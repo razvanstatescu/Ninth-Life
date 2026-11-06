@@ -1,20 +1,61 @@
 /**
  * Loads the offline dictionary from /data (copied by scripts/copy-data.mjs; never bundled).
  * Missing files are a normal state: the app shows "Dictionary not loaded" and keeps the keys.
+ *
+ * Performance (plan F9, web-ui Req 23, docs/testing/performance.md):
+ * - the lexicon, bigram model and pack are fetched in parallel, then parsed;
+ * - the app ships the compact lexicon (en.v2.json, ADR-data-003), about half the bytes of v1;
+ * - URLs carry the file's content hash (`?v=`) from the build, so the service worker's precache
+ *   reuses the copy this page just downloaded instead of fetching it again;
+ * - after loading, the completion index is built in idle time, so no key press pays for it.
  */
 import {
   Lexicon,
   bigramModel,
+  decodeGhost,
   unigramModel,
   type BigramFile,
   type LanguageModel,
   type LexiconFile,
+  type LexiconFileV2,
 } from '@ninth/core';
 
-export const DATA_PATHS = {
-  lexicon: '/data/lexicon/en.v1.json',
+/** The data files the app loads, without their `?v=` hash. */
+export const DATA_FILES = {
+  lexicon: '/data/lexicon/en.v2.json',
   bigram: '/data/lexicon/en.bigram.v1.json',
   pack: '/data/packs/core-en.json',
+} as const;
+
+/**
+ * path -> short content hash, filled in at build time by next.config.mjs (NEXT_PUBLIC_DATA_REV).
+ * Empty in tests and in builds without public/data.
+ */
+function dataRevisions(): Record<string, string> {
+  try {
+    const raw = process.env.NEXT_PUBLIC_DATA_REV;
+    const parsed: unknown = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
+const REV = dataRevisions();
+
+/**
+ * The URL to fetch a file under /data with: its path plus `?v=<content hash>` when the build knows
+ * it. The service worker precaches exactly this URL, so use it for any /data file you fetch.
+ */
+export function dataUrl(path: string): string {
+  const v = REV[path];
+  return v ? `${path}?v=${v}` : path;
+}
+
+/** The URLs the app fetches (same keys as before; values now carry the content hash). */
+export const DATA_PATHS = {
+  lexicon: dataUrl(DATA_FILES.lexicon),
+  bigram: dataUrl(DATA_FILES.bigram),
+  pack: dataUrl(DATA_FILES.pack),
 } as const;
 
 export type VocabPack = { id: string; lang: string; version: number; words: { w: string; boost: number }[]; phrases: string[] };
@@ -34,6 +75,11 @@ export type DictState =
 
 type FetchLike = (url: string) => Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>;
 
+export interface LoadOptions {
+  /** Build the completion index and warm the decoder in idle time once loaded (default true). */
+  warm?: boolean;
+}
+
 async function getJson<T>(fetchImpl: FetchLike, url: string): Promise<T | null> {
   const res = await fetchImpl(url);
   if (res.status === 404) return null;
@@ -46,29 +92,33 @@ function isPack(v: unknown): v is VocabPack {
   return !!p && Array.isArray(p.words) && Array.isArray(p.phrases);
 }
 
-export async function loadDictionary(fetchImpl: FetchLike = (u) => fetch(u)): Promise<DictState> {
-  let file: LexiconFile | null;
-  try {
-    file = await getJson<LexiconFile>(fetchImpl, DATA_PATHS.lexicon);
-  } catch (e) {
-    // A failed fetch offline (no cached copy yet) reads the same as a missing file.
-    return { status: 'missing' };
-  }
-  if (!file) return { status: 'missing' };
+/** Settled result of one fetch: the value, or the error it failed with. */
+type Got<T> = { ok: true; value: T | null } | { ok: false };
+const settle = <T>(p: Promise<T | null>): Promise<Got<T>> => p.then((value) => ({ ok: true as const, value }), () => ({ ok: false as const }));
+
+export async function loadDictionary(fetchImpl: FetchLike = (u) => fetch(u), opts: LoadOptions = {}): Promise<DictState> {
+  // All three requests go out at once: on a slow phone network each one costs a full round trip.
+  const [lexRes, packRes, bigRes] = await Promise.all([
+    settle(getJson<LexiconFile | LexiconFileV2>(fetchImpl, DATA_PATHS.lexicon)),
+    settle(getJson<unknown>(fetchImpl, DATA_PATHS.pack)),
+    settle(getJson<BigramFile>(fetchImpl, DATA_PATHS.bigram)),
+  ]);
+
+  // A failed fetch offline (no cached copy yet) reads the same as a missing file.
+  if (!lexRes.ok || !lexRes.value) return { status: 'missing' };
 
   let lexicon: Lexicon;
   try {
-    lexicon = Lexicon.fromJSON(file);
+    lexicon = Lexicon.fromJSON(lexRes.value);
   } catch (e) {
     return { status: 'error', message: e instanceof Error ? e.message : String(e) };
   }
 
   let pack: VocabPack | null = null;
   try {
-    const p = await getJson<unknown>(fetchImpl, DATA_PATHS.pack);
-    if (isPack(p)) {
-      pack = p;
-      lexicon.addWords(p.words);
+    if (packRes.ok && isPack(packRes.value)) {
+      pack = packRes.value;
+      lexicon.addWords(pack.words);
     }
   } catch {
     /* the pack is optional */
@@ -77,14 +127,45 @@ export async function loadDictionary(fetchImpl: FetchLike = (u) => fetch(u)): Pr
   let lm: LanguageModel = unigramModel(lexicon);
   let model: 'bigram' | 'unigram' = 'unigram';
   try {
-    const b = await getJson<BigramFile>(fetchImpl, DATA_PATHS.bigram);
-    if (b) {
-      lm = bigramModel(b, lexicon);
+    if (bigRes.ok && bigRes.value) {
+      lm = bigramModel(bigRes.value, lexicon);
       model = 'bigram';
     }
   } catch {
     /* frequency ranking still works */
   }
 
-  return { status: 'ready', lexicon, lm, model, pack };
+  const state: DictState = { status: 'ready', lexicon, lm, model, pack };
+  if (opts.warm !== false) warmDictionary(state);
+  return state;
+}
+
+type IdleDeadlineLike = { timeRemaining(): number; didTimeout?: boolean };
+
+/** requestIdleCallback where the browser has it (not Safari), else a short timeout. */
+export function whenIdle(fn: () => void, timeout = 2000): void {
+  const g = globalThis as { requestIdleCallback?: (cb: (d: IdleDeadlineLike) => void, o?: { timeout: number }) => number };
+  if (typeof g.requestIdleCallback === 'function') g.requestIdleCallback(() => fn(), { timeout });
+  else setTimeout(fn, 50);
+}
+
+/**
+ * Do the one-off work of the first key presses ahead of time, in two idle slices: build the
+ * lexicon's completion index (a sort of every code), then run one small decode and completion so
+ * the engine's code is compiled. Each slice is short; neither changes any result. web-ui Req 23.3.
+ */
+export function warmDictionary(state: DictState, schedule: (fn: () => void) => void = whenIdle): void {
+  if (state.status !== 'ready') return;
+  const { lexicon, lm } = state;
+  schedule(() => {
+    lexicon.prepare();
+    schedule(() => {
+      try {
+        lexicon.completions('4');
+        decodeGhost(['4', '6333'], { lexicon, lm, k: 5 });
+      } catch {
+        /* warming is best effort */
+      }
+    });
+  });
 }

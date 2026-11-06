@@ -14,8 +14,8 @@ run say so. Method: `docs/architecture/data-and-eval.md` and `.kiro/specs/eval-h
 
 | Config | Word acc | Sent top-1 | Sent top-5 | KSR | Scan steps/char | Invalid pre-validator | p50 ms | p95 ms | $/1k |
 |---|---|---|---|---|---|---|---|---|---|
-| B0 dict | 91.5% | 62.4% | 92.0% | -1.2% | 3.61 | n/a | 0.14 | 0.60 | 0 |
-| B1 ghost | 96.8% | 85.6% | 97.3% | -0.0% | 3.57 | n/a | 0.17 | 0.71 | 0 |
+| B0 dict | 91.5% | 62.4% | 92.0% | -1.2% | 3.61 | n/a | 0.18 | 0.80 | 0 |
+| B1 ghost | 96.8% | 85.6% | 97.3% | -0.0% | 3.57 | n/a | 0.22 | 1.06 | 0 |
 | B2 LLM raw | not run | | | | | | | | |
 | B3 LLM+val | not run | | | | | | | | |
 | B4 lattice+val | not run | | | | | | | | |
@@ -25,6 +25,11 @@ mode every letter is still one press, so KSR near 0 is the expected ceiling for 
 values are the cost of corrections. Scan steps/char counts single-switch auto-scan highlight
 steps on the 6-row grid (candidates, 4 keypad rows, actions), driven through
 `@ninth/core` `scanReducer`.
+
+B2 to B4 call the Anthropic API, so the offline run never runs them. `pnpm -F @ninth/eval llm`
+runs them (see `docs/architecture/data-and-eval.md` section 4) and writes one "Model ranking"
+section per model and mode below, each with its date, item count and the B0/B1 rows for the same
+items.
 
 ## By source
 
@@ -37,3 +42,27 @@ steps on the 6-row grid (candidates, 4 keypad rows, actions), driven through
 
 "Unreachable" = items with a word that is not in the lexicon, so neither decoding nor cycling can
 produce it (names, rare spellings).
+
+## Initials mode, offline (plan section 3.3 "Phantom mode")
+
+Same items, one press per word on the key of its first letter, 0 between words. The decoder sees
+only those digits (`lattice(codes, lex, 12, 'initials')`). If the gold sentence is not in the top
+5, the simulated user presses # through the slot's 12 readings, as the app does, and retypes in
+letter mode any word that is not among them (its full code plus # presses, on top of the initial).
+Letter-mode B1 needs 1.00 presses per character on the same items.
+
+The 12-word initials lattice holds 52.8% of the gold words and every word of
+3.1% of the gold sentences (27 of 866): that is the
+ceiling for any ranker, B4 included, that keeps to listed words.
+
+| Config | Word acc | Sent top-1 | Sent top-5 | Presses/char | KSR | Words retyped in letter mode | Unreachable items | Scan steps/char | p50 ms | p95 ms |
+|---|---|---|---|---|---|---|---|---|---|---|
+| B0 dict | 14.6% | 0.0% | 0.0% | 1.26 | -25.8% | 2306 of 4890 | 15 | 5.36 | 0.55 | 1.75 |
+| B1 ghost | 21.0% | 1.5% | 2.0% | 1.35 | -34.6% | 2306 of 4890 | 15 | 5.89 | 0.82 | 2.42 |
+
+| Config | Source | Items | Word acc | Sent top-1 | Sent top-5 | Presses/char |
+|---|---|---|---|---|---|---|
+| B0 dict | aac | 566 | 15.1% | 0.0% | 0.0% | 1.27 |
+| B0 dict | turk | 300 | 14.0% | 0.0% | 0.0% | 1.24 |
+| B1 ghost | aac | 566 | 23.8% | 1.9% | 2.5% | 1.33 |
+| B1 ghost | turk | 300 | 17.4% | 0.7% | 1.0% | 1.36 |

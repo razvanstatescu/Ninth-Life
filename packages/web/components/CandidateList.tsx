@@ -1,4 +1,5 @@
 import { formatSentence, type Candidate, type Punct } from '@ninth/core';
+import { showWord, type DisplayMap } from '@/lib/myWords';
 import { Button } from './Button';
 import { CandidateButton } from './Candidate';
 
@@ -13,6 +14,7 @@ export function CandidateList({
   onSelect,
   shown,
   toggle,
+  display,
 }: {
   candidates: Candidate[];
   selectedIndex: number;
@@ -26,6 +28,8 @@ export function CandidateList({
   shown?: number;
   /** "More sentences" / "Fewer sentences", the last cell of the scan row when present. */
   toggle?: { label: string; onClick: () => void } | null;
+  /** The person's spellings ("Mihai"), lib/myWords.ts. */
+  display?: DisplayMap | null;
 }) {
   const visible = candidates.slice(0, shown ?? candidates.length);
   const usedModel = candidates.some((c) => c.source === 'llm');
@@ -40,7 +44,10 @@ export function CandidateList({
             <li key={c.words.join(' ')}>
               <CandidateButton
                 rank={i + 1}
-                text={formatSentence(c.words, punct)}
+                text={formatSentence(
+                  c.words.map((w) => showWord(w, display)),
+                  punct,
+                )}
                 selected={i === selectedIndex}
                 lit={litIndex === i}
                 onSelect={() => onSelect(i)}

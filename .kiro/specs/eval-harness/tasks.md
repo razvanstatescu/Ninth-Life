@@ -35,11 +35,18 @@
   - [x] 9.1 Seeded PRNG only; timings kept out of `RESULTS.json`
   - [x] 9.2 Property: same seed ⇒ byte-identical `RESULTS.json`, in-process and via the CLI (P11, P12)
 - [x] 10. Measured B0/B1 on the full test set; `RESULTS.md` regenerated
-- [ ] 11. B2–B4 with the decoder package's Anthropic client (`AnthropicLlmClient`) (Req 3.3–3.6, 4.6, 4.7) — owner: decoder + eval
-  - [ ] 11.1 `packages/decoder` exports a `createProposer()` wrapping `LlmClient` + `buildPrompt` + `parseReply`
-  - [ ] 11.2 Replace the one few-shot example that also occurs in the test set ("i am good")
-  - [ ] 11.3 Run `pnpm -F @ninth/eval eval --llm <module>`; record model, region and cost
+- [ ] 11. B2–B4 with the decoder package's Anthropic client (`AnthropicLlmClient`) (Req 3.3–3.6, 4.6, 4.7, 8.1–8.8) — owner: decoder + eval
+  - [x] 11.1 Harness wraps the decoder's real code instead of a `createProposer()` module: `src/llm/configs.ts` (B2/B3 on `AnthropicLlmClient` + `buildPrompt` + `parseReply`, B4 through `handleDecode`); additive exports only in `packages/decoder/src/index.ts`
+  - [x] 11.2 No few-shot answer occurs in the test set (checked 2026-11-06 against all 866 items; "i am good" is gone from `prompt.ts`)
+  - [x] 11.4 Response cache, retries, concurrency, cost estimate and `--yes`, `--plan`, `--dry-run`, RESULTS.md sections, RESULTS.llm.json, per-item JSONL (P17–P19)
+  - [ ] 11.3 With the key: `pnpm -F @ninth/decoder live-check`, then `pnpm -F @ninth/eval llm --model claude-haiku-5-5` and `--model claude-haiku-4-5 --yes`; commit RESULTS.md and RESULTS.llm.json; decide D5
+- [x] 17. Live check `packages/decoder/scripts/live-check.ts` (Req 8.9): thinking disabled, cache read on the second call, response time; skip without a key; tested with a fake fetch
+- [ ] 18. Initials mode (Req 9)
+  - [x] 18.1 Simulated user and offline B0/B1 baseline in `eval`/`quick`, lattice coverage (P20)
+  - [x] 18.2 `pnpm -F @ninth/eval llm --mode initials` (B4; `--only B3,B4` adds the unconstrained run)
+  - [ ] 18.3 With the key: run B3 and B4 in initials mode; decide whether to build "Phantom mode"
 - [ ] 12. CI: `.github/workflows/eval.yml` runs `test`, `data:check` and `quick` on PRs touching core, eval or data (Req 2.1, 6.1)
+  - [x] 12.1 Manual-dispatch model run (model, mode, limit, cost confirmation), off by default, `secrets.ANTHROPIC_API_KEY` in two steps only; dry run of B2–B4 in the `eval` job (Req 8.8, 8.10)
 - [ ] 13. Confirm Turk dialogues license with the author (web page CC BY 4.0 vs readme CC BY-ND 3.0); if ND, rebuild bigrams with `--no-turk` (Req 1.7, 5.7)
 - [x] 14. Plan F2: measure single-letter and junk readings (Req 2.6, 5.8; ADR-core-002, ADR-data-002)
   - [x] 14.1 `--lexicon`, `--bigram`, `--letter-penalty` CLI options; `lm.letterPenalty` in `RESULTS.json` (Req 2.6) — P14

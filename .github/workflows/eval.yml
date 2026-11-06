@@ -1,8 +1,11 @@
 name: eval
 
-# Runs the decoding eval and keeps RESULTS as an artifact. Offline configs only
-# (B0 dictionary, B1 ghost mode); B2 to B4 call the Anthropic API and are run by hand
-# with a proposer module (see .kiro/powers/ninth-life-eval/POWER.md).
+# Runs the decoding eval and keeps RESULTS as an artifact.
+# - `eval` job (manual or weekly): offline configs B0 and B1 in letter and initials mode, plus a
+#   dry run of B2-B4 against the in-process fake Messages API (no key, no network).
+# - `llm` job (manual only, off by default): B2-B4 against the Anthropic API with
+#   secrets.ANTHROPIC_API_KEY. It never runs on pull requests or on the schedule, and it refuses
+#   to spend more than $1 unless `llm_confirm_cost` is ticked (see .kiro/powers/ninth-life-eval/POWER.md).
 
 on:
   workflow_dispatch:
@@ -12,6 +15,24 @@ on:
         type: choice
         options: [quick, full]
         default: quick
+      llm_model:
+        description: "B2-B4 with the Anthropic API: none (default, nothing is sent) or a model"
+        type: choice
+        options: [none, claude-haiku-5-5, claude-haiku-4-5]
+        default: none
+      llm_limit:
+        description: "Items for the model run: a number (seeded sample) or 'full' (866 items)"
+        type: string
+        default: "200"
+      llm_mode:
+        description: "Key mode for the model run"
+        type: choice
+        options: [letter, initials]
+        default: letter
+      llm_confirm_cost:
+        description: "Allow a model run whose cost estimate is above $1 (passes --yes)"
+        type: boolean
+        default: false
   schedule:
     - cron: "37 5 * * 1" # Mondays 05:37 UTC
 
@@ -43,9 +64,65 @@ jobs:
             echo
             cat "$RUNNER_TEMP/eval-table.md"
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Dry run of B2-B4 (fake Messages API, no key)
+        run: pnpm -s -F @ninth/eval llm --dry-run --limit 20 --out "$RUNNER_TEMP/eval-dry-run" > /dev/null
       - name: Upload RESULTS
         uses: actions/upload-artifact@v7
         with:
           name: eval-${{ env.MODE }}-${{ github.run_number }}
           path: ${{ runner.temp }}/eval-results/
           retention-days: 90
+
+  llm:
+    # Manual dispatch with a model chosen; never on pull_request (not a trigger) or schedule.
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.llm_model != 'none'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      MODEL: ${{ github.event.inputs.llm_model }}
+      LIMIT: ${{ github.event.inputs.llm_limit }}
+      LLM_MODE: ${{ github.event.inputs.llm_mode }}
+      CONFIRM: ${{ github.event.inputs.llm_confirm_cost }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+      - name: Live check (thinking disabled, prompt cache, response time)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: pnpm -s -F @ninth/decoder live-check -- --require-key --model "$MODEL"
+      - name: B2-B4 with the Anthropic API
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          OUT="$RUNNER_TEMP/llm-results"
+          mkdir -p "$OUT"
+          cp packages/eval/RESULTS.md "$OUT/RESULTS.md"
+          if [ -f packages/eval/RESULTS.llm.json ]; then cp packages/eval/RESULTS.llm.json "$OUT/"; fi
+          ARGS=(--model "$MODEL" --mode "$LLM_MODE" --out "$OUT" --items-out "$OUT/items.jsonl")
+          if [ "$LIMIT" != "full" ]; then
+            case "$LIMIT" in ''|*[!0-9]*) echo "llm_limit must be a number or 'full'"; exit 2;; esac
+            ARGS+=(--limit "$LIMIT")
+          fi
+          if [ "$CONFIRM" = "true" ]; then ARGS+=(--yes); fi
+          pnpm -s -F @ninth/eval llm "${ARGS[@]}" | tee "$RUNNER_TEMP/llm-section.md"
+          {
+            echo "## B2-B4, $MODEL, $LLM_MODE mode, limit $LIMIT, on ${GITHUB_SHA::7}"
+            echo
+            cat "$RUNNER_TEMP/llm-section.md"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload model results and response cache
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: eval-llm-${{ env.MODEL }}-${{ env.LLM_MODE }}-${{ github.run_number }}
+          path: |
+            ${{ runner.temp }}/llm-results/
+            packages/eval/.cache/llm/anthropic/
+          if-no-files-found: ignore
+          retention-days: 30

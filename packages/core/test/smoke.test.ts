@@ -5,11 +5,12 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { Lexicon, bigramModel, decodeGhost, unigramModel, validate, type BigramFile, type LexiconFile } from '../src/index';
+import { Lexicon, bigramModel, decodeGhost, unigramModel, validate, type BigramFile, type LexiconFile, type LexiconFileV2 } from '../src/index';
 
 const DATA = join(__dirname, '..', '..', '..', 'data', 'lexicon');
 const LEX = join(DATA, 'en.v1.json');
 const BIGRAM = join(DATA, 'en.bigram.v1.json');
+const LEX_V2 = join(DATA, 'en.v2.json');
 
 describe('core-encoder: real lexicon smoke test', () => {
   it.skipIf(!existsSync(LEX))('Req 5.3 en.v1.json decodes ["4","6333","92837"] to include "i need water"', () => {
@@ -34,5 +35,13 @@ describe('core-encoder: real lexicon smoke test', () => {
     // Without the penalty "h need water" was rank 5.
     const before = decodeGhost(['4', '6333', '92837'], { lexicon: lex, lm: bigramModel(JSON.parse(readFileSync(BIGRAM, 'utf8')) as BigramFile, lex, { letterPenalty: 0 }) });
     expect(before.map((c) => c.words.join(' '))).toContain('h need water');
+  });
+
+  it.skipIf(!existsSync(LEX_V2) || !existsSync(BIGRAM))('Req 2.11 en.v2.json (the file the app ships) decodes "4 6333 92837" to "i need water" first', () => {
+    const lex = Lexicon.fromJSON(JSON.parse(readFileSync(LEX_V2, 'utf8')) as LexiconFileV2);
+    const lm = bigramModel(JSON.parse(readFileSync(BIGRAM, 'utf8')) as BigramFile, lex);
+    expect(lex.size).toBeGreaterThan(40_000);
+    expect(decodeGhost(['4', '6333', '92837'], { lexicon: lex, lm })[0]?.words.join(' ')).toBe('i need water');
+    expect(lex.completions('54824', 1)).toEqual(['kitchen']);
   });
 });

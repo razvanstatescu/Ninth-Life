@@ -2,8 +2,8 @@
 
 ## Introduction
 
-The eval harness measures how well Ninth Life turns 9-key letter-mode key presses back into the
-sentence the person meant. It owns the data the app ships (`data/`) and the frozen test set, runs
+The eval harness measures how well Ninth Life turns 9-key key presses (letter mode, and initials
+mode as a stretch) back into the sentence the person meant. It owns the data the app ships (`data/`) and the frozen test set, runs
 a simulated user against each decoder configuration (B0 to B4), and regenerates
 `packages/eval/RESULTS.md`. Ninth Life is a general-purpose text entry and text-to-speech tool;
 the harness reports measured numbers only, never claims.
@@ -16,6 +16,8 @@ Contracts: `docs/architecture/contracts.md` sections 1 and 2.
 - **Code**: the digit string for one word in letter mode (`"isn't"` → `4768`).
 - **Gold sentence**: the sentence a crowd worker wrote; the target the simulated user types.
 - **Decoder / config**: B0 dict, B1 ghost, B2 LLM raw, B3 LLM + validator, B4 lattice-constrained LLM + validator.
+- **Initials mode** ("Phantom mode", plan section 3.3): one press per word, on the key of its first letter.
+- **Response cache**: `packages/eval/.cache/llm/` (gitignored), one file per Messages API request, named by the request hash.
 - **Fixture**: `packages/eval/fixtures/test.v1.jsonl`; **lock**: `packages/eval/eval.lock`.
 - **Train / dev / test split**: the splits published with the AACText and Turk datasets.
 
@@ -102,3 +104,28 @@ suggestion, so that we decide with data and without the report spreading the wor
 7.2 THE report SHALL NOT spell any blocklisted word: each SHALL be shown as its first letter plus dots and a SHA-256 prefix, including when it is another word's first reading.
 7.3 THE blocklist SHALL be a public list with a compatible license, fetched with a pinned SHA-256 into the gitignored cache and never committed; the slur marks SHALL be stored as SHA-256 hashes.
 7.4 THE report SHALL only measure; it SHALL NOT change the lexicon.
+
+## Requirement 8: Model runs (B2 to B4 against the Anthropic API)
+
+**User story:** As the team choosing the default model (decision D5), I want B2 to B4 measured with
+one command on the shipping code, at a known cost, so that the choice rests on numbers.
+
+8.1 WHEN `pnpm -F @ninth/eval llm` is run, THE harness SHALL measure B2 (the decoder's prompt with no lattice and no guesses, no validator), B3 (the same replies filtered by `validate()`) and B4 (`handleDecode` with the request the app's `buildRequest` sends: 12 lattice words per slot, the top 5 ghost beams, the partner line, k = 5, at most 4 KB) using `@ninth/decoder`'s `AnthropicLlmClient`, `buildPrompt`, `maxTokensFor` and `parseReply`, and SHALL NOT keep a second copy of the prompt; like the app, B4 SHALL send no request when a slot has no lexicon word or a code exceeds the route's limits.
+8.2 THE harness SHALL cache every successful reply on disk under `packages/eval/.cache/llm/`, keyed by the SHA-256 of the API version, URL and request body, AND WHEN a request is already cached THE harness SHALL answer it from the cache without a network call, so that a rerun costs nothing and gives the same results.
+8.3 THE harness SHALL keep at most `--concurrency` (default 4) requests in flight, SHALL retry 408, 429, 5xx and 529 replies with exponential backoff (1 s doubling, at most 30 s, the server's retry-after when given, at most 6 attempts), AND IF a request fails with any other status or runs out of attempts, THEN THE harness SHALL stop sending, SHALL exit non-zero and SHALL write no results.
+8.4 THE harness SHALL record, for each item and LLM config, sentence top-1 and top-5, the share of model sentences that fail `validate()` before the validator, the latency of each successful call (p50 and p95 per config), input, output, cache-read and cache-write tokens from the reply's `usage`, and the cost at `packages/decoder/src/models.ts` list prices.
+8.5 WHEN a model run starts, THE harness SHALL print, before sending any request, a cost estimate (requests not yet cached x average tokens per call x list price), SHALL accept `--plan` to stop after it, AND IF the estimate is above $1 and `--yes` was not given, THEN THE harness SHALL send nothing and exit 3; IF `ANTHROPIC_API_KEY` is unset outside a dry run, THEN it SHALL send nothing and exit 2.
+8.6 THE harness SHALL write each run as a `RESULTS.md` section marked with the model, mode, date and item count and replace only the section of the same model and mode; `pnpm -F @ninth/eval eval` SHALL keep these sections when it rewrites the file; the same numbers without dates or timings SHALL go to `RESULTS.llm.json`.
+8.7 THE harness SHALL read the API key only from `ANTHROPIC_API_KEY` AND SHALL NOT write it to the cache, results, per-item records or logs.
+8.8 WHEN `--dry-run` is given, THE harness SHALL run the whole path against an in-process fake Messages API with no key and no network, SHALL keep its replies in a separate cache namespace, and SHALL NOT write into `packages/eval/`.
+8.9 THE decoder package SHALL provide `pnpm -F @ninth/decoder live-check`, which sends one real request per model (two identical ones for Haiku 5.5) and checks that Haiku 5.5 accepts `thinking: {type: "disabled"}` with no sampling parameters on the pinned `anthropic-version`, that the second Haiku 5.5 request reports `cache_read_input_tokens > 0`, that the reply parses and validates, and reports each response time; it SHALL exit non-zero on a failed check AND SHALL skip with a clear message when no key is set.
+8.10 THE eval workflow SHALL offer B2 to B4 as a manual-dispatch input (model, mode, limit, cost confirmation), off by default, reading `secrets.ANTHROPIC_API_KEY` only in the steps that call the API, AND SHALL NOT run it on pull requests or on the schedule.
+
+## Requirement 9: Initials mode (plan section 3.3, stretch "Phantom mode")
+
+**User story:** As the team deciding whether to build initials mode, I want an offline baseline and
+a prepared model run, so that we know how much the mode depends on the model before building it.
+
+9.1 WHILE in initials mode, THE simulated user SHALL press one key per word (the key of its first letter) and one space key between words; WHEN the gold sentence is not in the top k, it SHALL press # through the slot's 12 readings as the app does, AND IF the gold word is not among them, THEN it SHALL retype that word in letter mode (its full code plus # presses) and count it as retyped.
+9.2 WHEN `pnpm -F @ninth/eval eval` or `quick` is run, THE harness SHALL also report B0 and B1 in initials mode on the same items (word accuracy, sentence top-1 and top-5, presses per character, words retyped) and the share of gold words and sentences inside the 12-word initials lattice.
+9.3 WHEN `pnpm -F @ninth/eval llm --mode initials` is run, THE harness SHALL send one-digit codes in initials mode through the same B4 path (default config B4; `--only` may add B2 and B3).

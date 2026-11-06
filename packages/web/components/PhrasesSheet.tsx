@@ -28,6 +28,7 @@ export function PhrasesSheet({
   onSpeak,
   onSpeakQuick,
   onDelete,
+  onMyWords,
   onClose,
 }: {
   open: boolean;
@@ -40,6 +41,8 @@ export function PhrasesSheet({
   onSpeak: (p: Phrase) => void;
   onSpeakQuick: (text: string) => void;
   onDelete: (p: Phrase) => void;
+  /** Open My words (web-ui Req 21.3). */
+  onMyWords?: () => void;
   onClose: () => void;
 }) {
   const [confirming, setConfirming] = useState<string | null>(null);
@@ -47,6 +50,14 @@ export function PhrasesSheet({
   const quick = quickPhrases.slice(0, shown);
   return (
     <Sheet open={open} name="phrases" title="Phrases" onClose={onClose} scanning={scanning}>
+      {onMyWords ? (
+        <div className="scan-cluster sheet__link" data-scan-row="my-words">
+          <Button variant="secondary" icon="spell" onClick={onMyWords}>
+            My words
+          </Button>
+          <span className="field__help">Names and words you added, and word packs.</span>
+        </div>
+      ) : null}
       <section className="group" aria-labelledby="phrases-saved">
         <h3 className="group__title" id="phrases-saved">
           Your phrases

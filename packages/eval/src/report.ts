@@ -39,7 +39,50 @@ export function sourceTable(results: Results): string {
   return out.join('\n');
 }
 
-export function resultsMarkdown(results: Results, timing: Timing, env: { node: string; platform: string }): string {
+/** Initials-mode table (spec Req 9.2): one press per word, so presses/char is the headline. */
+export function initialsTable(configs: readonly ConfigResult[], timing: Timing): string {
+  const out = [
+    '| Config | Word acc | Sent top-1 | Sent top-5 | Presses/char | KSR | Words retyped in letter mode | Unreachable items | Scan steps/char | p50 ms | p95 ms |',
+    '|---|---|---|---|---|---|---|---|---|---|---|',
+  ];
+  for (const c of configs) {
+    const m = c.metrics;
+    if (c.status !== 'ok' || !m) continue;
+    const t = timing[c.id];
+    out.push(
+      `| ${c.label} | ${pct(m.wordAcc)} | ${pct(m.top1)} | ${pct(m.top5)} | ${f2(m.pressesPerChar)} | ${pct(m.ksr)} | ${m.retypedWords ?? 0} of ${m.words} | ${m.unreachable} | ${f2(m.scanStepsPerChar)} | ${t ? f2(t.p50) : ''} | ${t ? f2(t.p95) : ''} |`,
+    );
+  }
+  return out.join('\n');
+}
+
+function initialsSection(results: Results, timing: Timing): string {
+  const ini = results.initials;
+  if (!ini) return '';
+  const src = ['| Config | Source | Items | Word acc | Sent top-1 | Sent top-5 | Presses/char |', '|---|---|---|---|---|---|---|'];
+  for (const c of ini.configs) {
+    for (const [name, m] of Object.entries(c.bySource ?? {})) src.push(`| ${c.label} | ${name} | ${m.items} | ${pct(m.wordAcc)} | ${pct(m.top1)} | ${pct(m.top5)} | ${f2(m.pressesPerChar)} |`);
+  }
+  return `
+## Initials mode, offline (plan section 3.3 "Phantom mode")
+
+Same items, one press per word on the key of its first letter, 0 between words. The decoder sees
+only those digits (\`lattice(codes, lex, 12, 'initials')\`). If the gold sentence is not in the top
+5, the simulated user presses # through the slot's 12 readings, as the app does, and retypes in
+letter mode any word that is not among them (its full code plus # presses, on top of the initial).
+Letter-mode B1 needs ${f2(results.configs.find((c) => c.id === 'B1')?.metrics?.pressesPerChar ?? NaN)} presses per character on the same items.
+
+The ${ini.coverage.perSlot}-word initials lattice holds ${pct(ini.coverage.wordsInLattice / (ini.coverage.words || 1))} of the gold words and every word of
+${pct(ini.coverage.itemsInLattice / (ini.coverage.items || 1))} of the gold sentences (${ini.coverage.itemsInLattice} of ${ini.coverage.items}): that is the
+ceiling for any ranker, B4 included, that keeps to listed words.
+
+${initialsTable(ini.configs, timing)}
+
+${src.join('\n')}
+`;
+}
+
+export function resultsMarkdown(results: Results, timing: Timing, env: { node: string; platform: string }, initialsTiming: Timing = {}): string {
   const s = results.subset;
   return `# Ninth Life eval results
 
@@ -63,11 +106,16 @@ values are the cost of corrections. Scan steps/char counts single-switch auto-sc
 steps on the 6-row grid (candidates, 4 keypad rows, actions), driven through
 \`@ninth/core\` \`scanReducer\`.
 
+B2 to B4 call the Anthropic API, so the offline run never runs them. \`pnpm -F @ninth/eval llm\`
+runs them (see \`docs/architecture/data-and-eval.md\` section 4) and writes one "Model ranking"
+section per model and mode below, each with its date, item count and the B0/B1 rows for the same
+items.
+
 ## By source
 
 ${sourceTable(results)}
 
 "Unreachable" = items with a word that is not in the lexicon, so neither decoding nor cycling can
 produce it (names, rare spellings).
-`;
+${initialsSection(results, initialsTiming)}`;
 }

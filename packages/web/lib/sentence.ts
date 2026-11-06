@@ -9,6 +9,7 @@ import {
   encodeWord,
   formatSentence,
   lattice,
+  matchesCode,
   proof,
   validate,
   type Candidate,
@@ -18,17 +19,25 @@ import {
   type ProofState,
 } from '@ninth/core';
 import { codesOf, type ComposerState } from './composer';
+import { showWord, type DisplayMap } from './myWords';
 
 export const MAX_CANDIDATES = 5;
 export const READINGS_PER_SLOT = 12;
 
+/**
+ * typing:    the open word is a prefix of dictionary words (shows their first letters).
+ * unspelled: no dictionary word and no spelled word for these keys yet (shows the digits; spell mode
+ *            fixes it, web-ui Req 20).
+ */
+export type WordState = ProofState | 'typing' | 'unspelled';
+
 export interface DisplayWord {
-  /** The word as it will be spoken, lower case; null while the open word matches nothing yet. */
+  /** The word as it will be spoken, lower case (folded); null while nothing matches these keys yet. */
   word: string | null;
   code: string;
   /** For an unfinished word: the letters typed so far, taken from the likeliest completion. */
   partial?: string;
-  state: ProofState | 'typing';
+  state: WordState;
 }
 
 export interface Sentence {
@@ -96,6 +105,42 @@ export function decodeWithPins(
   return out;
 }
 
+/** Stands for a slot with no word in beam search around it; never shown, never spoken. */
+const HOLE = '\u0000';
+
+/**
+ * The likeliest words for the slots that have one (dictionary words, or words the person spelled or
+ * pinned), with null for every slot that has neither (web-ui Req 20.1). Used when no full sentence
+ * exists, so the known words are still ranked in context. A slot's word always encodes to its code.
+ */
+export function decodeAround(
+  state: ComposerState,
+  lex: Lexicon,
+  lm: LanguageModel,
+  opts: { mode?: Mode; context?: string[] } = {},
+): (string | null)[] {
+  const codes = codesOf(state);
+  const mode = opts.mode ?? 'letter';
+  if (codes.length === 0) return [];
+  const lat = lattice(codes, lex, READINGS_PER_SLOT, mode).map((slot, i) => {
+    const pin = state.slots[i]?.pin;
+    if (pin) return [pin];
+    return slot.length > 0 ? slot : [HOLE];
+  });
+  const prev = opts.context?.length ? opts.context[opts.context.length - 1]!.toLowerCase() : BOS;
+  const best = beam(lat, lm, 32, prev)[0];
+  return codes.map((code, i) => {
+    const w = best?.words[i];
+    return w && w !== HOLE && matchesCode(w, code, mode) ? w : null;
+  });
+}
+
+/** Which word spell mode opens on: the first word not spelled yet, else the last word. */
+export function spellTarget(words: readonly DisplayWord[]): number {
+  const hole = words.findIndex((w) => w.state === 'unspelled');
+  return hole >= 0 ? hole : words.length - 1;
+}
+
 /** LLM sentences first (already validated), then ghost ones, no duplicates, at most k. */
 export function mergeCandidates(llm: Candidate[], ghost: Candidate[], k = MAX_CANDIDATES): Candidate[] {
   const out: Candidate[] = [];
@@ -114,11 +159,19 @@ function sameWords(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((w, i) => w === b[i]);
 }
 
+export interface BuildOptions {
+  /** decodeAround() for when there is no full sentence: the known words, null for the rest. */
+  fallback?: readonly (string | null)[] | null;
+  /** The person's spellings ("Mihai"), applied to the text only (lib/myWords.ts). */
+  display?: DisplayMap | null;
+}
+
 export function buildSentence(
   state: ComposerState,
   candidates: Candidate[],
   lex: Lexicon | null,
   mode: Mode = 'letter',
+  opts: BuildOptions = {},
 ): Sentence {
   const codes = codesOf(state);
   if (codes.length === 0) {
@@ -137,6 +190,7 @@ export function buildSentence(
     const slot = state.slots[i]!;
     if (chosen) return chosen[i] ?? null;
     if (slot.pin) return slot.pin;
+    if (opts.fallback) return opts.fallback[i] ?? null;
     return lex ? (readings(lex, code, mode)[0] ?? null) : null;
   });
 
@@ -152,15 +206,18 @@ export function buildSentence(
   const words: DisplayWord[] = codes.map((code, i) => {
     const word = raw[i] ?? null;
     if (word === null) {
-      const partial = lex ? partialFor(lex, code) : undefined;
-      return { word: null, code, partial, state: 'typing' };
+      // The open word may still grow into a dictionary word; anything else has no word yet.
+      const open = state.open && i === codes.length - 1;
+      const partial = lex && open ? partialFor(lex, code) : undefined;
+      if (partial || !lex || mode !== 'letter') return { word: null, code, partial, state: 'typing' };
+      return { word: null, code, state: 'unspelled' };
     }
     return { word, code, state: proofs?.[i]?.state ?? 'reject' };
   });
 
   const speakable = words.length > 0 && words.every((w) => w.word !== null && (w.state === 'match' || w.state === 'new'));
   // One token per slot (an unfinished word shows its partial letters, or its digits).
-  const shownTokens = words.map((w) => w.word ?? w.partial ?? w.code);
+  const shownTokens = words.map((w) => (w.word !== null ? showWord(w.word, opts.display) : (w.partial ?? w.code)));
   const text = formatSentence(shownTokens, state.punct);
   const tokens = text.split(' ');
   const shown = words.map((w) => w.word ?? '');

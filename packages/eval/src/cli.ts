@@ -11,21 +11,28 @@
  *   --only B0,B1         run only these configs
  *   --llm <module>       ES module whose default export (or `createProposer`) returns an
  *                        LlmProposer; enables B2-B4
- *   --lexicon <path>     LexiconFile to evaluate (default data/lexicon/en.v1.json); for data experiments
+ *   --lexicon <path>     LexiconFile (v1) or LexiconFileV2 to evaluate (default data/lexicon/en.v1.json);
+ *                        data/lexicon/en.v2.json gives the same results (ADR-data-003)
  *   --bigram <path>      BigramFile to evaluate (default data/lexicon/en.bigram.v1.json)
  *   --letter-penalty <x> log10 penalty for one-letter words other than a/i (default: core's,
  *                        ADR-core-002); 0 turns it off
  *   --out <dir>          where to write RESULTS.json / RESULTS.md (default packages/eval)
  *   --write / --no-write force writing on or off (quick defaults to off, full to on)
  *   --json               print RESULTS.json to stdout instead of the table
+ *   --no-initials        skip the offline initials-mode baseline (B0/B1 with one key per word)
+ *
+ * B2-B4 against the Anthropic API: `pnpm -F @ninth/eval llm` (src/llm/cli.ts). Rewriting
+ * RESULTS.md here keeps the "Model ranking" sections that command wrote.
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { LlmProposer } from './decoders';
-import { EVAL_DIR, loadBigramFile, loadFixture, loadLexiconFile, PATHS, readLock } from './fixture';
-import { resultsMarkdown, table } from './report';
-import { DEFAULT_K, DEFAULT_SEED, runEval, serializeResults } from './run';
+import { EVAL_DIR, lexiconSourceSha, loadBigramFile, loadFixture, loadLexiconFile, PATHS, readLock } from './fixture';
+import { withLlmSections } from './llm/report';
+import { initialsTable, resultsMarkdown, table } from './report';
+import { Lexicon } from '@ninth/core';
+import { DEFAULT_K, DEFAULT_SEED, latticeCoverage, runEval, selectItems, serializeResults } from './run';
 
 interface Args {
   quick: boolean;
@@ -39,10 +46,11 @@ interface Args {
   out: string;
   write?: boolean;
   json: boolean;
+  initials: boolean;
 }
 
 export function parseArgs(argv: string[]): Args {
-  const a: Args = { quick: false, seed: DEFAULT_SEED, k: DEFAULT_K, out: EVAL_DIR, json: false };
+  const a: Args = { quick: false, seed: DEFAULT_SEED, k: DEFAULT_K, out: EVAL_DIR, json: false, initials: true };
   for (let i = 0; i < argv.length; i++) {
     const x = argv[i]!;
     const val = () => {
@@ -62,6 +70,7 @@ export function parseArgs(argv: string[]): Args {
     else if (x === '--write') a.write = true;
     else if (x === '--no-write') a.write = false;
     else if (x === '--json') a.json = true;
+    else if (x === '--no-initials') a.initials = false;
     else if (x === '--') continue;
     else throw new Error(`unknown option ${x}`);
   }
@@ -95,14 +104,14 @@ export async function main(argv: string[]): Promise<number> {
   const lexicon = loadLexiconFile(args.lexicon);
   const bigram = loadBigramFile(args.bigram);
   for (const [name, got, want] of [
-    ['lexicon', lexicon.sha256, lock.lexicon.sha256],
+    ['lexicon', lexiconSourceSha(lexicon), lock.lexicon.sha256],
     ['bigram', bigram.sha256, lock.bigram.sha256],
   ] as const) {
     if (got !== want) process.stderr.write(`warning: ${name} SHA-256 differs from eval.lock (data rebuilt since the test set was frozen)\n`);
   }
   const llm = args.llm ? await loadProposer(args.llm) : undefined;
 
-  const { results, timing } = await runEval({
+  const common = {
     items,
     fixture: { path: lock.fixture.path, sha256 },
     lexicon,
@@ -110,10 +119,20 @@ export async function main(argv: string[]): Promise<number> {
     quick: args.quick,
     seed: args.seed,
     k: args.k,
-    only: args.only,
-    llm,
     lm: args.letterPenalty === undefined ? undefined : { letterPenalty: args.letterPenalty },
-  });
+  };
+  const { results, timing } = await runEval({ ...common, only: args.only, llm });
+  // Initials-mode baseline (spec Req 9): offline configs only, same items.
+  let initialsTiming = {};
+  if (args.initials) {
+    const ini = await runEval({ ...common, mode: 'initials', only: (args.only ?? ['B0', 'B1']).filter((id) => id === 'B0' || id === 'B1') });
+    if (ini.results.configs.length > 0) {
+      const lex = Lexicon.fromJSON(lexicon.data);
+      const evaluated = selectItems(items, args.quick, args.seed);
+      results.initials = { mode: 'initials', configs: ini.results.configs, coverage: latticeCoverage(evaluated, lex, 'initials') };
+      initialsTiming = ini.timing;
+    }
+  }
 
   const write = args.write ?? !args.quick;
   if (write) {
@@ -121,7 +140,9 @@ export async function main(argv: string[]): Promise<number> {
     const jsonPath = join(args.out, 'RESULTS.json');
     const mdPath = join(args.out, 'RESULTS.md');
     writeFileSync(jsonPath, serializeResults(results));
-    writeFileSync(mdPath, resultsMarkdown(results, timing, { node: process.versions.node, platform: `${process.platform}-${process.arch}` }));
+    const previous = existsSync(mdPath) ? readFileSync(mdPath, 'utf8') : '';
+    const md = resultsMarkdown(results, timing, { node: process.versions.node, platform: `${process.platform}-${process.arch}` }, initialsTiming);
+    writeFileSync(mdPath, withLlmSections(md, previous));
     process.stderr.write(`wrote ${relative(process.cwd(), jsonPath)} and ${relative(process.cwd(), mdPath)}\n`);
   }
   if (args.json) process.stdout.write(serializeResults(results));
@@ -129,6 +150,7 @@ export async function main(argv: string[]): Promise<number> {
     const s = results.subset;
     process.stdout.write(`${s.quick ? 'Quick subset' : 'Full set'}: ${s.items} items, seed ${s.seed}, k=${results.k}\n\n`);
     process.stdout.write(table(results, timing) + '\n');
+    if (results.initials) process.stdout.write(`\nInitials mode (one key per word), same items:\n\n${initialsTable(results.initials.configs, initialsTiming)}\n`);
   }
   return 0;
 }

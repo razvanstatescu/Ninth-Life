@@ -38,7 +38,13 @@ Python (3.13, venv at `packages/eval/.venv`, pins in `requirements.txt`) builds 
 | `src/scan-cost.ts` | scan steps by driving core `scanReducer` | 4.5 |
 | `src/metrics.ts` | aggregation, percentiles | 4.4, 4.7, 4.8 |
 | `src/run.ts`, `src/rng.ts` | subset selection, orchestration, canonical JSON | 2.1, 2.2, 6.1–6.3 |
-| `src/report.ts`, `src/cli.ts` | markdown, options, writing results | 2.1–2.5 |
+| `src/report.ts`, `src/cli.ts` | markdown, options, writing results; initials baseline | 2.1–2.5, 9.2 |
+| `src/llm/configs.ts` | B2/B3 on `AnthropicLlmClient` + `buildPrompt` + `parseReply`; B4 through `handleDecode` with an app-shaped request; offline request planning | 8.1, 8.4, 9.3 |
+| `src/llm/transport.ts` | the client's `fetch`: response cache, concurrency limit, retries, call records | 8.2, 8.3, 8.7 |
+| `src/llm/estimate.ts` | cost estimate from the planned requests; `--yes` gate | 8.5 |
+| `src/llm/report.ts`, `src/llm/cli.ts` | RESULTS.md sections, RESULTS.llm.json, per-item JSONL; `pnpm -F @ninth/eval llm` | 8.5, 8.6 |
+| `src/llm/fake-api.ts` | in-process fake Messages API for `--dry-run` and tests | 8.8 |
+| `packages/decoder/scripts/live-check.ts` | one real call per model for the ADR-001 open questions | 8.9 |
 
 ## Key decisions
 
@@ -63,9 +69,26 @@ JSON written with a fixed key order.
 The simulated user then sees each slot's most frequent word (what the keypad shows while typing),
 and word accuracy is computed on that.
 
-**LLM plug-in.** `--llm <module>` loads a module exporting `createProposer(): LlmProposer`.
-The decoder package can wrap its `LlmClient`, `buildPrompt` and `parseReply` without the harness
-depending on the Anthropic API client.
+**LLM plug-in.** `--llm <module>` loads a module exporting `createProposer(): LlmProposer` (kept
+for experiments). The measured path is `pnpm -F @ninth/eval llm` (Req 8), which depends on
+`@ninth/decoder` directly so that nothing is re-implemented.
+
+**Model runs (Req 8).** The shipping code is used as is and wrapped only at its edges:
+`AnthropicLlmClient` gets the eval transport as its `fetch`, and B4 calls `handleDecode` with
+a permissive quota, `StaticFlags(true)` and a 10-minute deadline (quality is measured on every
+reply; the share of calls slower than the route's 1,200 ms deadline is reported next to p50/p95).
+B2 and B3 send the same request, so B3 is a cache hit. Request bodies are computed offline before
+any call (B4 by running `handleDecode` with a client that captures the prompt and fails), which
+gives an exact cost plan and the cache hit count; a test checks the plan equals what the run sends.
+The cache key hashes version, URL and body, never headers, so the key is never stored. Latency
+comes from the cache record of the original call, so reruns report the same p50/p95. Per-config
+token and cost totals go to `RESULTS.llm.json` (deterministic given the cache); dates and
+latencies only to `RESULTS.md`.
+
+**Initials mode (Req 9).** Decoders get `codes.map(c => c[0])`; the simulated user's # fallback
+cycles the 12 readings the app shows in initials mode, and a word outside them is retyped in
+letter mode. This is an assumption about what a person would do (the app has no in-word mode
+switch today); it is stated in the report.
 
 ## Correctness properties
 
@@ -88,6 +111,10 @@ Each property is a test in `packages/eval/test/` (P = property-based with fast-c
 | P13 | Rebuilding the fixture from the cached inputs reproduces the locked SHA-256. | 1.1, 5.6 | `pnpm -F @ninth/eval data:check` |
 | P14 | CLI parses `--lexicon`, `--bigram`, `--letter-penalty` (refuses > 0); `RESULTS.json` records the penalty; turning it off changes no item's reachability. | 2.6 | `harness.test.ts` (E) |
 | P15 | Down-weighting never removes a word, never raises a score, lowers by at most `down_zipf`, never below the floor, and leaves one-letter, dictionary and name words unchanged (500 random vocabularies). | 5.8 | `scripts/test_build_lexicon.py` (P) |
+| P17 | The transport sends each distinct request once, answers repeats from the cache, never stores the API key, retries only 408/429/5xx/529 and keeps at most `concurrency` requests in flight. | 8.2, 8.3, 8.7 | `llm.test.ts` (E) |
+| P18 | The offline plan predicts exactly the requests a run sends; above $1 without `--yes` nothing is sent. | 8.5 | `llm.test.ts` (E) |
+| P19 | In a dry run B3 and B4 never show a sentence that fails `validate()`; a rerun sends nothing and writes byte-identical `RESULTS.llm.json`. | 3.5, 8.2, 8.8 | `llm.test.ts` (E) |
+| P20 | Initials mode: a shown gold sentence costs one press per word plus spaces; a word outside the 12 readings is retyped. | 9.1 | `llm.test.ts` (E) |
 | P16 | For any set of listed words in a lexicon, the offensive report never spells one (including as a first reading) and shows its mask; a listed word in the gold sentence is not counted. | 7.1, 7.2 | `offensive.test.ts` (P + E) |
 
 ## Error handling
@@ -96,3 +123,7 @@ Each property is a test in `packages/eval/test/` (P = property-based with fast-c
 - Fixture hash mismatch: refuse to run (results would not be comparable).
 - Data hash mismatch with the lock: warn and continue (expected while iterating on data).
 - LLM backend throws: the run fails loudly; there are no silent partial numbers.
+- Model run: 408/429/5xx/529 are retried with backoff; any other status, or running out of
+  attempts, stops the transport and the run exits 1 with the API's error type and message (never
+  request data) and writes nothing. A refusal or an unparseable reply is a model outcome: counted,
+  not fatal. B4 then shows ghost beams, as the route does.

@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { BigramFile, LexiconFile } from '@ninth/core';
+import type { BigramFile, LexiconFile, LexiconFileV2 } from '@ninth/core';
 import type { TestItem } from './types';
 
 export const EVAL_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -13,6 +13,8 @@ export const PATHS = {
   fixture: join(EVAL_DIR, 'fixtures', 'test.v1.jsonl'),
   lock: join(EVAL_DIR, 'eval.lock'),
   lexicon: join(REPO_ROOT, 'data', 'lexicon', 'en.v1.json'),
+  /** Compact twin of `lexicon` that the web app ships (ADR-data-003); loads to the same Lexicon. */
+  lexiconV2: join(REPO_ROOT, 'data', 'lexicon', 'en.v2.json'),
   bigram: join(REPO_ROOT, 'data', 'lexicon', 'en.bigram.v1.json'),
   resultsJson: join(EVAL_DIR, 'RESULTS.json'),
   resultsMd: join(EVAL_DIR, 'RESULTS.md'),
@@ -65,5 +67,12 @@ export function loadJson<T>(path: string): { data: T; sha256: string } {
   return { data: JSON.parse(buf.toString('utf8')) as T, sha256: sha256(buf) };
 }
 
-export const loadLexiconFile = (path = PATHS.lexicon) => loadJson<LexiconFile>(path);
+/** A v1 or v2 lexicon file (both load with Lexicon.fromJSON; the default is v1, which eval.lock pins). */
+export const loadLexiconFile = (path = PATHS.lexicon) => loadJson<LexiconFile | LexiconFileV2>(path);
+
+/** The v1 file a lexicon was derived from: itself for v1, `derived_from.sha256` for a compact v2 file. */
+export function lexiconSourceSha(l: { data: LexiconFile | LexiconFileV2; sha256: string }): string {
+  const from = (l.data as { derived_from?: { sha256?: unknown } }).derived_from?.sha256;
+  return l.data.v === 2 && typeof from === 'string' ? from : l.sha256;
+}
 export const loadBigramFile = (path = PATHS.bigram) => loadJson<BigramFile>(path);

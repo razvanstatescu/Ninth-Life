@@ -15,10 +15,12 @@
     "data:fetch": ".venv/bin/python scripts/fetch_datasets.py",
     "data:build": ".venv/bin/python scripts/build_lexicon.py && .venv/bin/python scripts/build_bigrams.py && .venv/bin/python scripts/build_pack.py",
     "data:check": ".venv/bin/python scripts/build_testset.py --check",
-    "data:freeze": ".venv/bin/python scripts/build_testset.py"
+    "data:freeze": ".venv/bin/python scripts/build_testset.py",
+    "llm": "tsx src/llm/cli.ts"
   },
   "dependencies": {
-    "@ninth/core": "workspace:*"
+    "@ninth/core": "workspace:*",
+    "@ninth/decoder": "workspace:*"
   },
   "devDependencies": {
     "tsx": "4.19.2",

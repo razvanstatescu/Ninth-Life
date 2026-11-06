@@ -29,7 +29,8 @@ export function aggregate(rs: readonly ItemResult[], k: number, hasRaw: boolean,
     usd += r.usd;
   }
   const n = rs.length || 1;
-  return {
+  const initials = rs.some((r) => r.retyped !== undefined);
+  const m: Metrics = {
     items: rs.length,
     words,
     wordAcc: r4(correct / (words || 1)),
@@ -42,6 +43,8 @@ export function aggregate(rs: readonly ItemResult[], k: number, hasRaw: boolean,
     unreachable: unreach,
     usdPer1k: hasCost ? r4((usd / n) * 1000) : null,
   };
+  if (initials) m.retypedWords = rs.reduce((s, r) => s + (r.retyped ?? 0), 0);
+  return m;
 }
 
 /** p-th percentile (nearest rank) of a list of numbers. */

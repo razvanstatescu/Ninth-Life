@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Build data/lexicon/en.v1.json (LexiconFile, docs/architecture/contracts.md section 1).
+"""Build data/lexicon/en.v1.json (LexiconFile, docs/architecture/contracts.md section 1) and its
+compact twin data/lexicon/en.v2.json (LexiconFileV2, ADR-data-003), which is what the web app ships.
 
 Steps (plan section 3.2):
   1. wordfreq 3.1.1 top_n_list('en', N) with zipf_frequency.
@@ -21,9 +22,15 @@ Steps (plan section 3.2):
      are never touched here (core's language model penalises them instead, ADR-core-002).
   5. Encode with the standard keypad map, group by code, sort by frequency (desc), then
      word (asc) for determinism. zipfX10 = round(zipf * 10).
+  6. Write the compact v2 file from the v1 dict (compact_lexicon): the same words and zipfX10,
+     without the codes (core derives them on load). One group per zipfX10, highest first; inside a
+     group, words in the order JavaScript reads v1 (js_code_order, then the code's own order),
+     space-separated, so core breaks score ties exactly as it does for v1.
+     Deterministic: the same v1 always gives the same bytes (test_build_lexicon.py).
 
 Usage: python packages/eval/scripts/build_lexicon.py [--top 60000] [--min-zipf 2.0]
        [--acronyms keep|down|drop] [--junk keep|down|drop] [--scowl DIR] [--scowl-level 95]
+       python packages/eval/scripts/build_lexicon.py --compact-only   (v2 from the existing v1, offline)
 """
 
 from __future__ import annotations
@@ -216,6 +223,61 @@ def build(top: int, min_zipf: float, filters: Filters | None = None) -> tuple[di
     return lex, stats
 
 
+COMPACT_NOTE = "compact v2 of en.v1.json: words grouped by zipf x 10, codes derived on load (ADR-data-003)"
+
+
+# Largest array index in JavaScript (2^32 - 2): object keys that are canonical integers up to this
+# value are enumerated first, in ascending numeric order; every other key follows in insertion order.
+JS_MAX_ARRAY_INDEX = 2**32 - 2
+
+
+def js_code_order(codes: dict) -> list[str]:
+    """The keys of a v1 `codes` object in the order Object.values() visits them in JavaScript."""
+    index = sorted((c for c in codes if int(c) <= JS_MAX_ARRAY_INDEX), key=int)
+    rest = [c for c in codes if int(c) > JS_MAX_ARRAY_INDEX]
+    return index + rest
+
+
+def compact_lexicon(lex: dict, v1_sha256: str) -> dict:
+    """LexiconFileV2 from a LexiconFile (v1): same words, same zipfX10, no codes.
+
+    Groups by zipfX10, highest first. Inside a group, words keep the order in which JavaScript
+    reads v1 (js_code_order: integer-like codes ascending by value, then the rest as written),
+    then each code's own order (frequency desc, word asc). Core breaks score ties by load order,
+    so lookup() and completions() give the same lists for both files.
+    """
+    groups: dict[int, list[str]] = defaultdict(list)
+    for code in js_code_order(lex["codes"]):
+        for w, zx10 in lex["codes"][code]:
+            assert " " not in w and w, w
+            groups[int(zx10)].append(w)
+    return {
+        "v": 2,
+        "lang": lex["lang"],
+        "source": lex["source"] + "; " + COMPACT_NOTE,
+        "license": lex["license"],
+        "derived_from": {"file": "en.v1.json", "sha256": v1_sha256},
+        "words": [[z, " ".join(groups[z])] for z in sorted(groups, reverse=True)],
+    }
+
+
+def write_compact(path: Path, lex2: dict) -> None:
+    """Deterministic v2 JSON: the header on the first line, then one zipf group per line."""
+    head = {k: v for k, v in lex2.items() if k != "words"}
+    head_txt = json.dumps(head, ensure_ascii=False, separators=(",", ":"))[:-1]
+    lines = [json.dumps(g, ensure_ascii=False, separators=(",", ":")) for g in lex2["words"]]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(head_txt + ',"words":[\n' + ",\n".join(lines) + "\n]}\n")
+
+
+def write_compact_from(v1_path: Path, v2_path: Path) -> dict:
+    data = v1_path.read_bytes()
+    lex2 = compact_lexicon(json.loads(data.decode("utf-8")), hashlib.sha256(data).hexdigest())
+    write_compact(v2_path, lex2)
+    return lex2
+
+
 def collision_stats(lex: dict) -> dict:
     codes = lex["codes"]
     n_words = sum(len(v) for v in codes.values())
@@ -270,14 +332,23 @@ def main() -> int:
     ap.add_argument("--scowl-level", type=int, default=95)
     ap.add_argument("--out", type=Path, default=DATA_DIR / "lexicon" / "en.v1.json")
     ap.add_argument("--stats", type=Path, default=EVAL_DIR / "build-stats" / "lexicon.json")
+    ap.add_argument("--v2-out", type=Path, default=DATA_DIR / "lexicon" / "en.v2.json")
+    ap.add_argument("--compact-only", action="store_true", help="only (re)write --v2-out from the existing --out")
     args = ap.parse_args()
+
+    if args.compact_only:
+        lex2 = write_compact_from(args.out, args.v2_out)
+        print(json.dumps({"file": str(args.v2_out), "groups": len(lex2["words"]), **size_stats(args.v2_out)}, indent=2))
+        return 0
 
     filters = Filters(args.acronyms, args.junk, args.down_zipf, args.acronym_signal, args.scowl, args.scowl_level)
     lex, stats = build(args.top, args.min_zipf, filters)
     write_json(args.out, lex, one_key_per_line="codes")
+    write_compact_from(args.out, args.v2_out)
     stats.update(collision_stats(lex))
     stats["file"] = str(args.out.relative_to(DATA_DIR.parent)) if args.out.is_relative_to(DATA_DIR.parent) else str(args.out)
     stats.update(size_stats(args.out))
+    stats["v2"] = {"file": "data/lexicon/en.v2.json", **size_stats(args.v2_out)}
     args.stats.parent.mkdir(parents=True, exist_ok=True)
     args.stats.write_text(json.dumps(stats, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps({k: v for k, v in stats.items() if k not in ("dropped_bare_contractions", "largest_codes")}, indent=2))

@@ -1,5 +1,5 @@
 'use client';
-import { useId, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import {
   ACCEPT_DELAY,
   PITCH,
@@ -16,6 +16,42 @@ import { Button } from './Button';
 import { Sheet } from './Sheet';
 
 export const VOICE_PICKER_ID = 'voice-picker';
+
+type Access = Settings['access'];
+const isScan = (a: Access) => a === 'scan1' || a === 'scan2';
+const ACCESS_LABEL: Record<Access, string> = { keyboard: 'Keyboard', touch: 'Touch', scan1: 'One switch', scan2: 'Two switches' };
+
+/**
+ * Plan F11, web-ui Req 16.7: a switch user who picks Keyboard or Touch is asked first, because once
+ * scanning is off they cannot turn it back on by switch. Cancel is the first cell, so a stray press
+ * keeps scanning. The question replaces the sheet's settings until it is answered, so its row comes
+ * straight after Close in the scan order.
+ */
+function ConfirmScanOff({ to, onCancel, onConfirm }: { to: Access; onCancel: () => void; onConfirm: () => void }) {
+  const titleId = useId();
+  const textId = useId();
+  const ref = useRef<HTMLDivElement>(null);
+  // Focus the question itself, not a button: while scanning, a focus ring would be a second ember thing (Req 16.6).
+  useEffect(() => ref.current?.focus(), []);
+  return (
+    <div className="group" role="alertdialog" aria-labelledby={titleId} aria-describedby={textId} tabIndex={-1} ref={ref} data-confirm="scan-off">
+      <h3 className="group__title" id={titleId}>
+        Turn off switch scanning?
+      </h3>
+      <p className="field__help" id={textId}>
+        You will need a keyboard or touch to turn it back on.
+      </p>
+      <div className="field__row scan-cluster" data-scan-row="confirm-scan-off">
+        <Button variant="secondary" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button variant="secondary" onClick={onConfirm}>
+          {`Turn off, use ${ACCESS_LABEL[to]}`}
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 function Seg<T extends string>({
   legend,
@@ -142,7 +178,31 @@ export function SettingsSheet({
     const next = voices.voices[(Math.max(0, voiceIndex) + d + n) % n];
     if (next) set('voiceURI', next.voiceURI);
   };
-  const scanning = settings.access === 'scan1' || settings.access === 'scan2';
+  const scanning = isScan(settings.access);
+  // F11: the way to type that waits for "Turn off switch scanning?" to be answered.
+  const [pendingAccess, setPendingAccess] = useState<Access | null>(null);
+  useEffect(() => {
+    if (!open) setPendingAccess(null);
+  }, [open]);
+  const chooseAccess = (v: Access) => {
+    if (scanningSheet && isScan(settings.access) && !isScan(v)) setPendingAccess(v);
+    else set('access', v);
+  };
+  const answer = (turnOff: boolean) => {
+    const to = pendingAccess;
+    // Put focus back on the sheet (not a control) before the question disappears.
+    (document.querySelector('dialog[data-overlay="settings"] .sheet__inner') as HTMLElement | null)?.focus();
+    setPendingAccess(null);
+    if (turnOff && to) set('access', to);
+  };
+
+  if (pendingAccess) {
+    return (
+      <Sheet open={open} name="settings" title="Settings" onClose={onClose} scanning={scanningSheet}>
+        <ConfirmScanOff to={pendingAccess} onCancel={() => answer(false)} onConfirm={() => answer(true)} />
+      </Sheet>
+    );
+  }
 
   return (
     <Sheet open={open} name="settings" title="Settings" onClose={onClose} initialFocusId={focusVoice ? VOICE_PICKER_ID : undefined} scanning={scanningSheet}>
@@ -230,7 +290,7 @@ export function SettingsSheet({
           legend="Access"
           name="access"
           value={settings.access}
-          onChange={(v) => set('access', v)}
+          onChange={chooseAccess}
           options={[
             { value: 'keyboard', label: 'Keyboard' },
             { value: 'touch', label: 'Touch' },

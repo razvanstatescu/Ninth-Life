@@ -5,7 +5,7 @@
  * sentences, proof (lib/layout.ts). Ghost mode (offline dictionary)
  * always works; model ranking is optional, off by default, and never speaks on its own.
  */
-import { lattice, type Candidate } from '@ninth/core';
+import { encodeWord, lattice, normalize, type Candidate, type Lexicon } from '@ninth/core';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactElement } from 'react';
 import { EMPTY, actionForKey, codesOf, composerReducer } from '@/lib/composer';
 import { loadDictionary, type DictState } from '@/lib/data';
@@ -13,10 +13,25 @@ import { DecodeCache, buildRequest, decodeRemote, type RejectedSuggestion } from
 import { focusContext, mapKey } from '@/lib/keyboard';
 import { sectionOrder, useLayout, visibleSentences, type Layout, type Section } from '@/lib/layout';
 import { KEY_ROWS, type KeyDef } from '@/lib/keys';
-import { MAX_CANDIDATES, buildSentence, decodeWithPins, mergeCandidates, readings } from '@/lib/sentence';
+import { applyMyWords, buildDisplayMap, makeMyWord, mergeMyWords, showWord, type MyWord } from '@/lib/myWords';
+import { MAX_CANDIDATES, buildSentence, decodeAround, decodeWithPins, mergeCandidates, readings, spellTarget } from '@/lib/sentence';
 import { DEFAULT_SETTINGS, applyLook, readStoredLook, sanitizeSettings, stepScanMs, type Settings } from '@/lib/settings';
 import { pickVoice, speak, speechSupported } from '@/lib/speech';
-import { deletePhrase, listPhrases, loadSettings, markPhraseUsed, savePhrase, saveSettings, storageAvailable, type Phrase } from '@/lib/storage';
+import {
+  deleteMyWord,
+  deletePhrase,
+  importPhrases,
+  listMyWords,
+  listPhrases,
+  loadSettings,
+  markPhraseUsed,
+  putMyWords,
+  savePhrase,
+  saveSettings,
+  storageAvailable,
+  type Phrase,
+} from '@/lib/storage';
+import type { ImportPlan, ParsedPack } from '@/lib/vocabPack';
 import { statusLines, statusSummary } from '@/lib/status';
 import { useOnline } from '@/lib/useOnline';
 import { useOverlayScan } from '@/lib/useOverlayScan';
@@ -29,6 +44,7 @@ import { Footer } from './Footer';
 import { Icon } from './Icon';
 import { Keypad } from './Keypad';
 import { MenuSheet } from './MenuSheet';
+import { MyWordsSheet } from './MyWordsSheet';
 import { PartnerTurn } from './PartnerTurn';
 import { PhrasesSheet } from './PhrasesSheet';
 import { ProofPanel } from './ProofPanel';
@@ -36,26 +52,32 @@ import { ScanBar } from './ScanBar';
 import { SettingsSheet } from './SettingsSheet';
 import { ShowMode } from './ShowMode';
 import { SpeakBar } from './SpeakBar';
+import { SpellSheet } from './SpellSheet';
 
 const LLM_DEBOUNCE_MS = 400;
-const ACTIONS = ['speak', 'clear', 'save', 'show'] as const;
+const ACTIONS = ['speak', 'clear', 'save', 'show', 'spell'] as const;
 const KEYPAD_ROWS = KEY_ROWS.length; // 4
 /**
- * Scan grid (web-ui Req 8.1, 16.1): keypad rows first so any key is at most 4 + 3 = 7 steps away
- * (Keypad README), then sentences, the actions under the SpeakBar, and the header (Menu, or
+ * Scan grid (web-ui Req 8.1, 16.1, 21.2): keypad rows first so any key is at most 4 + 3 = 7 steps
+ * away (Keypad README), then sentences, "Add to my words" offers (empty, so skipped, unless a word on
+ * show is not in the person's words), the actions under the SpeakBar, and the header (Menu, or
  * Phrases / Voice / Settings on wide screens).
  */
 export const CAND_ROW = KEYPAD_ROWS; // scan row 4
-export const ACTION_ROW = KEYPAD_ROWS + 1; // scan row 5
-export const MENU_ROW = KEYPAD_ROWS + 2; // scan row 6
+export const OFFER_ROW = KEYPAD_ROWS + 1; // scan row 5
+export const ACTION_ROW = KEYPAD_ROWS + 2; // scan row 6
+export const MENU_ROW = KEYPAD_ROWS + 3; // scan row 7
 const WIDE_MENU = ['phrases', 'voice', 'settings'] as const;
 
-type SheetName = 'menu' | 'settings' | 'voice' | 'phrases' | null;
+type SheetName = 'menu' | 'settings' | 'voice' | 'phrases' | 'words' | 'spell' | null;
+const WORDS_NOT_SAVED = 'My words could not be saved on this device, so they last until you close the app. Storage may be off in this browser window.';
 
 export function CommunicationScreen({
   initialDict,
   initialSettings,
   layout: forcedLayout,
+  initialWords,
+  reloadDict,
 }: {
   /** Inject a dictionary (tests, embeds); otherwise it loads from /data. */
   initialDict?: DictState;
@@ -63,6 +85,10 @@ export function CommunicationScreen({
   initialSettings?: Partial<Settings>;
   /** Force a layout (tests); otherwise it follows the viewport. */
   layout?: Layout;
+  /** My words to start with (tests); otherwise they load from IndexedDB. */
+  initialWords?: MyWord[];
+  /** A fresh dictionary, used after a word is removed (the lexicon cannot forget a word). */
+  reloadDict?: () => Promise<DictState>;
 } = {}) {
   const layout = useLayout(forcedLayout);
   const [settings, setSettings] = useState<Settings>(() => sanitizeSettings({ ...DEFAULT_SETTINGS, ...initialSettings }));
@@ -78,6 +104,18 @@ export function CommunicationScreen({
   const [speaking, setSpeaking] = useState(false);
   const [moreSentences, setMoreSentences] = useState(false);
   const [announce, setAnnounce] = useState('');
+  // My words (web-ui Req 21): stored on this device, boosted in the lexicon, spelled the person's way.
+  const [myWords, setMyWords] = useState<MyWord[]>(initialWords ?? []);
+  const [wordsLoaded, setWordsLoaded] = useState(initialWords !== undefined);
+  const [wordsError, setWordsError] = useState<string | null>(null);
+  /** Spellings chosen in spell mode this visit (folded -> "Mihai"), also for words not added. */
+  const [spelled, setSpelled] = useState<ReadonlyMap<string, string>>(new Map());
+  /** Bumped whenever the lexicon is changed in place (addWords), so decoding runs again. */
+  const [lexVersion, setLexVersion] = useState(0);
+  const [spell, setSpell] = useState<{ index: number; code: string; word: string | null; capital: boolean } | null>(null);
+  const myWordsRef = useRef(myWords);
+  myWordsRef.current = myWords;
+  const appliedTo = useRef<Lexicon | null>(null);
   const online = useOnline();
   const voices = useVoices(settings.lang);
   const cache = useRef(new DecodeCache());
@@ -93,6 +131,14 @@ export function CommunicationScreen({
       setSettingsLoaded(true);
     });
     if (!initialDict) loadDictionary().then((d) => alive && setDict(d));
+    if (initialWords === undefined) {
+      if (storageAvailable())
+        listMyWords()
+          .then((w) => alive && setMyWords((cur) => mergeMyWords(w, cur)))
+          .catch(() => alive && setWordsError(WORDS_NOT_SAVED))
+          .finally(() => alive && setWordsLoaded(true));
+      else setWordsLoaded(true);
+    }
     if (storageAvailable())
       listPhrases()
         .then((p) => alive && setPhrases(p))
@@ -108,12 +154,22 @@ export function CommunicationScreen({
     void saveSettings(settings);
   }, [settings, settingsLoaded]);
 
+  // My words are raised in each lexicon once, when it and the stored words are both ready.
+  useEffect(() => {
+    if (dict.status !== 'ready' || !wordsLoaded || appliedTo.current === dict.lexicon) return;
+    appliedTo.current = dict.lexicon;
+    applyMyWords(dict.lexicon, myWordsRef.current);
+    setLexVersion((v) => v + 1);
+  }, [dict, wordsLoaded]);
+
   // ---- decoding -------------------------------------------------------------------------------
   const lex = dict.status === 'ready' ? dict.lexicon : null;
+  const display = useMemo(() => buildDisplayMap(myWords, [...spelled].map(([w, d]) => ({ w, display: d }))), [myWords, spelled]);
   const codes = useMemo(() => codesOf(composer), [composer]);
   const ghost = useMemo(
     () => (dict.status === 'ready' ? decodeWithPins(composer, dict.lexicon, dict.lm, { k: MAX_CANDIDATES, mode: settings.mode }) : []),
-    [composer, dict, settings.mode],
+    // lexVersion: the lexicon was changed in place (addWords), so decode again.
+    [composer, dict, settings.mode, lexVersion],
   );
   const remoteKey = DecodeCache.key(codes, partner);
   const llmActive = settings.llm && online && dict.status === 'ready';
@@ -125,7 +181,17 @@ export function CommunicationScreen({
     [remoteNow, composer.slots],
   );
   const candidates = useMemo(() => mergeCandidates(remoteValid, ghost), [remoteValid, ghost]);
-  const sentence = useMemo(() => buildSentence(composer, candidates, lex, settings.mode), [composer, candidates, lex, settings.mode]);
+  // No full sentence (a word with no dictionary word and not spelled yet): still rank the known words (Req 20.1).
+  const fallback = useMemo(
+    () => (dict.status === 'ready' && candidates.length === 0 && composer.slots.length > 0 ? decodeAround(composer, dict.lexicon, dict.lm, { mode: settings.mode }) : null),
+    // lexVersion: the lexicon was changed in place (addWords), so decode again.
+    [dict, candidates.length, composer, settings.mode, lexVersion],
+  );
+  const sentence = useMemo(
+    () => buildSentence(composer, candidates, lex, settings.mode, { fallback, display }),
+    // lexVersion: the lexicon was changed in place (addWords), so decode again.
+    [composer, candidates, lex, settings.mode, fallback, display, lexVersion],
+  );
 
   useEffect(() => {
     if (!llmActive || dict.status !== 'ready' || codes.length === 0 || pinned) return;
@@ -259,6 +325,105 @@ export function CommunicationScreen({
       });
   }, [sentence.speakable, sentence.text, say]);
 
+  // ---- my words and spell mode (web-ui Req 19-22) ---------------------------------------------
+  /** Save words on the device and raise them in the lexicon. */
+  const addMyWords = useCallback(
+    (list: MyWord[]) => {
+      if (list.length === 0) return;
+      const next = mergeMyWords(myWordsRef.current, list);
+      myWordsRef.current = next;
+      setMyWords(next);
+      if (lex && appliedTo.current === lex) {
+        applyMyWords(lex, list);
+        setLexVersion((v) => v + 1);
+      }
+      const changed = next.filter((x) => list.some((l) => l.w === x.w));
+      if (!storageAvailable()) setWordsError(WORDS_NOT_SAVED);
+      else
+        putMyWords(changed)
+          .then(() => setWordsError(null))
+          .catch(() => setWordsError(WORDS_NOT_SAVED));
+    },
+    [lex],
+  );
+
+  const addWord = useCallback(
+    (raw: string, source: MyWord['source']): string | null => {
+      const m = makeMyWord(raw, source);
+      if ('error' in m) return m.error;
+      const had = myWordsRef.current.find((x) => x.w === m.w);
+      if (had && had.display === m.display) return `${m.display} is already in my words.`;
+      addMyWords([m]);
+      say(`${m.display} added to my words.`);
+      return null;
+    },
+    [addMyWords, say],
+  );
+
+  const removeWord = useCallback(
+    (w: string) => {
+      const gone = myWordsRef.current.find((x) => x.w === w);
+      const next = myWordsRef.current.filter((x) => x.w !== w);
+      myWordsRef.current = next;
+      setMyWords(next);
+      if (storageAvailable()) void deleteMyWord(w).catch(() => setWordsError('This word could not be removed from this device.'));
+      say(`${gone?.display ?? w} removed from my words.`);
+      // The lexicon only ever raises words, so build a fresh one and raise the words that are left.
+      const current = lex;
+      void (reloadDict ?? loadDictionary)()
+        .then((fresh) => {
+          if (fresh.status === 'ready' && fresh.lexicon !== current) setDict(fresh);
+        })
+        .catch(() => undefined);
+    },
+    [lex, reloadDict, say],
+  );
+
+  const importPack = useCallback(
+    (pack: ParsedPack, plan: ImportPlan) => {
+      const now = Date.now();
+      const list: MyWord[] = [...plan.add, ...plan.update].map((pw) => ({ w: pw.w, display: pw.display, boost: pw.boost, added: now, source: 'pack' }));
+      addMyWords(list);
+      if (plan.phrasesNew.length > 0 && storageAvailable())
+        void importPhrases(plan.phrasesNew)
+          .then(() => listPhrases().then(setPhrases))
+          .catch(() => setPhraseError('The phrases from this pack could not be saved.'));
+      say(`Added ${list.length} ${list.length === 1 ? 'word' : 'words'} from pack ${pack.id}.`);
+    },
+    [addMyWords, say],
+  );
+
+  const canSpell = dict.status === 'ready' && settings.mode === 'letter' && codes.length > 0;
+  const openSpell = useCallback(() => {
+    if (!canSpell) return;
+    const i = spellTarget(sentence.words);
+    const w = sentence.words[i];
+    if (!w) return;
+    const start = w.word ?? w.partial ?? null;
+    // A word the dictionary does not have at all is usually a name, so it starts with a capital.
+    const capital = w.word ? /^\p{Lu}/u.test(showWord(w.word, display)) : w.state === 'unspelled';
+    setSpell({ index: i, code: w.code, word: start, capital });
+    setSheet('spell');
+  }, [canSpell, sentence.words, display]);
+
+  const useSpelled = useCallback(
+    (shown: string, add: boolean) => {
+      const target = spell;
+      const w = normalize(shown);
+      // Valid by construction (only the key's letters were offered); checked again before use.
+      if (!target || encodeWord(w) !== target.code || composer.slots[target.index]?.code !== target.code) {
+        setSheet(null);
+        return;
+      }
+      setSpelled((m) => new Map(m).set(w, shown));
+      dispatch({ type: 'pin', index: target.index, word: w });
+      setSheet(null);
+      if (add) addWord(shown, 'spelled');
+      else say(lex?.has(w) ? `${shown} is in your sentence.` : `${shown} is in your sentence. Not in your words yet. Add it?`);
+    },
+    [spell, composer.slots, addWord, lex, say],
+  );
+
   const moveSelection = useCallback(
     (delta: 1 | -1) => {
       const n = sentence.candidates.length;
@@ -287,17 +452,29 @@ export function CommunicationScreen({
       ? { label: 'Fewer sentences', onClick: () => setMoreSentences(false) }
       : null;
   const candCells = shownSentences.count + (sentenceToggle && shownSentences.count > 0 ? 1 : 0);
+  // Words on show that match their keys but are not in the person's words: "Add to my words".
+  const offers = useMemo(() => {
+    const seen = new Set<string>();
+    const out: { word: string; label: string }[] = [];
+    for (const w of sentence.words) {
+      if (w.state !== 'new' || !w.word || seen.has(w.word)) continue;
+      seen.add(w.word);
+      out.push({ word: w.word, label: showWord(w.word, display) });
+    }
+    return out;
+  }, [sentence.words, display]);
+  const addOffer = useCallback((word: string) => void addWord(showWord(word, display), 'spelled'), [addWord, display]);
   const menuCells = layout === 'wide' ? WIDE_MENU.length : 1;
 
   const openSheet = useCallback((name: SheetName) => setSheet(name), []);
   const showCurrent = useCallback(() => {
     if (sentence.speakable && sentence.text) setShow({ text: sentence.text, reason: null });
   }, [sentence.speakable, sentence.text]);
-  const actionsRef = useRef({ pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout });
-  actionsRef.current = { pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout };
+  const actionsRef = useRef({ pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout, openSpell, offers, addOffer });
+  actionsRef.current = { pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout, openSpell, offers, addOffer };
   const scanner = useScanner({
     mode: scanMode,
-    rows: [...KEY_ROWS.map((r) => r.length), candCells, ACTIONS.length, menuCells],
+    rows: [...KEY_ROWS.map((r) => r.length), candCells, offers.length, ACTIONS.length, menuCells],
     loops: settings.scanLoops,
     scanMs: settings.scanMs,
     acceptDelayMs: settings.acceptDelayMs,
@@ -310,12 +487,16 @@ export function CommunicationScreen({
       } else if (row === CAND_ROW) {
         if (cell < shownSentences.count) a.selectCandidate(cell);
         else a.sentenceToggle?.onClick();
+      } else if (row === OFFER_ROW) {
+        const o = a.offers[cell];
+        if (o) a.addOffer(o.word);
       } else if (row === ACTION_ROW) {
         const act = ACTIONS[cell];
         if (act === 'speak') a.speakNow();
         else if (act === 'clear') a.clearAll();
         else if (act === 'save') a.saveCurrent();
         else if (act === 'show') a.showCurrent();
+        else if (act === 'spell') a.openSpell();
       } else if (row === MENU_ROW) {
         a.openSheet(a.layout === 'wide' ? (WIDE_MENU[cell] ?? null) : 'menu');
       }
@@ -434,7 +615,12 @@ export function CommunicationScreen({
         ? 'Sentences appear here as you press keys.'
         : dict.status === 'loading'
           ? 'Loading your dictionary.'
-          : 'No sentence matches these keys yet. Keep typing, or press Back.';
+          : sentence.words.some((w) => w.state === 'unspelled')
+            ? `Not in your words yet: ${sentence.words
+                .filter((w) => w.state === 'unspelled')
+                .map((w) => w.code)
+                .join(', ')}. Spell this word to choose its letters, or press Back.`
+            : 'No sentence matches these keys yet. Keep typing, or press Back.';
 
   const alternatives = (i: number) => [...new Set(sentence.candidates.map((c) => c.words[i]).filter((w): w is string => !!w))];
   const quickPhrases = dict.status === 'ready' ? (dict.pack?.phrases ?? []) : [];
@@ -465,6 +651,9 @@ export function CommunicationScreen({
           <Button variant="quiet" icon="show" onClick={showCurrent} disabled={!sentence.speakable} lit={actionLit(3)}>
             Show
           </Button>
+          <Button variant="secondary" icon="spell" onClick={openSpell} disabled={!canSpell} lit={actionLit(4)} aria-label="Spell this word" data-action="spell">
+            Spell<span className="spell-btn__more"> this word</span>
+          </Button>
         </div>
       </div>
     ),
@@ -489,12 +678,23 @@ export function CommunicationScreen({
           onSelect={selectCandidate}
           shown={shownSentences.count}
           toggle={sentenceToggle}
+          display={display}
         />
       </div>
     ),
     proof: (
       <div key="proof" className="order-proof" data-section="proof">
-        <ProofPanel words={sentence.words} labels={sentence.tokens} rejected={remoteNow?.rejected ?? []} rejectedCount={remoteNow?.rejectedCount ?? 0} alternatives={alternatives} />
+        <ProofPanel
+          words={sentence.words}
+          labels={sentence.tokens}
+          rejected={remoteNow?.rejected ?? []}
+          rejectedCount={remoteNow?.rejectedCount ?? 0}
+          alternatives={alternatives}
+          offers={offers}
+          onAddWord={addOffer}
+          offerScanning={scanRow === OFFER_ROW}
+          offerLit={scanRow === OFFER_ROW ? litCell : -1}
+        />
       </div>
     ),
     pad: (
@@ -569,6 +769,7 @@ export function CommunicationScreen({
         status={status}
         scanning={overlayScanMode !== null}
         onPhrases={() => setSheet('phrases')}
+        onMyWords={() => setSheet('words')}
         onVoice={() => setSheet('voice')}
         onSettings={() => setSheet('settings')}
         onClose={() => setSheet(null)}
@@ -599,6 +800,30 @@ export function CommunicationScreen({
             .then(() => listPhrases().then(setPhrases))
             .catch(() => setPhraseError('This phrase could not be deleted.'));
         }}
+        onMyWords={() => setSheet('words')}
+        onClose={() => setSheet(null)}
+      />
+      <MyWordsSheet
+        open={sheet === 'words'}
+        scanning={overlayScanMode !== null}
+        words={myWords}
+        phrases={phrases.map((p) => p.text)}
+        lexicon={lex}
+        error={wordsError}
+        onAdd={(raw) => addWord(raw, 'typed')}
+        onRemove={removeWord}
+        onImport={importPack}
+        onClose={() => setSheet(null)}
+      />
+      <SpellSheet
+        open={sheet === 'spell' && spell !== null}
+        code={spell?.code ?? ''}
+        word={spell?.word ?? null}
+        capital={spell?.capital ?? false}
+        known={(w) => !!lex?.has(w)}
+        mine={(w) => myWords.some((x) => x.w === w)}
+        scanning={overlayScanMode !== null}
+        onUse={useSpelled}
         onClose={() => setSheet(null)}
       />
       <ShowMode text={show?.text ?? null} reason={show?.reason ?? null} scanning={overlayScanMode !== null} onClose={() => setShow(null)} />

@@ -1,6 +1,8 @@
 import { formatSentence } from '@ninth/core';
+import { useId } from 'react';
 import type { RejectedSuggestion } from '@/lib/decodeClient';
 import type { DisplayWord } from '@/lib/sentence';
+import { Button } from './Button';
 import { ProofChip } from './ProofChip';
 
 function quoteList(words: string[]): string {
@@ -18,6 +20,10 @@ export function ProofPanel({
   rejected,
   rejectedCount = 0,
   alternatives,
+  offers = [],
+  onAddWord,
+  offerScanning = false,
+  offerLit = -1,
 }: {
   words: DisplayWord[];
   /** How each word is written in the sentence ("I", not "i"); trailing punctuation is dropped. */
@@ -27,7 +33,17 @@ export function ProofPanel({
   rejectedCount?: number;
   /** For slot i, the words the keys do spell (from the valid sentences). */
   alternatives: (i: number) => string[];
+  /**
+   * Words on show that match their keys but are not in the person's words (state `new`), as
+   * { word, label } with the person's spelling. Each gets "Not in your words yet. Add it?" and an
+   * "Add to my words" button (web-ui Req 21.2). Their buttons are one scan row.
+   */
+  offers?: { word: string; label: string }[];
+  onAddWord?: (word: string) => void;
+  offerScanning?: boolean;
+  offerLit?: number;
 }) {
+  const uid = useId();
   const rejectChips: { word: string; code: string; key: string }[] = [];
   const notes: string[] = [];
   const seen = new Set<string>();
@@ -81,7 +97,27 @@ export function ProofPanel({
       {words.some((w) => w.state === 'typing') ? (
         <p className="proof__note">The last word is not finished yet. Keep typing, or press Back.</p>
       ) : null}
-      {words.some((w) => w.state === 'new') ? <p className="proof__note">A word with a plus is not in your words yet. It matches your keys and can be spoken.</p> : null}
+      {words.some((w) => w.state === 'unspelled') ? (
+        <p className="proof__note">
+          Not spelled yet: {words.filter((w) => w.state === 'unspelled').map((w) => w.code).join(', ')}. No word in your dictionary matches these keys. Spell this word to choose its letters.
+        </p>
+      ) : null}
+      {offers.length > 0 && onAddWord ? (
+        <div className={offerScanning ? 'proof__offers nl-scanrow is-scanning' : 'proof__offers nl-scanrow'}>
+          {offers.map((o, i) => (
+            <div className="proof__offer" key={o.word}>
+              <p className="proof__note" id={`${uid}-offer-${i}`}>
+                <strong>{o.label}</strong> matches your keys and can be spoken. Not in your words yet. Add it?
+              </p>
+              <Button variant="secondary" icon="plus" onClick={() => onAddWord(o.word)} lit={offerLit === i} aria-describedby={`${uid}-offer-${i}`}>
+                Add to my words
+              </Button>
+            </div>
+          ))}
+        </div>
+      ) : words.some((w) => w.state === 'new') ? (
+        <p className="proof__note">A word with a plus is not in your words yet. It matches your keys and can be spoken.</p>
+      ) : null}
       {rejectedCount > 0 && rejected.length === 0 ? (
         <p className="proof__note">
           The model suggested {rejectedCount === 1 ? '1 sentence' : `${rejectedCount} sentences`} that did not match your keys. {rejectedCount === 1 ? 'It was' : 'They were'} dropped and will not be spoken.

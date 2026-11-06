@@ -39,7 +39,8 @@ for (const name of EXTRA_FILES) {
   }
 }
 
-const expected = ['lexicon/en.v1.json', 'lexicon/en.bigram.v1.json', 'packs/core-en.json'];
+// en.v2.json is what the app fetches (lib/data.ts); en.v1.json is read at build time by the landing page.
+const expected = ['lexicon/en.v2.json', 'lexicon/en.v1.json', 'lexicon/en.bigram.v1.json', 'packs/core-en.json'];
 for (const rel of expected) {
   if (!existsSync(join(DEST, rel))) console.warn(`copy-data: ${rel} not found; the app will run without it`);
 }

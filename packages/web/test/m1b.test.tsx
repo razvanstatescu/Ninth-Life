@@ -37,6 +37,8 @@ function moveToCell(text: string) {
   expect(litCell()).toBe(text);
 }
 const openSheet = (name: string) => document.querySelector(`dialog[data-overlay="${name}"][open]`);
+/** Let the sheet scanner's MutationObserver re-read the rows after the sheet's content changed. */
+const flushRows = () => act(async () => {});
 
 beforeEach(() => {
   vi.spyOn(Date, 'now').mockImplementation(((t = 0) => () => (t += 1000))());
@@ -53,7 +55,7 @@ describe('phone layout (web-ui Req 15)', () => {
     expect(order).toEqual(['speak', 'pad', 'cands', 'proof']);
   });
 
-  it('Req 15.2 + 15.3: one status pill and a Menu that opens Phrases, Voice and Settings', () => {
+  it('Req 15.2 + 15.3 + 21.3: one status pill and a Menu that opens Phrases, My words, Voice and Settings', () => {
     render(<CommunicationScreen initialDict={miniDict()} layout="compact" />);
     const compact = document.querySelector('.app-header__actions.app-header--compact')!;
     expect(within(compact as HTMLElement).getAllByRole('button').map((b) => b.textContent)).toEqual(['Menu']);
@@ -61,7 +63,7 @@ describe('phone layout (web-ui Req 15)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
     const menu = openSheet('menu') as HTMLElement;
     expect(menu).toBeTruthy();
-    expect(within(menu).getAllByRole('button').map((b) => b.textContent)).toEqual(['Close', 'Phrases', 'Voice', 'Settings']);
+    expect(within(menu).getAllByRole('button').map((b) => b.textContent)).toEqual(['Close', 'Phrases', 'My words', 'Voice', 'Settings']);
     fireEvent.click(within(menu).getByRole('button', { name: 'Settings' }));
     expect(openSheet('menu')).toBeNull();
     expect(openSheet('settings')).toBeTruthy();
@@ -112,7 +114,7 @@ describe('switch access everywhere (web-ui Req 16)', () => {
     expect(litRow()).toBe('close'); // after a choice the scan starts again at the first row
   });
 
-  it('Req 16.4: scanning can be turned off and back on by switch alone before the sheet closes', () => {
+  it('Req 16.4: scanning can be turned off and back on by switch alone before the sheet closes', async () => {
     render(<CommunicationScreen initialDict={miniDict()} layout="wide" initialSettings={{ access: 'scan2', acceptDelayMs: 0 }} />);
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     expect(litRow()).toBe('close');
@@ -120,6 +122,13 @@ describe('switch access everywhere (web-ui Req 16)', () => {
     sw('Enter');
     moveToCell('Keyboard');
     sw('Enter');
+    // Plan F11 (Req 16.7): asked first; the question's row comes straight after Close.
+    await flushRows();
+    moveToRow('confirm-scan-off');
+    sw('Enter');
+    moveToCell('Turn off, use Keyboard');
+    sw('Enter');
+    await flushRows();
     expect((screen.getByRole('radio', { name: 'Keyboard' }) as HTMLInputElement).checked).toBe(true);
     // Still scanning inside the sheet: change your mind.
     moveToRow('access');
@@ -134,13 +143,19 @@ describe('switch access everywhere (web-ui Req 16)', () => {
     expect(screen.getByText('Step scanning with 2 switches')).toBeTruthy();
   });
 
-  it('Req 16.4: choosing Touch by switch turns scanning off once the sheet closes', () => {
+  it('Req 16.4: choosing Touch by switch turns scanning off once the sheet closes', async () => {
     render(<CommunicationScreen initialDict={miniDict()} layout="wide" initialSettings={{ access: 'scan2', acceptDelayMs: 0 }} />);
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     moveToRow('access');
     sw('Enter');
     moveToCell('Touch');
     sw('Enter');
+    await flushRows();
+    moveToRow('confirm-scan-off'); // plan F11 (Req 16.7)
+    sw('Enter');
+    moveToCell('Turn off, use Touch');
+    sw('Enter');
+    await flushRows();
     moveToRow('close');
     sw('Enter');
     sw('Enter');

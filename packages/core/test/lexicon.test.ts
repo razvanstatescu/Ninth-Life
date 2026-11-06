@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { Lexicon, NEW_WORD_ZIPF, TRIE_TOP_K, encodeWord, normalize, type LexiconFile } from '../src/index';
+import { Lexicon, NEW_WORD_ZIPF, TRIE_TOP_K, encodeWord, normalize, type LexiconFile, type LexiconFileV2 } from '../src/index';
 import { code, lexiconFile, plainWord, runs } from './arbitraries';
 import { MINI_LEXICON } from './fixtures/mini-lexicon';
 
@@ -128,8 +128,146 @@ describe('core-encoder: lexicon', () => {
     );
   });
 
-  it('Req 2.7 rejects files that are not v1', () => {
-    expect(() => Lexicon.fromJSON({ ...MINI_LEXICON, v: 2 } as unknown as LexiconFile)).toThrow(TypeError);
+  it('Req 2.7 rejects files that are not v1 or v2', () => {
+    expect(() => Lexicon.fromJSON({ ...MINI_LEXICON, v: 2 } as unknown as LexiconFile)).toThrow(TypeError); // v2 needs words
+    expect(() => Lexicon.fromJSON({ ...MINI_LEXICON, v: 3 } as unknown as LexiconFile)).toThrow(TypeError);
+    expect(() => Lexicon.fromJSON({ v: 1, lang: 'en', words: [] } as unknown as LexiconFile)).toThrow(TypeError); // v1 needs codes
     expect(() => Lexicon.fromJSON(null as unknown as LexiconFile)).toThrow(TypeError);
+  });
+});
+
+/**
+ * The loading algorithm before the fast path (ADR-data-003): normalize and encode every word,
+ * the highest zipf wins, every list sorted by zipf desc then first appearance.
+ */
+function referenceLookup(file: LexiconFile): Map<string, string[]> {
+  const byWord = new Map<string, { code: string; z: number; seq: number }>();
+  let seq = 0;
+  for (const list of Object.values(file.codes))
+    for (const [raw, zx] of list) {
+      if (typeof raw !== 'string' || typeof zx !== 'number' || !Number.isFinite(zx)) continue;
+      const w = normalize(raw);
+      const c = encodeWord(w);
+      if (c === null) continue;
+      const prev = byWord.get(w);
+      if (prev) prev.z = Math.max(prev.z, zx / 10);
+      else byWord.set(w, { code: c, z: zx / 10, seq: seq++ });
+    }
+  const out = new Map<string, string[]>();
+  for (const [w, e] of [...byWord].sort(([, a], [, b]) => b.z - a.z || a.seq - b.seq)) {
+    const l = out.get(e.code);
+    if (l) l.push(w);
+    else out.set(e.code, [w]);
+  }
+  return out;
+}
+
+/** v1 -> v2 the way packages/eval/scripts/build_lexicon.py does it (groups by zipf, v1 load order inside). */
+function toV2(file: LexiconFile): LexiconFileV2 {
+  const groups = new Map<number, string[]>();
+  for (const list of Object.values(file.codes))
+    for (const [w, z] of list) {
+      if (w === '' || w.includes(' ')) continue; // cannot be encoded in either format
+      const g = groups.get(z);
+      if (g) g.push(w);
+      else groups.set(z, [w]);
+    }
+  const words = [...groups.keys()].sort((a, b) => b - a).map((z): [number, string] => [z, groups.get(z)!.join(' ')]);
+  return { v: 2, lang: file.lang, source: file.source, license: file.license, words };
+}
+
+/** Keep the first spelling of each normalized word (real files have no duplicates; data.test.ts checks). */
+function dedupe(file: LexiconFile): LexiconFile {
+  const seen = new Set<string>();
+  const codes: LexiconFile['codes'] = {};
+  for (const [c, list] of Object.entries(file.codes)) {
+    const kept = list.filter(([w]) => !seen.has(normalize(w)) && seen.add(normalize(w)));
+    if (kept.length) codes[c] = kept;
+  }
+  return { ...file, codes };
+}
+
+const prefixesOf = (codes: Iterable<string>): string[] => {
+  const out = new Set<string>();
+  for (const c of codes) for (let i = 1; i <= c.length; i++) out.add(c.slice(0, i));
+  return [...out];
+};
+
+describe('core-encoder: fast loading and the completion index', () => {
+  it('Req 2.8 the per-letter fast path loads exactly what normalize + encodeWord would (property, lying files too)', () => {
+    fc.assert(
+      fc.property(fc.oneof(lexiconFile(true), lexiconFile(false)), (file) => {
+        const l = Lexicon.fromJSON(file);
+        const ref = referenceLookup(file);
+        let n = 0;
+        for (const [c, words] of ref) {
+          expect(l.lookup(c)).toEqual(words);
+          n += words.length;
+        }
+        expect(l.size).toBe(n);
+      }),
+      { numRuns: runs(300) },
+    );
+  });
+
+  it('Req 2.8 decorated and non-plain words still take the safe path (example)', () => {
+    const l = Lexicon.fromJSON({ ...MINI_LEXICON, codes: { '1': [['Ｇｏｏｄ', 50], ['ISN’T', 40], ['mâine', 30], ["'", 30], ['a b', 30]] } });
+    expect(l.lookup('4663')).toEqual(['good']);
+    expect(l.lookup('4768')).toEqual(["isn't"]);
+    expect(l.lookup('62463')).toEqual(['maine']);
+    expect(l.size).toBe(3);
+  });
+
+  it('Req 2.9 a v2 file loads to the same lexicon as its v1 source: lookup, zipf, size, completions (property)', () => {
+    fc.assert(
+      fc.property(lexiconFile(false), (raw) => {
+        const file = dedupe(raw);
+        const a = Lexicon.fromJSON(file);
+        const b = Lexicon.fromJSON(toV2(file));
+        expect(b.size).toBe(a.size);
+        for (const c of Object.keys(file.codes)) expect(b.lookup(c)).toEqual(a.lookup(c));
+        for (const list of Object.values(file.codes)) for (const [w] of list) expect(b.zipf(w)).toBe(a.zipf(w));
+        for (const p of prefixesOf(Object.keys(file.codes))) expect(b.completions(p, 12)).toEqual(a.completions(p, 12));
+      }),
+      { numRuns: runs(300) },
+    );
+  });
+
+  it('Req 2.9 v2 example: groups by zipf, codes derived, ties in file order', () => {
+    const l = Lexicon.fromJSON({ v: 2, lang: 'en', source: 't', license: 'MIT', words: [[62, 'good in go'], [58, 'home'], [40, 'gone hood']] });
+    expect(l.lookup('4663')).toEqual(['good', 'home', 'gone', 'hood']);
+    expect(l.lookup('46')).toEqual(['in', 'go']);
+    expect(l.zipf('home')).toBeCloseTo(5.8);
+    expect(l.completions('4')).toEqual(['good', 'in', 'go', 'home', 'gone']);
+  });
+
+  it('Req 2.10 prepare() and cached completions stay exact after addWords (property)', () => {
+    const pack = fc.array(fc.record({ w: plainWord(1, 6), boost: fc.option(fc.integer({ min: -2, max: 4 }), { nil: undefined }) }), { maxLength: 15 });
+    fc.assert(
+      fc.property(lexiconFile(false), pack, code(4), (file, p, extra) => {
+        const warm = Lexicon.fromJSON(file);
+        warm.prepare();
+        const before = prefixesOf(Object.keys(file.codes)).concat(extra);
+        for (const q of before) warm.completions(q, 3); // fill the cache
+        warm.addWords(p);
+        warm.prepare(); // idempotent
+        const cold = Lexicon.fromJSON(file);
+        cold.addWords(p);
+        const all = prefixesOf([...Object.keys(file.codes), ...p.map(({ w }) => encodeWord(w)!)]).concat(extra);
+        for (const q of all) {
+          expect(warm.completions(q)).toEqual(cold.completions(q));
+          expect(warm.completions(q, 9)).toEqual(cold.completions(q, 9));
+        }
+      }),
+      { numRuns: runs(200) },
+    );
+  });
+
+  it('Req 2.10 completions for a prefix are computed once and served from the cache', () => {
+    const l = Lexicon.fromJSON(MINI_LEXICON);
+    const first = l.completions('466');
+    expect(l.completions('466')).toEqual(first);
+    expect(l.completions('466', 2)).toEqual(first.slice(0, 2));
+    expect(l.completions('466', 8).slice(0, 5)).toEqual(first); // a larger k recomputes, same head
   });
 });

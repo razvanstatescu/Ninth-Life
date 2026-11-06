@@ -5,7 +5,7 @@ import { Button } from './Button';
 import { Sheet } from './Sheet';
 
 /**
- * The compact header's Menu (web-ui Req 15.3): the full status, then Phrases, Voice and Settings.
+ * The compact header's Menu (web-ui Req 15.3): the full status, then Phrases, My words, Voice and Settings.
  * Each choice opens its own sheet in place of this one.
  */
 export function MenuSheet({
@@ -13,6 +13,7 @@ export function MenuSheet({
   status,
   scanning,
   onPhrases,
+  onMyWords,
   onVoice,
   onSettings,
   onClose,
@@ -21,6 +22,7 @@ export function MenuSheet({
   status: StatusLine[];
   scanning?: boolean;
   onPhrases: () => void;
+  onMyWords?: () => void;
   onVoice: () => void;
   onSettings: () => void;
   onClose: () => void;
@@ -31,6 +33,11 @@ export function MenuSheet({
         <Button variant="secondary" icon="save" onClick={onPhrases}>
           Phrases
         </Button>
+        {onMyWords ? (
+          <Button variant="secondary" icon="spell" onClick={onMyWords}>
+            My words
+          </Button>
+        ) : null}
         <Button variant="secondary" icon="voice" onClick={onVoice}>
           Voice
         </Button>

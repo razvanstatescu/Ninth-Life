@@ -19,7 +19,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { bigramModel, decodeGhost, encodeWord, Lexicon, normalize, type BigramFile, type LexiconFile } from '@ninth/core';
+import { bigramModel, decodeGhost, encodeWord, Lexicon, normalize, type BigramFile, type LexiconFile, type LexiconFileV2 } from '@ninth/core';
 import { EVAL_DIR, loadBigramFile, loadFixture, loadLexiconFile, sha256 } from './fixture';
 import type { TestItem } from './types';
 
@@ -81,7 +81,7 @@ export function blocklistWords(text: string): string[] {
   return [...out].sort();
 }
 
-export function analyse(items: TestItem[], lexFile: LexiconFile, bigram: BigramFile, words: string[], k = 5) {
+export function analyse(items: TestItem[], lexFile: LexiconFile | LexiconFileV2, bigram: BigramFile, words: string[], k = 5) {
   const lex = Lexicon.fromJSON(lexFile);
   const lm = bigramModel(bigram, lex);
   const listed = new Set(words.filter((w) => lex.has(w)));

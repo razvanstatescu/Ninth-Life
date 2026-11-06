@@ -262,6 +262,58 @@
 [data-scan-state="lit"] { box-shadow: 0 0 0 var(--scan-width) var(--ember), 0 0 0 calc(var(--scan-width) + 3px) var(--plum); }
 .seg__opt[data-scan-state="lit"] { border-color: var(--ink); }
 
+/* "Add to my words" offers under the proof chips (web-ui Req 20.2): one scan row. */
+.proof__offers { display: flex; flex-direction: column; gap: var(--space-3); padding: 6px; margin: -6px; border-radius: calc(var(--radius-card) + 6px); }
+.proof__offer { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-4); }
+.proof__offer .proof__note { flex: 1 1 240px; min-width: 0; overflow-wrap: anywhere; }
+.proof__offer strong { font-weight: 700; }
+
+/* "Spell this word" in the actions row: just "Spell" on narrow phones (the name stays "Spell this word"). */
+@media (max-width: 599px) { .spell-btn__more { display: none; } }
+
+/* Spell mode (components/SpellSheet.tsx): the word, its keys, then one row of letters per key. */
+.spell { display: flex; flex-direction: column; gap: var(--space-6); }
+.spell__preview { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-4) var(--space-6); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.spell__word { font-size: var(--type-utterance-size); line-height: var(--type-utterance-line); font-weight: var(--type-utterance-weight); overflow-wrap: anywhere; }
+.spell__code { font-family: var(--font-mono); font-size: var(--type-digits-size); line-height: var(--type-digits-line); letter-spacing: 0.06em; color: var(--ink-muted); }
+.spell__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.spell__positions { display: flex; flex-direction: column; gap: var(--space-4); }
+.spell__pos { display: flex; flex-direction: column; gap: var(--space-2); border: 0; margin: 0; padding: 0; min-width: 0; }
+.spell__legend { display: flex; align-items: baseline; gap: var(--space-3); padding: 0; }
+.spell__key { font-family: var(--font-mono); font-weight: 500; color: var(--ink-muted); }
+.spell__letters { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.spell__letter {
+  position: relative; display: inline-grid; place-items: center;
+  min-width: 64px; min-height: 64px; padding: 0 var(--space-4);
+  border-radius: var(--radius-chip); border: 2px solid var(--line-strong);
+  color: var(--ink); cursor: pointer;
+  font-size: 30px; line-height: 32px; font-weight: 700;
+}
+/* The real radio covers the tile, so a tap anywhere on it chooses the letter. */
+.spell__letter input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.spell__num { position: absolute; top: 4px; left: 8px; font-family: var(--font-mono); font-size: var(--type-label-size); line-height: 16px; font-weight: 500; color: var(--ink-muted); }
+/* Chosen: a sunken fill, a thick ink ring and an underlined letter, never color alone. */
+.spell__letter:has(input:checked) { background: var(--surface-sunken); border-color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); }
+.spell__letter:has(input:checked) .spell__char { text-decoration: underline 3px; text-underline-offset: 6px; }
+.spell__letter:has(input:focus-visible) { outline: var(--focus-width) solid var(--focus); outline-offset: 3px; }
+.spell__letter[data-scan-state="lit"] { border-color: var(--ink); }
+
+/* Proof chip for keys with no word yet: dotted, digits in mono, and the words "not spelled yet". */
+.nl-chip--unspelled { border-style: dotted; }
+.nl-chip__digits { font-family: var(--font-mono); font-weight: 500; letter-spacing: 0.04em; }
+.nl-chip__note { margin-left: var(--space-2); font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: 600; color: var(--ink-muted); }
+
+/* My words (components/MyWordsSheet.tsx) */
+.sheet__link { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-4); }
+.mywords { display: flex; flex-direction: column; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.myword { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-3) var(--space-3) var(--space-6); border-radius: var(--radius-card); background: var(--surface-sunken); }
+.myword__text { font-size: var(--type-candidate-size); line-height: var(--type-candidate-line); font-weight: 600; overflow-wrap: anywhere; }
+.myword__code { flex: 1 1 80px; font-family: var(--font-mono); font-size: var(--type-label-size); line-height: var(--type-label-line); color: var(--ink-muted); }
+.pack-preview { display: flex; flex-direction: column; gap: var(--space-3); background: var(--surface-sunken); }
+.pack-preview:focus { outline: none; }
+.pack-preview:focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: 3px; }
+.pack-preview__list { margin: 0; padding-left: var(--space-6); display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--type-body-size); line-height: var(--type-body-line); overflow-wrap: anywhere; }
+
 /* Show mode: the sentence in big text for when there is no voice. */
 .show {
   position: fixed; inset: 0; margin: 0; width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh;
@@ -282,5 +334,5 @@
 .statement { padding: var(--space-6); border-radius: var(--radius-card); border: 2px solid var(--line-strong); background: var(--surface); }
 
 @media (prefers-reduced-motion: no-preference) {
-  .scan-cluster, .seg__opt, .app-header__actions { transition: box-shadow 120ms linear; }
+  .scan-cluster, .seg__opt, .app-header__actions, .proof__offers, .spell__letter { transition: box-shadow 120ms linear; }
 }

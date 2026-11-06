@@ -32,6 +32,33 @@ export interface DecodeOutput {
   raw?: string[][];
   /** Cost of this call in USD, if the decoder knows it. */
   usd?: number;
+  /** Model-call statistics for this decode (LLM configs run through `src/llm/`). */
+  llm?: LlmCallStats;
+}
+
+/**
+ * What the model calls behind one decode cost (spec eval-harness Req 8.4). Latency is the recorded
+ * wall-clock time of each successful API call (from the response cache on a rerun), so reruns
+ * report the same numbers.
+ */
+export interface LlmCallStats {
+  /** API requests this decode needed (0 when the shipping client would not call the model). */
+  calls: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
+  /** Cost at models.ts list prices, micro-dollars. */
+  usdMicros: number;
+  latencyMs: number[];
+  /** Replies with stop_reason "refusal". */
+  refusals: number;
+  /** Replies with no JSON `c` array. */
+  unparseable: number;
+  /** B4: handleDecode answered from ghost beams only (`degraded: true`). */
+  degraded: number;
+  /** B4: decodes where the app would not call the model (a slot with no lexicon word). */
+  skipped: number;
 }
 
 /**
@@ -65,6 +92,8 @@ export interface ItemResult {
   /** True if the gold sentence could not be produced at all (a word missing from the lexicon). */
   unreachable: boolean;
   usd: number;
+  /** Initials mode only: gold words the person had to retype in letter mode (not among the slot's readings). */
+  retyped?: number;
 }
 
 export interface Metrics {
@@ -80,6 +109,22 @@ export interface Metrics {
   invalidPreValidator: number | null;
   unreachable: number;
   usdPer1k: number | null;
+  /** Initials mode only: words retyped in letter mode because the initials readings did not hold them. */
+  retypedWords?: number;
+}
+
+/** Deterministic totals of the model calls behind one LLM config (no timings, Req 6.2). */
+export interface LlmAggregate {
+  calls: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
+  usd: number;
+  refusals: number;
+  unparseable: number;
+  degraded: number;
+  skipped: number;
 }
 
 export interface ConfigResult {
@@ -89,6 +134,7 @@ export interface ConfigResult {
   note?: string;
   metrics?: Metrics;
   bySource?: Record<string, Metrics>;
+  llm?: LlmAggregate;
 }
 
 /** Deterministic results (RESULTS.json): no timings, no dates. */
@@ -103,9 +149,24 @@ export interface Results {
   k: number;
   mode: Mode;
   configs: ConfigResult[];
+  /** Offline initials-mode baseline (spec Req 9), written by the full run. */
+  initials?: { mode: 'initials'; configs: ConfigResult[]; coverage: LatticeCoverage };
+}
+
+/** How much of the gold text a lattice holds: the ceiling for a ranker that keeps to listed words. */
+export interface LatticeCoverage {
+  perSlot: number;
+  words: number;
+  wordsInLattice: number;
+  items: number;
+  itemsInLattice: number;
 }
 
 /** Non-deterministic timings, reported next to Results but never inside RESULTS.json. */
 export interface Timing {
-  [configId: string]: { p50: number; p95: number; n: number };
+  /**
+   * n = number of timed calls. For LLM configs the times are the recorded API call latencies and
+   * `overDeadline` is the share above the decode route's 1,200 ms server deadline.
+   */
+  [configId: string]: { p50: number; p95: number; n: number; overDeadline?: number };
 }

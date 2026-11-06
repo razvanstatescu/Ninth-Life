@@ -12,7 +12,7 @@ export {
   type RejectedWord,
   type ErrorBody,
 } from './schema.js';
-export { buildPrompt, SYSTEM_PROMPT, FEW_SHOTS, type Prompt } from './prompt.js';
+export { buildPrompt, estimateTokens, SYSTEM_PROMPT, FEW_SHOTS, type Prompt, type FewShot } from './prompt.js';
 export { parseReply } from './parse.js';
 export {
   AnthropicLlmClient,
@@ -20,6 +20,11 @@ export {
   LlmError,
   ANTHROPIC_URL,
   ANTHROPIC_VERSION,
+  anthropicBody,
+  readAnthropic,
+  shouldCache,
+  type AnthropicLlmOptions,
+  type LlmCallOptions,
   type LlmClient,
   type LlmResult,
   type LlmUsage,
@@ -29,5 +34,5 @@ export {
 export { MemoryQuotaStore, DEFAULT_LIMITS, type QuotaStore, type QuotaLimits, type QuotaDecision } from './quota.js';
 export { EnvFlags, StaticFlags, type Flags } from './flags.js';
 export { consoleMetrics, silentMetrics, type DecodeMetrics, type MetricsLogger } from './log.js';
-export { MODEL_PROFILES, DEFAULT_MODEL, isModelId, type ModelId, type ModelProfile } from './models.js';
+export { MODEL_PROFILES, DEFAULT_MODEL, isModelId, costMicros, type ModelId, type ModelProfile, type PriceUsdPerMTok } from './models.js';
 export { createFetchHandler, configFromEnv, hashIp, clientIp, originAllowed, type FetchHandlerConfig } from './adapters/fetch.js';
