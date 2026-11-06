@@ -19,14 +19,14 @@ const md5 = (/** @type {string} */ file) => createHash('md5').update(readFileSyn
 
 /**
  * Public files that are NOT precached (plan F9, docs/testing/performance.md "precache"):
- * - the 512 px PNG icons and the Apple touch icon: only an install prompt or a home-screen add
+ * - the 192 and 512 px PNG icons and the Apple touch icon: only an install prompt or a home-screen add
  *   reads them, online, and the runtime image cache keeps them after that;
  * - latin-ext font subsets: CSS loads them only for text that needs them (unicode-range);
  * - the data licence and notice (attribution pages, not needed to talk offline);
  * - en.v1.json: the eval's lexicon. The app ships the compact en.v2.json (ADR-data-003).
  */
 const NOT_PRECACHED = [
-  /^icons\/icon(-maskable)?-512\.png$/,
+  /^icons\/icon(-maskable)?-(192|512)\.png$/,
   /^icons\/apple-touch-icon\.png$/,
   /^fonts\/.*-latin-ext\.woff2$/,
   /^data\/(LICENSE|NOTICE\.md)$/,

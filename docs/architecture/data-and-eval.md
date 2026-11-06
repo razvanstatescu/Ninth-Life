@@ -59,11 +59,13 @@ surviving ids from the filtered file and the turn text and split from the clean 
 | File | Raw | gzip -9 | brotli 11 | Contents |
 |---|---|---|---|---|
 | `data/lexicon/en.v1.json` | 1,558,083 B | 402,255 B | 328,257 B | 58,906 words, 48,140 codes |
+| `data/lexicon/en.v2.json` | 483,570 B | 230,120 B | 193,816 B | the same 58,906 words in the compact v2 layout, codes derived on load (ADR-data-003); what the app ships |
 | `data/lexicon/en.bigram.v1.json` | 339,148 B | 103,418 B | 85,535 B | 19,237 pairs over 2,973 contexts |
 | `data/packs/core-en.json` | 5,564 B | | | 36 core words, 198 phrases |
 | `packages/eval/fixtures/test.v1.jsonl` | 164,854 B | | | 866 test items, 4,890 words |
 
-First load of lexicon + bigrams: 413.8 KB brotli (505.7 KB gzip), under the plan's 700 KB budget.
+First load of lexicon + bigrams: 413.8 KB brotli (505.7 KB gzip) with `en.v1.json`; the app now ships `en.v2.json`,
+so it is 272.2 KB brotli (325.7 KB gzip) (ADR-data-003, `docs/testing/performance.md`).
 
 ### Lexicon build (`build_lexicon.py`)
 

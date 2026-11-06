@@ -16,16 +16,21 @@
 // What it measures, per run:
 //   firstLoadKB      bytes over the wire for the first visit (encodedDataLength, so compressed as
 //                    served; `next start` sends gzip, Vercel sends brotli), split by type
-//   precache         what the service worker then downloads on install (entries in sw.js)
+//   precache         upper bound: every entry in sw.js as sent, as if none came from the HTTP cache
+//   swInstallKB      what the service worker really downloads on install after a first visit
+//                    (its own requests, through Playwright's service-worker network events), and
+//                    which /data files it fetched from the network again (dataRefetched)
 //   dictReadyMs      navigation start -> "Offline dictionary ready" on screen
 //   keyMs            each key press of "kitchen" (5 4 8 2 4 3 6) -> speak bar updated and painted;
 //                    5th press (54824, no whole word) is the first completion, so it builds the trie
 //   then, in the same page, with @ninth/core loaded from source (TypeScript transpiled on the fly,
 //   served to the page through page.route, so nothing is added to the app bundle):
-//   jsonParseMs      JSON.parse of the lexicon text
-//   lexiconMs        Lexicon.fromJSON (normalize + encode + index every word)
+//   jsonParseMs      JSON.parse of the lexicon text the app ships (en.v2.json, else en.v1.json)
+//   lexiconMs        Lexicon.fromJSON (check + encode + file every word)
+//   v1ParseMs        JSON.parse + Lexicon.fromJSON of en.v1.json with the same core, for comparison
 //   bigramMs         bigramModel(...)
-//   trieMs           first lexicon.completions() call, which builds the digit trie
+//   trieMs           first lexicon.completions() call with no warm-up (builds the completion index;
+//                    the app builds it in idle time instead)
 //   decodeFirstMs    first decodeGhost() of a 7-word sentence
 //   decodeMs         median of 10 more decodes of the same sentence
 //   heapAppMB        JS heap after the app is ready (after a forced GC)
@@ -34,6 +39,8 @@
 //
 // No core code is changed by this script. Findings and proposals go in docs/testing/performance.md.
 import { execSync } from 'node:child_process';
+// Report the service worker's own requests too (Chromium), so the precache cost is measured, not guessed.
+process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS ??= '1';
 import http from 'node:http';
 import https from 'node:https';
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
@@ -140,15 +147,21 @@ async function coreTimings(page, cdp) {
   const r = await page.evaluate(async (sentence) => {
     const core = await import('/__perf/core/index.js');
     const t = () => performance.now();
-    const [lexText, bigText] = await Promise.all(
-      ['/data/lexicon/en.v1.json', '/data/lexicon/en.bigram.v1.json'].map((u) => fetch(u).then((res) => res.text())),
-    );
+    const text = (u) => fetch(u).then((res) => (res.ok ? res.text() : null));
+    const [v2Text, v1Text, bigText] = await Promise.all(['/data/lexicon/en.v2.json', '/data/lexicon/en.v1.json', '/data/lexicon/en.bigram.v1.json'].map(text));
+    const lexText = v2Text ?? v1Text;
     let a = t();
     const file = JSON.parse(lexText);
     const jsonParseMs = t() - a;
     a = t();
     const lexicon = core.Lexicon.fromJSON(file);
     const lexiconMs = t() - a;
+    let v1ParseMs = null;
+    if (v2Text && v1Text) {
+      a = t();
+      core.Lexicon.fromJSON(JSON.parse(v1Text));
+      v1ParseMs = t() - a;
+    }
     a = t();
     const big = JSON.parse(bigText);
     const lm = core.bigramModel(big, lexicon);
@@ -170,8 +183,10 @@ async function coreTimings(page, cdp) {
     // Keep our copy alive for the heap measurement.
     window.__perfKeep = { lexicon, lm };
     return {
+      lexiconFile: file.v === 2 ? 'en.v2.json' : 'en.v1.json',
       jsonParseMs,
       lexiconMs,
+      v1ParseMs,
       bigramMs,
       trieMs,
       decodeFirstMs,
@@ -264,6 +279,18 @@ async function runMobile(browser) {
 /** Second visit offline: install the service worker online, then reload with no network at 4x CPU. */
 async function runOffline(browser) {
   const context = await browser.newContext({ ...MOTO_G, serviceWorkers: 'allow' });
+  // The service worker's own requests: a positive body size came over the network, a negative one
+  // (Chromium's convention) from the HTTP cache.
+  const swReqs = [];
+  context.on('requestfinished', (r) => {
+    if (!r.serviceWorker()) return;
+    swReqs.push(
+      r.sizes().then(
+        (z) => ({ url: new URL(r.url()).pathname, net: z.responseBodySize > 0 ? z.responseBodySize + z.responseHeadersSize : 0 }),
+        () => ({ url: '', net: 0 }),
+      ),
+    );
+  });
   const page = await context.newPage();
   const cdp = await context.newCDPSession(page);
   const bytes = await byteCounter(cdp);
@@ -276,13 +303,21 @@ async function runOffline(browser) {
       for (let i = 0; i < 300; i++) {
         for (const n of await caches.keys()) {
           const c = await caches.open(n);
-          if (await c.match('/data/lexicon/en.v1.json', { ignoreSearch: true })) return true;
+          for (const lex of ['/data/lexicon/en.v2.json', '/data/lexicon/en.v1.json'])
+            if (await c.match(lex, { ignoreSearch: true })) {
+              // Installed once the service worker is active (the precache is complete by then).
+              const reg = await navigator.serviceWorker.getRegistration();
+              if (reg?.active) return true;
+            }
         }
         await new Promise((r) => setTimeout(r, 200));
       }
       return false;
     })
     .catch(() => false);
+  const sw = await Promise.all(swReqs.splice(0));
+  const swInstallKB = sw.reduce((n, r) => n + r.net, 0) / 1024;
+  const dataRefetched = [...new Set(sw.filter((r) => r.net > 0 && r.url.startsWith('/data/')).map((r) => r.url))];
   let offlineReadyMs = null;
   let offlineKB = null;
   if (swReady) {
@@ -295,7 +330,7 @@ async function runOffline(browser) {
     offlineKB = (bytes.sum() - before) / 1024;
   }
   await context.close();
-  return { swReady, offlineReadyMs, offlineKB };
+  return { swReady, offlineReadyMs, offlineKB, swInstallKB, dataRefetched };
 }
 
 /** Raw bytes on the wire for one GET with gzip allowed (node's fetch would decode the body). */
@@ -370,14 +405,16 @@ const ROWS = [
   ['JSON.parse lexicon (ms)', 'jsonParseMs', 1],
   ['Lexicon.fromJSON (ms)', 'lexiconMs', 1],
   ['Lexicon parse total (ms)', (r) => r.jsonParseMs + r.lexiconMs, 1],
+  ['  same core on en.v1.json, parse total (ms)', 'v1ParseMs', 1],
   ['bigramModel (ms)', 'bigramMs', 1],
-  ['First completions(), trie build (ms)', 'trieMs', 1],
+  ['First completions() with no warm-up (ms)', 'trieMs', 1],
   ['decodeGhost 7 words, first call (ms)', 'decodeFirstMs', 2],
   ['decodeGhost 7 words, median of 10 (ms)', 'decodeMs', 2],
   ['JS heap, app ready (MB)', 'heapAppMB', 1],
   ['JS heap for lexicon + bigrams + trie (MB)', 'heapDictMB', 1],
   ['Offline reload to dictionary ready (ms)', 'offlineReadyMs', 0],
   ['Offline reload bytes from network (KB)', 'offlineKB', 1],
+  ['Service worker install, really downloaded (KB)', 'swInstallKB', 0],
 ];
 const get = (r, k) => (typeof k === 'function' ? k(r) : r[k]);
 const fmt = (v, d) => (v === null || v === undefined ? 'n/a' : v.toFixed(d));
@@ -387,9 +424,11 @@ for (const [label, k, d] of ROWS) {
   const dk = median(results.desktop.map((r) => get(r, k)));
   lines.push(`| ${label} | ${fmt(m, d)} | ${fmt(dk, d)} |`);
 }
-console.log(`\nMedians of ${RUNS} run(s). Sentence: "${SENTENCE}" -> ${results.mobile[0]?.codes}, top: "${results.mobile[0]?.top}"`);
+console.log(`\nLexicon file timed: ${results.mobile[0]?.lexiconFile}. Medians of ${RUNS} run(s). Sentence: "${SENTENCE}" -> ${results.mobile[0]?.codes}, top: "${results.mobile[0]?.top}"`);
 console.log(lines.join('\n'));
-if (results.precache) console.log(`\nService worker precache on install: ${results.precache.entries} entries, ${results.precache.kb.toFixed(0)} KB on the wire (after the first load).`);
+if (results.precache) console.log(`\nService worker precache: ${results.precache.entries} entries, at most ${results.precache.kb.toFixed(0)} KB if none came from the HTTP cache.`);
+const refetched = [...new Set(results.mobile.flatMap((r) => r.dataRefetched ?? []))];
+console.log(`Dictionary files the service worker downloaded a second time: ${refetched.length ? refetched.join(', ') : 'none'}.`);
 console.log(`Key presses typing "kitchen" 5 4 8 2 4 3 6 (median per press, ms): ${KEYS.map((_, i) => i).map((i) => fmt(median(results.mobile.map((r) => r.keyMs?.[i])), 0)).join(', ')}`);
 const load = median(results.mobile.map((r) => r.firstLoadKB));
 const parse = median(results.desktop.map((r) => r.jsonParseMs + r.lexiconMs));

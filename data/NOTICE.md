@@ -7,6 +7,7 @@ them; changes are described per file. How to rebuild them: `docs/architecture/da
 | File | Built by | Derived from |
 |---|---|---|
 | `lexicon/en.v1.json` | `packages/eval/scripts/build_lexicon.py` | wordfreq 3.1.1; SCOWL 2020.12.07 used only to classify words (no SCOWL list included) |
+| `lexicon/en.v2.json` | `packages/eval/scripts/build_lexicon.py` (from `en.v1.json`) | the same words and frequencies as `en.v1.json` in a compact layout without codes (ADR-data-003); this is the file the web app ships |
 | `lexicon/en.bigram.v1.json` | `packages/eval/scripts/build_bigrams.py` | AACText "Imagination of Crowds" train split; Turk dialogues train split; unigram from `en.v1.json` |
 | `packs/core-en.json` | `packages/eval/scripts/build_pack.py` | Universal Core vocabulary (36 words); AACText train split (phrases) |
 
