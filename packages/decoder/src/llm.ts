@@ -1,12 +1,10 @@
-import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
-import { costMicros, HOME_REGION, MODEL_PROFILES, type ModelKey, type ModelProfile } from './models.js';
-import type { Prompt } from './prompt.js';
+import { costMicros, DEFAULT_MODEL, MODEL_PROFILES, type ModelId, type ModelProfile } from './models.js';
+import { estimateTokens, type Prompt } from './prompt.js';
 
-// LLM access. InvokeModel (not Converse) because:
-// - it takes the native Anthropic Messages body, so `cache_control`, `thinking` and the sampling
-//   rules of each Claude model are sent exactly as Anthropic documents them;
-// - the pinned @aws-sdk/client-bedrock-runtime 3.712.0 has no Converse `cachePoint` type.
-// See docs/research/bedrock-models.md.
+// LLM access through the Anthropic Messages API (POST https://api.anthropic.com/v1/messages).
+// Plain fetch, no SDK: one non-streaming call with a small max_tokens, a hard deadline from the
+// handler, and no retries (a retry cannot fit the 1.5 s client budget). Every candidate the model
+// returns is re-checked by the validator, so this file only has to deliver text.
 
 export interface LlmUsage {
   inputTokens: number;
@@ -36,8 +34,10 @@ export interface LlmClient {
 
 export class LlmError extends Error {
   constructor(
-    readonly kind: 'refusal' | 'bad_response' | 'config',
+    readonly kind: 'refusal' | 'bad_response' | 'http' | 'config',
     message: string,
+    /** Upstream HTTP status, when there was one (logged as a number; the body never is). */
+    readonly status?: number,
   ) {
     super(message);
     this.name = 'LlmError';
@@ -61,7 +61,7 @@ function sleep(ms: number, signal: AbortSignal): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Fake client for tests and local dev.
+// Fake client for tests and local demos.
 
 export type FakeReply =
   | string
@@ -93,29 +93,31 @@ export class FakeLlmClient implements LlmClient {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Bedrock request/response bodies.
+// Anthropic Messages API.
 
-export function anthropicBody(p: ModelProfile, prompt: Prompt, maxTokens: number): Record<string, unknown> {
-  const system: Record<string, unknown>[] = [{ type: 'text', text: prompt.system }];
-  if (p.cacheSystem) system[0]!.cache_control = { type: 'ephemeral' };
-  const body: Record<string, unknown> = {
-    anthropic_version: 'bedrock-2023-05-31',
-    max_tokens: maxTokens,
-    system,
-    messages: [{ role: 'user', content: [{ type: 'text', text: prompt.user }] }],
-  };
-  if (p.temperature !== undefined) body.temperature = p.temperature;
-  if (p.disableThinking) body.thinking = { type: 'disabled' };
-  return body;
+export const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
+/**
+ * API version 2026-10-21. On it, `temperature`, `top_p` and `top_k` return 400 on every model, so
+ * the decoder sends none of them (both Haiku models sample at the default).
+ */
+export const ANTHROPIC_VERSION = '2026-10-21';
+
+/** True when the frozen system prompt is long enough to be cached on this model. */
+export function shouldCache(p: ModelProfile, system: string): boolean {
+  return estimateTokens(system) * p.tokenizerFactor >= p.cacheMinTokens;
 }
 
-export function novaBody(p: ModelProfile, prompt: Prompt, maxTokens: number): Record<string, unknown> {
-  return {
-    schemaVersion: 'messages-v1',
-    system: [{ text: prompt.system }],
-    messages: [{ role: 'user', content: [{ text: prompt.user }] }],
-    inferenceConfig: { maxTokens, ...(p.temperature !== undefined ? { temperature: p.temperature } : {}) },
+export function anthropicBody(p: ModelProfile, prompt: Prompt, maxTokens: number): Record<string, unknown> {
+  const systemBlock: Record<string, unknown> = { type: 'text', text: prompt.system };
+  if (shouldCache(p, prompt.system)) systemBlock.cache_control = { type: 'ephemeral' };
+  const body: Record<string, unknown> = {
+    model: p.id,
+    max_tokens: maxTokens,
+    system: [systemBlock],
+    messages: [{ role: 'user', content: [{ type: 'text', text: prompt.user }] }],
   };
+  if (p.disableThinking) body.thinking = { type: 'disabled' };
+  return body;
 }
 
 interface AnthropicResponse {
@@ -129,16 +131,10 @@ interface AnthropicResponse {
   };
 }
 
-interface NovaResponse {
-  output?: { message?: { content?: { text?: string }[] } };
-  stopReason?: string;
-  usage?: { inputTokens?: number; outputTokens?: number; cacheReadInputTokenCount?: number; cacheWriteInputTokenCount?: number };
-}
-
 export function readAnthropic(json: unknown): LlmResult {
   const r = json as AnthropicResponse;
-  if (r.stop_reason === 'refusal') throw new LlmError('refusal', 'model declined');
-  if (!Array.isArray(r.content)) throw new LlmError('bad_response', 'no content');
+  if (r?.stop_reason === 'refusal') throw new LlmError('refusal', 'model declined');
+  if (!Array.isArray(r?.content)) throw new LlmError('bad_response', 'no content');
   // Read blocks by type: a response may start with thinking blocks.
   const text = r.content
     .filter((b) => b.type === 'text' && typeof b.text === 'string')
@@ -156,76 +152,55 @@ export function readAnthropic(json: unknown): LlmResult {
   };
 }
 
-export function readNova(json: unknown): LlmResult {
-  const r = json as NovaResponse;
-  const parts = r.output?.message?.content;
-  if (!Array.isArray(parts)) throw new LlmError('bad_response', 'no content');
-  return {
-    text: parts.map((c) => c.text ?? '').join(''),
-    stopReason: r.stopReason,
-    usage: {
-      inputTokens: r.usage?.inputTokens ?? 0,
-      outputTokens: r.usage?.outputTokens ?? 0,
-      cacheReadTokens: r.usage?.cacheReadInputTokenCount ?? 0,
-      cacheWriteTokens: r.usage?.cacheWriteInputTokenCount ?? 0,
-    },
-  };
+export type FetchLike = (url: string, init: RequestInit) => Promise<Response>;
+
+export interface AnthropicLlmOptions {
+  apiKey: string;
+  model?: ModelId;
+  fetch?: FetchLike;
+  url?: string;
 }
 
-/** Minimal shape of the SDK client we use, so tests can pass a stub. */
-export interface InvokeModelSender {
-  send(cmd: InvokeModelCommand, opts?: { abortSignal?: AbortSignal }): Promise<{ body?: Uint8Array }>;
-}
-
-export interface BedrockLlmOptions {
-  model: ModelKey;
-  region?: string;
-  client?: InvokeModelSender;
-}
-
-/** Refuse any configuration that could send text outside the EU. */
-export function assertEu(region: string, p: ModelProfile): void {
-  if (!/^eu-[a-z]+-\d$/.test(region)) throw new LlmError('config', 'decoder region must be an EU region');
-  if (!p.profileId.startsWith('eu.')) throw new LlmError('config', 'model must use an EU geo inference profile');
-  if (!p.destinationRegions.every((r) => r.startsWith('eu-'))) {
-    throw new LlmError('config', 'profile routes outside the EU');
-  }
-}
-
-export class BedrockLlmClient implements LlmClient {
+export class AnthropicLlmClient implements LlmClient {
   readonly model: string;
   readonly profile: ModelProfile;
-  private readonly client: InvokeModelSender;
+  private readonly apiKey: string;
+  private readonly fetchImpl: FetchLike;
+  private readonly url: string;
 
-  constructor(opts: BedrockLlmOptions) {
-    this.profile = MODEL_PROFILES[opts.model];
-    const region = opts.region ?? HOME_REGION;
-    assertEu(region, this.profile);
+  constructor(opts: AnthropicLlmOptions) {
+    if (!opts.apiKey) throw new LlmError('config', 'missing API key');
+    this.apiKey = opts.apiKey;
+    this.profile = MODEL_PROFILES[opts.model ?? DEFAULT_MODEL];
     this.model = this.profile.label;
-    // maxAttempts 1: the whole decode has a 1.5 s budget, so retries only add cost.
-    this.client = opts.client ?? new BedrockRuntimeClient({ region, maxAttempts: 1 });
+    this.fetchImpl = opts.fetch ?? ((u, i) => fetch(u, i));
+    this.url = opts.url ?? ANTHROPIC_URL;
   }
 
   async complete(prompt: Prompt, opts: LlmCallOptions): Promise<LlmResult> {
-    const p = this.profile;
-    const body = p.family === 'anthropic' ? anthropicBody(p, prompt, opts.maxTokens) : novaBody(p, prompt, opts.maxTokens);
-    const out = await this.client.send(
-      new InvokeModelCommand({
-        modelId: p.profileId,
-        contentType: 'application/json',
-        accept: 'application/json',
-        body: new TextEncoder().encode(JSON.stringify(body)),
-      }),
-      { abortSignal: opts.signal },
-    );
-    if (!out.body) throw new LlmError('bad_response', 'empty body');
+    const res = await this.fetchImpl(this.url, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': this.apiKey,
+        'anthropic-version': ANTHROPIC_VERSION,
+      },
+      body: JSON.stringify(anthropicBody(this.profile, prompt, opts.maxTokens)),
+      signal: opts.signal,
+      cache: 'no-store',
+    });
+    if (!res.ok) {
+      // Drain the body so the connection can be reused; never surface its text.
+      await res.text().catch(() => '');
+      throw new LlmError('http', 'upstream error', res.status);
+    }
     let json: unknown;
     try {
-      json = JSON.parse(new TextDecoder().decode(out.body));
+      json = await res.json();
     } catch {
       throw new LlmError('bad_response', 'body is not JSON');
     }
-    return p.family === 'anthropic' ? readAnthropic(json) : readNova(json);
+    return readAnthropic(json);
   }
 
   costMicros(usage: LlmUsage): number {
