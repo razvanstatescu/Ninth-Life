@@ -1,0 +1,36 @@
+# Tasks: core-encoder
+
+- [x] 1. Keymap and `normalize()` (Req 1.1, 1.2, 1.6)
+  - [x] 1.1 Property: length preservation (Req 1.1) — P1
+  - [x] 1.2 Property: normalization invariance, incl. Romanian/Spanish examples (Req 1.2) — P2
+  - [x] 1.3 Property + exhaustive scan: `normalize` idempotent (Req 1.6) — P6
+  - [x] 1.4 Fold ´ and ` as apostrophes (PBT finding 1, ADR-core-001 §2) (Req 1.2) — P2
+- [x] 2. `encodeWord()` returns null on non-encodable characters; apostrophes are free (Req 1.3, 1.4)
+  - [x] 2.1 Property: null or 2-9 for any string (Req 1.3) — P3
+  - [x] 2.2 Property: apostrophes never change the code; example "isn't" -> 4768 (Req 1.4) — P4
+- [x] 3. `tokenize()` and `encodeSentence()` (Req 1.5, ADR-core-001 §1) — P5
+- [x] 4. `validate()` for letter and initials modes (Req 3.1, 3.2, 3.3, 3.4)
+  - [x] 4.1 Property: length mismatch rejects (Req 3.1) — P10
+  - [x] 4.2 Property: soundness (Req 3.2) — P11
+  - [x] 4.3 Property: completeness (Req 3.3) — P13
+  - [x] 4.4 Property: agrees with a reference implementation, incl. cross-mode codes (Req 3.2–3.4) — P12
+- [x] 5. `proof()` match / new / reject (Req 3.5) — P14
+- [x] 6. Lexicon loader, code → words map in frequency order, re-encoding on load (Req 2.1, 2.5, 2.6, 2.7)
+  - [x] 6.1 Example: 4663 -> good, home, gone (Req 2.1)
+  - [x] 6.2 Property: lookup soundness even for a lying file (Req 2.6) — P9
+- [x] 7. Digit trie with top-5 completions per node, built lazily (Req 2.2) — P7
+- [x] 8. `has()`, `zipf()`, `addWords()` vocab packs (Req 2.3, 2.4) — P8
+- [x] 9. `unigramModel`, `bigramModel` with backoff, prototype-safe lookups (Req 4.1–4.4) — P15
+- [x] 10. `lattice()`, `beam()` (Req 5.1, 5.2) — P16
+- [x] 11. `decodeGhost()`: context as first prev, validate filter, dedupe, top k (Req 5.3–5.7)
+  - [x] 11.1 Property: every result passes validate (Req 5.3) — P17
+  - [x] 11.2 Property: a sentence is found when every code has a word (Req 5.3) — P18
+  - [x] 11.3 Example: context supplies only the first prev (Req 5.4)
+  - [x] 11.4 Property: deterministic (Req 5.7) — P19
+- [x] 12. `formatSentence()` (Req 6.1–6.4) — P20; example "i" -> "I"
+- [x] 13. Portability guard: no DOM / Node APIs in src; index exports the contract (Req 7.1, 7.2)
+- [x] 14. Mini fixture lexicon + bigram (`test/fixtures/mini-lexicon.ts`)
+- [x] 15. Smoke test against `data/lexicon/en.v1.json`, skipped when absent (Req 5.3)
+- [x] 16. Mutation check of the property suite; record findings in `docs/architecture/core.md` "PBT findings"
+- [ ] 17. Optional: per-word display forms (restore diacritics, e.g. "mâine") — needs a `LexiconFile` change (Req 1.2 follow-up)
+- [ ] 18. Optional: smaller trie (top-5 only on nodes with > 5 words below) if phones show memory pressure (Req 2.2 follow-up)

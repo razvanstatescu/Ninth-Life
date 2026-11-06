@@ -5,6 +5,10 @@ with a note in `docs/decisions/` and tell every owner.
 
 ## 1. `@ninth/core` public API (`packages/core/src/index.ts`)
 
+Clarifications and additive extensions (sentence splitting on punctuation, extra apostrophe folds,
+`beam(…, prev)`, extra exports, edge-case behaviour): see
+[ADR-core-001](../decisions/ADR-core-001-contract-clarifications.md).
+
 Pure TypeScript, no DOM, no Node-only APIs. Runs in the browser, in Lambda (Node 22) and in the eval
 harness.
 
