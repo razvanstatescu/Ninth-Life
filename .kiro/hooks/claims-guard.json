@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "claims-guard",
+      "description": "When a prompt is about user-facing words, remind the agent of the banned claims and the intended-purpose sentence. The matcher keeps it off for other prompts, so it only costs credits when relevant.",
+      "trigger": "UserPromptSubmit",
+      "matcher": "[Cc]opy|[Ww]ording|[Tt]ext|[Ll]abel|[Bb]utton|[Mm]essage|[Tt]oast|[Oo]nboarding|[Ll]anding|[Ww]ebsite|README|[Rr]eadme|[Dd]evpost|[Ww]rite-?up|[Vv]ideo|[Ss]cript|[Tt]agline|[Hh]eadline|[Bb]log|[Pp]ost|[Tt]weet|[Ss]ocial|[Cc]laim|[Mm]arketing|[Dd]isclaimer|[Aa]bout",
+      "action": {
+        "type": "agent",
+        "prompt": "If this request adds or changes user-facing words (UI, README, website, Devpost, video script, posts), check them against the banned claims in .kiro/steering/product.md and the words in .kiro/steering/trademarks.md before you write. Keep the intended-purpose sentence verbatim where it appears. Use only numbers from packages/eval/RESULTS.md, with the method linked. If nothing user-facing changes, ignore this note."
+      }
+    }
+  ]
+}

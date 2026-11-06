@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "typecheck-on-stop",
+      "description": "When the agent finishes a turn, typecheck every package. tsc output goes to stderr so a failure reaches the agent.",
+      "trigger": "Stop",
+      "action": {
+        "type": "command",
+        "command": "pnpm -r typecheck 1>&2"
+      },
+      "timeout": 300
+    }
+  ]
+}

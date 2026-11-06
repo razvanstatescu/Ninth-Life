@@ -6,6 +6,7 @@ Steps (plan section 3.2):
   2. normalize (NFKD, strip marks, lowercase, fold curly apostrophes); keep a-z words
      with optional internal apostrophes; drop Zipf < MIN_ZIPF.
   3. Merge words that normalize to the same string (frequencies summed).
+  3b. Drop the third-party trademarks listed (as hashes) in BANNED_SHA256.
   4. Drop apostrophe-less spellings of contractions ("dont", "im") when the contraction
      is at least 1.0 Zipf more frequent: they share its code and are almost always a
      misspelling of it. Real words ("its", "were", "ill", "well") are far closer in
@@ -20,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import gzip
+import hashlib
 import json
 import math
 import sys
@@ -30,6 +32,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ninth_common import DATA_DIR, EVAL_DIR, WORD_FULL_RE, encode_word, normalize, write_json  # noqa: E402
 
 CONTRACTION_GAP = 1.0
+
+# Third-party trademarks the product must never show (.kiro/steering/trademarks.md). Stored as
+# SHA-256 of the normalized word so this file does not spell them (tm-lint scans scripts).
+BANNED_SHA256 = {
+    "2ab6d53e717a0e0d773ccfdb8b0e84ac494729c6b567c72d256b883a9db17ea8",
+    "48c2b33eeb8d9f12837d045394028ae014ab0b43bcb1e094bcff764fba3504d3",
+    "5ed4c844477205875f8cdeaf2e8ea50580fe302eb0812afc98966916440eebac",
+    "ef46a230cfb0c087fdd8883bc989a3eaa253428f9f6033335e0cee7173c42a92",
+}
+
+
+def is_banned(word: str) -> bool:
+    """True for a banned mark and its apostrophe forms ("x's")."""
+    stem = word.split("'")[0]
+    return any(hashlib.sha256(w.encode("utf-8")).hexdigest() in BANNED_SHA256 for w in (word, stem))
 
 
 def build(top: int, min_zipf: float) -> tuple[dict, dict]:
@@ -47,7 +64,7 @@ def build(top: int, min_zipf: float) -> tuple[dict, dict]:
     stats = {"wordfreq_version": version, "top_n": top, "min_zipf": min_zipf, "raw": len(raw)}
 
     freq: dict[str, float] = defaultdict(float)  # linear frequency per billion
-    rejected_shape = rejected_zipf = 0
+    rejected_shape = rejected_zipf = rejected_banned = 0
     for w in raw:
         z = wordfreq.zipf_frequency(w, "en")
         if z < min_zipf:
@@ -57,10 +74,14 @@ def build(top: int, min_zipf: float) -> tuple[dict, dict]:
         if not WORD_FULL_RE.match(n):
             rejected_shape += 1
             continue
+        if is_banned(n):
+            rejected_banned += 1
+            continue
         freq[n] += 10 ** z
     stats["rejected_non_alpha"] = rejected_shape
     stats["rejected_low_zipf"] = rejected_zipf
-    stats["merged_after_normalize"] = len(raw) - rejected_shape - rejected_zipf - len(freq)
+    stats["rejected_trademark"] = rejected_banned
+    stats["merged_after_normalize"] = len(raw) - rejected_shape - rejected_zipf - rejected_banned - len(freq)
 
     zipf = {w: math.log10(f) for w, f in freq.items()}
 

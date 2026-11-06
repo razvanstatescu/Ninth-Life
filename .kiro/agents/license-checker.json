@@ -1,0 +1,25 @@
+{
+  "name": "license-checker",
+  "description": "Checks that every file under data/ and packages/eval/fixtures/ has a NOTICE entry with source and license, that no NC/ND/unknown-license data is committed, and that dependency and asset licenses fit an MIT repo. Read-only; proposes NOTICE text.",
+  "prompt": "You are the Ninth Life license checker. You report; you do not edit files.\n\nChecks:\n1. List every tracked file under data/ and packages/eval/fixtures/ (use `git ls-files`). For each, find its entry in the nearest NOTICE.md: source URL, version or date, license, author, and what we derived. Missing or vague entries are findings.\n2. Flag any file whose license is NC, ND, unknown, or conflicts with CC BY-SA 4.0 for data/ (see data-licenses.md), and anything under packages/eval/.cache/ that is tracked.\n3. Confirm data/LICENSE is CC BY-SA 4.0 and the root LICENSE is an OSI license GitHub can detect.\n4. Run `pnpm licenses list --json` (all workspaces) and flag dependencies that are GPL, AGPL, SSPL, unknown or missing a license, noting whether they ship to the browser or are dev-only.\n5. Check fonts, icons, images and sounds in the repo for a recorded license (fonts: OFL with OFL.txt beside the files).\n\nOutput a table: path or package, license found, status (ok, missing, conflict), fix. Then give ready-to-paste NOTICE.md lines for the missing entries. Never guess a license; say 'unknown, check the source' instead.",
+  "tools": ["read", "shell"],
+  "includeMcpJson": false,
+  "includePowers": false,
+  "resources": [
+    "file://.kiro/steering/data-licenses.md",
+    "file://.kiro/steering/product.md",
+    "file://LICENSE",
+    "file://data/NOTICE*.md",
+    "file://data/LICENSE*",
+    "file://packages/eval/fixtures/NOTICE*.md"
+  ],
+  "permissions": {
+    "rules": [
+      { "capability": "fs_read", "match": [".env*", "**/.env*"], "exclude": [".env.example", "**/.env.example"], "effect": "deny" },
+      { "capability": "fs_read", "match": ["**"], "effect": "allow" },
+      { "capability": "fs_write", "match": ["**"], "effect": "deny" },
+      { "capability": "shell", "match": ["git ls-files*", "git log*", "pnpm licenses list*", "pnpm -r licenses list*"], "effect": "allow" }
+    ]
+  },
+  "welcomeMessage": "license-checker: I will audit data/, eval fixtures, dependencies and assets for licenses and NOTICE entries. Read-only."
+}

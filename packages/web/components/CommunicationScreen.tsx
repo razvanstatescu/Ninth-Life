@@ -12,7 +12,7 @@ import { DecodeCache, buildRequest, decodeRemote, type RejectedSuggestion } from
 import { focusContext, mapKey } from '@/lib/keyboard';
 import { KEY_ROWS, type KeyDef } from '@/lib/keys';
 import { MAX_CANDIDATES, buildSentence, decodeWithPins, mergeCandidates, readings } from '@/lib/sentence';
-import { DEFAULT_SETTINGS, applyLook, isScan, sanitizeSettings, stepScanMs, type Settings } from '@/lib/settings';
+import { DEFAULT_SETTINGS, applyLook, isScan, readStoredLook, sanitizeSettings, stepScanMs, type Settings } from '@/lib/settings';
 import { pickVoice, speak, speechSupported } from '@/lib/speech';
 import { deletePhrase, listPhrases, loadSettings, markPhraseUsed, savePhrase, saveSettings, storageAvailable, type Phrase } from '@/lib/storage';
 import { useOnline } from '@/lib/useOnline';
@@ -50,7 +50,7 @@ export function CommunicationScreen({
   initialSettings?: Partial<Settings>;
 } = {}) {
   const [settings, setSettings] = useState<Settings>(() => sanitizeSettings({ ...DEFAULT_SETTINGS, ...initialSettings }));
-  const settingsLoaded = useRef(false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [dict, setDict] = useState<DictState>(initialDict ?? { status: 'loading' });
   const [composer, dispatch] = useReducer(composerReducer, EMPTY);
   const [partner, setPartner] = useState('');
@@ -71,8 +71,9 @@ export function CommunicationScreen({
     let alive = true;
     loadSettings().then((s) => {
       if (!alive) return;
-      if (s) setSettings(s);
-      settingsLoaded.current = true;
+      // Stored settings win; otherwise keep the look the head script already applied.
+      setSettings((cur) => s ?? sanitizeSettings({ ...cur, ...readStoredLook(), ...initialSettings }));
+      setSettingsLoaded(true);
     });
     if (!initialDict) loadDictionary().then((d) => alive && setDict(d));
     if (storageAvailable())
@@ -85,9 +86,10 @@ export function CommunicationScreen({
   }, [initialDict]);
 
   useEffect(() => {
+    if (!settingsLoaded) return; // do not repaint over the head script's theme with defaults
     applyLook(settings);
-    if (settingsLoaded.current) void saveSettings(settings);
-  }, [settings]);
+    void saveSettings(settings);
+  }, [settings, settingsLoaded]);
 
   // ---- decoding -------------------------------------------------------------------------------
   const lex = dict.status === 'ready' ? dict.lexicon : null;
@@ -444,7 +446,7 @@ export function CommunicationScreen({
             </div>
 
             <div className="order-proof">
-              <ProofPanel words={sentence.words} rejected={remoteNow?.rejected ?? []} rejectedCount={remoteNow?.rejectedCount ?? 0} alternatives={alternatives} />
+              <ProofPanel words={sentence.words} labels={sentence.tokens} rejected={remoteNow?.rejected ?? []} rejectedCount={remoteNow?.rejectedCount ?? 0} alternatives={alternatives} />
             </div>
           </div>
 

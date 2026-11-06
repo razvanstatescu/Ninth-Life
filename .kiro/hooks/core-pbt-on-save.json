@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "core-pbt-on-save",
+      "description": "When the agent saves a file in packages/core, run the core unit and fast-check property tests. Failures (stderr) go back to the agent.",
+      "trigger": "PostFileSave",
+      "matcher": "packages/core/(src|test)/.*\\.ts$",
+      "action": {
+        "type": "command",
+        "command": "pnpm -F @ninth/core test --run --reporter=dot 1>&2"
+      },
+      "timeout": 180
+    }
+  ]
+}

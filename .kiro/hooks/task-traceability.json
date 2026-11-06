@@ -1,0 +1,24 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "task-needs-requirement",
+      "description": "Before a spec task starts, make the agent tie it to requirement IDs and property tests (agent action: costs credits, cannot block).",
+      "trigger": "PreTaskExec",
+      "action": {
+        "type": "agent",
+        "prompt": "Before you write code for this task: (1) name the requirement IDs from this spec's requirements.md that it satisfies; (2) name the fast-check properties or example tests that cover each one, and the test file they live in or will live in; (3) if the task maps to no requirement, stop and say so instead of coding. Keep the answer to a few lines, then continue."
+      }
+    },
+    {
+      "name": "log-task",
+      "description": "After a spec task finishes, append a dated row to docs/KIRO_LOG.md (scripts/kiro-log.mjs). Never fails the task.",
+      "trigger": "PostTaskExec",
+      "action": {
+        "type": "command",
+        "command": "node scripts/kiro-log.mjs task"
+      },
+      "timeout": 15
+    }
+  ]
+}

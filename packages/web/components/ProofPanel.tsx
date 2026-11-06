@@ -14,11 +14,14 @@ function quoteList(words: string[]): string {
  */
 export function ProofPanel({
   words,
+  labels = [],
   rejected,
   rejectedCount = 0,
   alternatives,
 }: {
   words: DisplayWord[];
+  /** How each word is written in the sentence ("I", not "i"); trailing punctuation is dropped. */
+  labels?: string[];
   rejected: RejectedSuggestion[];
   /** Suggestions the server dropped before replying (it sends the count, not the words). */
   rejectedCount?: number;
@@ -61,7 +64,7 @@ export function ProofPanel({
         <ul className="proof__chips">
           {words.map((w, i) => (
             <li key={`w-${i}`}>
-              <ProofChip state={w.state} word={w.word ?? w.partial ?? w.code} code={w.code} />
+              <ProofChip state={w.state} word={labels[i]?.replace(/[.?!,]+$/, '') || w.word || w.partial || w.code} code={w.code} />
             </li>
           ))}
           {rejectChips.map((c) => (

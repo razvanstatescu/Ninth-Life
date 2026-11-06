@@ -6,15 +6,15 @@ run say so. Method: `docs/architecture/data-and-eval.md` and `.kiro/specs/eval-h
 
 - Test set: `fixtures/test.v1.jsonl`, 866 items, SHA-256 `9fefd9dbeacda45a…` (see `eval.lock`)
 - Run: full set, 866 items, seed 9, k = 5, mode = letter
-- Lexicon: 58908 words (`data/lexicon/en.v1.json`, SHA-256 `9c0cbf73366f46fe…`); bigrams `data/lexicon/en.bigram.v1.json` (`9bbfc725d49c5d2d…`)
+- Lexicon: 58906 words (`data/lexicon/en.v1.json`, SHA-256 `d82ccc79612fcd8a…`); bigrams `data/lexicon/en.bigram.v1.json` (`9bbfc725d49c5d2d…`)
 - Latency: wall-clock per decode call on linux-x64, Node 22.23.4; not part of `RESULTS.json` (it varies run to run)
 
 ## Summary
 
 | Config | Word acc | Sent top-1 | Sent top-5 | KSR | Scan steps/char | Invalid pre-validator | p50 ms | p95 ms | $/1k |
 |---|---|---|---|---|---|---|---|---|---|
-| B0 dict | 91.4% | 62.4% | 91.8% | -1.3% | 3.61 | n/a | 0.13 | 0.57 | 0 |
-| B1 ghost | 96.8% | 85.5% | 97.1% | -0.1% | 3.57 | n/a | 0.15 | 0.62 | 0 |
+| B0 dict | 91.4% | 62.4% | 91.8% | -1.3% | 3.61 | n/a | 0.13 | 0.55 | 0 |
+| B1 ghost | 96.8% | 85.5% | 97.1% | -0.1% | 3.57 | n/a | 0.16 | 0.65 | 0 |
 | B2 LLM raw | not run | | | | | | | | |
 | B3 LLM+val | not run | | | | | | | | |
 | B4 lattice+val | not run | | | | | | | | |

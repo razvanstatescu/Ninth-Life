@@ -5,6 +5,7 @@
   "raw": 60000,
   "rejected_non_alpha": 897,
   "rejected_low_zipf": 0,
+  "rejected_trademark": 2,
   "merged_after_normalize": 137,
   "dropped_bare_contractions": [
     "aint",
@@ -66,8 +67,8 @@
     "youre",
     "youve"
   ],
-  "words": 58908,
-  "codes": 48142,
+  "words": 58906,
+  "codes": 48140,
   "ambiguous_codes": 5144,
   "word_types_sharing_a_code": 15910,
   "pct_word_types_sharing_a_code": 27.01,
@@ -169,7 +170,7 @@
     ]
   },
   "file": "data/lexicon/en.v1.json",
-  "raw_bytes": 1558026,
-  "gzip9_bytes": 401462,
-  "brotli11_bytes": 327983
+  "raw_bytes": 1557975,
+  "gzip9_bytes": 401447,
+  "brotli11_bytes": 328051
 }

@@ -34,6 +34,16 @@
 .app-main__talk { flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
 .app-main__pad { flex: 1 1 360px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
 
+@media (max-width: 599px) {
+  .app__inner { gap: 20px; }
+  .app-header { gap: var(--space-3); }
+  .app-header__actions { gap: var(--space-2); }
+  .app-header__actions .nl-btn { padding: 0 14px; font-size: 16px; }
+  .partner { padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4); gap: var(--space-3); }
+  .speak-actions { gap: var(--space-2); }
+  .speak-actions .nl-btn { padding: 0 14px; font-size: 16px; }
+}
+
 @media (max-width: 959px) {
   .app { padding: var(--space-4) var(--space-4) var(--space-12); }
   .app-main { display: flex; flex-direction: column; align-items: stretch; gap: 20px; }

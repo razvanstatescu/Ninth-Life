@@ -99,5 +99,19 @@ export function applyLook(settings: Pick<Settings, 'theme' | 'targetSize'>, doc:
   }
 }
 
+/** The look mirrored in localStorage (used until IndexedDB answers, or when it is unavailable). */
+export function readStoredLook(): Partial<Pick<Settings, 'theme' | 'targetSize'>> {
+  try {
+    const theme = localStorage.getItem(THEME_KEY);
+    const size = localStorage.getItem(KEYSIZE_KEY);
+    return {
+      ...(theme === 'night' || theme === 'day' || theme === 'system' ? { theme } : {}),
+      ...(size === 'l' || size === 'xl' ? { targetSize: size } : {}),
+    };
+  } catch {
+    return {};
+  }
+}
+
 /** Inline script for <head>: sets data-theme before the first paint. */
 export const THEME_BOOT_SCRIPT = `(function(){try{var d=document.documentElement;var t=localStorage.getItem('${THEME_KEY}');if(t==='night'||t==='day'||t==='system')d.dataset.theme=t;var k=localStorage.getItem('${KEYSIZE_KEY}');if(k==='l'||k==='xl')d.dataset.keysize=k;}catch(e){}})();`;

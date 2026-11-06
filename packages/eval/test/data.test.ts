@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { bigramModel, encodeWord, Lexicon, normalize, type BigramFile, type LexiconFile } from '@ninth/core';
-import { PATHS, REPO_ROOT } from '../src/fixture';
+import { PATHS, REPO_ROOT, sha256 } from '../src/fixture';
 
 const lexFile = JSON.parse(readFileSync(PATHS.lexicon, 'utf8')) as LexiconFile;
 const bigFile = JSON.parse(readFileSync(PATHS.bigram, 'utf8')) as BigramFile;
@@ -43,6 +43,21 @@ describe('data/lexicon/en.v1.json (LexiconFile)', () => {
       }
     }
     expect(n).toBeGreaterThanOrEqual(40_000);
+  });
+
+  it('contains no banned third-party trademark (or its possessive), checked by hash', () => {
+    // Same SHA-256 list as scripts/build_lexicon.py BANNED_SHA256 (.kiro/steering/trademarks.md).
+    const banned = new Set([
+      '2ab6d53e717a0e0d773ccfdb8b0e84ac494729c6b567c72d256b883a9db17ea8',
+      '48c2b33eeb8d9f12837d045394028ae014ab0b43bcb1e094bcff764fba3504d3',
+      '5ed4c844477205875f8cdeaf2e8ea50580fe302eb0812afc98966916440eebac',
+      'ef46a230cfb0c087fdd8883bc989a3eaa253428f9f6033335e0cee7173c42a92',
+    ]);
+    const hits = Object.values(lexFile.codes)
+      .flat()
+      .map(([w]) => w)
+      .filter((w) => banned.has(sha256(w)) || banned.has(sha256(w.split("'")[0]!)));
+    expect(hits).toEqual([]);
   });
 
   it('loads in @ninth/core without dropping words', () => {
