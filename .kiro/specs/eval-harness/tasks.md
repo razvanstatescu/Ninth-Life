@@ -1,0 +1,43 @@
+# Tasks: eval-harness
+
+- [x] 1. Python environment and shared helpers (Req 1.3, 1.4, 5.1)
+  - [x] 1.1 `requirements.txt` with pinned wordfreq 3.1.1 and dependencies; venv at `packages/eval/.venv`
+  - [x] 1.2 `ninth_common.py`: normalize (incl. ADR-core-001 apostrophe folding), encode_word, tokenize, dataset loaders
+  - [x] 1.3 Unit tests `scripts/test_ninth_common.py` (`pnpm -F @ninth/eval test:py`)
+- [x] 2. Dataset fetch (Req 1.6, 1.7)
+  - [x] 2.1 Inspect aactext.org/imagine and /turk; record real file names, splits and licenses
+  - [x] 2.2 `fetch_datasets.py` with per-file SHA-256 pins; never fetch `lm_test_switch.txt` / `lm_test_comm.txt`
+- [x] 3. Lexicon `data/lexicon/en.v1.json` (Req 5.1, 5.2, 5.6)
+  - [x] 3.1 Build, measure raw/gzip/brotli size and collision stats (`build-stats/lexicon.json`)
+  - [x] 3.2 Property: every entry encodes to its code, sorted, ≥ 40k words (P4)
+  - [ ] 3.3 Team decision on the size cut (60k vs 40k; see data-and-eval.md "Size"), needs a contract note if changed
+  - [ ] 3.4 Team decision on filtering slurs from the lexicon (wordfreq includes some as low-rank readings)
+- [x] 4. Bigrams `data/lexicon/en.bigram.v1.json` (Req 1.5, 5.3, 5.6)
+  - [x] 4.1 Modified-KN interpolation over the deployed unigram; prune and renormalize backoff
+  - [x] 4.2 Held-out perplexity on AACText dev (unigram vs bigram) in `build-stats/bigram.json`
+  - [x] 4.3 Property: values ≤ 0, 2 decimals, near-normalized under core `bigramModel` (P5)
+- [x] 5. Core pack `data/packs/core-en.json` (Req 1.5, 5.4, 5.5)
+  - [x] 5.1 Universal Core 36 words (boost 0.1); phrases mined from AACText train, name filter, reviewed denylist
+  - [x] 5.2 Property: shape, phrase words known, boost changes no first reading (P6)
+- [x] 6. License files (Req 5.7)
+  - [x] 6.1 `data/LICENSE` (full CC BY-SA 4.0 legal code), `data/NOTICE.md`, `fixtures/NOTICE.md`
+- [x] 7. Frozen test set (Req 1.1–1.4)
+  - [x] 7.1 `build_testset.py` → `fixtures/test.v1.jsonl` + `eval.lock`; `--check` mode (P13)
+  - [x] 7.2 Tests: lock hash, tamper refusal, codes = encode(words), core tokenize agreement (P1–P3)
+- [x] 8. Harness (Req 2.x, 3.x, 4.x)
+  - [x] 8.1 `Decoder` interface; B0 (unigram beam) and B1 (`decodeGhost` + `bigramModel`)
+  - [x] 8.2 `LlmProposer` interface and `llmDecoder` for B2/B3/B4; `--llm <module>` loader (Req 3.3–3.6)
+  - [x] 8.3 Simulated user: presses, selections, Next fallback, unreachable (P7, P8)
+  - [x] 8.4 Scan steps via core `scanReducer` (P9)
+  - [x] 8.5 Metrics, per-source breakdown, latency p50/p95
+  - [x] 8.6 CLI: `quick` (200 seeded) prints table; `eval` writes `RESULTS.json` + `RESULTS.md`
+- [x] 9. Determinism (Req 6.1–6.3)
+  - [x] 9.1 Seeded PRNG only; timings kept out of `RESULTS.json`
+  - [x] 9.2 Property: same seed ⇒ byte-identical `RESULTS.json`, in-process and via the CLI (P11, P12)
+- [x] 10. Measured B0/B1 on the full test set; `RESULTS.md` regenerated
+- [ ] 11. B2–B4 with the decoder package's Bedrock client (Req 3.3–3.6, 4.6, 4.7) — owner: decoder + eval
+  - [ ] 11.1 `packages/decoder` exports a `createProposer()` wrapping `LlmClient` + `buildPrompt` + `parseReply`
+  - [ ] 11.2 Replace the one few-shot example that also occurs in the test set ("i am good")
+  - [ ] 11.3 Run `pnpm -F @ninth/eval eval --llm <module>`; record model, region and cost
+- [ ] 12. CI: `.github/workflows/eval.yml` runs `test`, `data:check` and `quick` on PRs touching core, eval or data (Req 2.1, 6.1)
+- [ ] 13. Confirm Turk dialogues license with the author (web page CC BY 4.0 vs readme CC BY-ND 3.0); if ND, rebuild bigrams with `--no-turk` (Req 1.7, 5.7)

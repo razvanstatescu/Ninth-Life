@@ -88,6 +88,9 @@ importers:
 
   packages/infra:
     dependencies:
+      '@ninth/decoder':
+        specifier: workspace:*
+        version: link:../decoder
       aws-cdk-lib:
         specifier: 2.170.0
         version: 2.170.0(constructs@10.4.2)

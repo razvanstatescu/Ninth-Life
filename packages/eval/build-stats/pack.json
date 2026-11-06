@@ -1,0 +1,10 @@
+{
+  "core_words": 36,
+  "phrases": 198,
+  "candidates_min_count": 223,
+  "rejected": {
+    "denylist": 22,
+    "oov_or_name": 1
+  },
+  "bytes": 5564
+}

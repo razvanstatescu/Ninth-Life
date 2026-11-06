@@ -1,0 +1,137 @@
+/**
+ * Contract checks on the committed data files (spec eval-harness Req 5.1 - 5.5; properties P4-P6).
+ */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { bigramModel, encodeWord, Lexicon, normalize, type BigramFile, type LexiconFile } from '@ninth/core';
+import { PATHS, REPO_ROOT } from '../src/fixture';
+
+const lexFile = JSON.parse(readFileSync(PATHS.lexicon, 'utf8')) as LexiconFile;
+const bigFile = JSON.parse(readFileSync(PATHS.bigram, 'utf8')) as BigramFile;
+const pack = JSON.parse(readFileSync(join(REPO_ROOT, 'data', 'packs', 'core-en.json'), 'utf8')) as {
+  id: string;
+  lang: string;
+  version: number;
+  words: { w: string; boost: number }[];
+  phrases: string[];
+};
+
+describe('data/lexicon/en.v1.json (LexiconFile)', () => {
+  it('has the contract header', () => {
+    expect(lexFile.v).toBe(1);
+    expect(lexFile.lang).toBe('en');
+    expect(lexFile.license).toBe('CC-BY-SA-4.0');
+    expect(lexFile.source).toContain('wordfreq 3.1.1');
+  });
+
+  it('files every word under its own code, normalized, once, as [word, int zipfX10] sorted desc', () => {
+    const seen = new Set<string>();
+    let n = 0;
+    for (const [code, list] of Object.entries(lexFile.codes)) {
+      expect(list.length).toBeGreaterThan(0);
+      for (let i = 0; i < list.length; i++) {
+        const [w, z] = list[i]!;
+        expect(normalize(w)).toBe(w);
+        expect(encodeWord(w)).toBe(code);
+        expect(Number.isInteger(z)).toBe(true);
+        expect(z).toBeGreaterThanOrEqual(20);
+        if (i > 0) expect(list[i - 1]![1]).toBeGreaterThanOrEqual(z);
+        expect(seen.has(w)).toBe(false);
+        seen.add(w);
+        n++;
+      }
+    }
+    expect(n).toBeGreaterThanOrEqual(40_000);
+  });
+
+  it('loads in @ninth/core without dropping words', () => {
+    const lex = Lexicon.fromJSON(lexFile);
+    const n = Object.values(lexFile.codes).reduce((s, l) => s + l.length, 0);
+    expect(lex.size).toBe(n);
+    expect(lex.lookup('4663').slice(0, 2)).toEqual(['good', 'home']);
+    expect(lex.lookup('4768')).toContain("isn't");
+  });
+});
+
+describe('data/lexicon/en.bigram.v1.json (BigramFile)', () => {
+  const lex = Lexicon.fromJSON(lexFile);
+
+  it('has the contract header', () => {
+    expect(bigFile.v).toBe(1);
+    expect(bigFile.bos).toBe('<s>');
+    expect(bigFile.license).toBe('CC-BY-SA-4.0');
+    expect(bigFile.source).toContain('train');
+  });
+
+  it('stores log10 values <= 0 with at most 2 decimals, over lexicon words only', () => {
+    for (const [prev, row] of Object.entries(bigFile.logp)) {
+      expect(prev === '<s>' || lex.has(prev)).toBe(true);
+      expect(typeof bigFile.backoff[prev]).toBe('number');
+      for (const [w, lp] of Object.entries(row)) {
+        expect(lex.has(w)).toBe(true);
+        expect(lp).toBeLessThanOrEqual(0);
+        expect(Math.round(lp * 100) / 100).toBe(lp);
+      }
+    }
+    for (const bo of Object.values(bigFile.backoff)) {
+      expect(bo).toBeLessThanOrEqual(0);
+      expect(Math.round(bo * 100) / 100).toBe(bo);
+    }
+  });
+
+  it('is roughly normalised for frequent contexts under core bigramModel', () => {
+    // Sum over the whole lexicon of P(w | prev) should be close to the unigram mass (<= 1).
+    const lm = bigramModel(bigFile, lex);
+    const words = Object.values(lexFile.codes).flat().map(([w]) => w);
+    for (const prev of ['<s>', 'i', 'you']) {
+      let mass = 0;
+      for (const w of words) mass += 10 ** lm.logP(prev, w);
+      expect(mass).toBeGreaterThan(0.5);
+      expect(mass).toBeLessThan(1.1);
+    }
+  });
+
+  it('prefers conversational readings after <s>', () => {
+    const lm = bigramModel(bigFile, lex);
+    expect(lm.logP('<s>', 'i')).toBeGreaterThan(lm.logP('<s>', 'g'));
+    expect(lm.logP('i', 'need')).toBeGreaterThan(lm.logP('i', 'mead'));
+  });
+});
+
+describe('data/packs/core-en.json (VocabPack)', () => {
+  const lex = Lexicon.fromJSON(lexFile);
+
+  it('has the VocabPack shape with the 36 Universal Core words', () => {
+    expect(pack).toMatchObject({ id: 'core-en', lang: 'en', version: 1 });
+    expect(pack.words).toHaveLength(36);
+    for (const { w, boost } of pack.words) {
+      expect(lex.has(w)).toBe(true);
+      expect(boost).toBeGreaterThanOrEqual(0);
+    }
+    expect(new Set(pack.words.map((x) => x.w)).size).toBe(36);
+  });
+
+  it('has 100-200 short phrases whose words are all typable and known', () => {
+    expect(pack.phrases.length).toBeGreaterThanOrEqual(100);
+    expect(pack.phrases.length).toBeLessThanOrEqual(200);
+    for (const p of pack.phrases) {
+      const words = normalize(p)
+        .split(/[^a-z']+/)
+        .map((w) => w.replace(/^'+|'+$/g, ''))
+        .filter(Boolean);
+      expect(words.length).toBeGreaterThan(0);
+      expect(words.length).toBeLessThanOrEqual(6);
+      for (const w of words) expect(lex.has(w), `${w} in "${p}"`).toBe(true);
+    }
+  });
+
+  it('does not reorder any first reading when the boost is applied', () => {
+    const boosted = Lexicon.fromJSON(lexFile);
+    boosted.addWords(pack.words);
+    for (const { w } of pack.words) {
+      const code = encodeWord(w)!;
+      expect(boosted.lookup(code)[0]).toBe(lex.lookup(code)[0]);
+    }
+  });
+});

@@ -1,0 +1,22 @@
+{
+  "aac_train_lines": 5019,
+  "turk_train_dialogues": 707,
+  "turk_train_turns": 4242,
+  "tokens": 57026,
+  "oov_or_untypable_tokens": 441,
+  "bigram_tokens": 56246,
+  "bigram_types": 19584,
+  "D1": 0.7398,
+  "D2": 1.137,
+  "D3plus": 1.4073,
+  "prev_contexts": 2973,
+  "kept_pairs": 19237,
+  "prune": 0.2,
+  "min_count": 1,
+  "raw_bytes": 339147,
+  "gzip9_bytes": 103414,
+  "brotli11_bytes": 85587,
+  "dev_words": 2943,
+  "perplexity_unigram": 833.2,
+  "perplexity_bigram": 101.2
+}

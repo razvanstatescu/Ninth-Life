@@ -1,0 +1,351 @@
+{
+ "id": "core-en",
+ "lang": "en",
+ "version": 1,
+ "words": [
+  {
+   "w": "all",
+   "boost": 0.1
+  },
+  {
+   "w": "can",
+   "boost": 0.1
+  },
+  {
+   "w": "different",
+   "boost": 0.1
+  },
+  {
+   "w": "do",
+   "boost": 0.1
+  },
+  {
+   "w": "finished",
+   "boost": 0.1
+  },
+  {
+   "w": "get",
+   "boost": 0.1
+  },
+  {
+   "w": "go",
+   "boost": 0.1
+  },
+  {
+   "w": "good",
+   "boost": 0.1
+  },
+  {
+   "w": "he",
+   "boost": 0.1
+  },
+  {
+   "w": "help",
+   "boost": 0.1
+  },
+  {
+   "w": "here",
+   "boost": 0.1
+  },
+  {
+   "w": "i",
+   "boost": 0.1
+  },
+  {
+   "w": "in",
+   "boost": 0.1
+  },
+  {
+   "w": "it",
+   "boost": 0.1
+  },
+  {
+   "w": "like",
+   "boost": 0.1
+  },
+  {
+   "w": "look",
+   "boost": 0.1
+  },
+  {
+   "w": "make",
+   "boost": 0.1
+  },
+  {
+   "w": "more",
+   "boost": 0.1
+  },
+  {
+   "w": "not",
+   "boost": 0.1
+  },
+  {
+   "w": "on",
+   "boost": 0.1
+  },
+  {
+   "w": "open",
+   "boost": 0.1
+  },
+  {
+   "w": "put",
+   "boost": 0.1
+  },
+  {
+   "w": "same",
+   "boost": 0.1
+  },
+  {
+   "w": "she",
+   "boost": 0.1
+  },
+  {
+   "w": "some",
+   "boost": 0.1
+  },
+  {
+   "w": "stop",
+   "boost": 0.1
+  },
+  {
+   "w": "that",
+   "boost": 0.1
+  },
+  {
+   "w": "turn",
+   "boost": 0.1
+  },
+  {
+   "w": "up",
+   "boost": 0.1
+  },
+  {
+   "w": "want",
+   "boost": 0.1
+  },
+  {
+   "w": "what",
+   "boost": 0.1
+  },
+  {
+   "w": "when",
+   "boost": 0.1
+  },
+  {
+   "w": "where",
+   "boost": 0.1
+  },
+  {
+   "w": "who",
+   "boost": 0.1
+  },
+  {
+   "w": "why",
+   "boost": 0.1
+  },
+  {
+   "w": "you",
+   "boost": 0.1
+  }
+ ],
+ "phrases": [
+  "I love you.",
+  "Thank you.",
+  "I am hungry.",
+  "Why?",
+  "How are you?",
+  "Thanks.",
+  "Hello.",
+  "Oh!",
+  "I'm thirsty.",
+  "Really?",
+  "I'm hungry.",
+  "Water.",
+  "Yes.",
+  "Help.",
+  "Hungry.",
+  "Where are you going?",
+  "Good morning.",
+  "Hi!",
+  "I am thirsty.",
+  "I need help.",
+  "I'm cold.",
+  "Love you.",
+  "Nice to meet you.",
+  "What's for dinner?",
+  "I'm tired.",
+  "No.",
+  "What is your name?",
+  "You are welcome.",
+  "Don't worry.",
+  "Good bye.",
+  "How was your day?",
+  "I am tired.",
+  "I need to use the bathroom.",
+  "No, thank you.",
+  "Sorry.",
+  "Sure.",
+  "What time is it?",
+  "Excuse me.",
+  "Good night.",
+  "Happy birthday.",
+  "Help me.",
+  "How have you been?",
+  "How old are you?",
+  "I am hot.",
+  "I miss you.",
+  "I need water.",
+  "Leave me alone.",
+  "My back hurts.",
+  "Thanks so much.",
+  "Why not?",
+  "Yes please.",
+  "Are you okay?",
+  "Bathroom.",
+  "Bless you.",
+  "Bye.",
+  "Can you give me a ride?",
+  "Good job.",
+  "Good luck.",
+  "Have a great day.",
+  "I am bored.",
+  "I am fine.",
+  "I am not feeling well.",
+  "I am sad.",
+  "I am sorry.",
+  "I don't know.",
+  "I love you too.",
+  "I need to use the restroom.",
+  "I need you.",
+  "Let's go.",
+  "My feet hurt.",
+  "No, not yet.",
+  "No thanks.",
+  "Okay!",
+  "Open the door.",
+  "Please help me.",
+  "Sure, why not.",
+  "Take care.",
+  "Thanks for your help.",
+  "Tired.",
+  "Turn on the TV.",
+  "Water please.",
+  "When?",
+  "Where are you?",
+  "Yes, of course.",
+  "You are great.",
+  "Are you hungry?",
+  "Best wishes!",
+  "Bring me some salt.",
+  "Can I have some water?",
+  "Can I have some water please?",
+  "Can you call my mother?",
+  "Can you get it for me?",
+  "Can you give me a lift?",
+  "Can you help me?",
+  "Can you open the window?",
+  "Change the channel.",
+  "Cold.",
+  "Come on!",
+  "Cool!",
+  "Did you enjoy your meal?",
+  "Do not disturb!",
+  "Don't know.",
+  "Get well soon.",
+  "Going to bed.",
+  "Hands hurt.",
+  "Happy holidays!",
+  "Have fun!",
+  "Hello, how are you?",
+  "Hello, how do you do?",
+  "Help me please.",
+  "Help me with this.",
+  "Hi Mom.",
+  "How are you doing?",
+  "How did you sleep?",
+  "How is your family?",
+  "How much does this cost?",
+  "How was it?",
+  "How was your night?",
+  "I am cold.",
+  "I am feeling good!",
+  "I am scared.",
+  "I didn't sleep well last night.",
+  "I don't like it.",
+  "I feel cold.",
+  "I feel good today.",
+  "I feel okay.",
+  "I feel sick.",
+  "I feel sleepy.",
+  "I have a headache.",
+  "I have something to tell you.",
+  "I like your hair.",
+  "I love this movie!",
+  "I love this song!",
+  "I need a bath.",
+  "I need a hug.",
+  "I need some fresh air.",
+  "I need some water.",
+  "I need to pee!",
+  "I want to go.",
+  "I want to go outside.",
+  "I would love a pizza.",
+  "I'm bored.",
+  "I'm doing well, thank you.",
+  "I'm in pain.",
+  "I'm itchy.",
+  "I'm ok.",
+  "I'm sorry.",
+  "In pain.",
+  "Is the computer working?",
+  "It is hot.",
+  "It's cold.",
+  "It's hot.",
+  "Let's go outside.",
+  "Look at me.",
+  "Love you mum.",
+  "Maybe.",
+  "Merry Christmas.",
+  "More salt please.",
+  "My head hurts.",
+  "Need water.",
+  "Nice to see you.",
+  "Nice to see you again.",
+  "No, not at all.",
+  "Ok, sure.",
+  "Ok, when?",
+  "Open the window.",
+  "Please change the channel.",
+  "Please pray for me.",
+  "Please switch on the heater.",
+  "Smile.",
+  "Sure, here it is.",
+  "Thank you for coming!",
+  "That would be nice!",
+  "Thirsty.",
+  "Too loud.",
+  "Trust me.",
+  "Turn off the TV.",
+  "Want to sleep.",
+  "What are we having for dinner?",
+  "What happened?",
+  "What is that?",
+  "What is the time?",
+  "What time?",
+  "What time is the party?",
+  "What's for supper?",
+  "What's going on?",
+  "When are you coming back?",
+  "When are you going on vacation?",
+  "Where am I?",
+  "Where are my glasses?",
+  "Where are my keys?",
+  "Where are you from?",
+  "Where are you going today?",
+  "Where is the bathroom?",
+  "Will you help me?",
+  "You are the best!",
+  "You look nice.",
+  "You look nice today."
+ ]
+}

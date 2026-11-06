@@ -4,13 +4,15 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "predev": "node scripts/copy-data.mjs",
+    "predev": "node scripts/gen-tokens.mjs && node scripts/copy-data.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/copy-data.mjs",
+    "prebuild": "node scripts/gen-tokens.mjs && node scripts/copy-data.mjs",
     "build": "next build",
     "start": "next start",
     "test": "vitest",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "tokens": "node scripts/gen-tokens.mjs",
+    "icons": "node scripts/gen-icons.mjs"
   },
   "dependencies": {
     "@ninth/core": "workspace:*",

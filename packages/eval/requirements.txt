@@ -1,0 +1,12 @@
+# Python tooling for the Ninth Life data build (packages/eval/scripts).
+# Install into packages/eval/.venv:  python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+wordfreq==3.1.1
+# wordfreq 3.1.1 dependencies, pinned as resolved on 2026-11-06
+ftfy==6.3.1
+langcodes==3.5.1
+locate==1.1.1
+msgpack==1.2.4
+regex==2026.9.29
+wcwidth==0.9.4
+# compressed-size reporting only
+brotli==1.2.1

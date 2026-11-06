@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "fixture": {
+    "path": "fixtures/test.v1.jsonl",
+    "sha256": "9fefd9dbeacda45ac7b0897336df2be952ca94a6e7f92ab24f27ef88f4ff9749",
+    "rows": 866,
+    "bytes": 164854
+  },
+  "inputs": {
+    "imagine/sent_test_aac.txt": "e42988d0a8345bc05499ea49cd79a0bb2518f9670cf6431e51ad58e08114091b",
+    "turk/turk-dialogues.txt": "7bd80a8a8fe1e3ee91158072b4adc198db691f96196b27acf28ea8335507dafb",
+    "turk/turk-dialogues-filtered.txt": "b820e18842b2155dfddd6e857e8211525fbbd62c751800551759c868d21416db"
+  },
+  "lexicon": {
+    "path": "data/lexicon/en.v1.json",
+    "sha256": "9c0cbf73366f46fe28326b08fc3023f56d34db2f2785a5d319be0846b8eee25f"
+  },
+  "bigram": {
+    "path": "data/lexicon/en.bigram.v1.json",
+    "sha256": "9bbfc725d49c5d2d8efc3f0aa879a905e57051f1c8038625f3e90ea4cf8b4819"
+  },
+  "stats": {
+    "aac_test_lines": 566,
+    "aac_dropped": 0,
+    "turk_test_dialogues": 217,
+    "turk_candidate_pairs": 1042,
+    "rows": 866,
+    "rows_aac": 566,
+    "rows_turk": 300,
+    "words": 4890,
+    "oov_words_vs_en_v1": 15,
+    "oov_rate_pct": 0.31
+  }
+}

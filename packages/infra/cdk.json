@@ -1,0 +1,16 @@
+{
+  "app": "npx tsx bin/app.ts",
+  "watch": { "include": ["bin/**", "lib/**"] },
+  "context": {
+    "allowedOrigins": "http://localhost:3000",
+    "models": "haiku-4.5,haiku-5.5",
+    "activeModel": "haiku-4.5",
+    "budgetUsd": 40,
+    "budgetStart": "2026-11-01",
+    "@aws-cdk/core:checkSecretUsage": true,
+    "@aws-cdk/core:target-partitions": ["aws"],
+    "@aws-cdk/aws-iam:minimizePolicies": true,
+    "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
+    "@aws-cdk/core:enablePartitionLiterals": true
+  }
+}

@@ -8,8 +8,21 @@
     "quick": "tsx src/cli.ts --quick",
     "eval": "tsx src/cli.ts",
     "test": "vitest",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "test:py": ".venv/bin/python -m unittest discover -s scripts -p 'test_*.py'",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "data:venv": "python3 -m venv .venv && .venv/bin/pip install -r requirements.txt",
+    "data:fetch": ".venv/bin/python scripts/fetch_datasets.py",
+    "data:build": ".venv/bin/python scripts/build_lexicon.py && .venv/bin/python scripts/build_bigrams.py && .venv/bin/python scripts/build_pack.py",
+    "data:check": ".venv/bin/python scripts/build_testset.py --check",
+    "data:freeze": ".venv/bin/python scripts/build_testset.py"
   },
-  "dependencies": { "@ninth/core": "workspace:*" },
-  "devDependencies": { "tsx": "4.19.2", "typescript": "5.6.3", "vitest": "2.1.8", "fast-check": "3.23.1" }
+  "dependencies": {
+    "@ninth/core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "4.19.2",
+    "typescript": "5.6.3",
+    "vitest": "2.1.8",
+    "fast-check": "3.23.1"
+  }
 }

@@ -1,0 +1,125 @@
+/*
+ * Ninth Life components, ported from design/system/components/bundle.css.
+ * Every value reads a token from tokens.css. Differences from the bundle are marked "app:".
+ *   app: the Google Fonts @import is gone; fonts are self-hosted in globals.css (offline).
+ *   app: keys size from --nl-key so the keypad fits a 390px phone and honours the XL setting.
+ *   app: Day primary buttons get the plum inner ring from the Interface kit (--ember-edge).
+ *   app: key digit and chip code are 16px, not 15px: nothing in the app is smaller than `label`.
+ *   app: is-lit / is-scanning also apply to candidates and action buttons for switch scanning.
+ */
+
+.nl-root {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.nl-icon { width: 24px; height: 24px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Button */
+.nl-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  min-height: var(--target-min); min-width: var(--target-min); padding: 0 var(--space-6);
+  border-radius: var(--radius-key); border: 2px solid transparent;
+  font-family: var(--font-sans); font-size: 18px; line-height: 22px; font-weight: 700;
+  cursor: pointer; text-decoration: none;
+}
+.nl-btn:focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: 3px; }
+.nl-btn--primary { background: var(--ember); color: var(--on-ember); box-shadow: var(--ember-edge); }
+.nl-btn--primary:active { background: var(--ember-deep); }
+.nl-btn--secondary { background: transparent; color: var(--ink); border-color: var(--line-strong); }
+.nl-btn--secondary:active { background: var(--surface-sunken); }
+.nl-btn--quiet { background: var(--surface-sunken); color: var(--ink); }
+.nl-btn--quiet:active { box-shadow: inset 0 0 0 2px var(--line-strong); }
+.nl-btn--danger { background: transparent; color: var(--danger); border-color: var(--danger); }
+.nl-btn--xl { min-height: 80px; padding: 0 var(--space-8); font-size: 22px; line-height: 26px; }
+.nl-btn--compact { padding: 0 20px; }
+.nl-btn .nl-icon { width: 22px; height: 22px; }
+.nl-btn--xl .nl-icon { width: 24px; height: 24px; }
+.nl-btn:disabled { cursor: not-allowed; color: var(--ink-muted); }
+.nl-btn--quiet:disabled { background: var(--surface-sunken); }
+
+/* Key */
+.nl-key {
+  position: relative; display: grid; place-items: center;
+  width: var(--nl-key, var(--key-size)); height: var(--nl-key, var(--key-size));
+  border-radius: var(--radius-key); border: 0;
+  background: var(--key); color: var(--on-key);
+  font-family: var(--font-sans); cursor: pointer;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  user-select: none; -webkit-user-select: none;
+}
+.nl-key:focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: 3px; }
+.nl-key:active { box-shadow: inset 0 0 0 3px var(--ember); }
+.nl-key__letters { font-size: 30px; line-height: 32px; font-weight: 700; letter-spacing: 0.04em; }
+.nl-key__digit { position: absolute; top: 9px; left: 12px; font-family: var(--font-mono); font-size: 16px; line-height: 16px; font-weight: 500; }
+.nl-key__word { font-size: 18px; line-height: 22px; font-weight: 700; }
+.nl-key.is-lit { background: var(--ember); color: var(--on-ember); box-shadow: inset 0 0 0 3px var(--plum), var(--glow-ember); }
+.nl-key.is-lit:active { background: var(--ember-deep); }
+
+/* Keypad */
+.nl-keypad {
+  --nl-key: clamp(var(--key-min), calc((100vw - 104px) / 3), var(--key-size));
+  display: inline-flex; flex-direction: column; gap: var(--space-3);
+  padding: var(--space-6); border-radius: var(--radius-panel);
+  background: var(--panel); box-shadow: var(--lift);
+}
+[data-keysize="xl"] .nl-keypad { --nl-key: clamp(var(--key-min), calc((100vw - 104px) / 3), var(--key-xl)); }
+.nl-keypad__row { display: flex; gap: var(--space-3); padding: 6px; margin: -6px; border-radius: calc(var(--radius-key) + 6px); }
+.nl-keypad__row.is-scanning,
+.nl-scanrow.is-scanning { box-shadow: 0 0 0 var(--scan-width) var(--ember), 0 0 0 calc(var(--scan-width) + 3px) var(--plum); }
+
+/* app: a lit candidate or action button during scanning; the same ember + plum ring as a row. */
+.nl-candidate.is-lit,
+.nl-btn.is-lit { box-shadow: 0 0 0 var(--scan-width) var(--ember), 0 0 0 calc(var(--scan-width) + 3px) var(--plum); }
+
+/* Proof chip */
+.nl-chip {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  min-height: 48px; padding: 0 var(--space-4) 0 var(--space-3);
+  border-radius: var(--radius-chip); border: 2px solid var(--line-strong);
+  background: var(--surface); color: var(--ink);
+  font-family: var(--font-sans); font-size: 22px; line-height: 28px; font-weight: 600;
+}
+.nl-chip .nl-icon { width: 22px; height: 22px; }
+.nl-chip__code { font-family: var(--font-mono); font-size: 16px; line-height: 16px; font-weight: 500; color: var(--ink-muted); margin-left: var(--space-1); text-decoration: none; display: inline-block; }
+.nl-chip--match { border-color: var(--proof-match); background: color-mix(in srgb, var(--proof-match) 14%, var(--surface)); }
+.nl-chip--match .nl-icon { color: var(--proof-match); }
+.nl-chip--new { border-style: dashed; border-color: var(--proof-new); }
+.nl-chip--new .nl-icon { color: var(--proof-new); }
+.nl-chip--reject { border-color: var(--proof-reject); color: var(--proof-reject); }
+.nl-chip--reject .nl-chip__word { text-decoration: line-through; text-decoration-thickness: 2px; }
+.nl-chip--typing { border-style: dotted; color: var(--ink-muted); font-weight: 400; }
+
+/* Candidate sentence */
+.nl-candidate {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3);
+  width: 100%;
+  min-height: 72px; padding: var(--space-3) var(--space-6) var(--space-3) var(--space-4);
+  border-radius: var(--radius-card); border: 2px solid var(--line);
+  background: var(--surface); color: var(--ink);
+  font-family: var(--font-sans); text-align: left; cursor: pointer;
+}
+.nl-candidate:focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: 3px; }
+.nl-candidate__rank { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: var(--radius-chip); background: var(--surface-sunken); font-family: var(--font-mono); font-size: 18px; font-weight: 500; color: var(--ink-muted); }
+.nl-candidate__text { font-size: 26px; line-height: 34px; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.nl-candidate.is-selected { background: var(--ember-soft); border-color: var(--focus); box-shadow: 0 0 0 2px var(--focus); }
+.nl-candidate.is-selected .nl-candidate__rank { background: var(--ember); color: var(--on-ember); }
+.nl-candidate.is-selected.is-lit { box-shadow: 0 0 0 var(--scan-width) var(--ember), 0 0 0 calc(var(--scan-width) + 3px) var(--plum); }
+
+/* Speak bar */
+.nl-speakbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4);
+  padding: var(--space-4) var(--space-4) var(--space-4) var(--space-6);
+  border-radius: var(--radius-card); background: var(--surface-sunken); color: var(--ink);
+  font-family: var(--font-sans);
+}
+.nl-speakbar__text { flex: 1 1 280px; min-width: 0; margin: 0; font-size: 40px; line-height: 48px; font-weight: 600; overflow-wrap: anywhere; }
+.nl-speakbar__text.is-empty { color: var(--ink-muted); font-weight: 400; }
+.nl-speakbar__partial { color: var(--ink-muted); text-decoration: underline dotted 2px; text-underline-offset: 6px; }
+.nl-speakbar__digits { display: block; margin-top: var(--space-1); font-family: var(--font-mono); font-size: 20px; line-height: 28px; font-weight: 500; letter-spacing: 0.06em; color: var(--ink-muted); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .nl-keypad__row, .nl-key, .nl-scanrow, .nl-candidate, .nl-btn { transition: box-shadow 120ms linear, background-color 120ms linear; }
+}

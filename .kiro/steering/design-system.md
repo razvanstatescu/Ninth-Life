@@ -1,0 +1,46 @@
+---
+inclusion: fileMatch
+fileMatchPattern: ["packages/web/**/*.tsx", "packages/web/**/*.css", "packages/web/**/*.ts"]
+---
+
+# Design system: use it, do not reinvent it
+
+The source of truth is `design/system/`:
+
+- `design/system/README.md`: voice, color, type, shape, motion, accessibility, surfaces, logo.
+- `design/system/tokens.json`: every color (Night and Day values), type style, spacing, size, radius and shadow.
+- `design/system/components/<Name>/README.md` and `preview.html`: Button, Key, Keypad, ProofChip, Candidate, SpeakBar (plus Cover). Styles in `design/system/components/bundle.css`, classes prefixed `nl-`.
+- `design/system/assets/Logos/`: the icon and favicon. Do not redraw them.
+
+Read the component README before building or changing that component. If something you need is missing, add it to the design system first (tokens, then component), then use it.
+
+## Tokens
+
+- Use CSS custom properties named exactly like the tokens (`var(--ember)`, `var(--surface-sunken)`, `var(--space-4)`, `var(--target-min)`, `var(--radius-key)`). No raw hex, px sizes or shadows in components except where a token does not exist yet; then add the token.
+- Themes: **Night** is the default and the brand; **Day** follows `prefers-color-scheme: light` or the setting. Every token has both values. Keypad keys (`--key` plum, `--on-key`) are the same in both themes.
+- Spacing is a 4px scale: 4, 8, 12, 16, 24, 32, 48, 64, 96.
+- Sizes: `target-min` 56px, `key-min` 72px, `key-size` 96px, `key-xl` 128px, `focus-width` 4px, `scan-width` 6px.
+- Radii: chip 14px, key 24px, card 28px, panel 44px, pill.
+- Shadows: `lift` only on the keypad panel (the one floating element); `glow-ember` only on the lit key.
+
+## Type
+
+- Families: **Atkinson Hyperlegible Next** for everything, **Atkinson Hyperlegible Mono** for key sequences.
+- Load them with `next/font` so the files are self-hosted at build time. Do not hotlink Google Fonts from the browser (no `@import` of fonts.googleapis.com in app CSS; `bundle.css` does that for previews only), because a runtime request sends every visitor's IP address to a third party.
+- Version note (checked 2026-11-06): `next/font/google` knows "Atkinson Hyperlegible Next" and "Atkinson Hyperlegible Mono" only from **Next.js 15.4.0**. The repo pins 15.1.3, where only the older "Atkinson Hyperlegible" exists. Either upgrade Next (also needed for security fixes) or use `next/font/local` with the OFL font files and their license in the repo.
+- Styles: `utterance` 40px/600 is the largest text in the app; `candidate` 26px/600; `key-letters` 30px/700 with `key-digit` 15px mono; `body-lg` 20px is default app body; `label` 16px/600 is the smallest app text; `caption` 14px website and video only.
+
+## Components and rules that are easy to break
+
+- **Key:** letters lead (30px bold), the digit is small in the corner. `aria-label` is "4, G H I". Lit state = ember fill + plum inner ring + `glow-ember`; only one key lit at a time. Pressed = inner ember ring, never color alone.
+- **Keypad:** fixed layout (1 punctuation, 2 to 9 letters, `*` Back, `0` Space, `#` Next). Never reorder keys, hide digits or add keys. Scanning: active row gets `is-scanning`, active key `is-lit`; highlight jumps, never slides.
+- **Button:** primary (ember) is one per screen and is almost always Speak (`nl-btn--xl`, 80px). Secondary, quiet and danger variants as in the README. Danger asks to confirm.
+- **Candidate:** up to 5, ranked; selecting does not speak, Speak does; `aria-pressed` for selection; every listed candidate already passed the proof check.
+- **ProofChip:** match (check icon, solid border), new (plus icon, dashed border), reject (x icon, struck through, never spoken). Announce the state as a word.
+- **SpeakBar:** the sentence in `utterance`, the key sequence under it in mono `ink-muted`, then Speak. Empty state says "Press a key to start". Never truncate.
+- **Icons:** inline SVG, 24px grid, 2.5px round stroke, `currentColor`. No emoji, no filled glyph sets, no pictures of people, no mascot, no cartoon cat.
+- **Copy:** plain verbs, sentence case, no exclamation marks, numbers as digits. See the Write / Not table in the README.
+
+## Spooky, but calm
+
+Kiroween wants atmosphere; our users need calm. Night theme, the cat-ear bubble and the one ember key carry the mood. No flicker, fog animation, jump scares, dripping text or low-contrast "ghost" text in the app. The website hero and the video may use slow fades.

@@ -1,0 +1,134 @@
+{
+  "harness": "ninth-eval/1",
+  "fixture": {
+    "path": "fixtures/test.v1.jsonl",
+    "sha256": "9fefd9dbeacda45ac7b0897336df2be952ca94a6e7f92ab24f27ef88f4ff9749",
+    "rows": 866
+  },
+  "lexicon": {
+    "sha256": "9c0cbf73366f46fe28326b08fc3023f56d34db2f2785a5d319be0846b8eee25f",
+    "words": 58908
+  },
+  "bigram": {
+    "sha256": "9bbfc725d49c5d2d8efc3f0aa879a905e57051f1c8038625f3e90ea4cf8b4819"
+  },
+  "subset": {
+    "quick": false,
+    "seed": 9,
+    "items": 866
+  },
+  "k": 5,
+  "mode": "letter",
+  "configs": [
+    {
+      "id": "B0",
+      "label": "B0 dict",
+      "status": "ok",
+      "metrics": {
+        "items": 866,
+        "words": 4890,
+        "wordAcc": 0.9143,
+        "top1": 0.6236,
+        "top5": 0.918,
+        "ksr": -0.0126,
+        "scanStepsPerChar": 3.6098,
+        "pressesPerChar": 1.0126,
+        "invalidPreValidator": null,
+        "unreachable": 15,
+        "usdPer1k": null
+      },
+      "bySource": {
+        "aac": {
+          "items": 566,
+          "words": 2730,
+          "wordAcc": 0.911,
+          "top1": 0.6537,
+          "top5": 0.9417,
+          "ksr": -0.0163,
+          "scanStepsPerChar": 3.6223,
+          "pressesPerChar": 1.0163,
+          "invalidPreValidator": null,
+          "unreachable": 7,
+          "usdPer1k": null
+        },
+        "turk": {
+          "items": 300,
+          "words": 2160,
+          "wordAcc": 0.9185,
+          "top1": 0.5667,
+          "top5": 0.8733,
+          "ksr": -0.0082,
+          "scanStepsPerChar": 3.5948,
+          "pressesPerChar": 1.0082,
+          "invalidPreValidator": null,
+          "unreachable": 8,
+          "usdPer1k": null
+        }
+      }
+    },
+    {
+      "id": "B1",
+      "label": "B1 ghost",
+      "status": "ok",
+      "metrics": {
+        "items": 866,
+        "words": 4890,
+        "wordAcc": 0.9679,
+        "top1": 0.8545,
+        "top5": 0.9711,
+        "ksr": -0.0009,
+        "scanStepsPerChar": 3.5692,
+        "pressesPerChar": 1.0009,
+        "invalidPreValidator": null,
+        "unreachable": 15,
+        "usdPer1k": null
+      },
+      "bySource": {
+        "aac": {
+          "items": 566,
+          "words": 2730,
+          "wordAcc": 0.9733,
+          "top1": 0.8869,
+          "top5": 0.9841,
+          "ksr": -0.0019,
+          "scanStepsPerChar": 3.5742,
+          "pressesPerChar": 1.0019,
+          "invalidPreValidator": null,
+          "unreachable": 7,
+          "usdPer1k": null
+        },
+        "turk": {
+          "items": 300,
+          "words": 2160,
+          "wordAcc": 0.9611,
+          "top1": 0.7933,
+          "top5": 0.9467,
+          "ksr": 0.0002,
+          "scanStepsPerChar": 3.5633,
+          "pressesPerChar": 0.9998,
+          "invalidPreValidator": null,
+          "unreachable": 8,
+          "usdPer1k": null
+        }
+      }
+    },
+    {
+      "id": "B2",
+      "label": "B2 LLM raw",
+      "status": "not-run",
+      "note": "no LLM backend configured (pass --llm <module>)"
+    },
+    {
+      "id": "B3",
+      "label": "B3 LLM+val",
+      "status": "not-run",
+      "note": "no LLM backend configured (pass --llm <module>)"
+    },
+    {
+      "id": "B4",
+      "label": "B4 lattice+val",
+      "status": "not-run",
+      "note": "no LLM backend configured (pass --llm <module>)"
+    }
+  ]
+}

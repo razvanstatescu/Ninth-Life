@@ -1,0 +1,175 @@
+"""Shared helpers for the Ninth Life data build scripts.
+
+These mirror the `@ninth/core` contract (docs/architecture/contracts.md section 1):
+normalize() is NFKD + strip combining marks + lowercase + fold curly apostrophes, and
+encode_word() maps a-z to keypad digits 2-9, skipping apostrophes.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+import unicodedata
+from pathlib import Path
+
+EVAL_DIR = Path(__file__).resolve().parent.parent
+REPO_ROOT = EVAL_DIR.parent.parent
+CACHE_DIR = EVAL_DIR / ".cache"
+DATA_DIR = REPO_ROOT / "data"
+
+KEY_LETTERS = {
+    "2": "abc",
+    "3": "def",
+    "4": "ghi",
+    "5": "jkl",
+    "6": "mno",
+    "7": "pqrs",
+    "8": "tuv",
+    "9": "wxyz",
+}
+KEYMAP = {ch: d for d, letters in KEY_LETTERS.items() for ch in letters}
+
+# U+2018 U+2019 U+02BC per the contract; U+00B4 and U+0060 per ADR-core-001. Folded before NFKD
+# (which would turn U+00B4 into a space plus a combining accent) and again after it.
+_APOSTROPHES = re.compile("[‘’ʼ´`]")
+# A lexicon word: letters, optionally joined by single internal apostrophes.
+WORD_RE = re.compile(r"[a-z]+(?:'[a-z]+)*")
+WORD_FULL_RE = re.compile(r"^[a-z]+(?:'[a-z]+)*$")
+
+
+def normalize(text: str) -> str:
+    text = _APOSTROPHES.sub("'", text)
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(ch for ch in text if not unicodedata.category(ch).startswith("M"))
+    return _APOSTROPHES.sub("'", text.lower())
+
+
+def encode_word(word: str) -> str | None:
+    out = []
+    for ch in normalize(word):
+        if ch == "'":
+            continue
+        d = KEYMAP.get(ch)
+        if d is None:
+            return None
+        out.append(d)
+    return "".join(out) or None
+
+
+# Characters that separate words inside a whitespace token ("t-shirt", "and/or").
+_SPLIT_RE = re.compile(r"[-‐-―/_]+")
+# Punctuation that may wrap a word and is dropped.
+_EDGE_PUNCT = "\"'.,!?;:()[]{}<>*~`“”…"
+
+
+def tokenize(text: str) -> tuple[list[str], bool]:
+    """Split a sentence into lexicon-style words.
+
+    Returns (words, clean). `clean` is False when some token could not be typed with
+    letter keys (digits, symbols, non-Latin letters), so callers can drop the sentence
+    rather than silently change what the person "said".
+    """
+    words: list[str] = []
+    clean = True
+    for raw in normalize(text).split():
+        for part in _SPLIT_RE.split(raw):
+            part = part.strip(_EDGE_PUNCT)
+            if not part:
+                continue
+            if WORD_FULL_RE.match(part):
+                words.append(part)
+            else:
+                clean = False
+    return words, clean
+
+
+_SENT_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
+
+
+def split_sentences(text: str) -> list[str]:
+    return [s for s in _SENT_SPLIT_RE.split(text.strip()) if s]
+
+
+def tokenize_marked(text: str) -> list[str | None]:
+    """Like tokenize() but keeps a None where an untypable token was, so n-gram
+    training can break the chain there instead of inventing a bigram across it."""
+    out: list[str | None] = []
+    for raw in normalize(text).split():
+        for part in _SPLIT_RE.split(raw):
+            part = part.strip(_EDGE_PUNCT)
+            if not part:
+                continue
+            out.append(part if WORD_FULL_RE.match(part) else None)
+    return out
+
+
+def sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 16), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def read_lines(path: Path) -> list[str]:
+    with open(path, encoding="utf-8") as f:
+        return [ln.rstrip("\n").rstrip("\r") for ln in f]
+
+
+_TURK_ID_RE = re.compile(r"^(chain\d+_[\d_]+)")
+
+
+def load_turk(cache: Path = CACHE_DIR) -> list[dict]:
+    """Turk dialogues that survived the offensive-content filter, with their split.
+
+    turk-dialogues.txt is cleanly tab-separated (set, id, turn1..turn6). The filtered
+    file has the same ids but its column delimiters are inconsistent (tabs sometimes
+    replaced by runs of spaces, some records wrapped over lines), so turn boundaries
+    cannot be recovered from it reliably. We therefore take the *set of ids* from the
+    filtered file and the turn text and split label from the original file.
+    Sorted by id for determinism.
+    """
+    keep = set()
+    for ln in read_lines(cache / "turk" / "turk-dialogues-filtered.txt"):
+        m = _TURK_ID_RE.match(ln)
+        if m:
+            keep.add(m.group(1))
+    orig = read_lines(cache / "turk" / "turk-dialogues.txt")
+    header = orig[0].split("\t")
+    assert header[:2] == ["set", "id"], header
+    out = []
+    for ln in orig[1:]:
+        if not ln.strip():
+            continue
+        cols = ln.split("\t")
+        assert len(cols) == 8, (len(cols), ln[:80])
+        if cols[1] not in keep:
+            continue
+        out.append({"id": cols[1], "split": cols[0], "turns": [t.strip() for t in cols[2:]]})
+    out.sort(key=lambda d: d["id"])
+    return out
+
+
+def load_aac(split: str, cache: Path = CACHE_DIR) -> list[str]:
+    path = cache / "imagine" / f"sent_{split}_aac.txt"
+    return [ln.strip() for ln in read_lines(path) if ln.strip()]
+
+
+def write_json(path: Path, obj, one_key_per_line: str | None = None) -> None:
+    """Deterministic compact JSON. If one_key_per_line names a dict field, each of its
+    entries goes on its own line (diff-friendly) at negligible size cost."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if one_key_per_line is None:
+        text = json.dumps(obj, ensure_ascii=False, separators=(",", ":"), sort_keys=False)
+    else:
+        inner = obj[one_key_per_line]
+        head = {k: v for k, v in obj.items() if k != one_key_per_line}
+        head_txt = json.dumps(head, ensure_ascii=False, separators=(",", ":"))[:-1]
+        lines = [
+            json.dumps(k, ensure_ascii=False) + ":" + json.dumps(v, ensure_ascii=False, separators=(",", ":"))
+            for k, v in inner.items()
+        ]
+        text = head_txt + "," + json.dumps(one_key_per_line) + ":{\n" + ",\n".join(lines) + "\n}}"
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(text + "\n")
