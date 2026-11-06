@@ -54,3 +54,6 @@
   - [x] 14.3 Measured (a) letter penalty, (b) acronyms drop/down (SCOWL and no-vowel), (c) non-dictionary drop/down on B0/B1, full set and Turk subset; shipped (a) + (b) + (c) down 1.0; data rebuilt, `eval.lock` refreshed (fixture unchanged), `RESULTS.md` regenerated
 - [x] 15. Offensive-readings report for D7, LDNOOBW list (CC BY 4.0) in the cache only (Req 7.1–7.4) — P16
 - [ ] 16. Review the slur marks in `src/offensive.ts` with the team before deciding D7
+- [x] 17. Compact lexicon `data/lexicon/en.v2.json` from `build_lexicon.py` (`compact_lexicon`, `--compact-only`), ADR-data-003 (Req 5.9)
+  - [x] Python: lossless + deterministic for 300 random v1 dicts, JavaScript key order, committed v2 in sync (`scripts/test_build_lexicon.py` `CompactTest`)
+  - [x] TS: header, order, v1 and v2 load to the same Lexicon (`test/compact.test.ts`); `--lexicon data/lexicon/en.v2.json` gives the same `RESULTS.json` as v1 apart from the lexicon SHA-256

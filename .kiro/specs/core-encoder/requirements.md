@@ -44,8 +44,9 @@ completions as I type, so that I need as few presses as possible.
     descending frequency order (ties in file order), or `[]` if there are none, as a copy the
     caller cannot use to change the lexicon.
 2.2 WHEN `completions(prefix, k)` is called, THE lexicon SHALL return the k most frequent words whose
-    code starts with prefix (including the exact code), in descending frequency order, k = 5 by
-    default, reading precomputed top-5 lists from a digit trie for k <= 5.
+    code starts with prefix (including the exact code), in descending frequency order (ties in load
+    order), k = 5 by default. (Since ADR-data-003 the answer comes from a sorted code index and a
+    per-prefix cache instead of a precomputed trie; the results are the same.)
 2.3 WHEN `has(word)` or `zipf(word)` is called, THE lexicon SHALL normalize the word first, and
     SHALL NOT treat inherited object keys (e.g. "constructor") as words.
 2.4 WHEN `addWords` is called, THE lexicon SHALL add unknown encodable words (zipf 3.0 + boost),
@@ -55,7 +56,19 @@ completions as I type, so that I need as few presses as possible.
 2.6 WHEN a lexicon file is loaded, THE lexicon SHALL re-encode every word, file it under its real
     code, and drop words that cannot be encoded, so that every word `lookup(code)` returns encodes
     to code.
-2.7 IF a lexicon file is not version 1, THEN THE lexicon SHALL throw a TypeError.
+2.7 IF a lexicon file is neither version 1 (with `codes`) nor version 2 (with `words`), THEN THE lexicon
+    SHALL throw a TypeError.
+2.8 WHEN a lexicon file is loaded, THE lexicon SHALL encode a word that is plain a-z and apostrophes
+    with a per-letter table and SHALL send every other word through `normalize` and `encodeWord`, AND
+    the result SHALL equal loading every word through `normalize` and `encodeWord` (plan F9, C1).
+2.9 WHEN a version 2 file (`LexiconFileV2`, ADR-data-003) is loaded, THE lexicon SHALL derive every
+    code from its word, AND SHALL give the same `size`, `lookup`, `zipf` and `completions` as the
+    version 1 file it was built from; a list that arrives in rank order SHALL NOT be sorted again.
+2.10 THE lexicon SHALL build its completion index without ranking the whole vocabulary, either on
+    `prepare()` or on the first `completions()` call, SHALL keep it exact after `addWords` (new codes
+    inserted, cached answers dropped), AND `prepare()` SHALL be idempotent.
+2.11 THE shipped `data/lexicon/en.v2.json` SHALL load to the same lexicon as `data/lexicon/en.v1.json`
+    (every `lookup`, every `zipf`, `size`, and `completions(p, 12)`).
 
 ## Requirement 3: Validator
 **User story:** As a person who relies on the app to speak for me, I want a guarantee that nothing is

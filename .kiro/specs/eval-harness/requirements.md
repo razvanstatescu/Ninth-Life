@@ -85,6 +85,10 @@ numbers reflect the effort a person would spend.
 5.6 WHEN a data build is re-run on the same inputs, THE builder SHALL produce byte-identical output.
 5.7 THE `data/` directory SHALL carry the CC BY-SA 4.0 license and a NOTICE crediting wordfreq and its upstream sources, the AACText and Turk datasets, and UNC CLDS Universal Core.
 5.8 THE lexicon builder SHALL lower by `--down-zipf` (default 1.0, floored at the minimum Zipf) the words that SCOWL lists only in capitals (acronyms) and the words in no SCOWL list, SHALL NOT remove any word by doing so, and SHALL leave one-letter words, dictionary words and names unchanged (ADR-data-002). SCOWL SHALL be fetched with a pinned SHA-256 and SHALL NOT be committed.
+5.9 THE lexicon builder SHALL also emit `data/lexicon/en.v2.json` (`LexiconFileV2`, ADR-data-003) from `en.v1.json`: the
+    same words and `zipfX10`, grouped by `zipfX10` highest first, in the order JavaScript reads v1 inside a group, with
+    `derived_from.sha256` naming the v1 file; it SHALL be byte-identical for the same v1, AND the committed v2 SHALL be
+    what the builder derives from the committed v1.
 
 ## Requirement 6: Determinism
 

@@ -33,8 +33,20 @@
 - [x] 15. Smoke test against `data/lexicon/en.v1.json`, skipped when absent (Req 5.3)
 - [x] 16. Mutation check of the property suite; record findings in `docs/architecture/core.md` "PBT findings"
 - [ ] 17. Optional: per-word display forms (restore diacritics, e.g. "mâine") — needs a `LexiconFile` change (Req 1.2 follow-up)
-- [ ] 18. Optional: smaller trie (top-5 only on nodes with > 5 words below) if phones show memory pressure (Req 2.2 follow-up)
+- [x] 18. ~~Optional: smaller trie~~ Superseded by task 21: no trie at all (sorted code index), about 15 MB of heap for lexicon + index instead of 22 MB (Req 2.2 follow-up)
 - [x] 19. One-letter penalty in `unigramModel` / `bigramModel` (`LmOptions`, default -3, a/i exempt), plan F2, ADR-core-002 (Req 4.5, 5.8)
   - [x] 19.1 Property P21: only one-letter scores drop, by at most the penalty (Req 4.5)
   - [x] 19.2 Property P22: the penalty only reorders; exhaustive beams hold the same sentences (Req 5.8)
   - [x] 19.3 Smoke: `4 6333 92837` has no stray letter in the top 5 on `en.v1.json` (Req 5.8)
+- [x] 20. Fast `Lexicon.fromJSON` (plan F9, C1): per-letter table for plain words, `normalize` only for the rest; sort only the lists that arrive out of order (Req 2.8)
+  - [x] 20.1 Property: the fast path loads exactly what the old normalize-every-word loader did, lying files included (`test/lexicon.test.ts`, Req 2.8)
+  - [x] 20.2 Example: fullwidth, curly-apostrophe and accented words still take the safe path (Req 2.8)
+  - [x] 20.3 Mutation check: skipping the out-of-order sort is killed by Req 2.8 and Req 2.9
+- [x] 21. Completion index instead of the digit trie: sorted codes, binary search, best k over the run, per-prefix cache; `prepare()` (Req 2.2, 2.10)
+  - [x] 21.1 Property: after `prepare()` and a warm cache, `addWords` gives the same completions as a cold lexicon (Req 2.10)
+  - [x] 21.2 Mutation check: appending a new code instead of inserting it in order is killed by Req 2.10
+- [x] 22. `LexiconFileV2` loader (ADR-data-003) (Req 2.7, 2.9)
+  - [x] 22.1 Property: a random v1 file and its v2 twin load to the same lexicon, `completions(p, 12)` included (Req 2.9)
+  - [x] 22.2 Smoke: `en.v2.json` decodes "4 6333 92837" to "i need water" and completes 54824 to "kitchen" (`test/smoke.test.ts`, Req 2.11)
+  - [x] 22.3 Real data: v1 and v2 load to the same lexicon (`packages/eval/test/compact.test.ts`, Req 2.11)
+- [ ] 23. Optional: parse in a Web Worker. Not justified by the numbers in `docs/testing/performance.md` (parse is off the key path and under 100 ms on desktop); revisit if a real low-end phone shows a long task during loading (Req 2.9 follow-up)

@@ -39,8 +39,13 @@ export interface LexiconFile {            // data/lexicon/<lang>.v1.json
   v: 1; lang: string; source: string; license: string;
   codes: Record<string, [word: string, zipfX10: number][]>; // words sorted by frequency desc
 }
+export interface LexiconFileV2 {          // data/lexicon/<lang>.v2.json, compact (ADR-data-003)
+  v: 2; lang: string; source: string; license: string;
+  words: [zipfX10: number, words: string][]; // one group per zipfX10, highest first; words space-separated; no codes
+}
 export class Lexicon {
-  static fromJSON(file: LexiconFile): Lexicon;
+  static fromJSON(file: LexiconFile | LexiconFileV2): Lexicon; // both load to the same Lexicon; codes always derived
+  prepare(): void;                                 // build the completion index now (idle time); optional
   readonly lang: string;
   lookup(code: string): string[];                 // exact code, frequency order, [] if none
   has(word: string): boolean;                     // normalized
@@ -91,12 +96,16 @@ export function scanReducer(cfg: ScanConfig, s: ScanState, e: ScanEvent): { stat
 | File | Shape | Notes |
 |---|---|---|
 | `data/lexicon/en.v1.json` | `LexiconFile` | wordfreq 3.1.1 `top_n_list('en', 60000)`, Zipf >= 2.0, a-z plus internal apostrophe; acronyms and words in no SCOWL list down-weighted 1.0 Zipf (ADR-data-002) |
+| `data/lexicon/en.v2.json` | `LexiconFileV2` | the same words and zipfX10 as `en.v1.json`, grouped by zipfX10 (highest first), in the order JavaScript reads v1 inside a group, no codes; built from v1 by `build_lexicon.py` (`--compact-only` offline); `derived_from.sha256` names the v1 file. **The web app ships this file**; the eval and the Python builders read v1 (ADR-data-003) |
 | `data/lexicon/en.bigram.v1.json` | `BigramFile` | AACText + Turk **train** splits only (test stays held out) |
 | `data/packs/core-en.json` | `VocabPack` | Universal Core 36 words + common AAC phrases, generic only, no personal names |
 | `data/NOTICE.md`, `data/LICENSE` | | attribution, CC BY-SA 4.0 |
 
 The web app (Next.js) loads these from `/data/...` (copied into `packages/web/public/data/` by
 `packages/web/scripts/copy-data.mjs`, run on `predev` / `prebuild`). Never import them into the JS bundle.
+It fetches `en.v2.json`, the bigram file and the pack in parallel, at `/data/...json?v=<content hash>`
+(`dataUrl()` in `packages/web/lib/data.ts`; the hash comes from the build), which is also the URL the
+service worker precaches.
 
 ## 3. Decode HTTP API (`packages/decoder`)
 

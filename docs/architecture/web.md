@@ -30,6 +30,8 @@ Spec: `.kiro/specs/web-ui/` (requirements, design, tasks). Contracts: `docs/arch
 | `ScanBar` | artboard scan control | "Switch scanning: 1.2 s a step", Slower, Faster |
 | `Sheet`, `SettingsSheet`, `PhrasesSheet` | Interface kit | Native `<dialog>` sheets; Close is the first scan row. Phrases has saved phrases and the pack's quick phrases |
 | `ShowMode` | | Full-screen big text when there is no voice |
+| `SpellSheet` | ProofChip `new` + Interface kit | "Spell this word": one radio row per key with only its letters (Req 19) |
+| `MyWordsSheet` | Interface kit | My words: list, Remove, Add a word, word pack import / preview / export (Req 21, 22) |
 | `Footer` | website footer | Statement and About link (16px in the app, not `caption`) |
 
 ## State model
@@ -45,6 +47,10 @@ layout    'wide' (>= 960px) | 'compact', matchMedia                         ← 
 scanner   ScanState from @ninth/core scanReducer                          ← lib/useScanner.ts
 sheetScan second scanReducer over the open sheet's data-scan-row rows    ← lib/useOverlayScan.ts
 phrases   IndexedDB 'phrases' (only after Save phrase)                    ← lib/storage.ts
+myWords   IndexedDB 'words' (only after Add to my words / a pack import)  ← lib/myWords.ts, lib/storage.ts
+          applied with lexicon.addWords on load and on add; lexVersion bumps decoding
+display   folded word -> person's spelling (my words + spelled this visit), applied only to text
+fallback  decodeAround(composer) when no full sentence: known words ranked, null = not spelled yet
 ```
 
 What is on show: a chosen sentence, else rank 1, else word by word. `#` pins the next reading of the last word;
@@ -70,8 +76,9 @@ Focus in a text field turns shortcuts off. When a button or link has focus, Ente
 In switch modes, a press on the page outside any control is also the switch. While a sheet is open in a switch
 mode, Space and Enter (and a press on the sheet or backdrop) drive the sheet's scan instead.
 
-Scan grid: rows 0-3 keypad, row 4 sentences on show (+ More/Fewer; skipped when empty), row 5 Speak / Clear /
-Save phrase / Show, row 6 the header (Menu on compact screens, Phrases / Voice / Settings on wide ones).
+Scan grid: rows 0-3 keypad, row 4 sentences on show (+ More/Fewer; skipped when empty), row 5 "Add to my words"
+offers (skipped when empty), row 6 Speak / Clear / Save phrase / Show / Spell this word, row 7 the header (Menu on
+compact screens, Phrases / Voice / Settings on wide ones).
 Any key is at most 4 + 3 = 7 steps away; this keypad-first order is also the access-modes spec's (F3).
 
 Sheet scanning: rows are the `data-scan-row` elements in the open `[data-overlay]` dialog, Close first; it starts by
@@ -79,6 +86,17 @@ itself on Close and returns there after each choice. Sliders have buttons (scan 
 voice picker has Previous / Next voice, so every setting works with a switch. The scan mode is latched while the
 sheet is open, so turning scanning off (Keyboard, Touch) or switching modes takes effect on Close and can be undone
 before then. Focus rests on the sheet, not a button, so the scan highlight stays the one ember thing.
+
+## Your words: spell mode and my words
+
+Full design and the pack format: [vocab-packs.md](vocab-packs.md). In short: keys with no dictionary word show their
+digits and a "not spelled yet" chip while the other words are still ranked (`decodeAround`); "Spell this word" opens
+`SpellSheet`, whose rows offer only each key's letters (valid by construction, checked with `encodeWord`), and "Use
+this word" pins the word to its slot. A word not in the person's words is `new` and gets "Not in your words yet. Add
+it?". My words live in IndexedDB, are raised with `lexicon.addWords`, and keep the person's spelling through a
+display map applied just before `formatSentence` (the core stays folded; this resolves the case question in
+ADR-core-001). Removing a word reloads the dictionary with `loadDictionary()` and re-applies the rest, because the
+lexicon can only raise words. Spell sheet keys: 1-4 pick a letter and move on, arrows move, Enter uses the word.
 
 ## Layout
 

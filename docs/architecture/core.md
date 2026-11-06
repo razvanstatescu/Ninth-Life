@@ -17,7 +17,7 @@ and in the eval CLI. `package.json` points `main`/`exports` at `src/index.ts`; c
 |---|---|---|
 | `src/keymap.ts` | `KEYMAP`, `KEY_LETTERS`, `DIGITS`, `normalize`, `encodeWord`, `encodeSentence`, `tokenize`, `digitOf`, `isCode`, types `Mode`, `Digit` | Letters to keys. Normalization (NFKD, strip marks, lowercase, fold apostrophes). |
 | `src/validator.ts` | `validate`, `matchesCode`, `proof`, types `ProofState`, `WordProof` | The safety core: a candidate is speakable only if every word encodes to its code. |
-| `src/lexicon.ts` | `Lexicon`, `LexiconFile`, `TRIE_TOP_K`, `NEW_WORD_ZIPF` | Exact code -> words map, lazy digit trie with top-5 completions per node, vocab packs. |
+| `src/lexicon.ts` | `Lexicon`, `LexiconFile`, `LexiconFileV2`, `TRIE_TOP_K`, `NEW_WORD_ZIPF` | Exact code -> words map, sorted code index with cached completions, vocab packs; loads v1 and the compact v2 file (ADR-data-003). |
 | `src/lm.ts` | `unigramModel`, `bigramModel`, `LanguageModel`, `BigramFile`, `LmOptions`, `BOS`, `LOGP_FLOOR`, `DEFAULT_LETTER_PENALTY`, `SPOKEN_LETTERS` | log10 scores for the beam, with the one-letter penalty (ADR-core-002). |
 | `src/decode.ts` | `lattice`, `beam`, `decodeGhost`, `Candidate`, `GhostOptions`, defaults | Ghost mode: offline decoding, no LLM. |
 | `src/format.ts` | `formatSentence`, `Punct` | Sentence case, `i` -> `I`, punctuation. Runs after validation and never changes words. |
@@ -44,15 +44,27 @@ slot code (letter mode), or the slot code must be one digit equal to the word's 
 mode). `proof` gives the per-word verdict for the proof panel: `match` (in lexicon), `new` (encodes
 but unknown, e.g. a name, shown amber), `reject` (never spoken).
 
-### Lexicon and digit trie
-`fromJSON` normalizes and **re-encodes** every word, so a data error cannot put a word under a code
-it does not type. Entries are kept in a `Map` by word and a `Map` by code (sorted by effective zipf,
-ties in file order). The trie is built lazily on the first `completions()` call and dropped when
-`addWords` changes a score: all words are sorted once by rank, then each word is pushed into the
-node of every prefix of its code until that node holds `TRIE_TOP_K` (5) words. Because words arrive
-in rank order, the first five to reach a node are its top five, so no per-node merge is needed. The
-trie is stored as a `Map<prefix, string[]>` (one entry per trie node, keyed by its digit path).
-`completions(prefix, k > 5)` walks the rank-ordered array and stops after `k` hits.
+### Lexicon and completion index
+`fromJSON` reads two formats: v1 (`codes`: code -> `[word, zipfX10]` lists) and the compact v2
+(`words`: `[zipfX10, "w1 w2 ..."]` groups, highest first, no codes; ADR-data-003, what the app ships).
+Either way the **code is computed from the word**, so a data error cannot put a word under a code it
+does not type (Req 2.6). A word that is plain a-z and `'` is encoded with a 128-entry per-letter
+table (`normalize` is the identity on such a word); anything else goes through `normalize` and
+`encodeWord` (Req 2.8). `addWords` (vocab packs, my words) always takes the `normalize` path.
+
+Entries are kept in a `Map` by word and a `Map` by code, each code's list in rank order (effective
+zipf desc, ties in load order). A new entry has the largest load number, so a list only needs a sort
+when the new entry outscores the current last one; only those lists are sorted (Req 2.9). v2 groups
+arrive highest zipf first, so loading v2 sorts nothing.
+
+Completions (Req 2.2, 2.10): instead of a trie, the lexicon keeps every code in one **sorted array**
+(built by `prepare()` or the first `completions()` call: one sort of 48k strings). The codes that
+start with a prefix are one contiguous run; a binary search finds it and a single pass keeps the
+best k entries by rank, stopping inside each code's list as soon as an entry cannot make the top k.
+Each answer is cached per prefix (up to 2,048 prefixes) until a score changes. `addWords` inserts a
+new code into the sorted array in place and clears the cache, so nothing is rebuilt. The results are
+identical to the old trie's (both are "the first k words with this prefix in global rank order"),
+and the web app calls `prepare()` and fills the single-key cache in idle time after loading.
 
 ### Language models
 Unigram: `log10 p(w) = zipf(w) - 9`, clamped to [-9, 0]; unknown words get -9. Bigram (Katz /
@@ -95,16 +107,28 @@ B = beam width (32), R = rows.
 |---|---|---|
 | `encodeWord`, `normalize` | O(length) | O(length) |
 | `validate` | O(total characters) | O(1) extra |
-| `Lexicon.fromJSON` | O(N·L + N log N) | O(N) |
+| `Lexicon.fromJSON` (v1 or v2) | O(N·L), plus a sort only for lists out of order | O(N) |
 | `lookup(code)` | O(1) + O(m) copy | O(m) |
-| trie build (lazy, once) | O(N log N + N·L) | O(trie nodes · 5) |
-| `completions(p, k <= 5)` | O(1) + O(k) | — |
-| `completions(p, k > 5)` | O(N) worst case, stops after k hits | O(k) |
+| completion index (`prepare`, once) | O(C log C) for C codes | O(C) |
+| `completions(p, k)`, first call for p | O(log C + codes under p + k log k) | O(k) cached |
+| `completions(p, k)`, cached | O(k) | — |
+| `addWords`, new code | O(C) array insert | — |
 | `beam` / `decodeGhost` | O(n · B·S · log(B·S)) | O(B·S·n) |
 | `scanReducer` | O(R) per event | O(1) |
 
-Measured on `data/lexicon/en.v1.json` (58,906 words) under Node 22 on the dev container:
-JSON parse 32 ms, `fromJSON` 92 ms, lazy trie build 69 ms and about 22 MB of heap, `decodeGhost`
+Measured on the 58,906-word lexicon under Node 22 on the dev container (cold process, 3 runs;
+before ADR-data-003: JSON parse 32 ms, `fromJSON` 92 ms, lazy trie build 69 ms and about 22 MB of
+heap on a faster container):
+
+| | `en.v1.json` | `en.v2.json` |
+|---|---|---|
+| `JSON.parse` | 42-46 ms | 0.3-2 ms |
+| `Lexicon.fromJSON` | 95-101 ms | 64-86 ms |
+| `prepare()` (sort 48,140 codes) | 6 ms | 9-12 ms |
+| first `completions(d, 12)` per single key | | 1-6 ms (then cached) |
+| heap, lexicon + index (+ the parsed file) | 23 MB | 15 MB |
+
+In the browser at 4x CPU the same work is in `docs/testing/performance.md`. `decodeGhost` takes
 0.1-1 ms for 3-7 words and about 2 ms for 18 words with the bigram. With the bigram,
 `["4","6333","92837"]` -> `i need water`, `i want to go home`, `can you help me`,
 `please call my mom` and `thank you very much` all decode top-1; the unigram alone gets
@@ -121,7 +145,9 @@ language:
 
 1. Build `data/lexicon/<lang>.v1.json` in the `LexiconFile` shape with `lang: 'ro'` (or `'es'`).
    Words may be written with diacritics: `fromJSON` normalizes and re-encodes them, and two
-   spellings that fold to the same word keep the higher frequency.
+   spellings that fold to the same word keep the higher frequency. For the web app, also write the
+   compact `<lang>.v2.json` (`build_lexicon.py`'s `compact_lexicon`, ADR-data-003); words with
+   diacritics simply take the `normalize` path on load.
 2. Optionally build `data/lexicon/<lang>.bigram.v1.json` (`BigramFile`); otherwise use
    `unigramModel`.
 3. Load it with `Lexicon.fromJSON(file)` and pass it to `decodeGhost`. Everything else (validator,
@@ -144,10 +170,12 @@ argument, which is a contract change; write an ADR first.
   `[]`. Names come from vocab packs or the LLM path (shown as `new` in the proof panel).
 - **Initials mode is weak offline.** Each slot holds only the 12 most frequent words starting on
   that key; initials mode depends on the LLM.
-- **Trie memory.** About 22 MB of heap for 59k words. If low-end phones struggle, store top-5 lists
-  only for nodes with more than five words below them and answer small subtrees from a sorted code
-  array (same results, much smaller).
-- **`completions(p, k > 5)` is O(N)** in the worst case (rare prefixes); fine at 59k words.
+- **Short prefixes are the slow completions.** A one-digit prefix covers about 6,000 codes: 1-6 ms
+  on desktop the first time, then cached. Initials mode asks for these on every press; the web app
+  fills the eight single-key answers in idle time after loading.
+- **Parsing is on the main thread.** About 65 ms on desktop and 230-270 ms at 4x CPU, during loading
+  only, never in a key press. A Web Worker would move it off the main thread; not worth it yet
+  (`docs/testing/performance.md`).
 - **Unicode letters that do not decompose** (ø, ł, ß, ı) are unencodable, so any word that has one
   is rejected; see above.
 - **Scope.** The engine is a general-purpose text-entry and text-to-speech component.
@@ -190,6 +218,8 @@ and ran the suite (seed 42). Every mutant must be killed by at least one propert
 | Initials validator uses `startsWith` | `Req 3.2 soundness` (after the fix below) | `{"cand":["aa"],"m":"initials","codes":["22"]}` |
 | Initials lattice accepts multi-digit codes **and** the `validate` filter is removed | `Req 5.3 decodeGhost output always passes validate` (after the fix below) | mini lexicon, codes `["6333"]`, initials mode: returned `need`, which does not validate |
 | Only the `validate` filter in `decodeGhost` removed | not killed | expected: the lexicon is already sound, so the filter is defense in depth |
+| Loader skips sorting a list whose new entry outscores the last (ADR-data-003) | `Req 2.8 the per-letter fast path ...`, `Req 2.9 a v2 file loads to the same lexicon ...` | a v1 list in file order with a lower zipf before a higher one |
+| `addWords` appends a new code to the sorted index instead of inserting it in order | `Req 2.10 prepare() and cached completions stay exact after addWords` | a pack word whose code sorts before the last code; its prefix run is split |
 
 The `startsWith` mutant first survived every property: in initials mode the generator only made
 one-digit codes, so `startsWith` and `c[0] ===` never disagreed. The validator generator now also

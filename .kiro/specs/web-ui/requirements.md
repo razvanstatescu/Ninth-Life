@@ -89,8 +89,9 @@ so that motor memory holds and I never tap a key three times.
 
 ## Requirement 8: Switch scanning UI
 8.1 THE scan grid SHALL be: rows 0-3 the keypad rows, row 4 the sentences on show (plus More / Fewer sentences when
-    present; skipped when empty), row 5 Speak, Clear, Save phrase, Show, and row 6 the header (Menu on compact screens;
-    Phrases, Voice, Settings on wide ones), so any key is reachable in at most 4 + 3 = 7 highlight steps. Keypad rows
+    present; skipped when empty), row 5 the "Add to my words" offers (Req 21.2; skipped when empty), row 6 Speak,
+    Clear, Save phrase, Show, Spell this word, and row 7 the header (Menu on compact screens; Phrases, Voice, Settings
+    on wide ones), so any key is reachable in at most 4 + 3 = 7 highlight steps. Keypad rows
     come first because typing is what a switch user does most (Keypad README; M1 review F3).
 8.2 THE active row SHALL get `is-scanning` (ember ring inside a plum ring) and then the active cell `is-lit`.
 8.3 WHILE `access` is `scan1`, THE app SHALL tick every `scanMs` (400-5,000 ms, default 1,200), and Space or Enter SHALL select.
@@ -147,7 +148,7 @@ so that I never scroll to reach a key.
      order) SHALL match that visual order.
 15.2 WHILE compact, THE header SHALL be one row: the icon and name, one status pill that sums up the dictionary,
      offline and model state in a word or two (with the full state as screen reader text), and one Menu button.
-15.3 WHEN Menu is pressed, THE app SHALL open a Menu sheet with Phrases, Voice and Settings and the full status;
+15.3 WHEN Menu is pressed, THE app SHALL open a Menu sheet with Phrases, My words, Voice and Settings and the full status;
      each choice SHALL open its sheet in place of the Menu.
 15.4 WHILE compact, THE app SHALL show at most 3 sentences and a "More sentences" button when there are more;
      WHEN a sentence past the third is chosen (ArrowDown, Alt+4, Alt+5), THE full list SHALL open.
@@ -176,6 +177,11 @@ with my switch, so that I do not need someone else to change my settings.
      and a press on the sheet or its backdrop outside a control SHALL act as the switch.
 16.6 WHILE scanning, THE scan highlight SHALL be the only ember thing: Speak SHALL be quiet, and focus SHALL rest on
      the sheet, not on a button, and SHALL NOT return to a button when the sheet closes.
+16.7 WHILE a sheet is open in a scan mode, WHEN Keyboard or Touch is chosen, THE app SHALL first ask "Turn off switch
+     scanning? You will need a keyboard or touch to turn it back on." in place of the sheet's settings, with Cancel as
+     the first cell of the scan row right after Close, AND SHALL change the setting only on "Turn off"; Cancel, Close
+     or Escape SHALL leave it unchanged. Changing between the two scan modes, or choosing while scanning is not on,
+     SHALL NOT ask (plan F11).
 
 ## Requirement 17: Quick phrases (M1 review F6)
 **User story:** As a person who types to talk, I want common phrases ready to speak, so that I can answer quickly.
@@ -223,3 +229,87 @@ Builds on Req 4. Browser and OS behaviour behind each item: `docs/research/web-s
       screen shows show mode (Req 4.5).
 18.13 THE app SHALL normalize voice language tags (`en_us`, `eng-US-f000`) before matching them, AND SHALL ignore the
       `default` flag when every voice claims it.
+
+## Requirement 19: Spell this word
+**User story:** As a person who types to talk, I want to choose the exact letters of a word, so that I can say names
+and words the dictionary does not have ("Mihai" is 64424, which no dictionary word matches).
+
+19.1 WHILE the dictionary is ready, the mode is letter mode and a word is typed, THE actions row SHALL offer "Spell this
+     word" (visible "Spell" below 600px, accessible name "Spell this word"); it SHALL open spell mode on the first word
+     that is not spelled yet (Req 20.2), else on the last word.
+19.2 Spell mode SHALL show the word in `utterance` type with its keys in mono, and one row per key pressed offering
+     only that key's 3 or 4 letters as radio buttons.
+19.3 THE spelled word SHALL encode to the slot's code: spell mode SHALL NOT offer a letter that is not on the key, AND
+     THE app SHALL check the word with `encodeWord` before it uses it.
+19.4 Touch: a tap chooses a letter. Keyboard: 1 to 4 SHALL choose the nth letter of the current key and move to the
+     next key (after the last, to "Use this word"); ArrowLeft and ArrowRight SHALL change the letter; ArrowUp and
+     ArrowDown SHALL move between keys; Enter on a letter SHALL use the word; Escape SHALL cancel.
+19.5 Switch: THE spell sheet's scan rows SHALL be Close (cancel), then "Use this word" and "Add to my words", then one
+     row per key with its letters as cells, then "Capital first letter" (Req 16.2).
+19.6 WHEN "Use this word" is chosen, THE word SHALL be fixed in that slot of this sentence; IF it is not in the
+     person's words THEN its proof chip SHALL be `new` and THE app SHALL offer "Add to my words" (Req 21.2).
+     "Add to my words" in spell mode SHALL use the word and add it.
+19.7 Spell mode SHALL start from the letters on show (or of the likeliest completion), else the first letter on each
+     key; "Capital first letter" SHALL start on for keys with no dictionary word and off otherwise.
+
+## Requirement 20: Sentences with unknown keys
+20.1 WHEN some slot has no dictionary word, THE app SHALL still rank the words of the other slots in context, AND SHALL
+     list full sentences as soon as every slot has a dictionary, spelled or added word.
+20.2 A slot with neither (a word not spelled yet) SHALL show its digits in the SpeakBar, a dotted proof chip with the
+     words "not spelled yet", and Speak SHALL stay off. An open word that is still a prefix of dictionary words SHALL
+     stay "typing" (Req 1.8).
+20.3 WHILE a word is not spelled yet, THE sentence list SHALL say "Not in your words yet: <digits>. Spell this word to
+     choose its letters, or press Back."
+20.4 Every word that can be spoken SHALL still pass `validate()` against its code; a spelled word that the person
+     changes by typing more keys SHALL be dropped.
+
+## Requirement 21: My words
+**User story:** As a person who types to talk, I want the names and words I use to stay, rank first and keep their
+capital letters, so that I spell each one only once.
+
+21.1 My words SHALL be stored only in IndexedDB on this device, only after the person adds a word ("Add to my words",
+     "Add a word" or a pack import), AND SHALL be sent nowhere except inside the lattice of a model-ranking request
+     while model ranking is on.
+21.2 WHEN a word on show matches its keys but is not in the person's words (`new`), THE proof panel SHALL say "Not in
+     your words yet. Add it?" with an "Add to my words" button; these buttons SHALL be scan row 5 (Req 8.1).
+21.3 My words SHALL open from the Phrases sheet and the Menu, list each word with its keys and Remove (with a
+     confirmation), each word one scan row, 20 at a time with "More words"; a helper SHALL be able to type a word.
+21.4 Added words SHALL be raised with `Lexicon.addWords` (boost 2 zipf units unless a pack says otherwise) when added
+     and on every load, so they rank.
+21.5 THE app SHALL keep the person's spelling ("Mihai", "Ștefan") in a display map and use it in the SpeakBar, the
+     sentence list, the proof, show mode, speech and saved phrases; the dictionary, the proof check and model
+     requests SHALL keep using folded words, and a spelling that does not fold back to its word SHALL be ignored.
+21.6 WHEN a word is removed, THE app SHALL rebuild the dictionary without it (the lexicon can only raise words).
+
+## Requirement 22: Word packs
+22.1 My words SHALL import a `VocabPack` JSON file (contracts.md §4) from a file picker or a pasted https link (a
+     GitHub page link becomes its raw file), AND SHALL export the person's words and saved phrases as one.
+22.2 THE app SHALL validate a pack before use: an id of 1-64 letters, digits, `.`, `-`, `_`; lang `en`; a whole
+     version from 1; a words list of at most 5,000; a phrases list of at most 1,000; at most 1 MB. Each word SHALL be
+     a-z with inner apostrophes after `normalize()` and at most 32 letters, each phrase at most 280 characters; IF the
+     shape is wrong THEN the pack SHALL be refused with one plain sentence, and entries that cannot be typed SHALL be
+     left out and listed.
+22.3 THE app SHALL show what a pack adds (new words, updated words, words already there, phrases, entries left out)
+     AND SHALL add nothing until the person chooses Add.
+22.4 Imported words SHALL keep their spelling (capitals and diacritics).
+22.5 Fetching a pack SHALL send no cookies, no referrer and nothing the person typed, and SHALL give up after 10 s.
+
+## Requirement 23: Dictionary loading performance (plan F9)
+**User story:** As a person on a cheap phone or a school Chromebook, I want the app to be ready quickly and every key
+press to feel instant, so that talking is never held up by the device.
+
+Measured with `scripts/perf-check.mjs`; numbers and method in `docs/testing/performance.md`.
+
+23.1 WHEN the app loads the dictionary, THE app SHALL request the lexicon, the bigram model and the vocab pack at the
+     same time, AND a missing or failed lexicon SHALL read as "missing" while a failed pack or bigram file SHALL NOT stop
+     loading.
+23.2 THE app SHALL fetch the compact lexicon `en.v2.json` (ADR-data-003) and every `/data` file at its content-hashed URL
+     (`?v=`), which SHALL be the URL the service worker precaches, so that the first visit downloads each dictionary file
+     once.
+23.3 WHEN the dictionary is ready, THE app SHALL build the lexicon's completion index and warm decoding in idle time
+     (`requestIdleCallback`, else a timeout), one short step per idle slice, so that no key press pays for it.
+23.4 THE service worker precache SHALL hold what the app needs offline and SHALL NOT hold the 192 and 512 px PNG icons,
+     the Apple touch icon, latin-ext font subsets, the data licence and notice, `en.v1.json`, the polyfills chunk or the
+     pages-router chunks; an offline reload after one visit SHALL still reach "Offline dictionary ready" with no network.
+23.5 ON the Moto G-class profile (4x CPU, Slow 4G), the first load SHALL stay under 700 KB compressed and no key press
+     typing "kitchen" SHALL take over 50 ms; on desktop, lexicon parse SHALL take under 100 ms.

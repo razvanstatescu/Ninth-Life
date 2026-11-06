@@ -10,6 +10,8 @@
  * - after loading, the completion index is built in idle time, so no key press pays for it.
  */
 import {
+  DEFAULT_PER_SLOT,
+  DIGITS,
   Lexicon,
   bigramModel,
   decodeGhost,
@@ -150,22 +152,29 @@ export function whenIdle(fn: () => void, timeout = 2000): void {
 }
 
 /**
- * Do the one-off work of the first key presses ahead of time, in two idle slices: build the
- * lexicon's completion index (a sort of every code), then run one small decode and completion so
- * the engine's code is compiled. Each slice is short; neither changes any result. web-ui Req 23.3.
+ * Do the one-off work of the first key presses ahead of time, one short idle slice per step:
+ * build the lexicon's completion index (a sort of every code), run one small decode so the
+ * engine's code is compiled, then fill the completion cache for each single key (what initials
+ * mode reads on every press). No step changes any result. web-ui Req 23.3.
  */
 export function warmDictionary(state: DictState, schedule: (fn: () => void) => void = whenIdle): void {
   if (state.status !== 'ready') return;
   const { lexicon, lm } = state;
-  schedule(() => {
-    lexicon.prepare();
+  const steps: (() => unknown)[] = [
+    () => lexicon.prepare(),
+    () => decodeGhost(['4', '6333'], { lexicon, lm, k: 5 }),
+    ...DIGITS.map((d) => () => lexicon.completions(d, DEFAULT_PER_SLOT)),
+  ];
+  const run = (i: number) => {
+    if (i >= steps.length) return;
     schedule(() => {
       try {
-        lexicon.completions('4');
-        decodeGhost(['4', '6333'], { lexicon, lm, k: 5 });
+        steps[i]!();
       } catch {
         /* warming is best effort */
       }
+      run(i + 1);
     });
-  });
+  };
+  run(0);
 }

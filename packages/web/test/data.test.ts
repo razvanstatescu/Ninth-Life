@@ -81,7 +81,7 @@ describe('dictionary loading (plan F9, web-ui Req 23)', () => {
     }
   });
 
-  it('Req 23.3: warming builds the completion index, then warms decoding, in two separate idle slices', () => {
+  it('Req 23.3: warming builds the completion index first, then warms decoding and each key, one idle slice per step', () => {
     const lexicon = Lexicon.fromJSON(LEX);
     const prepare = vi.spyOn(lexicon, 'prepare');
     const completions = vi.spyOn(lexicon, 'completions');
@@ -92,9 +92,14 @@ describe('dictionary loading (plan F9, web-ui Req 23)', () => {
     queue.shift()!();
     expect(prepare).toHaveBeenCalledTimes(1);
     expect(completions).not.toHaveBeenCalled();
-    expect(queue).toHaveLength(1);
-    queue.shift()!();
-    expect(completions).toHaveBeenCalled();
+    let slices = 1;
+    while (queue.length) {
+      expect(queue).toHaveLength(1); // one step at a time
+      queue.shift()!();
+      slices++;
+    }
+    expect(slices).toBe(2 + 8);
+    expect(completions.mock.calls.map(([p]) => p)).toEqual(['2', '3', '4', '5', '6', '7', '8', '9']);
     warmDictionary({ status: 'missing' }, (fn) => queue.push(fn));
     expect(queue).toHaveLength(0);
   });

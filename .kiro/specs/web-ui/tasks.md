@@ -75,3 +75,38 @@
       iPhone (first Speak, then Speak again while speaking), Chrome on Android, Edge on Windows; log results in
       `docs/research/web-speech.md` (Req 18.2, 18.3, 18.8, 18.10)
 - [ ] 34. Pass `lang` from the active pack to `pickVoice` in the screen and Settings when ro/es packs land (Req 18.4; owner of the components)
+
+## Your words: spell mode, unknown keys, my words, word packs (Req 19-22)
+- [x] 35. `lib/spell.ts` (letters per key, start letters, `spelledWord` checked with `encodeWord`) and
+      `components/SpellSheet.tsx`: radio rows per key, 1-4 / arrows / Enter, switch rows, capital switch (Req 19.1-19.7)
+  - [x] 35.1 Tests: letters per key, 2,000 random codes and choices all encode to their code, start letters
+        (`test/words.test.ts`); keyboard, arrows and two-switch spelling on the screen (`test/spell.test.tsx`)
+- [x] 36. `lib/sentence.ts` `decodeAround` (beam with a placeholder in empty slots), `unspelled` word state and chip,
+      `spellTarget`; sentence list and proof copy (Req 20.1-20.4)
+  - [x] 36.1 Tests: known words ranked around a hole, not spelled yet blocks Speak, spelled pin gives valid sentences,
+        typing more drops the pin
+- [x] 37. `lib/myWords.ts` (fold, display map, merge, `applyMyWords`), IndexedDB store `words` (DB v2),
+      "Add to my words" offers as scan row 5, `components/MyWordsSheet.tsx` from Phrases and Menu, remove rebuilds the
+      dictionary (Req 21.1-21.6)
+  - [x] 37.1 Tests: boosted words rank and match, display map only changes text, restore on load, remove with confirm,
+        helper-typed word with capitals
+- [x] 38. `lib/vocabPack.ts`: schema check, plan, export, link fetch; preview in My words (Req 22.1-22.5);
+      format in `docs/architecture/vocab-packs.md`
+  - [x] 38.1 Tests: valid pack, every shape error, skipped entries with reasons, plan, export round trip, links, fetch
+        options
+- [x] 39. e2e `test/e2e/spell.mjs`: "hi" + 64424, spell "Mihai" by keyboard and by one switch, add, reload, ranks
+      first; axe on the new states at 390 and 1440, Night and Day (Req 19-21, 9, 10)
+- [ ] 40. Screen reader pass of spell mode (VoiceOver iOS, NVDA): radio rows, live preview, offers (Req 19.2, 21.2)
+
+## Loading performance and scan-off confirm (plan F9, F11)
+- [x] 35. `components/SettingsSheet.tsx`: "Turn off switch scanning?" in place of the settings, Cancel first, row right
+      after Close; asked only when the sheet scans and the choice turns scanning off (Req 16.7)
+  - [x] 35.1 Tests: `test/scan-off-confirm.test.tsx` (switch Cancel and Turn off, tap, Close while asking, no question
+        between scan modes or when not scanning, focus on the question); `test/m1b.test.tsx` Req 16.4 answers it
+- [x] 36. `lib/data.ts`: parallel fetch, `en.v2.json`, `dataUrl()` content-hashed URLs, idle warm-up in steps (Req 23.1-23.3)
+  - [x] 36.1 Tests: `test/data.test.ts` (all three requested before any arrives, failures, old export names, warm-up order, `whenIdle`)
+- [x] 37. `next.config.mjs`: `NEXT_PUBLIC_DATA_REV`, `/data` precached at `?v=` with `revision: null`, trimmed public
+      entries and build chunks (Req 23.2, 23.4)
+- [x] 38. `scripts/perf-check.mjs`: v2 timing with a v1 comparison row, real service-worker install bytes and re-fetched
+      data files; before/after medians in `docs/testing/performance.md` (Req 23.5)
+- [ ] 39. Re-measure on a real low-end Android phone and a school Chromebook before quoting the numbers (Req 23.5)
