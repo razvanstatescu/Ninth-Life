@@ -1,10 +1,10 @@
-import { KEY_LETTERS, validate, type Digit } from '@ninth/core';
+import { KEY_LETTERS, normalize, validate, type Digit } from '@ninth/core';
 import fc from 'fast-check';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { handleDecode, maxTokensFor } from '../src/handler.js';
+import { handleDecode, maxTokensFor, rejectedWordsOf } from '../src/handler.js';
 import { FakeLlmClient } from '../src/llm.js';
 import type { QuotaStore } from '../src/quota.js';
-import type { DecodeResponse } from '../src/schema.js';
+import { DecodeResponseSchema, LIMITS, type DecodeResponse } from '../src/schema.js';
 import { makeDeps, META, oracleValid, requestFor } from './helpers.js';
 
 const ok = (r: { status: number; json: unknown }) => {
@@ -175,6 +175,69 @@ describe('handleDecode: graceful fallback to ghost (DS-2)', () => {
   });
 });
 
+describe('handleDecode: rejected words for the proof panel (F7, DS-1.7)', () => {
+  it('returns the model word that does not match its keys ("wafer" for 92837), with slot and expected code', async () => {
+    const deps = makeDeps({ reply: '{"c":[["i","need","wafer"],["i","need","water"]]}' });
+    const res = ok(await handleDecode(requestFor('i need water'), META, deps));
+    expect(res.candidates.map((c) => c.words.join(' '))).toEqual(['i need water']);
+    expect(res.rejected).toBe(1);
+    expect(res.rejectedWords).toEqual([{ slot: 2, word: 'wafer', expectedCode: '92837' }]);
+    expect(DecodeResponseSchema.safeParse(res).success).toBe(true);
+  });
+
+  it('lists every failing slot, dedupes, keeps model order and caps at 5', async () => {
+    const reply = JSON.stringify({
+      c: [
+        ['you', 'want', 'wafer'],
+        ['you', 'want', 'wafer'],
+        ['he', 'needs', 'wine'],
+        ['we', 'need', 'water'],
+      ],
+    });
+    const res = ok(await handleDecode(requestFor('i need water'), META, makeDeps({ reply })));
+    expect(res.rejected).toBe(4);
+    expect(res.rejectedWords).toEqual([
+      { slot: 0, word: 'you', expectedCode: '4' },
+      { slot: 1, word: 'want', expectedCode: '6333' },
+      { slot: 2, word: 'wafer', expectedCode: '92837' },
+      { slot: 0, word: 'he', expectedCode: '4' },
+      { slot: 1, word: 'needs', expectedCode: '6333' },
+    ]);
+    expect(res.rejectedWords).toHaveLength(LIMITS.maxRejectedWords);
+  });
+
+  it('never returns raw model text: only normalized a-z/apostrophe words of at most 16 characters', async () => {
+    const long = 'w'.repeat(17);
+    const reply = JSON.stringify({ c: [['i', 'need', '<b>x</b>'], ['i', 'need', long], ['i', 'need', 'w4ter'], ['i', 'need', 'WÁFER'], ['i', 'need', "wa'fer"]] });
+    const res = ok(await handleDecode(requestFor('i need water'), META, makeDeps({ reply })));
+    expect(res.rejected).toBe(5);
+    expect(res.rejectedWords).toEqual([
+      { slot: 2, word: 'wafer', expectedCode: '92837' },
+      { slot: 2, word: "wa'fer", expectedCode: '92837' },
+    ]);
+  });
+
+  it('skips sentences with the wrong number of words, and words that a returned sentence also uses', async () => {
+    const reply = '{"c":[["i","need"],["i","water","water"],["i","need","water"]]}';
+    const res = ok(await handleDecode(requestFor('i need water'), META, makeDeps({ reply })));
+    expect(res.rejected).toBe(2);
+    expect(res.rejectedWords).toEqual([]); // "water" in slot 1 is rejected there, but it is spoken in slot 2
+  });
+
+  it('is [] on every degraded path (no model words to show)', async () => {
+    const body = requestFor('i need water', { beams: [['i', 'need', 'water']] });
+    for (const reply of [{ error: new Error('x') }, 'junk', { text: '{"c":[]}', delayMs: 100 }] as const) {
+      const res = ok(await handleDecode(body, META, makeDeps({ reply, timeoutMs: 10 })));
+      expect(res.rejectedWords).toEqual([]);
+      expect(DecodeResponseSchema.safeParse(res).success).toBe(true);
+    }
+  });
+
+  it('rejectedWordsOf in initials mode checks the first key only', () => {
+    expect(rejectedWordsOf([['it', 'zoo']], ['4', '6'], 'initials', [])).toEqual([{ slot: 1, word: 'zoo', expectedCode: '6' }]);
+  });
+});
+
 describe('maxTokensFor', () => {
   it('is 120 for short inputs and capped at 400', () => {
     expect(maxTokensFor(3, 5)).toBe(120);
@@ -302,6 +365,52 @@ describe('properties', () => {
     );
   });
 
+  it('DS-1.7 rejected words are never in candidates, never match their slot, and are safe to show (property)', async () => {
+    let withWords = 0;
+    let runs = 0;
+    await fc.assert(
+      fc.asyncProperty(
+        fc.constantFrom<'letter' | 'initials'>('letter', 'initials').chain((mode) =>
+          (mode === 'letter' ? codesArb : fc.array(digit, { minLength: 1, maxLength: 6 }).map((d) => d as string[])).chain((codes) =>
+            fc.record({
+              mode: fc.constant(mode),
+              codes: fc.constant(codes),
+              text: llmTextFor(codes),
+              beams: fc.array(candidateFor(codes), { maxLength: 3 }),
+              k: fc.integer({ min: 1, max: 5 }),
+            }),
+          ),
+        ),
+        async ({ mode, codes, text, beams, k }) => {
+          const deps = makeDeps({ reply: text });
+          const r = await handleDecode({ v: 1, lang: 'en', mode, codes, lattice: codes.map(() => []), beams, k }, META, deps);
+          if (r.status !== 200) return;
+          runs++;
+          const res = r.json as DecodeResponse;
+          expect(DecodeResponseSchema.safeParse(res).success).toBe(true);
+          expect(res.rejectedWords.length).toBeLessThanOrEqual(Math.min(LIMITS.maxRejectedWords, Math.max(0, res.rejected) * codes.length));
+          if (res.rejectedWords.length > 0) withWords++;
+          const spoken = new Set(res.candidates.flatMap((c) => c.words));
+          const seen = new Set<string>();
+          for (const rw of res.rejectedWords) {
+            expect(spoken.has(rw.word)).toBe(false); // soundness: a struck-through word is never offered
+            expect(rw.expectedCode).toBe(codes[rw.slot]);
+            expect(validate([rw.word], [rw.expectedCode], mode)).toBe(false);
+            expect(oracleValid([rw.word], [rw.expectedCode], mode)).toBe(false);
+            expect(rw.word).toMatch(/^[a-z]+(?:'[a-z]+)*$/);
+            expect(rw.word.length).toBeLessThanOrEqual(16);
+            expect(seen.has(`${rw.slot}:${rw.word}`)).toBe(false);
+            seen.add(`${rw.slot}:${rw.word}`);
+            // It came from the model's reply (after normalize: case, accents, fullwidth), not from anywhere else.
+            expect(normalize(text)).toContain(rw.word);
+          }
+        },
+      ),
+      { numRuns: 300 },
+    );
+    expect(withWords).toBeGreaterThan(runs / 20); // non-vacuous
+  });
+
   it('DS-6 privacy: nothing printed or logged contains request text, words or codes', async () => {
     const printed: string[] = [];
     for (const m of ['log', 'info', 'warn', 'error', 'debug'] as const) {
@@ -314,11 +423,12 @@ describe('properties', () => {
       fc.asyncProperty(
         marker,
         marker,
-        fc.constantFrom<('ok' | 'timeout' | 'error' | 'garbage' | 'disabled' | 'bad')[]>('ok', 'timeout', 'error', 'garbage', 'disabled', 'bad'),
+        fc.constantFrom<('ok' | 'rejected' | 'timeout' | 'error' | 'garbage' | 'disabled' | 'bad')[]>('ok', 'rejected', 'timeout', 'error', 'garbage', 'disabled', 'bad'),
         async (partner, word, path) => {
           printed.length = 0;
           const replies = {
             ok: `{"c":[["${word}"]]}`,
+            rejected: `{"c":[["${word}x"]]}`, // does not match key 2: a rejected word, which must not be logged
             timeout: { text: '{"c":[]}', delayMs: 50 },
             error: { error: new Error(`failed on ${partner} ${word}`) },
             garbage: `${partner} ${word}`,
@@ -331,7 +441,10 @@ describe('properties', () => {
             path === 'bad'
               ? { v: 1, lang: 'en', codes: [word], lattice: [[partner]] }
               : { v: 1, lang: 'en', codes: ['2'], lattice: [[word]], beams: [[word]], context: { partner, recent: [partner] } };
-          await handleDecode(body, META, deps);
+          const r = await handleDecode(body, META, deps);
+          // The rejected word does reach the response (so the panel can strike it through) ...
+          if (path === 'rejected') expect((r.json as DecodeResponse).rejectedWords).toEqual([{ slot: 0, word: `${word}x`, expectedCode: '2' }]);
+          // ... but never the logs.
           expect(printed.length).toBeGreaterThan(0);
           for (const line of printed) {
             expect(line).not.toContain(partner);

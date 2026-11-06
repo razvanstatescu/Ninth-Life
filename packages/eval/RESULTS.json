@@ -6,11 +6,14 @@
     "rows": 866
   },
   "lexicon": {
-    "sha256": "d82ccc79612fcd8ac93e06b517b9db1df75a425d02116e8acb165fafd8fa7d3d",
+    "sha256": "d27fc037658bffd78892139ba8ffa8b59b83ff3f906c02abb60d7c62da4f0667",
     "words": 58906
   },
   "bigram": {
-    "sha256": "9bbfc725d49c5d2d8efc3f0aa879a905e57051f1c8038625f3e90ea4cf8b4819"
+    "sha256": "d873fa2aa7d316e31b96e4dbf68dcece471d8079d119297d30a9b0afbe794801"
+  },
+  "lm": {
+    "letterPenalty": -3
   },
   "subset": {
     "quick": false,
@@ -27,12 +30,12 @@
       "metrics": {
         "items": 866,
         "words": 4890,
-        "wordAcc": 0.9143,
+        "wordAcc": 0.9145,
         "top1": 0.6236,
-        "top5": 0.918,
-        "ksr": -0.0126,
-        "scanStepsPerChar": 3.6098,
-        "pressesPerChar": 1.0126,
+        "top5": 0.9203,
+        "ksr": -0.0123,
+        "scanStepsPerChar": 3.6076,
+        "pressesPerChar": 1.0123,
         "invalidPreValidator": null,
         "unreachable": 15,
         "usdPer1k": null
@@ -43,10 +46,10 @@
           "words": 2730,
           "wordAcc": 0.911,
           "top1": 0.6537,
-          "top5": 0.9417,
-          "ksr": -0.0163,
-          "scanStepsPerChar": 3.6223,
-          "pressesPerChar": 1.0163,
+          "top5": 0.9435,
+          "ksr": -0.0161,
+          "scanStepsPerChar": 3.6206,
+          "pressesPerChar": 1.0161,
           "invalidPreValidator": null,
           "unreachable": 7,
           "usdPer1k": null
@@ -54,12 +57,12 @@
         "turk": {
           "items": 300,
           "words": 2160,
-          "wordAcc": 0.9185,
+          "wordAcc": 0.919,
           "top1": 0.5667,
-          "top5": 0.8733,
-          "ksr": -0.0082,
-          "scanStepsPerChar": 3.5948,
-          "pressesPerChar": 1.0082,
+          "top5": 0.8767,
+          "ksr": -0.0079,
+          "scanStepsPerChar": 3.5921,
+          "pressesPerChar": 1.0079,
           "invalidPreValidator": null,
           "unreachable": 8,
           "usdPer1k": null
@@ -73,12 +76,12 @@
       "metrics": {
         "items": 866,
         "words": 4890,
-        "wordAcc": 0.9679,
-        "top1": 0.8545,
-        "top5": 0.9711,
-        "ksr": -0.0009,
-        "scanStepsPerChar": 3.5692,
-        "pressesPerChar": 1.0009,
+        "wordAcc": 0.9681,
+        "top1": 0.8557,
+        "top5": 0.9734,
+        "ksr": -0.0004,
+        "scanStepsPerChar": 3.566,
+        "pressesPerChar": 1.0004,
         "invalidPreValidator": null,
         "unreachable": 15,
         "usdPer1k": null
@@ -90,9 +93,9 @@
           "wordAcc": 0.9733,
           "top1": 0.8869,
           "top5": 0.9841,
-          "ksr": -0.0019,
-          "scanStepsPerChar": 3.5742,
-          "pressesPerChar": 1.0019,
+          "ksr": -0.0017,
+          "scanStepsPerChar": 3.5732,
+          "pressesPerChar": 1.0017,
           "invalidPreValidator": null,
           "unreachable": 7,
           "usdPer1k": null
@@ -100,12 +103,12 @@
         "turk": {
           "items": 300,
           "words": 2160,
-          "wordAcc": 0.9611,
-          "top1": 0.7933,
-          "top5": 0.9467,
-          "ksr": 0.0002,
-          "scanStepsPerChar": 3.5633,
-          "pressesPerChar": 0.9998,
+          "wordAcc": 0.9616,
+          "top1": 0.7967,
+          "top5": 0.9533,
+          "ksr": 0.0012,
+          "scanStepsPerChar": 3.5575,
+          "pressesPerChar": 0.9988,
           "invalidPreValidator": null,
           "unreachable": 8,
           "usdPer1k": null

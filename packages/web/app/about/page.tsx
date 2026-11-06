@@ -27,6 +27,9 @@ export default function AboutPage() {
               key 4, so &quot;hi&quot; is 4 4. There is no tapping a key three times and no code to learn.
             </p>
             <p>It runs in your browser and works offline. You can type with a keyboard, by touch, or with one or two switches.</p>
+            <p>
+              <a href="/welcome">See the demo, the measured results and the source code</a>
+            </p>
           </section>
 
           <section aria-labelledby="proof">

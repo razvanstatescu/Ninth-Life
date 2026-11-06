@@ -7,12 +7,15 @@ import { buildPrompt, estimateTokens } from './prompt.js';
 import type { QuotaStore } from './quota.js';
 import {
   DecodeRequestSchema,
+  LIMITS,
+  REJECTED_WORD_RE,
   issuePaths,
   readBody,
   type DecodeCandidate,
   type DecodeRequest,
   type DecodeResponse,
   type ErrorBody,
+  type RejectedWord,
 } from './schema.js';
 
 // handleDecode: the framework-agnostic decode endpoint (docs/architecture/contracts.md §3).
@@ -75,6 +78,32 @@ async function callWithTimeout(llm: LlmClient, prompt: ReturnType<typeof buildPr
 
 const key = (words: string[]) => words.join(' ');
 
+/**
+ * F7: the words of rejected model candidates that do not match their slot, for the proof panel.
+ * Only candidates with one word per slot (otherwise the words do not line up with the keys), only
+ * words that are already normalized a-z/apostrophe and at most 16 characters, never a word that is
+ * also in a returned candidate, one entry per (slot, word), at most 5. Not logged (DS-6).
+ */
+export function rejectedWordsOf(rejectedCands: string[][], codes: string[], mode: 'letter' | 'initials', returned: string[][]): RejectedWord[] {
+  const spoken = new Set(returned.flat());
+  const out: RejectedWord[] = [];
+  const seen = new Set<string>();
+  for (const cand of rejectedCands) {
+    if (cand.length !== codes.length) continue;
+    for (let slot = 0; slot < cand.length && out.length < LIMITS.maxRejectedWords; slot++) {
+      const word = cand[slot]!;
+      const expectedCode = codes[slot]!;
+      if (validate([word], [expectedCode], mode)) continue; // this word matched; another one failed
+      if (word.length > LIMITS.maxRejectedWordChars || !REJECTED_WORD_RE.test(word)) continue;
+      if (spoken.has(word) || seen.has(`${slot}:${word}`)) continue;
+      seen.add(`${slot}:${word}`);
+      out.push({ slot, word, expectedCode });
+    }
+    if (out.length >= LIMITS.maxRejectedWords) break;
+  }
+  return out;
+}
+
 function toCandidate(words: string[], latticeSets: Set<string>[], source: 'llm' | 'ghost'): DecodeCandidate {
   return {
     text: formatSentence(words),
@@ -130,6 +159,7 @@ export async function handleDecode(
         v: 1,
         candidates: ghost.slice(0, k).map((w) => toCandidate(w, latticeSets, 'ghost')),
         rejected,
+        rejectedWords: [],
         model: 'ghost',
         ms: deps.now() - t0,
         degraded: true,
@@ -196,10 +226,12 @@ export async function handleDecode(
   let rejected = reply.malformed;
   const llmWords: string[][] = [];
   const llmSeen = new Set<string>();
+  const rejectedCands: string[][] = [];
   for (const rawCand of reply.candidates) {
     const cand = rawCand.map(normalize);
     if (!validate(cand, codes, mode)) {
       rejected++;
+      rejectedCands.push(cand);
       continue;
     }
     if (llmSeen.has(key(cand))) continue;
@@ -212,10 +244,11 @@ export async function handleDecode(
   for (const g of ghost) if (!llmSeen.has(key(g))) out.push(toCandidate(g, latticeSets, 'ghost'));
   const candidates = out.slice(0, k);
   const degraded = llmWords.length === 0;
+  const rejectedWords = rejectedWordsOf(rejectedCands, codes, mode, candidates.map((c) => c.words));
 
   return finish(
     200,
-    { v: 1, candidates, rejected, model: deps.llm.model, ms: deps.now() - t0, degraded },
+    { v: 1, candidates, rejected, rejectedWords, model: deps.llm.model, ms: deps.now() - t0, degraded },
     { outcome: 'ok', slots: codes.length, returned: candidates.length, rejected, ...usage },
   );
 }

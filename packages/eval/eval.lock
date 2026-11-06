@@ -13,11 +13,11 @@
   },
   "lexicon": {
     "path": "data/lexicon/en.v1.json",
-    "sha256": "d82ccc79612fcd8ac93e06b517b9db1df75a425d02116e8acb165fafd8fa7d3d"
+    "sha256": "d27fc037658bffd78892139ba8ffa8b59b83ff3f906c02abb60d7c62da4f0667"
   },
   "bigram": {
     "path": "data/lexicon/en.bigram.v1.json",
-    "sha256": "9bbfc725d49c5d2d8efc3f0aa879a905e57051f1c8038625f3e90ea4cf8b4819"
+    "sha256": "d873fa2aa7d316e31b96e4dbf68dcece471d8079d119297d30a9b0afbe794801"
   },
   "stats": {
     "aac_test_lines": 566,

@@ -19,12 +19,13 @@ import {
   validate,
   type BigramFile,
   type Lexicon,
+  type LmOptions,
   type Mode,
 } from '@ninth/core';
 import type { DecodeInput, DecodeOutput, Decoder } from './types';
 
-export function dictDecoder(lex: Lexicon): Decoder {
-  const lm = unigramModel(lex);
+export function dictDecoder(lex: Lexicon, lmOpts?: LmOptions): Decoder {
+  const lm = unigramModel(lex, lmOpts);
   return {
     id: 'B0',
     label: 'B0 dict',
@@ -34,8 +35,8 @@ export function dictDecoder(lex: Lexicon): Decoder {
   };
 }
 
-export function ghostDecoder(lex: Lexicon, bigrams: BigramFile): Decoder {
-  const lm = bigramModel(bigrams, lex);
+export function ghostDecoder(lex: Lexicon, bigrams: BigramFile, lmOpts?: LmOptions): Decoder {
+  const lm = bigramModel(bigrams, lex, lmOpts);
   return {
     id: 'B1',
     label: 'B1 ghost',
@@ -66,8 +67,8 @@ export type LlmConfig = 'B2' | 'B3' | 'B4';
 
 const LLM_LABEL: Record<LlmConfig, string> = { B2: 'B2 LLM raw', B3: 'B3 LLM+val', B4: 'B4 lattice+val' };
 
-export function llmDecoder(id: LlmConfig, proposer: LlmProposer, lex: Lexicon, bigrams: BigramFile): Decoder {
-  const ghost = ghostDecoder(lex, bigrams);
+export function llmDecoder(id: LlmConfig, proposer: LlmProposer, lex: Lexicon, bigrams: BigramFile, lmOpts?: LmOptions): Decoder {
+  const ghost = ghostDecoder(lex, bigrams, lmOpts);
   return {
     id,
     label: LLM_LABEL[id],

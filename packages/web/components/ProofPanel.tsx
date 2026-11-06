@@ -23,7 +23,7 @@ export function ProofPanel({
   /** How each word is written in the sentence ("I", not "i"); trailing punctuation is dropped. */
   labels?: string[];
   rejected: RejectedSuggestion[];
-  /** Suggestions the server dropped before replying (it sends the count, not the words). */
+  /** Suggestions the server dropped before replying (shown as a count when it sent no words). */
   rejectedCount?: number;
   /** For slot i, the words the keys do spell (from the valid sentences). */
   alternatives: (i: number) => string[];
@@ -31,21 +31,25 @@ export function ProofPanel({
   const rejectChips: { word: string; code: string; key: string }[] = [];
   const notes: string[] = [];
   const seen = new Set<string>();
-  for (const r of rejected.slice(0, 3)) {
-    const bad = r.proof.map((p, i) => ({ p, i })).filter(({ p }) => p.state === 'reject' && p.word);
+  // Whole sentences the client re-check refused (at most 3), then single words the server
+  // reported (F7, `slot` set, at most 5). Every one is struck through and never spoken.
+  const shown = [...rejected.filter((r) => r.slot === undefined).slice(0, 3), ...rejected.filter((r) => r.slot !== undefined).slice(0, 5)];
+  for (const r of shown) {
+    const bad = r.proof.map((p, i) => ({ p, i: r.slot ?? i })).filter(({ p }) => p.state === 'reject' && p.word);
     for (const { p } of bad) {
       if (seen.has(p.word)) continue;
       seen.add(p.word);
       rejectChips.push({ word: p.word, code: p.code ?? '', key: `r-${p.word}` });
     }
     const first = bad[0];
-    if (first) {
+    if (first && notes.length < 3) {
       const spells = alternatives(first.i).filter((w) => w !== first.p.word).slice(0, 3);
       const dropped = quoteList(bad.map(({ p }) => p.word));
+      const said = r.slot === undefined ? formatSentence(r.words) : first.p.word;
       notes.push(
         spells.length > 0
-          ? `The model suggested "${formatSentence(r.words)}". Your keys spell ${quoteList(spells)}, so ${dropped} was dropped and will not be spoken.`
-          : `The model suggested "${formatSentence(r.words)}". ${dropped} does not match your keys, so it was dropped and will not be spoken.`,
+          ? `The model suggested "${said}". Your keys spell ${quoteList(spells)}, so ${dropped} was dropped and will not be spoken.`
+          : `The model suggested "${said}". ${dropped} does not match your keys, so it was dropped and will not be spoken.`,
       );
     }
   }

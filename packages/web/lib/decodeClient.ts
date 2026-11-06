@@ -3,6 +3,8 @@
  * - Sends the keys (codes plus the offline lattice) and the partner's last line. Nothing else.
  * - Any non-200, bad JSON or more than 1,500 ms -> null, and the screen stays in ghost mode.
  * - Every returned sentence is checked again here with validate(); the proof panel uses this result.
+ * - Words the server says the model got wrong (`rejectedWords`, F7) are checked too and only ever
+ *   shown struck through; they never become candidates.
  * - Nothing here speaks. Speak is always a separate press.
  */
 import { proof, validate, type Candidate, type Lexicon, type Mode, type WordProof } from '@ninth/core';
@@ -29,7 +31,16 @@ export interface DecodeRequest {
 export interface RejectedSuggestion {
   words: string[];
   proof: WordProof[];
+  /**
+   * Set when this is one word the server rejected (`rejectedWords`, F7) rather than a whole
+   * sentence: the slot it was suggested for. `words` is then `[word]` and `proof` its verdict.
+   */
+  slot?: number;
 }
+
+/** F7: at most this many server-rejected words are shown, each a-z/apostrophe, at most 16 characters. */
+export const MAX_REJECTED_WORDS = 5;
+const REJECTED_WORD = /^[a-z]+(?:'[a-z]+)*$/;
 
 export interface RemoteResult {
   candidates: Candidate[];
@@ -88,7 +99,37 @@ export function checkResponse(json: unknown, codes: string[], lexicon: Lexicon, 
     else rejected.push({ words: ws, proof: proof(ws, codes, lexicon, mode) });
   }
   const rejectedCount = typeof body.rejected === 'number' && body.rejected >= 0 ? Math.floor(body.rejected) : 0;
+  rejected.push(...checkRejectedWords((json as { rejectedWords?: unknown }).rejectedWords, codes, lexicon, mode, candidates, rejected));
   return { candidates, rejected, rejectedCount, model: typeof body.model === 'string' ? body.model : undefined };
+}
+
+/**
+ * Server-reported rejected words (F7), re-checked: the slot must exist, the code must be that
+ * slot's code, the word must be a short a-z/apostrophe word that really does NOT match the keys,
+ * and it must not be a word of any sentence that can be spoken. Anything else is ignored.
+ */
+function checkRejectedWords(
+  raw: unknown,
+  codes: string[],
+  lexicon: Lexicon,
+  mode: Mode,
+  candidates: Candidate[],
+  already: RejectedSuggestion[],
+): RejectedSuggestion[] {
+  if (!Array.isArray(raw)) return [];
+  const spoken = new Set(candidates.flatMap((c) => c.words));
+  const seen = new Set(already.flatMap((r) => r.proof.map((p, i) => `${i}:${p.word}`)));
+  const out: RejectedSuggestion[] = [];
+  for (const item of raw.slice(0, MAX_REJECTED_WORDS)) {
+    const { slot, word, expectedCode } = (item ?? {}) as { slot?: unknown; word?: unknown; expectedCode?: unknown };
+    if (typeof slot !== 'number' || !Number.isInteger(slot) || slot < 0 || slot >= codes.length) continue;
+    if (typeof word !== 'string' || word.length > 16 || !REJECTED_WORD.test(word)) continue;
+    if (expectedCode !== codes[slot] || validate([word], [codes[slot]!], mode)) continue;
+    if (spoken.has(word) || seen.has(`${slot}:${word}`)) continue;
+    seen.add(`${slot}:${word}`);
+    out.push({ words: [word], proof: proof([word], [codes[slot]!], lexicon, mode), slot });
+  }
+  return out;
 }
 
 type FetchLike = (url: string, init: RequestInit) => Promise<Response>;

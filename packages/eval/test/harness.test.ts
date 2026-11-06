@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { encodeWord, Lexicon, type LexiconFile } from '@ninth/core';
+import { parseArgs } from '../src/cli';
 import { llmDecoder, type LlmProposer } from '../src/decoders';
 import { EVAL_DIR, loadBigramFile, loadFixture, loadLexiconFile } from '../src/fixture';
 import { aggregate, percentile } from '../src/metrics';
@@ -153,6 +154,30 @@ describe('LLM configs (pluggable)', () => {
     expect(b3.candidates).toEqual([['i', 'need']]);
     expect(b4.candidates).toEqual([['i', 'need']]);
     expect(b4.usd).toBe(0.002);
+  });
+});
+
+describe('CLI data-experiment options (Req 2.6)', () => {
+  it('parses --lexicon, --bigram and --letter-penalty, and refuses a positive penalty', () => {
+    const a = parseArgs(['--lexicon', 'x/lex.json', '--bigram', 'x/big.json', '--letter-penalty', '-2.5']);
+    expect(a.lexicon).toMatch(/x\/lex\.json$/);
+    expect(a.bigram).toMatch(/x\/big\.json$/);
+    expect(a.letterPenalty).toBe(-2.5);
+    expect(parseArgs(['--letter-penalty', '0']).letterPenalty).toBe(0);
+    expect(() => parseArgs(['--letter-penalty', '1'])).toThrow();
+    expect(() => parseArgs(['--letter-penalty', 'x'])).toThrow();
+  });
+
+  it('records the letter penalty in RESULTS.json; turning it off only changes rankings, never reachability', async () => {
+    const { items, sha256 } = loadFixture();
+    const input = { items, fixture: { path: 'fixtures/test.v1.jsonl', sha256 }, lexicon: loadLexiconFile(), bigram: loadBigramFile(), quick: true, seed: 3 };
+    const on = await runEval(input);
+    const off = await runEval({ ...input, lm: { letterPenalty: 0 } });
+    expect(on.results.lm).toEqual({ letterPenalty: -3 });
+    expect(off.results.lm).toEqual({ letterPenalty: 0 });
+    for (const id of ['B0', 'B1']) {
+      expect(on.perItem[id]!.map((r) => r.unreachable)).toEqual(off.perItem[id]!.map((r) => r.unreachable));
+    }
   });
 });
 

@@ -1,5 +1,5 @@
 /** Run decoders over test items with the simulated user. Pure apart from the timing clock. */
-import { Lexicon, type BigramFile, type LexiconFile, type Mode } from '@ninth/core';
+import { DEFAULT_LETTER_PENALTY, Lexicon, type BigramFile, type LexiconFile, type LmOptions, type Mode } from '@ninth/core';
 import { dictDecoder, ghostDecoder, llmDecoder, LLM_CONFIGS, type LlmProposer } from './decoders';
 import { aggregate, percentile } from './metrics';
 import { sample } from './rng';
@@ -24,6 +24,8 @@ export interface RunInput {
   llm?: LlmProposer;
   /** Restrict to these config ids. */
   only?: string[];
+  /** Language-model options for every config (default: core's defaults, ADR-core-002). */
+  lm?: LmOptions;
   /** Clock for latency (ms). Injected so tests can make timing deterministic too. */
   now?: () => number;
 }
@@ -32,11 +34,11 @@ export function selectItems(items: TestItem[], quick: boolean, seed: number): Te
   return quick ? sample(items, QUICK_SIZE, seed) : items.slice();
 }
 
-export function buildDecoders(lex: Lexicon, bigram: BigramFile, llm?: LlmProposer): { decoders: Decoder[]; missing: string[] } {
-  const decoders: Decoder[] = [dictDecoder(lex), ghostDecoder(lex, bigram)];
+export function buildDecoders(lex: Lexicon, bigram: BigramFile, llm?: LlmProposer, lmOpts?: LmOptions): { decoders: Decoder[]; missing: string[] } {
+  const decoders: Decoder[] = [dictDecoder(lex, lmOpts), ghostDecoder(lex, bigram, lmOpts)];
   const missing: string[] = [];
   for (const id of LLM_CONFIGS) {
-    if (llm) decoders.push(llmDecoder(id, llm, lex, bigram));
+    if (llm) decoders.push(llmDecoder(id, llm, lex, bigram, lmOpts));
     else missing.push(id);
   }
   return { decoders, missing };
@@ -52,7 +54,7 @@ export async function runEval(input: RunInput): Promise<{ results: Results; timi
   const now = input.now ?? (() => performance.now());
   const lex = Lexicon.fromJSON(input.lexicon.data);
   const items = selectItems(input.items, quick, seed);
-  const { decoders, missing } = buildDecoders(lex, input.bigram.data, input.llm);
+  const { decoders, missing } = buildDecoders(lex, input.bigram.data, input.llm, input.lm);
 
   const configs: ConfigResult[] = [];
   const timing: Timing = {};
@@ -92,6 +94,7 @@ export async function runEval(input: RunInput): Promise<{ results: Results; timi
     fixture: { path: input.fixture.path, sha256: input.fixture.sha256, rows: input.items.length },
     lexicon: { sha256: input.lexicon.sha256, words: lex.size },
     bigram: { sha256: input.bigram.sha256 },
+    lm: { letterPenalty: input.lm?.letterPenalty ?? DEFAULT_LETTER_PENALTY },
     subset: { quick, seed, items: items.length },
     k,
     mode,

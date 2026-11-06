@@ -25,6 +25,15 @@
     "onlyBuiltDependencies": [
       "esbuild",
       "sharp"
-    ]
+    ],
+    "packageExtensions": {
+      "@axe-core/playwright": {
+        "peerDependenciesMeta": {
+          "playwright-core": {
+            "optional": true
+          }
+        }
+      }
+    }
   }
 }

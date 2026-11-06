@@ -13,9 +13,9 @@
   "kept_pairs": 19237,
   "prune": 0.2,
   "min_count": 1,
-  "raw_bytes": 339147,
-  "gzip9_bytes": 103414,
-  "brotli11_bytes": 85587,
+  "raw_bytes": 339148,
+  "gzip9_bytes": 103418,
+  "brotli11_bytes": 85535,
   "dev_words": 2943,
   "perplexity_unigram": 833.2,
   "perplexity_bigram": 101.2

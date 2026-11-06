@@ -67,6 +67,77 @@
     "youre",
     "youve"
   ],
+  "filters": {
+    "settings": {
+      "acronyms": "down",
+      "junk": "down",
+      "down_zipf": 1.0,
+      "acronym_signal": "scowl",
+      "scowl_level": 95
+    },
+    "word_classes": {
+      "acronym": 962,
+      "dict": 46725,
+      "none": 4369,
+      "proper": 6824
+    },
+    "acronyms_affected": 962,
+    "junk_affected": 4369,
+    "acronym_examples": [
+      "bbc",
+      "nfl",
+      "nba",
+      "cnn",
+      "dvd",
+      "wtf",
+      "fifa",
+      "mps",
+      "cbs",
+      "btw",
+      "nc",
+      "nyc",
+      "ip",
+      "lgbt",
+      "nbc",
+      "nhl",
+      "nhs",
+      "usb",
+      "usd",
+      "espn",
+      "bmw",
+      "ncaa",
+      "fda",
+      "mtv",
+      "nsa"
+    ],
+    "junk_examples": [
+      "lol",
+      "https",
+      "fuckin",
+      "lmao",
+      "xbox",
+      "tbh",
+      "idk",
+      "omg",
+      "seo",
+      "uber",
+      "cyber",
+      "gameplay",
+      "wwe",
+      "goin",
+      "und",
+      "alot",
+      "lebron",
+      "gf",
+      "mlb",
+      "dems",
+      "hahaha",
+      "doin",
+      "photoshop",
+      "kanye",
+      "messi"
+    ]
+  },
   "words": 58906,
   "codes": 48140,
   "ambiguous_codes": 5144,
@@ -74,7 +145,7 @@
   "pct_word_types_sharing_a_code": 27.01,
   "word_types_not_first_in_code": 10766,
   "pct_word_types_not_first_in_code": 18.28,
-  "token_weighted_pct_first_in_code": 94.15,
+  "token_weighted_pct_first_in_code": 94.31,
   "max_words_per_code": 26,
   "largest_codes": {
     "727": [
@@ -84,48 +155,48 @@
       "sap",
       "pas",
       "pbs",
-      "sas",
-      "sbs"
+      "pap",
+      "ras"
     ],
     "222": [
-      "bbc",
       "abc",
       "cab",
       "aaa",
       "acc",
+      "bbc",
       "cbc",
-      "aca",
-      "aba"
+      "aba",
+      "bac"
     ],
     "227": [
       "car",
       "bar",
       "cap",
-      "cbs",
       "abs",
-      "bbq",
       "cas",
-      "aap"
+      "bas",
+      "cbs",
+      "bbs"
     ],
     "267": [
       "cop",
       "cos",
       "amp",
       "bop",
-      "cms",
       "cor",
       "ans",
-      "ams"
+      "bos",
+      "cns"
     ],
     "237": [
       "ads",
       "cds",
       "afp",
-      "ces",
-      "cfr",
       "bds",
       "cfs",
-      "adp"
+      "adp",
+      "cdr",
+      "aes"
     ]
   },
   "examples": {
@@ -151,7 +222,7 @@
       "i'd",
       "id",
       "hd",
-      "gf"
+      "ge"
     ],
     "4663": [
       "good",
@@ -170,7 +241,7 @@
     ]
   },
   "file": "data/lexicon/en.v1.json",
-  "raw_bytes": 1557975,
-  "gzip9_bytes": 401447,
-  "brotli11_bytes": 328051
+  "raw_bytes": 1558083,
+  "gzip9_bytes": 402255,
+  "brotli11_bytes": 328257
 }

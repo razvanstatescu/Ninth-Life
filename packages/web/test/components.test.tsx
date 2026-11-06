@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Keypad } from '@/components/Keypad';
 import { ProofChip } from '@/components/ProofChip';
+import { ProofPanel } from '@/components/ProofPanel';
 import { SpeakBar } from '@/components/SpeakBar';
 
 afterEach(cleanup);
@@ -43,6 +44,27 @@ describe('ProofChip', () => {
     expect(container.textContent).toContain('water');
     expect(container.textContent).toContain(text);
     expect(container.querySelector(`.nl-chip--${state}`)).not.toBeNull();
+  });
+});
+
+describe('ProofPanel (F7)', () => {
+  it('strikes through a word the server rejected, next to the words that are spoken', () => {
+    const words = [
+      { word: 'i', code: '4', state: 'match' as const },
+      { word: 'need', code: '6333', state: 'match' as const },
+      { word: 'water', code: '92837', state: 'match' as const },
+    ];
+    const rejected = [{ words: ['wafer'], slot: 2, proof: [{ word: 'wafer', code: '92337', expected: '92837', state: 'reject' as const }] }];
+    const { container } = render(
+      <ProofPanel words={words} rejected={rejected} rejectedCount={1} alternatives={(i) => (i === 2 ? ['water', 'waves'] : [])} />,
+    );
+    const struck = container.querySelectorAll('.nl-chip--reject');
+    expect(struck).toHaveLength(1);
+    expect(struck[0]!.textContent).toContain('wafer');
+    expect(struck[0]!.textContent).toContain('will not be spoken');
+    expect(container.querySelectorAll('.nl-chip--match')).toHaveLength(3);
+    expect(container.textContent).toContain('The model suggested "wafer". Your keys spell water or waves, so wafer was dropped and will not be spoken.');
+    expect(container.textContent).not.toContain('sentence that did not match'); // the count note gives way to the word
   });
 });
 

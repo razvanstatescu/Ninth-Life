@@ -24,4 +24,15 @@ describe('core-encoder: real lexicon smoke test', () => {
       for (const c of out) expect(validate(c.words, codes)).toBe(true);
     }
   });
+
+  it.skipIf(!existsSync(LEX) || !existsSync(BIGRAM))('Req 5.8 en.v1.json: no stray one-letter reading in the top 5 for "4 6333 92837" (plan F2)', () => {
+    const lex = Lexicon.fromJSON(JSON.parse(readFileSync(LEX, 'utf8')) as LexiconFile);
+    const lm = bigramModel(JSON.parse(readFileSync(BIGRAM, 'utf8')) as BigramFile, lex);
+    const out = decodeGhost(['4', '6333', '92837'], { lexicon: lex, lm });
+    expect(out[0]!.words).toEqual(['i', 'need', 'water']);
+    for (const c of out) expect(c.words[0]).toBe('i');
+    // Without the penalty "h need water" was rank 5.
+    const before = decodeGhost(['4', '6333', '92837'], { lexicon: lex, lm: bigramModel(JSON.parse(readFileSync(BIGRAM, 'utf8')) as BigramFile, lex, { letterPenalty: 0 }) });
+    expect(before.map((c) => c.words.join(' '))).toContain('h need water');
+  });
 });

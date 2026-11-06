@@ -173,3 +173,56 @@ def write_json(path: Path, obj, one_key_per_line: str | None = None) -> None:
         text = head_txt + "," + json.dumps(one_key_per_line) + ":{\n" + ",\n".join(lines) + "\n}}"
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         f.write(text + "\n")
+
+
+# --- SCOWL word-class signal (ADR-data-002) ------------------------------------------------
+# SCOWL file names: <spelling>-<category>.<size>, e.g. american-words.95, english-upper.50.
+_SCOWL_NAME_RE = re.compile(r"^([a-z_0-9]+)-(words|upper|abbreviations|contractions|proper-names)\.(\d+)$")
+_VOWELS = set("aeiouy")
+
+
+def scowl_shape(form: str) -> str:
+    """'lower' (all lower case), 'caps' (two or more letters, all upper case: BBC, TV) or 'title'
+    (anything else with a capital: London, iPhone). A trailing possessive 's is ignored."""
+    base = form[:-2] if form.endswith(("'s", "’s")) else form
+    letters = [c for c in base if c.isalpha()]
+    if all(c.islower() for c in letters):
+        return "lower"
+    if len(letters) >= 2 and all(c.isupper() for c in letters):
+        return "caps"
+    return "title"
+
+
+def load_scowl(final_dir: Path, max_level: int = 95) -> dict[str, set[str]]:
+    """Normalized word -> set of shapes it has in SCOWL lists of size <= max_level (all spellings
+    and categories). SCOWL files are ISO-8859-1. Sorted file order keeps this deterministic."""
+    if not final_dir.is_dir():
+        raise SystemExit(f"SCOWL word lists not found at {final_dir}; run `pnpm data:fetch` first")
+    shapes: dict[str, set[str]] = {}
+    for f in sorted(final_dir.iterdir()):
+        m = _SCOWL_NAME_RE.match(f.name)
+        if not m or int(m.group(3)) > max_level:
+            continue
+        for line in f.read_text(encoding="latin-1").splitlines():
+            form = line.strip()
+            if not form:
+                continue
+            shapes.setdefault(normalize(form), set()).add(scowl_shape(form))
+    return shapes
+
+
+def word_class(word: str, scowl: dict[str, set[str]]) -> str:
+    """'dict' (a lower-case SCOWL word or contraction), 'acronym' (in SCOWL only in ALL CAPS),
+    'proper' (in SCOWL only with a capital: names, places, brands) or 'none' (not in SCOWL)."""
+    s = scowl.get(word)
+    if not s:
+        return "none"
+    if "lower" in s:
+        return "dict"
+    return "acronym" if s == {"caps"} else "proper"
+
+
+def looks_like_acronym(word: str) -> bool:
+    """SCOWL-free heuristic: 2-5 letters and no vowel (a e i o u y), e.g. bbc, nfl, pcs."""
+    letters = word.replace("'", "")
+    return 2 <= len(letters) <= 5 and not (set(letters) & _VOWELS)

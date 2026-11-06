@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Download the evaluation and bigram-training corpora into packages/eval/.cache/.
 
-Only the files listed in FILES are fetched, each pinned by SHA-256. The AACText zip is
+Only the files listed in FILES and ARCHIVES are fetched, each pinned by SHA-256. The AACText zip is
 NOT downloaded because it bundles lm_test_switch.txt and lm_test_comm.txt, which are
 not under CC BY 4.0 (see aactext.org/imagine). Those two names are also refused here.
 
@@ -38,7 +38,48 @@ FILES = [
      "b820e18842b2155dfddd6e857e8211525fbbd62c751800551759c868d21416db", "CC-BY-4.0 (web page; readme says CC-BY-ND-3.0)"),
 ]
 
+# Build-time signals, never committed or shipped (ADR-data-002):
+# - SCOWL 2020.12.07 (Kevin Atkinson; permissive, MIT-like notice, see .cache/scowl/Copyright): only
+#   word-list membership is read, to tell dictionary words, names and all-caps acronyms apart.
+#   Only final/ (the word lists), Copyright and README are extracted.
+# - LDNOOBW "List of Dirty, Naughty, Obscene, and Otherwise Bad Words", English list (CC BY 4.0,
+#   Shutterstock). Used only to measure offensive readings (reports/offensive-readings.md).
+ARCHIVES = [
+    ("scowl/scowl-2020.12.07.tar.gz", "https://downloads.sourceforge.net/wordlist/scowl-2020.12.07.tar.gz",
+     "5587667caa20c4891390c2d42dbb4d5c4c3f41bee77af1457ece3ba23fb859cc", "SCOWL (MIT-like, see Copyright)",
+     "scowl-2020.12.07/", ("final/", "Copyright", "README"), "scowl"),
+]
+FILES += [
+    ("ldnoobw/en.txt", "https://raw.githubusercontent.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/master/en",
+     "af851ecef1d5f212caba17339b12ac39cc2fef7d78c74876f67237644fcee8bd", "CC-BY-4.0"),
+    ("ldnoobw/LICENSE", "https://raw.githubusercontent.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/master/LICENSE",
+     "55bfbc1759943f7d19acfc68e35644b7fbe10cd8d39ab3551ce5ecff5dda9979", "CC-BY-4.0"),
+]
+
 EXCLUDED = {"lm_test_switch.txt", "lm_test_comm.txt"}
+
+
+def extract(archive: Path, prefix: str, keep: tuple[str, ...], dest: Path) -> int:
+    """Extract members under prefix + keep[i] into dest (prefix stripped). Regular files only."""
+    import tarfile
+
+    n = 0
+    with tarfile.open(archive, "r:gz") as tar:
+        for m in tar.getmembers():
+            if not m.isfile() or not m.name.startswith(prefix):
+                continue
+            rel = m.name[len(prefix):]
+            if not any(rel == k or (k.endswith("/") and rel.startswith(k)) for k in keep):
+                continue
+            if rel.startswith("/") or ".." in Path(rel).parts:
+                raise SystemExit(f"unsafe path in {archive.name}: {m.name}")
+            out = dest / rel
+            out.parent.mkdir(parents=True, exist_ok=True)
+            src = tar.extractfile(m)
+            assert src is not None
+            out.write_bytes(src.read())
+            n += 1
+    return n
 
 
 def download(url: str, dest: Path) -> None:
@@ -71,6 +112,20 @@ def main() -> int:
                              "inspect the new file and update the pin deliberately.")
         manifest.append({"path": rel, "url": url, "sha256": sha, "license": lic, "bytes": dest.stat().st_size})
         print(f"ok    {rel}  {dest.stat().st_size} B")
+
+    for rel, url, sha, lic, prefix, keep, into in ARCHIVES:
+        dest = CACHE_DIR / rel
+        if args.force or not dest.exists() or sha256_file(dest) != sha:
+            print(f"fetch {url}")
+            download(url, dest)
+        got = sha256_file(dest)
+        if got != sha:
+            raise SystemExit(f"SHA-256 mismatch for {rel}: expected {sha}, got {got}. Upstream changed; "
+                             "inspect the new file and update the pin deliberately.")
+        n = extract(dest, prefix, keep, CACHE_DIR / into)
+        manifest.append({"path": rel, "url": url, "sha256": sha, "license": lic, "bytes": dest.stat().st_size,
+                         "extracted": n})
+        print(f"ok    {rel}  {dest.stat().st_size} B, {n} files extracted")
 
     (CACHE_DIR / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return 0

@@ -35,6 +35,40 @@ describe('decode client', () => {
     expect(checkResponse({ error: 'x' }, codes, lexicon, 'letter')).toBeNull();
   });
 
+  it('F7: shows server-rejected words (struck through), re-checked, never as candidates', () => {
+    const out = checkResponse(
+      {
+        v: 1,
+        candidates: [{ words: ['i', 'need', 'water'] }],
+        rejected: 3,
+        rejectedWords: [
+          { slot: 2, word: 'wafer', expectedCode: '92837' },
+          { slot: 2, word: 'wafer', expectedCode: '92837' }, // duplicate
+          { slot: 2, word: 'water', expectedCode: '92837' }, // matches the keys: not a rejection
+          { slot: 0, word: 'need', expectedCode: '4' }, // spoken in another slot: never struck through
+          { slot: 9, word: 'zzz', expectedCode: '4' }, // no such slot
+          { slot: 1, word: '<b>x</b>', expectedCode: '6333' }, // not a word
+          { slot: 1, word: 'meeds', expectedCode: '9' }, // wrong code for the slot
+        ],
+      },
+      codes,
+      lexicon,
+      'letter',
+    )!;
+    expect(out.candidates.map((c) => c.words.join(' '))).toEqual(['i need water']);
+    expect(out.rejected).toHaveLength(1);
+    expect(out.rejected[0]).toMatchObject({ words: ['wafer'], slot: 2, proof: [{ word: 'wafer', code: '92337', expected: '92837', state: 'reject' }] });
+    expect(out.rejectedCount).toBe(3);
+    // Older servers send no rejectedWords: nothing changes.
+    expect(checkResponse({ v: 1, candidates: [], rejected: 1 }, codes, lexicon, 'letter')!.rejected).toEqual([]);
+    // At most 5, and only a-z/apostrophe words of 16 characters or fewer.
+    const many = Array.from({ length: 9 }, (_, i) => ({ slot: 2, word: `wafer${'s'.repeat(i)}`, expectedCode: '92837' }));
+    const capped = checkResponse({ v: 1, candidates: [], rejected: 9, rejectedWords: many }, codes, lexicon, 'letter')!;
+    expect(capped.rejected.map((r) => r.words[0])).toEqual(['wafer', 'wafers', 'waferss', 'wafersss', 'waferssss']);
+    const long = checkResponse({ v: 1, candidates: [], rejected: 1, rejectedWords: [{ slot: 2, word: 'w'.repeat(17), expectedCode: '92837' }] }, codes, lexicon, 'letter')!;
+    expect(long.rejected).toEqual([]);
+  });
+
   it('falls back (null) after 1,500 ms', async () => {
     vi.useFakeTimers();
     const fetchImpl = vi.fn(() => new Promise<Response>(() => undefined));

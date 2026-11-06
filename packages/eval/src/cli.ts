@@ -11,6 +11,10 @@
  *   --only B0,B1         run only these configs
  *   --llm <module>       ES module whose default export (or `createProposer`) returns an
  *                        LlmProposer; enables B2-B4
+ *   --lexicon <path>     LexiconFile to evaluate (default data/lexicon/en.v1.json); for data experiments
+ *   --bigram <path>      BigramFile to evaluate (default data/lexicon/en.bigram.v1.json)
+ *   --letter-penalty <x> log10 penalty for one-letter words other than a/i (default: core's,
+ *                        ADR-core-002); 0 turns it off
  *   --out <dir>          where to write RESULTS.json / RESULTS.md (default packages/eval)
  *   --write / --no-write force writing on or off (quick defaults to off, full to on)
  *   --json               print RESULTS.json to stdout instead of the table
@@ -29,6 +33,9 @@ interface Args {
   k: number;
   only?: string[];
   llm?: string;
+  lexicon?: string;
+  bigram?: string;
+  letterPenalty?: number;
   out: string;
   write?: boolean;
   json: boolean;
@@ -48,6 +55,9 @@ export function parseArgs(argv: string[]): Args {
     else if (x === '--k') a.k = toInt(val(), x);
     else if (x === '--only') a.only = val().split(',').map((s) => s.trim());
     else if (x === '--llm') a.llm = val();
+    else if (x === '--lexicon') a.lexicon = resolve(val());
+    else if (x === '--bigram') a.bigram = resolve(val());
+    else if (x === '--letter-penalty') a.letterPenalty = toPenalty(val(), x);
     else if (x === '--out') a.out = resolve(val());
     else if (x === '--write') a.write = true;
     else if (x === '--no-write') a.write = false;
@@ -64,6 +74,12 @@ function toInt(v: string, name: string): number {
   return n;
 }
 
+function toPenalty(v: string, name: string): number {
+  const n = Number(v);
+  if (v.trim() === '' || !Number.isFinite(n) || n > 0) throw new Error(`${name} must be a number <= 0`);
+  return n;
+}
+
 async function loadProposer(spec: string): Promise<LlmProposer> {
   const url = pathToFileURL(isAbsolute(spec) ? spec : resolve(process.cwd(), spec)).href;
   const mod = (await import(url)) as { default?: () => LlmProposer | Promise<LlmProposer>; createProposer?: () => LlmProposer | Promise<LlmProposer> };
@@ -76,8 +92,8 @@ export async function main(argv: string[]): Promise<number> {
   const args = parseArgs(argv);
   const lock = readLock();
   const { items, sha256 } = loadFixture(PATHS.fixture, lock);
-  const lexicon = loadLexiconFile();
-  const bigram = loadBigramFile();
+  const lexicon = loadLexiconFile(args.lexicon);
+  const bigram = loadBigramFile(args.bigram);
   for (const [name, got, want] of [
     ['lexicon', lexicon.sha256, lock.lexicon.sha256],
     ['bigram', bigram.sha256, lock.bigram.sha256],
@@ -96,6 +112,7 @@ export async function main(argv: string[]): Promise<number> {
     k: args.k,
     only: args.only,
     llm,
+    lm: args.letterPenalty === undefined ? undefined : { letterPenalty: args.letterPenalty },
   });
 
   const write = args.write ?? !args.quick;

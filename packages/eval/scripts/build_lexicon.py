@@ -11,10 +11,19 @@ Steps (plan section 3.2):
      is at least 1.0 Zipf more frequent: they share its code and are almost always a
      misspelling of it. Real words ("its", "were", "ill", "well") are far closer in
      frequency to their contraction and are kept.
+  4b. Word-class filters (plan F2, ADR-data-002), from SCOWL 2020.12.07 word lists:
+     --acronyms keep|down|drop  words SCOWL lists only in ALL CAPS (bbc, nfl, pcs), or with
+                            --acronym-signal novowel, 2-5 letters and no vowel;
+     --junk keep|down|drop      words in no SCOWL list at all (lol, xbox, goin).
+     Shipped: both "down" (measured best; "drop" made test items unreachable).
+     "down" subtracts --down-zipf (default 1.0) from the word's Zipf, floored at --min-zipf,
+     so it sinks below the other readings of its code but stays typeable. One-letter words
+     are never touched here (core's language model penalises them instead, ADR-core-002).
   5. Encode with the standard keypad map, group by code, sort by frequency (desc), then
      word (asc) for determinism. zipfX10 = round(zipf * 10).
 
 Usage: python packages/eval/scripts/build_lexicon.py [--top 60000] [--min-zipf 2.0]
+       [--acronyms keep|down|drop] [--junk keep|down|drop] [--scowl DIR] [--scowl-level 95]
 """
 
 from __future__ import annotations
@@ -29,9 +38,23 @@ from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from ninth_common import DATA_DIR, EVAL_DIR, WORD_FULL_RE, encode_word, normalize, write_json  # noqa: E402
+from ninth_common import (  # noqa: E402
+    CACHE_DIR,
+    DATA_DIR,
+    EVAL_DIR,
+    WORD_FULL_RE,
+    encode_word,
+    load_scowl,
+    looks_like_acronym,
+    normalize,
+    word_class,
+    write_json,
+)
 
 CONTRACTION_GAP = 1.0
+# Shipped word-class filter settings (step 4b, ADR-data-002, measured in docs/architecture/data-and-eval.md). "keep" = off.
+DEFAULT_ACRONYMS = "down"
+DEFAULT_JUNK = "down"
 
 # Third-party trademarks the product must never show (.kiro/steering/trademarks.md). Stored as
 # SHA-256 of the normalized word so this file does not spell them (tm-lint scans scripts).
@@ -49,7 +72,75 @@ def is_banned(word: str) -> bool:
     return any(hashlib.sha256(w.encode("utf-8")).hexdigest() in BANNED_SHA256 for w in (word, stem))
 
 
-def build(top: int, min_zipf: float) -> tuple[dict, dict]:
+class Filters:
+    """Word-class filter settings (step 4b). The defaults change nothing."""
+
+    def __init__(self, acronyms="keep", junk="keep", down_zipf=1.0, acronym_signal="scowl",
+                 scowl_dir: Path | None = None, scowl_level=95):
+        self.acronyms, self.junk, self.down_zipf = acronyms, junk, down_zipf
+        self.acronym_signal, self.scowl_dir, self.scowl_level = acronym_signal, scowl_dir, scowl_level
+
+    @property
+    def active(self) -> bool:
+        return self.acronyms != "keep" or self.junk != "keep"
+
+    @property
+    def needs_scowl(self) -> bool:
+        return self.junk != "keep" or (self.acronyms != "keep" and self.acronym_signal == "scowl")
+
+    def describe(self) -> str:
+        parts = []
+        if self.acronyms != "keep":
+            sig = f"SCOWL {self.scowl_level} all-caps only" if self.acronym_signal == "scowl" else "no vowel, 2-5 letters"
+            parts.append(f"acronyms ({sig}) {self._verb(self.acronyms)}")
+        if self.junk != "keep":
+            parts.append(f"words in no SCOWL {self.scowl_level} list {self._verb(self.junk)}")
+        return "; ".join(parts)
+
+    def _verb(self, how: str) -> str:
+        return "dropped" if how == "drop" else f"down-weighted {self.down_zipf} Zipf"
+
+
+def apply_filters(zipf: dict[str, float], f: Filters, min_zipf: float, stats: dict,
+                  scowl: dict[str, set[str]] | None = None) -> None:
+    """Step 4b, in place. Records counts and a few examples in stats. `scowl` (normalized word ->
+    shapes, see ninth_common.load_scowl) is loaded from f.scowl_dir when not given."""
+    if not f.active:
+        return
+    if scowl is None:
+        scowl = load_scowl(f.scowl_dir, f.scowl_level) if f.needs_scowl else {}
+    classes: dict[str, int] = defaultdict(int)
+    acted: dict[str, list[str]] = {"acronyms": [], "junk": []}
+    for w in sorted(zipf, key=lambda x: (-zipf[x], x)):
+        if len(w.replace("'", "")) == 1:
+            continue  # one-letter words: core's LM penalty (ADR-core-002)
+        cls = word_class(w, scowl) if scowl else "unknown"
+        classes[cls] += 1
+        if f.acronym_signal == "novowel":
+            is_acr = looks_like_acronym(w)
+        else:
+            is_acr = cls == "acronym"
+        group, how = (("acronyms", f.acronyms) if is_acr else ("junk", f.junk) if cls == "none" else (None, "keep"))
+        if group is None or how == "keep":
+            continue
+        acted[group].append(w)
+        if how == "drop":
+            del zipf[w]
+        else:
+            zipf[w] = max(min_zipf, zipf[w] - f.down_zipf)
+    stats["filters"] = {
+        "settings": {"acronyms": f.acronyms, "junk": f.junk, "down_zipf": f.down_zipf,
+                     "acronym_signal": f.acronym_signal, "scowl_level": f.scowl_level},
+        "word_classes": dict(sorted(classes.items())),
+        "acronyms_affected": len(acted["acronyms"]),
+        "junk_affected": len(acted["junk"]),
+        # Most frequent first. Examples only: the full list is reproducible from the build.
+        "acronym_examples": acted["acronyms"][:25],
+        "junk_examples": acted["junk"][:25],
+    }
+
+
+def build(top: int, min_zipf: float, filters: Filters | None = None) -> tuple[dict, dict]:
     import wordfreq
 
     version = getattr(wordfreq, "__version__", None)
@@ -98,6 +189,10 @@ def build(top: int, min_zipf: float) -> tuple[dict, dict]:
         del zipf[w]
     stats["dropped_bare_contractions"] = dropped_bare
 
+    # Step 4b: word-class filters (ADR-data-002).
+    filters = filters or Filters()
+    apply_filters(zipf, filters, min_zipf, stats)
+
     groups: dict[str, list[tuple[str, float]]] = defaultdict(list)
     for w, z in zipf.items():
         code = encode_word(w)
@@ -113,7 +208,8 @@ def build(top: int, min_zipf: float) -> tuple[dict, dict]:
         "v": 1,
         "lang": "en",
         "source": f"wordfreq {version} top_n_list('en', {top}), zipf >= {min_zipf}, a-z plus internal apostrophe; "
-        "normalized NFKD, marks stripped, lowercased; apostrophe-less contraction spellings dropped",
+        "normalized NFKD, marks stripped, lowercased; apostrophe-less contraction spellings dropped"
+        + (f"; {filters.describe()}" if filters.active else ""),
         "license": "CC-BY-SA-4.0",
         "codes": codes,
     }
@@ -166,11 +262,18 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--top", type=int, default=60000)
     ap.add_argument("--min-zipf", type=float, default=2.0)
+    ap.add_argument("--acronyms", choices=["keep", "down", "drop"], default=DEFAULT_ACRONYMS)
+    ap.add_argument("--acronym-signal", choices=["scowl", "novowel"], default="scowl")
+    ap.add_argument("--junk", choices=["keep", "down", "drop"], default=DEFAULT_JUNK)
+    ap.add_argument("--down-zipf", type=float, default=1.0)
+    ap.add_argument("--scowl", type=Path, default=CACHE_DIR / "scowl" / "final")
+    ap.add_argument("--scowl-level", type=int, default=95)
     ap.add_argument("--out", type=Path, default=DATA_DIR / "lexicon" / "en.v1.json")
     ap.add_argument("--stats", type=Path, default=EVAL_DIR / "build-stats" / "lexicon.json")
     args = ap.parse_args()
 
-    lex, stats = build(args.top, args.min_zipf)
+    filters = Filters(args.acronyms, args.junk, args.down_zipf, args.acronym_signal, args.scowl, args.scowl_level)
+    lex, stats = build(args.top, args.min_zipf, filters)
     write_json(args.out, lex, one_key_per_line="codes")
     stats.update(collision_stats(lex))
     stats["file"] = str(args.out.relative_to(DATA_DIR.parent)) if args.out.is_relative_to(DATA_DIR.parent) else str(args.out)

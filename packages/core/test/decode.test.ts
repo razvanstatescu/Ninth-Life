@@ -132,4 +132,49 @@ describe('core-encoder: ghost-mode decoding', () => {
       }),
     );
   });
+
+  it('Req 5.8 the letter penalty never removes a valid reading from the lattice; it only reorders (property)', () => {
+    fc.assert(
+      fc.property(
+        fc.oneof(fc.constant(MINI_LEXICON), lexiconFile(false)),
+        fc.array(fc.oneof(fc.constantFrom('2', '4', '6', '7', '8', '9', '46', '4663', '6333', '92837'), code(3)), { minLength: 1, maxLength: 4 }),
+        fc.double({ min: -12, max: -0.01, noNaN: true }),
+        fc.boolean(),
+        (file, codes, pen, useBigram) => {
+          const l = Lexicon.fromJSON(file);
+          const make = (letterPenalty: number) =>
+            useBigram ? bigramModel(MINI_BIGRAM, l, { letterPenalty }) : unigramModel(l, { letterPenalty });
+          const off = make(0);
+          const on = make(pen);
+          const lat = lattice(codes, l);
+          // The lattice does not depend on the language model at all.
+          expect(lattice(codes, l)).toEqual(lat);
+          // Exhaustive beam: the same sentences come out, only the order (scores) may change.
+          const all = lat.reduce((n, slot) => n * new Set(slot).size, 1);
+          const a = beam(lat, off, all);
+          const b = beam(lat, on, all);
+          expect(b.length).toBe(a.length);
+          expect(new Set(b.map((c) => c.words.join(' ')))).toEqual(new Set(a.map((c) => c.words.join(' '))));
+          // ... and decodeGhost with room for every sentence returns the same set.
+          const k = Math.max(1, all);
+          const ga = decodeGhost(codes, { lexicon: l, lm: off, k });
+          const gb = decodeGhost(codes, { lexicon: l, lm: on, k });
+          expect(new Set(gb.map((c) => c.words.join(' ')))).toEqual(new Set(ga.map((c) => c.words.join(' '))));
+          // A sentence with no penalised letter keeps its exact score.
+          const scoreOff = new Map(a.map((c) => [c.words.join(' '), c.score]));
+          for (const c of b) {
+            const hasLetter = c.words.some((w) => /^[a-z]$/.test(w) && w !== 'a' && w !== 'i');
+            if (!hasLetter) expect(c.score).toBe(scoreOff.get(c.words.join(' ')));
+            else expect(c.score).toBeLessThan(scoreOff.get(c.words.join(' '))!);
+          }
+        },
+      ),
+      { numRuns: runs(300) },
+    );
+  });
+
+  it('Req 5.8 a spelled letter still decodes on its own, and "i" stays first (example)', () => {
+    expect(decodeGhost(['4'], { lexicon: lex, lm: bi }).map((c) => c.words[0])).toEqual(['i', 'h', 'g']);
+    expect(decodeGhost(['2'], { lexicon: lex, lm: uni }).map((c) => c.words[0])).toEqual(['a', 'b', 'c']);
+  });
 });

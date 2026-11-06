@@ -54,3 +54,59 @@ jobs:
         run: pnpm -r test
       - name: Web build
         run: pnpm -F @ninth/web build
+
+  # Browser checks against a production build: axe (WCAG 2.2 AA rules), the keyboard-only and
+  # single-switch walkthroughs, and the device performance report. Plain node scripts with
+  # Playwright (installed globally, as in the dev image); see docs/testing/README.md.
+  e2e:
+    name: e2e (axe, keyboard, switch, perf report)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      BASE_URL: http://localhost:3202
+      # Pinned and at least 2 weeks old; matches the dev image.
+      PLAYWRIGHT_VERSION: "1.63.0"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+      - name: Install Playwright and Chromium
+        run: |
+          npm install -g "playwright@${PLAYWRIGHT_VERSION}"
+          playwright install --with-deps chromium
+      - name: Web build
+        run: pnpm -F @ninth/web build
+      - name: Start the app on :3202
+        run: |
+          (pnpm -F @ninth/web exec next start -p 3202 > "$RUNNER_TEMP/next.log" 2>&1 &)
+          for i in $(seq 1 60); do
+            curl -sf -o /dev/null "$BASE_URL/welcome" && exit 0
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/next.log"
+          exit 1
+      - name: axe (WCAG 2.2 AA rules; fails on serious or critical)
+        run: node packages/web/test/e2e/axe.mjs
+      - name: Keyboard-only walkthrough
+        if: ${{ !cancelled() }}
+        run: node packages/web/test/e2e/keyboard.mjs
+      - name: Single-switch walkthrough
+        if: ${{ !cancelled() }}
+        run: node packages/web/test/e2e/switch.mjs
+      - name: Device performance report (report only)
+        if: ${{ !cancelled() }}
+        run: node scripts/perf-check.mjs --runs 3 --json packages/web/test-results/perf.json | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Keep the reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-reports
+          path: packages/web/test-results/
+          if-no-files-found: ignore

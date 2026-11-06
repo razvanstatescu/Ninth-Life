@@ -15,6 +15,10 @@ export const LIMITS = {
   maxBeams: 10,
   maxK: 5,
   defaultK: 5,
+  /** Response: at most this many rejected model words (F7, ADR-decoder-001). */
+  maxRejectedWords: 5,
+  /** Response: a rejected word longer than this is not shown at all. */
+  maxRejectedWordChars: 16,
 } as const;
 
 const code = z.string().regex(/^[2-9]+$/, 'code must be digits 2-9').max(LIMITS.maxCodeDigits);
@@ -60,15 +64,69 @@ export interface DecodeCandidate {
   source: 'llm' | 'ghost';
 }
 
+/**
+ * A word the model suggested that does not match its slot's keys (F7, ADR-decoder-001). Shown
+ * struck through in the proof panel, never spoken. Only normalized a-z words with internal
+ * apostrophes, at most 16 characters, ever appear here: never other model text.
+ */
+export interface RejectedWord {
+  /** Index into `codes` of the slot the model put the word in. */
+  slot: number;
+  word: string;
+  /** The slot's code, i.e. the keys the person pressed there. */
+  expectedCode: string;
+}
+
+/** Shape of a rejected word: a-z with single internal apostrophes, 1-16 characters. */
+export const REJECTED_WORD_RE = /^[a-z]+(?:'[a-z]+)*$/;
+
+export const RejectedWordSchema = z
+  .object({
+    slot: z.number().int().min(0).max(LIMITS.maxCodes - 1),
+    word: z.string().max(LIMITS.maxRejectedWordChars).regex(REJECTED_WORD_RE),
+    expectedCode: code,
+  })
+  .strict();
+
 export interface DecodeResponse {
   v: 1;
   candidates: DecodeCandidate[];
   /** LLM candidates dropped because they do not encode to the keys pressed. */
   rejected: number;
+  /**
+   * Additive (F7): up to 5 of the words that made those candidates fail, model order, one entry
+   * per (slot, word). Never a word that appears in `candidates`. `[]` when nothing was rejected,
+   * when the model was not asked or failed, or when a rejected sentence had the wrong number of
+   * words (its words do not line up with the slots).
+   */
+  rejectedWords: RejectedWord[];
   model: string;
   ms: number;
   degraded: boolean;
 }
+
+/** Response check, for tests and for any consumer that wants to verify a reply. */
+export const DecodeResponseSchema = z
+  .object({
+    v: z.literal(1),
+    candidates: z.array(
+      z
+        .object({
+          text: z.string(),
+          words: z.array(z.string()),
+          valid: z.literal(true),
+          oov: z.array(z.string()),
+          source: z.enum(['llm', 'ghost']),
+        })
+        .strict(),
+    ).max(LIMITS.maxK),
+    rejected: z.number().int().min(0),
+    rejectedWords: z.array(RejectedWordSchema).max(LIMITS.maxRejectedWords),
+    model: z.string(),
+    ms: z.number(),
+    degraded: z.boolean(),
+  })
+  .strict();
 
 export type ErrorBody =
   | { error: 'bad_request'; issues: string[] }

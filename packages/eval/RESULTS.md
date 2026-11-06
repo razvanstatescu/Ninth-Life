@@ -6,15 +6,16 @@ run say so. Method: `docs/architecture/data-and-eval.md` and `.kiro/specs/eval-h
 
 - Test set: `fixtures/test.v1.jsonl`, 866 items, SHA-256 `9fefd9dbeacda45a…` (see `eval.lock`)
 - Run: full set, 866 items, seed 9, k = 5, mode = letter
-- Lexicon: 58906 words (`data/lexicon/en.v1.json`, SHA-256 `d82ccc79612fcd8a…`); bigrams `data/lexicon/en.bigram.v1.json` (`9bbfc725d49c5d2d…`)
+- Lexicon: 58906 words (`data/lexicon/en.v1.json`, SHA-256 `d27fc037658bffd7…`); bigrams `data/lexicon/en.bigram.v1.json` (`d873fa2aa7d316e3…`)
+- Language model: one-letter words other than "a" and "i" get a log10 penalty of -3 (ADR-core-002)
 - Latency: wall-clock per decode call on linux-x64, Node 22.23.4; not part of `RESULTS.json` (it varies run to run)
 
 ## Summary
 
 | Config | Word acc | Sent top-1 | Sent top-5 | KSR | Scan steps/char | Invalid pre-validator | p50 ms | p95 ms | $/1k |
 |---|---|---|---|---|---|---|---|---|---|
-| B0 dict | 91.4% | 62.4% | 91.8% | -1.3% | 3.61 | n/a | 0.13 | 0.55 | 0 |
-| B1 ghost | 96.8% | 85.5% | 97.1% | -0.1% | 3.57 | n/a | 0.16 | 0.65 | 0 |
+| B0 dict | 91.5% | 62.4% | 92.0% | -1.2% | 3.61 | n/a | 0.14 | 0.60 | 0 |
+| B1 ghost | 96.8% | 85.6% | 97.3% | -0.0% | 3.57 | n/a | 0.17 | 0.71 | 0 |
 | B2 LLM raw | not run | | | | | | | | |
 | B3 LLM+val | not run | | | | | | | | |
 | B4 lattice+val | not run | | | | | | | | |
@@ -29,10 +30,10 @@ steps on the 6-row grid (candidates, 4 keypad rows, actions), driven through
 
 | Config | Source | Items | Words | Word acc | Sent top-1 | Sent top-5 | KSR | Scan steps/char | Unreachable |
 |---|---|---|---|---|---|---|---|---|---|
-| B0 dict | aac | 566 | 2730 | 91.1% | 65.4% | 94.2% | -1.6% | 3.62 | 7 |
-| B0 dict | turk | 300 | 2160 | 91.8% | 56.7% | 87.3% | -0.8% | 3.59 | 8 |
+| B0 dict | aac | 566 | 2730 | 91.1% | 65.4% | 94.3% | -1.6% | 3.62 | 7 |
+| B0 dict | turk | 300 | 2160 | 91.9% | 56.7% | 87.7% | -0.8% | 3.59 | 8 |
 | B1 ghost | aac | 566 | 2730 | 97.3% | 88.7% | 98.4% | -0.2% | 3.57 | 7 |
-| B1 ghost | turk | 300 | 2160 | 96.1% | 79.3% | 94.7% | 0.0% | 3.56 | 8 |
+| B1 ghost | turk | 300 | 2160 | 96.2% | 79.7% | 95.3% | 0.1% | 3.56 | 8 |
 
 "Unreachable" = items with a word that is not in the lexicon, so neither decoding nor cycling can
 produce it (names, rare spellings).

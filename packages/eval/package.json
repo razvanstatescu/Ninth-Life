@@ -7,6 +7,7 @@
   "scripts": {
     "quick": "tsx src/cli.ts --quick",
     "eval": "tsx src/cli.ts",
+    "report:offensive": "tsx src/offensive.ts",
     "test": "vitest",
     "test:py": ".venv/bin/python -m unittest discover -s scripts -p 'test_*.py'",
     "typecheck": "tsc -p tsconfig.json --noEmit",

@@ -50,6 +50,7 @@ run say so. Method: \`docs/architecture/data-and-eval.md\` and \`.kiro/specs/eva
 - Test set: \`${results.fixture.path}\`, ${results.fixture.rows} items, SHA-256 \`${results.fixture.sha256.slice(0, 16)}…\` (see \`eval.lock\`)
 - Run: ${s.quick ? `quick subset of ${s.items}` : `full set, ${s.items} items`}, seed ${s.seed}, k = ${results.k}, mode = ${results.mode}
 - Lexicon: ${results.lexicon.words} words (\`data/lexicon/en.v1.json\`, SHA-256 \`${results.lexicon.sha256.slice(0, 16)}…\`); bigrams \`data/lexicon/en.bigram.v1.json\` (\`${results.bigram.sha256.slice(0, 16)}…\`)
+- Language model: one-letter words other than "a" and "i" get a log10 penalty of ${results.lm.letterPenalty} (ADR-core-002)
 - Latency: wall-clock per decode call on ${env.platform}, Node ${env.node}; not part of \`RESULTS.json\` (it varies run to run)
 
 ## Summary

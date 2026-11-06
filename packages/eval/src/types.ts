@@ -97,6 +97,8 @@ export interface Results {
   fixture: { path: string; sha256: string; rows: number };
   lexicon: { sha256: string; words: number };
   bigram: { sha256: string };
+  /** Language-model options used for every config (ADR-core-002). */
+  lm: { letterPenalty: number };
   subset: { quick: boolean; seed: number; items: number };
   k: number;
   mode: Mode;

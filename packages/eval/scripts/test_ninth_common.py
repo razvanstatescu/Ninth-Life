@@ -5,7 +5,16 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from ninth_common import encode_word, normalize, split_sentences, tokenize, tokenize_marked  # noqa: E402
+from ninth_common import (  # noqa: E402
+    encode_word,
+    looks_like_acronym,
+    normalize,
+    scowl_shape,
+    split_sentences,
+    tokenize,
+    tokenize_marked,
+    word_class,
+)
 
 
 class CommonTest(unittest.TestCase):
@@ -33,6 +42,26 @@ class CommonTest(unittest.TestCase):
 
     def test_split_sentences(self):
         self.assertEqual(split_sentences("Hi. How are you?  Fine!"), ["Hi.", "How are you?", "Fine!"])
+
+    def test_scowl_shape_and_class(self):
+        self.assertEqual(scowl_shape("water"), "lower")
+        self.assertEqual(scowl_shape("BBC"), "caps")
+        self.assertEqual(scowl_shape("TV's"), "caps")
+        self.assertEqual(scowl_shape("London"), "title")
+        self.assertEqual(scowl_shape("iPhone"), "title")
+        scowl = {"water": {"lower"}, "bbc": {"caps"}, "tv": {"caps", "title"}, "london": {"title"}}
+        self.assertEqual(word_class("water", scowl), "dict")
+        self.assertEqual(word_class("bbc", scowl), "acronym")
+        self.assertEqual(word_class("tv", scowl), "proper")
+        self.assertEqual(word_class("london", scowl), "proper")
+        self.assertEqual(word_class("lol", scowl), "none")
+
+    def test_looks_like_acronym(self):
+        self.assertTrue(looks_like_acronym("bbc"))
+        self.assertTrue(looks_like_acronym("nfl"))
+        self.assertFalse(looks_like_acronym("my"))
+        self.assertFalse(looks_like_acronym("b"))
+        self.assertFalse(looks_like_acronym("water"))
 
 
 if __name__ == "__main__":
