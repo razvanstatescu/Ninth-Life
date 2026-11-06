@@ -12,7 +12,7 @@ Spec: `.kiro/specs/web-ui/` (requirements, design, tasks). Contracts: `docs/arch
 | `/about` | `app/about/page.tsx` | What it does, proof, privacy, the not-a-medical-device statement |
 | `POST /api/decode` | `app/api/decode/route.ts` | Production decode endpoint: `@ninth/decoder` `createFetchHandler` (Anthropic API); 503 `llm_disabled` unless `LLM_ENABLED=true` and `ANTHROPIC_API_KEY` is set |
 | `/sw.js` | built from `app/sw.ts` | Serwist service worker |
-| `/data/**` | `public/data` (copied) | Lexicon, bigram model and vocab pack, fetched at runtime |
+| `/data/**` | `public/data` (copied) | Compact lexicon `en.v2.json`, bigram model and vocab pack, fetched at runtime at `?v=<content hash>` (`en.v1.json` is copied for the landing page's build only) |
 | `/manifest.webmanifest`, `/icons/*`, `/fonts/*` | `public/` | PWA manifest, icons from the logo SVGs, self-hosted fonts |
 
 ## Component map
@@ -38,7 +38,7 @@ Spec: `.kiro/specs/web-ui/` (requirements, design, tasks). Contracts: `docs/arch
 
 ```
 settings  (IndexedDB 'settings', theme mirrored in localStorage for first paint)
-dict      loading | ready{lexicon, lm, model, pack} | missing | error      ← lib/data.ts
+dict      loading | ready{lexicon, lm, model, pack} | missing | error      ← lib/data.ts (parallel fetch, idle warm-up)
 composer  { slots: [{code, pin?}], open, punct, selected, spoken }       ← lib/composer.ts (pure reducer)
 remote    model ranking result for (codes, partner), LRU-cached          ← lib/decodeClient.ts
 derived   ghost = decodeWithPins(composer)  →  candidates = merge(remote, ghost)
@@ -87,6 +87,13 @@ voice picker has Previous / Next voice, so every setting works with a switch. Th
 sheet is open, so turning scanning off (Keyboard, Touch) or switching modes takes effect on Close and can be undone
 before then. Focus rests on the sheet, not a button, so the scan highlight stays the one ember thing.
 
+Turning scanning off asks first (plan F11, web-ui Req 16.7): in a scan mode, choosing Keyboard or Touch replaces the
+sheet's settings with "Turn off switch scanning? You will need a keyboard or touch to turn it back on." and two
+buttons, Cancel first, in the scan row right after Close. Only "Turn off, use Keyboard/Touch" changes the setting;
+Cancel, Close and Escape leave it. Switching between One switch and Two switches, or choosing while the sheet is not
+scanning, does not ask. Tests: `test/scan-off-confirm.test.tsx`. In jsdom the sheet scanner re-reads its rows in a
+MutationObserver (a microtask), so a test must `await act(async () => {})` after the sheet's content changes.
+
 ## Your words: spell mode and my words
 
 Full design and the pack format: [vocab-packs.md](vocab-packs.md). In short: keys with no dictionary word show their
@@ -120,11 +127,34 @@ keypad fit at 390 x 844; the size depends on the viewport only, never on the sen
 - `speechSynthesis.cancel()` runs before each sentence to clear a stuck queue.
 - Model ranking never speaks; only a Speak press does.
 
-## Offline strategy
+## Loading and offline strategy
+
+Loading (plan F9, web-ui Req 23; numbers in `docs/testing/performance.md`):
+
+- `lib/data.ts` requests `en.v2.json`, the bigram file and the pack **in parallel** (`Promise.all`), then parses the
+  lexicon, applies the pack and builds the language model. A missing or failed lexicon reads as "missing"; a failed
+  pack or bigram file only drops that part.
+- The app ships the **compact lexicon** `en.v2.json` (ADR-data-003): 230 KB gzip instead of 402 KB for v1, and it
+  parses in about half the time. `en.v1.json` stays the eval's file.
+- Every `/data` URL carries its content hash: `next.config.mjs` puts `{path: md5[0..12]}` in `NEXT_PUBLIC_DATA_REV`
+  and `dataUrl(path)` appends `?v=`. Old export names (`DATA_PATHS.lexicon/bigram/pack`, `loadDictionary`, `DictState`,
+  `VocabPack`) still work; fetch any other `/data` file through `dataUrl()` so it hits the precache.
+- When the dictionary is ready, `warmDictionary` runs in idle time (`requestIdleCallback`, else `setTimeout`), one
+  step per idle slice: `lexicon.prepare()` (the completion index), one small decode, then the completions of each
+  single key. No key press builds anything; before this the first word with no exact reading stalled 385-580 ms on
+  the Moto profile.
+
+Offline:
 
 - `pnpm prebuild` copies `data/lexicon` and `data/packs` into `public/data` (missing files are fine).
-- `next.config.mjs` passes every public file (with a content hash), `/` and `/about` to Serwist, plus the Next
-  static chunks. Max precache file size is 16 MB (the lexicon is about 1.6 MB).
+- `next.config.mjs` passes `/`, `/about`, the Next static chunks and the public files the app needs to Serwist:
+  the latin fonts, `favicon.svg`, `favicon-32.png`, `icon.svg`, the web manifest, and the three dictionary files at
+  their `?v=` URL with `revision: null`. Serwist fetches revision-null entries with the normal HTTP cache, so the
+  install reuses the copy the page just downloaded (revisioned entries are fetched with `cache: 'reload'`, which is
+  why the lexicon used to download twice).
+- Not precached: the 192 and 512 px PNG icons and the Apple touch icon (install prompts read them online; the runtime
+  image cache keeps them), latin-ext font subsets (loaded only for text that needs them), `data/LICENSE` and
+  `data/NOTICE.md`, `en.v1.json`, the polyfills chunk and the unused pages-router chunks (framework, main, pages/).
 - After one online visit the app opens, loads the dictionary and decodes with no network.
 - Decode requests are `NetworkOnly` and time out on the client after 1,500 ms; the app stays in ghost mode.
 - Offline indicator: "Offline. Using your dictionary." Model ranking shows as paused offline.

@@ -15,6 +15,7 @@ import {
   Lexicon,
   bigramModel,
   decodeGhost,
+  proof,
   unigramModel,
   type BigramFile,
   type LanguageModel,
@@ -152,17 +153,17 @@ export function whenIdle(fn: () => void, timeout = 2000): void {
 }
 
 /**
- * Do the one-off work of the first key presses ahead of time, one short idle slice per step:
- * build the lexicon's completion index (a sort of every code), run one small decode so the
- * engine's code is compiled, then fill the completion cache for each single key (what initials
- * mode reads on every press). No step changes any result. web-ui Req 23.3.
+ * Do the one-off work of the first key presses ahead of time, one short idle slice per step: first
+ * one small decode and proof (what any first press runs, so the engine's code is compiled), then
+ * the lexicon's completion index (a sort of every code), then the completion cache for each single
+ * key (what initials mode reads on every press). No step changes any result. web-ui Req 23.3.
  */
 export function warmDictionary(state: DictState, schedule: (fn: () => void) => void = whenIdle): void {
   if (state.status !== 'ready') return;
   const { lexicon, lm } = state;
   const steps: (() => unknown)[] = [
+    () => proof(decodeGhost(['4', '6333'], { lexicon, lm, k: 5 })[0]?.words ?? [], ['4', '6333'], lexicon),
     () => lexicon.prepare(),
-    () => decodeGhost(['4', '6333'], { lexicon, lm, k: 5 }),
     ...DIGITS.map((d) => () => lexicon.completions(d, DEFAULT_PER_SLOT)),
   ];
   const run = (i: number) => {

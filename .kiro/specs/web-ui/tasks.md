@@ -99,14 +99,14 @@
 - [ ] 40. Screen reader pass of spell mode (VoiceOver iOS, NVDA): radio rows, live preview, offers (Req 19.2, 21.2)
 
 ## Loading performance and scan-off confirm (plan F9, F11)
-- [x] 35. `components/SettingsSheet.tsx`: "Turn off switch scanning?" in place of the settings, Cancel first, row right
+- [x] 41. `components/SettingsSheet.tsx`: "Turn off switch scanning?" in place of the settings, Cancel first, row right
       after Close; asked only when the sheet scans and the choice turns scanning off (Req 16.7)
   - [x] 35.1 Tests: `test/scan-off-confirm.test.tsx` (switch Cancel and Turn off, tap, Close while asking, no question
         between scan modes or when not scanning, focus on the question); `test/m1b.test.tsx` Req 16.4 answers it
-- [x] 36. `lib/data.ts`: parallel fetch, `en.v2.json`, `dataUrl()` content-hashed URLs, idle warm-up in steps (Req 23.1-23.3)
+- [x] 42. `lib/data.ts`: parallel fetch, `en.v2.json`, `dataUrl()` content-hashed URLs, idle warm-up in steps (Req 23.1-23.3)
   - [x] 36.1 Tests: `test/data.test.ts` (all three requested before any arrives, failures, old export names, warm-up order, `whenIdle`)
-- [x] 37. `next.config.mjs`: `NEXT_PUBLIC_DATA_REV`, `/data` precached at `?v=` with `revision: null`, trimmed public
+- [x] 43. `next.config.mjs`: `NEXT_PUBLIC_DATA_REV`, `/data` precached at `?v=` with `revision: null`, trimmed public
       entries and build chunks (Req 23.2, 23.4)
-- [x] 38. `scripts/perf-check.mjs`: v2 timing with a v1 comparison row, real service-worker install bytes and re-fetched
+- [x] 44. `scripts/perf-check.mjs`: v2 timing with a v1 comparison row, real service-worker install bytes and re-fetched
       data files; before/after medians in `docs/testing/performance.md` (Req 23.5)
-- [ ] 39. Re-measure on a real low-end Android phone and a school Chromebook before quoting the numbers (Req 23.5)
+- [ ] 45. Re-measure on a real low-end Android phone and a school Chromebook before quoting the numbers (Req 23.5)

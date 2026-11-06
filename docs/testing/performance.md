@@ -1,9 +1,8 @@
 # Device performance
 
 How fast the communication screen loads and responds on a slow phone, measured with
-`scripts/perf-check.mjs` (Playwright + Chrome DevTools Protocol). Owner: website and quality
-testing. Core changes below are **proposals** for the core and web owners; this page changes no
-code.
+`scripts/perf-check.mjs` (Playwright + Chrome DevTools Protocol). Owners: website and quality
+testing (method), app performance (plan F9, the changes in "After F9" below).
 
 ## Method
 
@@ -13,21 +12,103 @@ code.
 | CPU | 4x slowdown (`Emulation.setCPUThrottlingRate`) | no throttling |
 | Network, first load | Slow 4G, Lighthouse mobile preset: 562.5 ms RTT, 1.44 Mbit/s down, 675 kbit/s up (`Network.emulateNetworkConditions`) | local, no shaping |
 | Cache | empty; service worker blocked so the page sees every byte | empty |
-| Offline | second context: install the service worker online, wait until the lexicon is precached, go offline, reload at 4x CPU | not run |
+| Offline | second context: install the service worker online, wait until the lexicon is precached and the worker is active, go offline, reload at 4x CPU | not run |
+| Service worker | the worker's own requests in that second context (Playwright's service-worker network events): bytes that came over the network, and any `/data` file that both the page and the worker took from the network | not run |
 
 Per run the script records first-load bytes (`encodedDataLength`, so compressed as served), the
 time from navigation to "Offline dictionary ready" on screen, and the latency of each key press
 typing "kitchen" (5 4 8 2 4 3 6) until the speak bar has updated and painted. It then loads
 `@ninth/core` from source into the same page (TypeScript transpiled on the fly and served through
-`page.route`, so nothing is added to the app) and times `JSON.parse` of the lexicon,
-`Lexicon.fromJSON`, `bigramModel`, the first `completions()` call (which builds the digit trie), and
+`page.route`, so nothing is added to the app) and times `JSON.parse` of the lexicon the app ships
+(`en.v2.json` since F9, `en.v1.json` before), `Lexicon.fromJSON`, the same for `en.v1.json` as a
+comparison row, `bigramModel`, the first `completions()` call with no warm-up (the trie build
+before F9, the completion index after), and
 `decodeGhost` of a 7-word sentence ("i need to go to the shop", codes 4 6333 86 46 86 843 7467;
 top result is that sentence). Heap is `Runtime.getHeapUsage` after two forced GCs.
 
 Each figure is the median of 3 runs. Run it again with `node scripts/perf-check.mjs` against
-`next start -p 3202` (see [README.md](README.md)).
+`next start` (`BASE_URL`, default port 3202) (see [README.md](README.md)).
 
-## Results (2026-11-06)
+## After F9 (2026-11-06): before and after
+
+Same machine, same script, same day: a linux-x64 cloud container (slower than the one used for the
+first measurement below: desktop parse 135.6 ms here against 108.6 ms there), headless Chromium from
+Playwright 1.63, `next start -p 3302` (gzip). "Before" is commit `b6eb1eb` plus teammates' work in
+progress; "after" adds the F9 changes and the teammates' later work (JS grew from 131 to 140 KB with
+their spell / my words screens). "4x" is not a real phone: read the times as relative.
+
+| Metric | Before, Moto G-class | After, Moto G-class | Before, desktop | After, desktop | Target |
+|---|---|---|---|---|---|
+| First load, compressed | 692 KB | **530 KB** | 692 KB | 530 KB | < 700 KB |
+| &nbsp;&nbsp;of which dictionary data | 499 KB | 326 KB | | | |
+| &nbsp;&nbsp;of which JS | 131 KB | 140 KB | | | |
+| &nbsp;&nbsp;of which fonts / HTML, CSS, other | 51 / 12 KB | 51 / 12 KB | | | |
+| Navigation to dictionary ready | 8,111 ms | **5,749 ms** | 407 ms | 302 ms | |
+| Slowest key press typing "kitchen" | 578 ms (5th press) | **41 ms** (1st press) | | | < 50 ms |
+| Key presses, median per press | 69, 27, 22, 28, 578, 49, 19 | 41, 21, 19, 23, 27, 26, 23 | | | |
+| `JSON.parse` lexicon | 119.3 ms (v1) | 2.1 ms (v2) | 22.8 ms | 0.4 ms | |
+| `Lexicon.fromJSON` | 527.0 ms | 262.0 ms | 112.0 ms | 51.0 ms | |
+| Lexicon parse total | 657.9 ms | **263.3 ms** | 135.6 ms | **51.4 ms** | < 100 ms desktop |
+| &nbsp;&nbsp;new core on `en.v1.json` | | 437.0 ms | | 81.0 ms | |
+| `bigramModel` | 19.3 ms | 16.1 ms | 3.6 ms | 3.0 ms | |
+| First `completions()` with no warm-up | 483.4 ms (trie) | 56.4 ms (index) | 85.8 ms | 11.6 ms | the app warms it in idle time |
+| `decodeGhost`, 7 words, first / median of 10 | 9.10 / 4.25 ms | 8.90 / 3.85 ms | 2.20 / 0.85 ms | 2.30 / 1.00 ms | |
+| JS heap, app ready | 21.7 MB | 13.6 MB | 12.3 MB | 13.1 MB | |
+| Extra heap for one lexicon + bigrams + index | 14.7 MB | 7.6 MB | 15.8 MB | 7.6 MB | |
+| Offline reload to dictionary ready | 1,041 ms | 576 ms | | | |
+| Offline reload, bytes from the network | 0 KB | 0 KB | | | 0 |
+| Precache entries / upper bound if nothing came from the HTTP cache | 40 / 1,139 KB | 27 / 538 KB | | | |
+| Service worker install, really downloaded | about 1,004 KB ¹ | **76 KB** | | | |
+| Dictionary files downloaded twice on the first visit | lexicon, bigrams, pack ¹ | **none** (3 of 3 runs) | | | none |
+| First visit with the service worker, page + worker | about 1.6 MB ¹ | 605 KB | | | |
+
+¹ Before, the worker's own downloads were not in the script; they were counted once on the before
+build with the same Playwright service-worker events (desktop profile, one run): 1,004 KB, including
+`en.v1.json` (395 KB) and the bigrams (101 KB) again, both 512 px icons (109 KB each), the polyfills
+chunk (39 KB), the unused pages-router chunks (framework 56 KB, main 35 KB), the latin-ext fonts and
+`data/LICENSE`.
+
+Runs after: mobile dictionary ready 5,685 / 5,749 / 5,793 ms; slowest key 51 / 35 / 41 ms (always
+the first press); desktop parse 51.4 / 53.9 / 44.6 ms; offline reload worked in 3 of 3 runs.
+Runs before: 8,417 / 8,111 / 7,996 ms; 578 / 577 / 743 ms; 135.6 / 142.5 / 120.0 ms.
+
+The first key press is the only one near 50 ms. It is mostly React rendering the first sentence and
+proof; when it lands 300 ms or more after "Offline dictionary ready" it takes 30-35 ms (it was 69 ms
+before). One run in three was at 51 ms, so treat 50 ms as met at the median, not with margin.
+
+### What changed (plan F9)
+
+| Proposal | Status | Where |
+|---|---|---|
+| W1 parallel fetch of lexicon, pack, bigrams | done: `Promise.all`, then parse | `packages/web/lib/data.ts` (web-ui Req 23.1) |
+| C1 faster `Lexicon.fromJSON` | done: plain a-z/`'` words use a per-letter table (no `normalize`), only out-of-order lists are sorted; same result as before for any file, lying files included | `packages/core/src/lexicon.ts` (core-encoder Req 2.8, 2.9) |
+| C3 compact wire format | done: `data/lexicon/en.v2.json`, codes derived on load, 230 KB gzip instead of 402 KB; eval results identical | ADR-data-003, `build_lexicon.py` (core-encoder Req 2.9, 2.11; eval-harness Req 5.9) |
+| C2 / W2 no trie build in a key press | done differently: no trie at all. A sorted code index plus a per-prefix cache gives the same completions (one sort, 6-12 ms in Node); the app builds it and warms decoding and each single key in idle time, one step per idle slice | `lexicon.ts` `prepare()`, `data.ts` `warmDictionary` (Req 2.10, web-ui Req 23.3) |
+| W3 trim the precache, no double download | done: `/data` precached at `?v=<content hash>` with `revision: null` (Serwist then uses the HTTP cache, which the page just filled); 192/512 px icons, Apple touch icon, latin-ext fonts, data licence and notice, `en.v1.json`, polyfills and pages-router chunks left out | `packages/web/next.config.mjs`, `app/sw.ts` (web-ui Req 23.2, 23.4) |
+| W4 Web Worker for parsing | not done: parse is 51 ms on desktop and 263 ms at 4x, once, during loading, never in a key press. Revisit if a real phone shows the loading screen freezing | |
+
+### What it means now
+
+1. **First load is 530 KB with gzip, 170 KB under the budget.** With brotli on Vercel the
+   dictionary is about 273 KB instead of 414 KB, so production should be near 480 KB.
+2. **The first visit costs about 0.6 MB, not 1.8 MB.** The worker downloads 76 KB of its own (the
+   HTML for `/` and `/about`, the two latin fonts and small icons, which carry a content revision and
+   are fetched with `cache: 'reload'`); the dictionary is taken from the HTTP cache.
+3. **The dictionary is ready about 2.4 s sooner on Slow 4G** (5.7 s): one round trip instead of
+   three, and 173 KB less to download.
+4. **No key press waits for an index.** The slow 5th press of "kitchen" (578 ms) is now 27 ms. In
+   initials mode the first press paid the same build (it reads `completions(key, 12)`); it now reads a
+   cache the idle warm-up filled.
+5. **Parse is under target with margin**: 51 ms on desktop. The same new core is 81 ms on v1, so the
+   loader alone would have met the target; the compact file is what saves the bytes.
+6. **Memory halved**: 7.6 MB for the dictionary instead of 14.7 MB (no trie, no parsed v1 object).
+7. **Offline still works**: 576 ms to dictionary ready at 4x CPU, 0 bytes from the network.
+
+## First measurement (2026-11-06, before F9)
+
+Kept for reference; the proposals it led to are in the table above.
+
+### Results
 
 Build: commit `1804f77` plus the website, `next start` (gzip). headless Chromium from Playwright 1.63 on a linux-x64
 cloud machine. "4x" slows this machine's CPU by 4; it is not a real phone, so read the times as
@@ -64,7 +145,7 @@ committed): first load 692 KB, dictionary ready 7,787 ms, slowest key press 352 
 110 ms, offline reload 741 ms. Same picture; the layout added about 5 KB of JS, leaving 8 KB of
 headroom under the 700 KB budget with gzip.
 
-## What this means
+### What this meant
 
 1. **First load is inside the 700 KB budget, but only just (687 KB with gzip).** On Vercel the
    lexicon and bigrams go out with brotli (328 + 86 KB per `docs/architecture/data-and-eval.md`
@@ -89,7 +170,7 @@ headroom under the 700 KB budget with gzip.
 8. **Offline works:** after one online visit, an offline reload has the dictionary ready in about
    720 ms at 4x CPU with no network bytes.
 
-## Proposals (not implemented)
+### Proposals (status in "What changed" above)
 
 For the web owner (`packages/web`):
 
@@ -118,4 +199,4 @@ For the core owner (`packages/core`):
 - **C3. Compact wire format** (already proposed in `docs/architecture/data-and-eval.md`):
   `codes: { "4663": "good:61 home:58 ..." }` cuts both bytes and parse time. Contract change.
 
-Re-run `node scripts/perf-check.mjs` after any of these and update the table above.
+Re-run `node scripts/perf-check.mjs` after any change to loading, the data files or the service worker, and update the before/after table.

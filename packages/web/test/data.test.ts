@@ -81,18 +81,22 @@ describe('dictionary loading (plan F9, web-ui Req 23)', () => {
     }
   });
 
-  it('Req 23.3: warming builds the completion index first, then warms decoding and each key, one idle slice per step', () => {
+  it('Req 23.3: warming runs one step per idle slice: a decode, then the completion index, then each key', () => {
     const lexicon = Lexicon.fromJSON(LEX);
     const prepare = vi.spyOn(lexicon, 'prepare');
     const completions = vi.spyOn(lexicon, 'completions');
+    const logP = vi.fn(() => -1);
     const queue: (() => void)[] = [];
-    const state: DictState = { status: 'ready', lexicon, lm: { logP: () => -1 }, model: 'unigram', pack: null };
+    const state: DictState = { status: 'ready', lexicon, lm: { logP }, model: 'unigram', pack: null };
     warmDictionary(state, (fn) => queue.push(fn));
-    expect(prepare).not.toHaveBeenCalled(); // nothing runs until the browser is idle
+    expect(logP).not.toHaveBeenCalled(); // nothing runs until the browser is idle
     queue.shift()!();
-    expect(prepare).toHaveBeenCalledTimes(1);
+    expect(logP).toHaveBeenCalled(); // slice 1: a decode
+    expect(prepare).not.toHaveBeenCalled();
+    queue.shift()!();
+    expect(prepare).toHaveBeenCalledTimes(1); // slice 2: the completion index
     expect(completions).not.toHaveBeenCalled();
-    let slices = 1;
+    let slices = 2;
     while (queue.length) {
       expect(queue).toHaveLength(1); // one step at a time
       queue.shift()!();

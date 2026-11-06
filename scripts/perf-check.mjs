@@ -114,18 +114,24 @@ const kind = (url, type) => {
 /** Count bytes on the wire per resource type through CDP Network events. */
 async function byteCounter(cdp) {
   const types = new Map();
+  const paths = new Map();
   const totals = { document: 0, js: 0, css: 0, font: 0, data: 0, other: 0 };
   const sw = { count: 0 };
+  /** /data paths whose body came over the network to the page (not from a cache or the worker). */
+  const dataNet = new Set();
   await cdp.send('Network.enable');
   cdp.on('Network.responseReceived', (e) => {
     types.set(e.requestId, kind(e.response.url, e.type));
+    if (!e.response.fromServiceWorker && !e.response.fromDiskCache) paths.set(e.requestId, new URL(e.response.url).pathname);
     if (e.response.fromServiceWorker) sw.count += 1;
   });
   cdp.on('Network.loadingFinished', (e) => {
     const k = types.get(e.requestId) ?? 'other';
     totals[k] += e.encodedDataLength;
+    const path = paths.get(e.requestId);
+    if (path?.startsWith('/data/') && e.encodedDataLength > 1024) dataNet.add(path);
   });
-  return { totals, sw, sum: () => Object.values(totals).reduce((a, b) => a + b, 0) };
+  return { totals, sw, dataNet, sum: () => Object.values(totals).reduce((a, b) => a + b, 0) };
 }
 
 async function gcHeapMB(cdp) {
@@ -284,9 +290,11 @@ async function runOffline(browser) {
   const swReqs = [];
   context.on('requestfinished', (r) => {
     if (!r.serviceWorker()) return;
+    // sizes() can wait forever on a request the worker never finished reading: give up after 5 s.
+    const late = new Promise((done) => setTimeout(() => done(null), 5000));
     swReqs.push(
-      r.sizes().then(
-        (z) => ({ url: new URL(r.url()).pathname, net: z.responseBodySize > 0 ? z.responseBodySize + z.responseHeadersSize : 0 }),
+      Promise.race([r.sizes(), late]).then(
+        (z) => (z ? { url: new URL(r.url()).pathname, net: z.responseBodySize > 0 ? z.responseBodySize + z.responseHeadersSize : 0 } : { url: '', net: 0 }),
         () => ({ url: '', net: 0 }),
       ),
     );
@@ -317,7 +325,10 @@ async function runOffline(browser) {
     .catch(() => false);
   const sw = await Promise.all(swReqs.splice(0));
   const swInstallKB = sw.reduce((n, r) => n + r.net, 0) / 1024;
-  const dataRefetched = [...new Set(sw.filter((r) => r.net > 0 && r.url.startsWith('/data/')).map((r) => r.url))];
+  // Downloaded twice = the page and the worker both took it from the network. When the worker asks
+  // first, the page reads the worker's copy from the HTTP cache instead, which is one download.
+  const dataRefetched = [...new Set(sw.filter((r) => r.net > 0 && bytes.dataNet.has(r.url)).map((r) => r.url))];
+  const visitKB = bytes.sum() / 1024 + swInstallKB;
   let offlineReadyMs = null;
   let offlineKB = null;
   if (swReady) {
@@ -330,7 +341,7 @@ async function runOffline(browser) {
     offlineKB = (bytes.sum() - before) / 1024;
   }
   await context.close();
-  return { swReady, offlineReadyMs, offlineKB, swInstallKB, dataRefetched };
+  return { swReady, offlineReadyMs, offlineKB, swInstallKB, visitKB, dataRefetched };
 }
 
 /** Raw bytes on the wire for one GET with gzip allowed (node's fetch would decode the body). */
@@ -382,7 +393,12 @@ const results = { mobile: [], desktop: [], precache: await precacheKB() };
 console.log(`perf-check on ${BASE_URL}, ${RUNS} run(s), core from ${CORE_DIR}`);
 try {
   for (let i = 0; i < RUNS; i++) {
-    const m = { ...(await runMobile(browser)), ...(await runOffline(browser)) };
+    const phase = (name) => process.stderr.write(`  run ${i + 1}: ${name}\n`);
+    phase('mobile');
+    const mob = await runMobile(browser);
+    phase('offline');
+    const m = { ...mob, ...(await runOffline(browser)) };
+    phase('desktop');
     const d = await runDesktop(browser);
     results.mobile.push(m);
     results.desktop.push(d);
@@ -415,6 +431,7 @@ const ROWS = [
   ['Offline reload to dictionary ready (ms)', 'offlineReadyMs', 0],
   ['Offline reload bytes from network (KB)', 'offlineKB', 1],
   ['Service worker install, really downloaded (KB)', 'swInstallKB', 0],
+  ['First visit with the service worker, page + worker (KB)', 'visitKB', 0],
 ];
 const get = (r, k) => (typeof k === 'function' ? k(r) : r[k]);
 const fmt = (v, d) => (v === null || v === undefined ? 'n/a' : v.toFixed(d));
