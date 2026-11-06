@@ -26,7 +26,7 @@
   cursor: pointer; text-decoration: none;
 }
 .nl-btn:focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: 3px; }
-.nl-btn--primary { background: var(--ember); color: var(--on-ember); box-shadow: var(--ember-edge); }
+.nl-btn--primary { background: var(--ember); color: var(--on-ember); border: 0; box-shadow: var(--ember-edge); } /* app: border 0 as in the artboards, so the Day plum ring sits on the edge */
 .nl-btn--primary:active { background: var(--ember-deep); }
 .nl-btn--secondary { background: transparent; color: var(--ink); border-color: var(--line-strong); }
 .nl-btn--secondary:active { background: var(--surface-sunken); }
