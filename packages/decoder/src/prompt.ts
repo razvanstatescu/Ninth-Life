@@ -34,12 +34,12 @@ export const FEW_SHOTS: readonly FewShot[] = [
   },
   {
     mode: 'letter',
-    codes: ['4', '26', '4663'],
-    lattice: [['i', 'g', 'h'], ['am', 'an', 'co'], ['good', 'home', 'gone', 'hood', 'hone']],
-    beams: [['i', 'am', 'good'], ['i', 'am', 'home']],
+    codes: ['4', '3335', '3463'],
+    lattice: [['i', 'g', 'h'], ['feel'], ['find', 'fine', 'dime', 'dine']],
+    beams: [['i', 'feel', 'find'], ['i', 'feel', 'fine']],
     partner: 'How are you feeling today?',
     k: 3,
-    answer: [['i', 'am', 'good'], ['i', 'am', 'home']],
+    answer: [['i', 'feel', 'fine'], ['i', 'feel', 'find']],
   },
   {
     mode: 'letter',

@@ -21,6 +21,8 @@ Start here. Every page below is kept in the repo, so the knowledge base is versi
 
 ## Decisions
 - [ADR-000: Next.js web app, framework-agnostic decoder](decisions/ADR-000-nextjs.md)
+- [ADR-core-001: core contract clarifications](decisions/ADR-core-001-contract-clarifications.md)
+- [ADR-data-001: keep the 60k lexicon](decisions/ADR-data-001-lexicon-size.md)
 - Other ADRs: `decisions/ADR-*.md`
 
 ## Research

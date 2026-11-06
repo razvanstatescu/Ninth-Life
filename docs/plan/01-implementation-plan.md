@@ -51,7 +51,7 @@ disagree, this page wins, and the reason sits in `docs/decisions/`.
 
 | Gate | Date | Definition of done | Status |
 |---|---|---|---|
-| M0 | Nov 6 | Monorepo, contracts, design system imported, `.kiro/` skeleton, knowledge base started | in progress |
+| M0 | Nov 6 | Monorepo, contracts, design system imported, `.kiro/` skeleton, knowledge base started | done |
 | M1 | Nov 11 | Ghost mode in the browser: keypad → candidates → proof → speak, offline, core PBT green | in progress (started Nov 6) |
 | M2 | Nov 14 | Deployed PWA (Vercel), offline works, decoder Lambda synthesizes, RESULTS v1 (B0/B1) | — |
 | M3 | Nov 20 | LLM mode with proof panel, latency harness, model chosen (Haiku 4.5 / newer Haiku / Nova Micro) | — |
@@ -66,6 +66,28 @@ disagree, this page wins, and the reason sits in `docs/decisions/`.
 3. **Web:** the communication screen from `design/artboards/In-context-app.dc.html`, settings sheet, speech, scanning, offline.
 4. **Decoder/infra:** handler with validator and quotas, Bedrock client, CDK stack, tests (no deploy yet).
 5. **Kiro:** verified steering, hooks, agents, MCP, power, CI; KIRO_LOG entries from day 1.
+
+## Measured so far (Nov 6)
+
+| What | Result | Source |
+|---|---|---|
+| Core tests | 63 pass, incl. property tests by requirement ID | `packages/core` |
+| Decoder + infra tests | 117 + 18 pass; CDK synthesizes without credentials | `packages/decoder`, `packages/infra` |
+| B0 dictionary order (866 items) | word acc 91.4%, sentence top-1 62.4%, top-5 91.8% | `packages/eval/RESULTS.md` |
+| B1 ghost mode (866 items) | word acc 96.8%, sentence top-1 85.5%, top-5 97.1%, p95 0.65 ms | `packages/eval/RESULTS.md` |
+| Data size | lexicon + bigrams 413.6 KB brotli | ADR-data-001 |
+
+Caveat: 24.4% of AACText test sentences also occur verbatim in the training split (stock phrases),
+so AACText numbers are optimistic. Report Turk (79.3% top-1) alongside.
+
+## Plan corrections found by the team
+
+- Plan §4.3 example codes are wrong: "need" = 6333, "water" = 92837.
+- Prompt caching does not apply to Haiku 4.5 (4,096-token minimum; our prompt is ~840). It does on Haiku 5.5 (512).
+- Haiku 5.5 rejects `temperature`; the client omits it and disables thinking.
+- AWS Budgets actions cannot invoke Lambda; we use a budget notification → SNS → kill-switch Lambda.
+- Haiku 4.5's "EOL no sooner than" date (Oct 16, 2026) has passed; it may go legacy during judging.
+- More in `docs/research/bedrock-models.md` and `docs/research/assumptions-register.md`.
 
 ## Working agreements
 
@@ -83,3 +105,9 @@ disagree, this page wins, and the reason sits in `docs/decisions/`.
 | D2 | Deploy target for the decoder in production | Lambda (ADR-000) | A |
 | D3 | Model choice | Decided at M3 from eval numbers | C |
 | D4 | Did anyone register for Kiroween 2025? | Ask the team | all |
+| D5 | Default LLM: Haiku 4.5 (plan baseline) or Haiku 5.5 (~8x cheaper, prompt caching works) | Decide at M3 from B3/B4 eval | A, C |
+| D6 | Turk dialogues license: web page says CC BY 4.0, download readme says CC BY-ND 3.0 | Ask Keith Vertanen; if ND, rebuild bigrams with `--no-turk` (perplexity 101 → 111) | C |
+| D7 | Filter offensive words out of suggestions (wordfreq ranks some as low readings of common codes) | Recommended yes: a short blocklist applied at lexicon build, words still typeable via "add word" | C |
+| D8 | Keep diacritics and capitals for display (ro "mâine", names "Ana") | Add optional display spelling to `LexiconFile` before ro/es packs | A, C |
+| D9 | Production web origin for the decoder CORS allowlist | Set when the Vercel domain exists (M2) | A |
+| D10 | Decoder AWS account | Use a dedicated account: the budget cannot filter Claude-on-Bedrock (billed via Marketplace) | A |
