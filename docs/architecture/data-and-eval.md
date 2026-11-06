@@ -65,7 +65,7 @@ surviving ids from the filtered file and the turn text and split from the clean 
 | `packages/eval/fixtures/test.v1.jsonl` | 164,854 B | | | 866 test items, 4,890 words |
 
 First load of lexicon + bigrams: 413.8 KB brotli (505.7 KB gzip) with `en.v1.json`; the app now ships `en.v2.json`,
-so it is 272.2 KB brotli (325.7 KB gzip) (ADR-data-003, `docs/testing/performance.md`).
+so it is 272.8 KB brotli (325.7 KB gzip) (ADR-data-003, `docs/testing/performance.md`).
 
 ### Lexicon build (`build_lexicon.py`)
 
