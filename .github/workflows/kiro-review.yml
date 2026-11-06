@@ -1,0 +1,129 @@
+name: kiro-review
+
+# Headless Kiro CLI review of a pull request with the read-only pr-reviewer agent.
+# Runs only while the PR carries the "kiro-review" label (each run spends Kiro
+# credits). Needs the KIRO_API_KEY secret: a Kiro API key, which requires a Pro,
+# Pro+, Pro Max or Power subscription (https://kiro.dev/docs/cli/headless/).
+# Optional repository variable KIRO_REVIEW_MODEL pins the model (check the exact
+# ID with /model in an interactive session; an unknown ID only warns and falls
+# back to the default model).
+
+on:
+  pull_request:
+    types: [labeled, synchronize, reopened]
+
+concurrency:
+  group: kiro-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    # Same-repo PRs only: secrets are not available to forks.
+    if: >-
+      contains(github.event.pull_request.labels.*.name, 'kiro-review') &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      BASE_REF: ${{ github.event.pull_request.base.ref }}
+      KIRO_REVIEW_MODEL: ${{ vars.KIRO_REVIEW_MODEL }}
+      NO_COLOR: "1"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Quick eval for the reviewer
+        run: pnpm -s -F @ninth/eval quick > eval.md 2>&1 || echo "(eval quick failed; see the job log)" >> eval.md
+
+      - name: Diff against the base branch
+        run: |
+          git diff --stat "origin/${BASE_REF}...HEAD" > diffstat.txt
+          git diff "origin/${BASE_REF}...HEAD" > pr.diff
+          wc -c pr.diff
+
+      - name: Install Kiro CLI
+        run: |
+          curl -fsSL https://cli.kiro.dev/install | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Kiro review (CLI V3, headless, read-only agent)
+        env:
+          KIRO_API_KEY: ${{ secrets.KIRO_API_KEY }}
+        run: |
+          if [ -z "$KIRO_API_KEY" ]; then
+            echo "::warning::KIRO_API_KEY is not set; skipping the Kiro review."
+            echo "Kiro review skipped: the KIRO_API_KEY secret is not set." > review.md
+            exit 0
+          fi
+          kiro-cli --version
+          {
+            cat .kiro/prompts/pr-review.md
+            printf '\n## Pull request\n#%s: %s (base: %s)\n' "$PR_NUMBER" "$PR_TITLE" "$BASE_REF"
+            printf '\n## Quick eval (pnpm -F @ninth/eval quick)\n'
+            head -c 20000 eval.md
+            printf '\n## Diff stat\n'
+            cat diffstat.txt
+            printf '\n## Diff (first 150 KB)\n```diff\n'
+            head -c 150000 pr.diff
+            printf '\n```\n'
+          } > prompt.txt
+          MODEL_ARGS=()
+          if [ -n "$KIRO_REVIEW_MODEL" ]; then MODEL_ARGS=(--model "$KIRO_REVIEW_MODEL"); fi
+          set +e
+          # Instruction comes from stdin (no positional argument). --v3 pins the
+          # harness; --trust-tools takes exact V3 internal tool IDs (read-only ones).
+          kiro-cli chat --v3 --no-interactive --agent pr-reviewer "${MODEL_ARGS[@]}" \
+            --trust-tools=read_file,grep_search,file_search,list_directory \
+            < prompt.txt > review.raw.md 2> kiro.stderr.log
+          code=$?
+          set -e
+          sed -e 's/\x1b\[[0-9;]*[A-Za-z]//g' review.raw.md > review.md
+          case $code in
+            0) ;;
+            4) echo "::error::Agent pr-reviewer not found by Kiro CLI V3 (exit 4)."; cat kiro.stderr.log; exit 1 ;;
+            *) echo "::error::kiro-cli exited with $code"; cat kiro.stderr.log; exit $code ;;
+          esac
+
+      - name: Post the review on the PR
+        if: always() && hashFiles('review.md') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          {
+            echo "## Kiro review (headless, agent \`pr-reviewer\`)"
+            echo
+            cat review.md
+            echo
+            echo "<sub>Kiro CLI V3, \`--no-interactive\`, read-only tools. [Run log](${RUN_URL}). Remove the \`kiro-review\` label to stop automatic reviews.</sub>"
+          } > comment.md
+          gh pr comment "$PR_NUMBER" --body-file comment.md
+
+      - name: Keep the review as evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: kiro-review-pr-${{ github.event.pull_request.number }}-run-${{ github.run_number }}
+          path: |
+            review.md
+            eval.md
+            diffstat.txt
+          if-no-files-found: ignore
+          retention-days: 90

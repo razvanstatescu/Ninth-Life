@@ -1,0 +1,56 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Fast rule checks that need no dependencies. Kept separate so a trademark or
+  # .kiro problem is visible even when the build is red.
+  rules:
+    name: rules (tm-lint, .kiro checks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Banned trademarks
+        run: node scripts/tm-lint.mjs
+      - name: .kiro present, tracked and not git-ignored (hackathon rule)
+        run: node scripts/check-kiro-not-ignored.mjs --require-tracked
+      - name: .kiro config is valid (hooks v1, agents, MCP, steering, powers)
+        run: node scripts/validate-kiro-config.mjs
+
+  build:
+    name: build (install, typecheck, test, web build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v7
+      # pnpm version comes from "packageManager" in package.json (pnpm@10.x).
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm -r typecheck
+      - name: Test (vitest runs once because CI=true)
+        run: pnpm -r test
+      - name: Web build
+        run: pnpm -F @ninth/web build

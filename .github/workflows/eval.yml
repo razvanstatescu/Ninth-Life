@@ -1,0 +1,51 @@
+name: eval
+
+# Runs the decoding eval and keeps RESULTS as an artifact. Offline configs only
+# (B0 dictionary, B1 ghost mode); B2 to B4 call Amazon Bedrock and are run by hand
+# with a proposer module (see .kiro/powers/ninth-life-eval/POWER.md).
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "quick (200-item subset) or full (frozen test set)"
+        type: choice
+        options: [quick, full]
+        default: quick
+  schedule:
+    - cron: "37 5 * * 1" # Mondays 05:37 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      MODE: ${{ github.event.inputs.mode || 'quick' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+      - name: Run eval
+        run: |
+          OUT="$RUNNER_TEMP/eval-results"
+          if [ "$MODE" = "full" ]; then SCRIPT=eval; else SCRIPT=quick; fi
+          pnpm -s -F @ninth/eval "$SCRIPT" --write --out "$OUT" | tee "$RUNNER_TEMP/eval-table.md"
+          {
+            echo "## Eval ($MODE) on ${GITHUB_SHA::7}"
+            echo
+            cat "$RUNNER_TEMP/eval-table.md"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload RESULTS
+        uses: actions/upload-artifact@v7
+        with:
+          name: eval-${{ env.MODE }}-${{ github.run_number }}
+          path: ${{ runner.temp }}/eval-results/
+          retention-days: 90
