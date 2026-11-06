@@ -89,6 +89,19 @@ so AACText numbers are optimistic. Report Turk (79.3% top-1) alongside.
 - Haiku 4.5's "EOL no sooner than" date (Oct 16, 2026) has passed; it may go legacy during judging.
 - More in `docs/research/bedrock-models.md` and `docs/research/assumptions-register.md`.
 
+## Follow-ups from M1 review (Nov 6)
+
+| # | Item | Owner | Proposed fix |
+|---|---|---|---|
+| F1 | Phone layout: header wraps to 4 rows and the keypad sits below the fold at 390×844 | B | Icon+label header collapses to one row (Settings/Phrases into a menu sheet); keypad before sentences on phones; show 3 sentences |
+| F2 | Single-letter readings rank too high ("H need water" at rank 5) | A, C | Penalize one-letter words other than "a" and "i" in the unigram model, or drop them from the lexicon |
+| F3 | Scan grid order differs: web puts keypad rows first (any key ≤ 7 steps), access-modes spec puts sentences in row 0 | A, B | Keep keypad-first (Keypad README); update the access-modes spec to match |
+| F4 | Settings and Phrases sheets are not reachable by switch scanning | B | Add a scan row for Settings/Phrases/Voice, and scan inside sheets |
+| F5 | No axe check in CI | B | Add `@axe-core/playwright` to web dev deps and a CI job |
+| F6 | Vocab pack phrases load but are not shown | B | Quick-phrases row in the Phrases sheet |
+| F7 | Rejected model words only show as a count unless the client re-check catches them | A | Return rejected words (not just a count) from the decoder so the proof panel can strike them through, as the design shows |
+| F8 | Fonts are self-hosted because Next 15.1.3's font list lacks Atkinson Hyperlegible Next/Mono | B | Fine for offline; revisit if Next is upgraded |
+
 ## Working agreements
 
 - Every feature starts as a Kiro spec task that cites requirement IDs. Property tests carry the requirement ID in their names.

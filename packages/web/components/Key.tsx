@@ -15,7 +15,10 @@ export function Key({ def, lit, onPress }: { def: KeyDef; lit?: boolean; onPress
         {def.digit}
       </span>
       {def.letters ? (
-        <span className="nl-key__letters" aria-hidden="true">
+        <span
+          className={def.letters.length > 3 ? 'nl-key__letters nl-key__letters--4' : 'nl-key__letters'}
+          aria-hidden="true"
+        >
           {def.letters}
         </span>
       ) : (

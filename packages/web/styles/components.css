@@ -53,6 +53,8 @@
 .nl-key:focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: 3px; }
 .nl-key:active { box-shadow: inset 0 0 0 3px var(--ember); }
 .nl-key__letters { font-size: 30px; line-height: 32px; font-weight: 700; letter-spacing: 0.04em; }
+/* 4-letter keys (PQRS, WXYZ) must fit inside the key at every size, down to key-min. */
+.nl-key__letters--4 { font-size: min(30px, calc(var(--nl-key, var(--key-size)) * 0.27)); letter-spacing: 0; }
 .nl-key__digit { position: absolute; top: 9px; left: 12px; font-family: var(--font-mono); font-size: 16px; line-height: 16px; font-weight: 500; }
 .nl-key__word { font-size: 18px; line-height: 22px; font-weight: 700; }
 .nl-key.is-lit { background: var(--ember); color: var(--on-ember); box-shadow: inset 0 0 0 3px var(--plum), var(--glow-ember); }
