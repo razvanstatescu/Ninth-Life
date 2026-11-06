@@ -125,7 +125,7 @@ decodes (estimate). On Haiku 4.5 the $8 daily dollar cap binds before the 20,000
 | Guard | Where | Value | On hit |
 |---|---|---|---|
 | Stage throttle | API Gateway `$default` | 5 rps, burst 10 | 429 from API Gateway |
-| Concurrency | Lambda reserved concurrency | 5 | 429/503 from API Gateway |
+| Concurrency | Lambda reserved concurrency | 5 | throttled invocations surface as a non-200 from API Gateway |
 | Per IP hash, minute | DynamoDB | 30 | 429 `rate_limited`, `Retry-After` to next minute |
 | Per IP hash, UTC day | DynamoDB | 300 | 429 `rate_limited`, `Retry-After` to midnight UTC |
 | Global, UTC day | DynamoDB | 20,000 decodes or $8.00 estimated | 503 `llm_disabled` / `daily_cap` |
@@ -141,7 +141,12 @@ SecureString `/ninthlife/ip_salt`), so they cannot be linked across days; items 
 - One JSON metrics line per request (`DecodeMetrics` in `src/log.ts`): outcome enum, status,
   timings, token counts, cost, model label, error class name. Never bodies, words, codes, partner
   text, IPs, IP hashes or error messages. Property-tested (`test/handler.test.ts`, "DS-6 privacy").
-- No payload tracing (X-Ray off). Log retention 2 weeks.
+- No payload tracing (X-Ray off), no API Gateway access logs. Log retention 2 weeks.
+- Bedrock model-invocation logging is an account setting the stack does not manage; it must stay
+  off. Check: `aws bedrock get-model-invocation-logging-configuration --region eu-central-1`
+  (expect no `loggingConfig`).
+- The salt can be rotated any time by overwriting `/ninthlife/ip_salt` (new cold starts pick it up;
+  per-IP counters simply restart).
 - EU only: the stack refuses any Region but eu-central-1, the Bedrock client refuses non-EU
   Regions/profiles, and IAM allows only `eu.` profiles and EU foundation-model ARNs. Note that EU
   profiles route among six EU Regions (Frankfurt, Stockholm, Milan, Spain, Ireland, Paris).
@@ -194,7 +199,8 @@ bootstrapped (`npx cdk bootstrap aws://<account>/eu-central-1`).
 5. Deploy: `cd packages/infra && npx cdk deploy -c allowedOrigins=https://<app-origin> [-c alertEmail=<address>] [-c activeModel=haiku-5.5]`.
    Confirm the email subscription if you set one.
 6. Set `NEXT_PUBLIC_DECODE_URL` in the web app to the `DecodeUrl` output.
-7. Smoke test (curl above), check one metrics line in CloudWatch Logs, fire the kill switch once.
+7. Smoke test (curl above), check one metrics line in CloudWatch Logs, confirm Bedrock
+   model-invocation logging is off, fire the kill switch once.
 8. After a day, compare Cost Explorer with the per-decode estimate and update `src/models.ts`.
 
 Context keys (`packages/infra/cdk.json`): `allowedOrigins`, `models` (IAM scope, default

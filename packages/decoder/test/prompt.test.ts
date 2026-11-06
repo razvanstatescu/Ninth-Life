@@ -45,7 +45,7 @@ describe('system prompt', () => {
   });
 
   it('contains no trademarked product names', () => {
-    for (const banned of [/\bT9\b/, /nokia/i, /swiftkey/i, /gboard/i]) expect(SYSTEM_PROMPT).not.toMatch(banned);
+    for (const banned of [/\bT9\b/, /nokia/i, /swiftkey/i, /gboard/i]) expect(SYSTEM_PROMPT).not.toMatch(banned); // tm-lint-allow
   });
 });
 
