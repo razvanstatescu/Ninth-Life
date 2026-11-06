@@ -39,12 +39,27 @@ Knowledge-base page with the route map, keyboard map and how to run: `docs/archi
 | `Button` | Button | adds `compact` and `lit` |
 | `AppHeader`, `StatusPill`, `PartnerTurn`, `ScanBar`, `Sheet`, `SettingsSheet`, `PhrasesSheet`, `ShowMode`, `Footer` | from the In-context-app and Interface-kit artboards | |
 
-## Scanning grid (Req 8)
+## Scanning grid (Req 8, 16)
 
-`rows = [3, 3, 3, 3, candidates.length, 3]`. Keypad rows come first so a key is at most 4 + 3 = 7 steps away
-(Keypad README). The access-modes spec lists candidates as row 0; this order was chosen for the key bound and the
-reducer's empty-row skipping keeps the grid stable while the sentence count changes. `useScanner` owns the timer
-(`scan1` only), the accept-delay debounce and pausing while an overlay is open.
+`rows = [3, 3, 3, 3, sentencesShown (+1 for More/Fewer), 4 actions, header]`, header = 1 (Menu) on compact screens
+and 3 (Phrases, Voice, Settings) on wide ones. Keypad rows come first so a key is at most 4 + 3 = 7 steps away
+(Keypad README; M1 review F3). The access-modes spec now lists the same order. The reducer's empty-row skipping keeps
+the grid stable while the sentence count changes. `useScanner` owns the timer (`scan1` only), the accept-delay
+debounce and pausing while an overlay is open.
+
+Sheets and show mode scan with their own `useScanner` (`lib/useOverlayScan.ts`): rows are the elements marked
+`data-scan-row` inside the open `[data-overlay]` dialog (Close first, from `Sheet`), cells are their enabled buttons,
+radios and checkboxes, re-read by a MutationObserver. The highlight is `data-scan-state="row" | "lit"`, set directly
+on the DOM so a re-render of the sheet cannot wipe it. Choosing a cell calls `click()`. The scan mode is latched when
+the overlay opens (Req 16.4), so a switch user who picks Keyboard can still pick One switch again before closing.
+
+## Layout (Req 15)
+
+`lib/layout.ts` decides `wide` (>= 960px) or `compact` with `useSyncExternalStore` on `matchMedia`. The static HTML
+is the wide DOM; CSS `order` lays it out as compact on phones until hydration renders the compact DOM order, so
+focus order matches the visual order and nothing jumps. The header renders both variants and CSS shows one. On
+compact screens `--nl-key` is also capped by `(100dvh - 480px) / 4` (never below 72px), so at 390 x 844 the
+SpeakBar and keypad fit; it depends on the viewport only, so keys do not resize while typing.
 
 ## Keyboard routing (Req 6)
 

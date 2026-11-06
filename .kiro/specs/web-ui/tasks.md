@@ -27,7 +27,7 @@
 - [x] 12. Touch: accept-delay debounce on repeated taps; L/XL key size (Req 7.1-7.3)
 - [x] 13. `lib/useScanner.ts` on `scanReducer`: timer, debounce, pause on overlays (Req 8.3, 8.4, 8.7; access-modes Req 4.1-4.3)
   - [x] 13.1 Tests: auto scan, empty row skipped, pause after loops, step scan never ticks (P4)
-- [x] 14. Scan grid rows → keypad, sentences, actions; `is-scanning` / `is-lit`; whole-page switch press; ScanBar (Req 8.1, 8.2, 8.5, 8.6)
+- [x] 14. Scan grid rows → keypad, sentences, actions, header; `is-scanning` / `is-lit`; whole-page switch press; ScanBar (Req 8.1, 8.2, 8.5, 8.6)
 
 ## Model ranking, offline, storage
 - [x] 15. `lib/decodeClient.ts`: request within limits, 1,500 ms timeout, re-validation, LRU (Req 12.2-12.4)
@@ -45,3 +45,19 @@
 - [ ] 23. Add `@axe-core/playwright` to CI once the e2e job exists (accessibility steering)
 - [ ] 24. Contrast audit of app-only pieces (pills, range thumb, seg radios) with a tool, both themes (Req 10.1)
 - [ ] 25. Screen reader walkthrough (VoiceOver iOS, NVDA) of typing, choosing and speaking (Req 2.4, 3.3)
+
+## M1 review follow-ups (F1, F3, F4, F6)
+- [x] 26. `lib/layout.ts`: `sectionOrder`, `visibleSentences`, `useLayout` (960px); compact DOM order and CSS `order`
+      fallback for the static HTML; height-aware key size (Req 15.1, 15.4-15.7)
+  - [x] 26.1 Tests: compact and wide order, 3 sentences + More, chosen 4th opens the list (`test/layout.test.ts`, `test/m1b.test.tsx`)
+- [x] 27. Compact header: one summary pill (`lib/status.ts`) and Menu; `MenuSheet` with Phrases, Voice, Settings and full status (Req 15.2, 15.3)
+  - [x] 27.1 Tests: one pill, one Menu, Menu opens the three sheets; summary wording
+- [x] 28. Header scan row and Show in the actions row; keypad-first order kept and the access-modes spec updated (Req 8.1, 16.1; F3)
+- [x] 29. `lib/useOverlayScan.ts`: `data-scan-row` rows in sheets and show mode on `scanReducer`, Close first, auto start,
+      `data-scan-state` highlight, Space/Enter and backdrop as the switch, latched mode, no focus ring (Req 16.2-16.6)
+  - [x] 29.1 Settings: slider buttons (Faster/Slower, Lower/Higher, Shorter/Longer, Fewer/More), Previous/Next voice (Req 16.3)
+  - [x] 29.2 Tests: header row → Settings → scan speed by switch; scanning off and back on inside the sheet; Touch turns it
+        off on close; Menu sheet by switch; one ember thing (`test/m1b.test.tsx`), `autoStart`/`resetKey` (`test/scanner.test.tsx`)
+- [x] 30. Quick phrases from the pack in the Phrases sheet: 12 then More, rows of 4 (Req 17.1-17.3)
+  - [x] 30.1 Tests: list, More, tap shows/speaks, voice path, switch path through show mode
+- [x] 31. Playwright pass at 390x844, 360x740 and 1440x1000, Night and Day, and scanning inside Settings (Req 15.5, 9.1, 9.2)

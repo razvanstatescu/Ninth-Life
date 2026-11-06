@@ -24,10 +24,11 @@ Spec: `.kiro/specs/web-ui/` (requirements, design, tasks). Contracts: `docs/arch
 | `CandidateList`, `CandidateButton` | Candidate (`nl-candidate`) | Up to 5 ranked sentences, `aria-pressed` |
 | `ProofPanel`, `ProofChip` | ProofChip (`nl-chip`) | match / new / reject, plus app-only `typing` |
 | `Button`, `Icon` | Button, iconography | Real `<button>`, inline 24px stroke icons |
-| `AppHeader`, `StatusPill` | In-context-app artboard | Logo (favicon variant at 44px), status pills, Phrases / Voice / Settings |
+| `AppHeader`, `StatusPill` | In-context-app artboard | Logo (favicon variant at 44px). Wide: every status pill, Phrases / Voice / Settings. Compact: one summary pill and Menu (both in the HTML, CSS shows one) |
+| `MenuSheet` | | Compact header's Menu: Phrases, Voice, Settings and the full status |
 | `PartnerTurn` | artboard "They said" | Optional typed line from the other person, never stored |
 | `ScanBar` | artboard scan control | "Switch scanning: 1.2 s a step", Slower, Faster |
-| `Sheet`, `SettingsSheet`, `PhrasesSheet` | Interface kit | Native `<dialog>` sheets |
+| `Sheet`, `SettingsSheet`, `PhrasesSheet` | Interface kit | Native `<dialog>` sheets; Close is the first scan row. Phrases has saved phrases and the pack's quick phrases |
 | `ShowMode` | | Full-screen big text when there is no voice |
 | `Footer` | website footer | Statement and About link (16px in the app, not `caption`) |
 
@@ -40,7 +41,9 @@ composer  { slots: [{code, pin?}], open, punct, selected, spoken }       ← lib
 remote    model ranking result for (codes, partner), LRU-cached          ← lib/decodeClient.ts
 derived   ghost = decodeWithPins(composer)  →  candidates = merge(remote, ghost)
           sentence = buildSentence(composer, candidates)  → text, tokens, proof per word, speakable
+layout    'wide' (>= 960px) | 'compact', matchMedia                         ← lib/layout.ts
 scanner   ScanState from @ninth/core scanReducer                          ← lib/useScanner.ts
+sheetScan second scanReducer over the open sheet's data-scan-row rows    ← lib/useOverlayScan.ts
 phrases   IndexedDB 'phrases' (only after Save phrase)                    ← lib/storage.ts
 ```
 
@@ -64,10 +67,29 @@ matches its keys.
 | Two switches | Space moves, Enter selects |
 
 Focus in a text field turns shortcuts off. When a button or link has focus, Enter and Space belong to it.
-In switch modes, a press on the page outside any control is also the switch.
+In switch modes, a press on the page outside any control is also the switch. While a sheet is open in a switch
+mode, Space and Enter (and a press on the sheet or backdrop) drive the sheet's scan instead.
 
-Scan grid: rows 0-3 keypad, row 4 sentences (skipped when empty), row 5 Speak / Clear / Save phrase.
-Any key is at most 4 + 3 = 7 steps away.
+Scan grid: rows 0-3 keypad, row 4 sentences on show (+ More/Fewer; skipped when empty), row 5 Speak / Clear /
+Save phrase / Show, row 6 the header (Menu on compact screens, Phrases / Voice / Settings on wide ones).
+Any key is at most 4 + 3 = 7 steps away; this keypad-first order is also the access-modes spec's (F3).
+
+Sheet scanning: rows are the `data-scan-row` elements in the open `[data-overlay]` dialog, Close first; it starts by
+itself on Close and returns there after each choice. Sliders have buttons (scan speed: Faster / Slower) and the
+voice picker has Previous / Next voice, so every setting works with a switch. The scan mode is latched while the
+sheet is open, so turning scanning off (Keyboard, Touch) or switching modes takes effect on Close and can be undone
+before then. Focus rests on the sheet, not a button, so the scan highlight stays the one ember thing.
+
+## Layout
+
+| | Wide (>= 960px) | Compact (< 960px) |
+|---|---|---|
+| Header | Brand, every status pill, Phrases / Voice / Settings | One row: brand, one summary pill, Menu |
+| Main | Left: They said, SpeakBar, sentences, proof. Right: keypad, scan control, hint | SpeakBar, keypad, scan control, sentences (3 + More), proof, They said, hint |
+
+The static HTML is the wide DOM; CSS `order` shows it in compact order on phones until hydration swaps in the compact
+DOM order (so focus order matches). Compact keys are capped by `(100dvh - 480px) / 4` (min 72px) so the SpeakBar and
+keypad fit at 390 x 844; the size depends on the viewport only, never on the sentence.
 
 ## Speech caveats
 
@@ -117,5 +139,7 @@ No font request leaves the site. Upgrading to Next 15.4+ would allow `next/font/
 ## Known gaps
 
 - No axe run in CI yet (the Playwright sanity script checks targets, text size, real controls and focus rings).
-- Settings sheets are not switch-scannable; a switch user needs help to change settings.
-- Vocab pack phrases are loaded but not yet shown as quick phrases.
+- At 360 x 740 keys are at the 72px minimum and the last 16px of the keypad panel sits below the fold while the
+  SpeakBar shows the 2-line empty prompt.
+- In Night, a selected sentence's border uses `--focus`, which is ember (design-system Candidate); it shows next to
+  Speak. Needs a design-system decision.

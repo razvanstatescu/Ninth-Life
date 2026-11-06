@@ -16,6 +16,10 @@ export interface ScannerOptions {
   acceptDelayMs: number;
   /** Stop the timer (a sheet is open, speech is running...). */
   paused?: boolean;
+  /** Start scanning at the first row as soon as there are rows (a sheet that just opened). */
+  autoStart?: boolean;
+  /** Changing this starts again from idle, like a mode change (another sheet opened). */
+  resetKey?: string;
   onChoose: (row: number, cell: number) => void;
 }
 
@@ -54,11 +58,22 @@ export function useScanner(opts: ScannerOptions): Scanner {
     [dispatch, opts.acceptDelayMs],
   );
 
-  // Turning scanning off or on starts again from idle.
+  // Turning scanning off or on (or a new sheet) starts again from idle.
+  const started = useRef(false);
   useEffect(() => {
+    started.current = false;
     stateRef.current = initialScan(cfgRef.current);
     setState(stateRef.current);
-  }, [opts.mode]);
+  }, [opts.mode, opts.resetKey]);
+
+  // A sheet starts scanning on its own: its first row (Close) is lit straight away.
+  const hasCells = cfg.rows.some((n) => n > 0);
+  useEffect(() => {
+    if (!opts.autoStart || !opts.mode || started.current || !hasCells) return;
+    if (stateRef.current.phase !== 'idle') return;
+    started.current = true;
+    dispatch('tick');
+  }, [opts.autoStart, opts.mode, opts.resetKey, hasCells, dispatch]);
 
   const running = opts.mode === 'scan1' && !opts.paused && (state.phase === 'rows' || state.phase === 'cells');
   useEffect(() => {

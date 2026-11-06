@@ -3,8 +3,13 @@
 ## Introduction
 Some people cannot press a keypad but can operate one or two switches (a button, a head switch, a
 sip-and-puff switch, or a key mapped as a switch). Ninth Life supports them with row/column
-scanning over the communication grid: row 0 holds up to 5 candidates, rows 1-4 the keypad
-(1-9, *, 0, #), row 5 the actions (speak, delete, next, save, mode). The scanning logic is a pure
+scanning over the communication grid: rows 0-3 hold the keypad (1-9, *, 0, #), row 4 the
+sentences (skipped when there are none), row 5 the actions (Speak, Clear, Save phrase, Show) and
+row 6 the header (Menu, or Phrases / Voice / Settings). Keypad rows come first because typing is what
+a switch user does most: any key is then at most 4 + 3 = 7 highlight steps away, as the Keypad README
+promises. With sentences in row 0 a key would take up to 5 + 3 = 8 steps, and the keypad rows would
+move whenever the sentence list appeared or emptied (M1 review F3, 2026-11-06). Sheets (Settings,
+Phrases, Menu) and show mode are scanned the same way, with their own rows (web-ui Req 16). The scanning logic is a pure
 reducer in `@ninth/core` (`packages/core/src/scan.ts`); timers, input mapping and rendering live in
 `packages/web`.
 

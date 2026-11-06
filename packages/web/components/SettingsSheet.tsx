@@ -36,7 +36,7 @@ function Seg<T extends string>({
     <fieldset className="field">
       <legend className="field__label">{legend}</legend>
       {help ? <p className="field__help">{help}</p> : null}
-      <div className="seg">
+      <div className="seg scan-cluster" data-scan-row={name}>
         {options.map((o) => (
           <label key={o.value} className="seg__opt">
             <input type="radio" name={name} value={o.value} checked={value === o.value} onChange={() => onChange(o.value)} />
@@ -54,7 +54,10 @@ function Range({
   min,
   max,
   step,
+  stepBy = step,
   display,
+  down,
+  up,
   onChange,
   help,
 }: {
@@ -63,18 +66,33 @@ function Range({
   min: number;
   max: number;
   step: number;
+  /** How far one press of the buttons moves the value (defaults to step). */
+  stepBy?: number;
   display: string;
+  /** Words on the buttons that lower and raise the value ("Faster", "Slower"). */
+  down: string;
+  up: string;
   onChange: (v: number) => void;
   help?: string;
 }) {
   const id = useId();
+  const round = (v: number) => Math.round(v * 1000) / 1000;
   return (
     <div className="field">
-      <label className="field__label" htmlFor={id}>
-        {label}
-      </label>
+      <div className="field__head">
+        <label className="field__label" htmlFor={id}>
+          {label}
+        </label>
+        <output className="field__value" htmlFor={id}>
+          {display}
+        </output>
+      </div>
       {help ? <p className="field__help">{help}</p> : null}
-      <div className="field__row">
+      {/* The buttons make the setting work with a switch or a single tap; the slider is for dragging. */}
+      <div className="field__row scan-cluster" data-scan-row={label}>
+        <Button variant="secondary" disabled={value <= min} onClick={() => onChange(round(Math.max(min, value - stepBy)))} aria-label={`${down}: ${label}, now ${display}`}>
+          {down}
+        </Button>
         <input
           id={id}
           className="range"
@@ -86,9 +104,9 @@ function Range({
           aria-valuetext={display}
           onChange={(e) => onChange(Number(e.target.value))}
         />
-        <output className="field__value" htmlFor={id}>
-          {display}
-        </output>
+        <Button variant="secondary" disabled={value >= max} onClick={() => onChange(round(Math.min(max, value + stepBy)))} aria-label={`${up}: ${label}, now ${display}`}>
+          {up}
+        </Button>
       </div>
     </div>
   );
@@ -102,8 +120,11 @@ export function SettingsSheet({
   onChange,
   onTestVoice,
   onClose,
+  scanning: scanningSheet,
 }: {
   open: boolean;
+  /** Switch scanning drives the sheet (web-ui Req 16). */
+  scanning?: boolean;
   focusVoice?: boolean;
   settings: Settings;
   voices: VoicesState;
@@ -113,12 +134,18 @@ export function SettingsSheet({
 }) {
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => onChange(sanitizeSettings({ ...settings, [k]: v }));
   const current = pickVoice(voices.voices, settings.voiceURI);
-  const loopsId = useId();
   const llmHelpId = useId();
+  const voiceIndex = current ? voices.voices.findIndex((v) => v.voiceURI === current.voiceURI) : -1;
+  const stepVoice = (d: 1 | -1) => {
+    const n = voices.voices.length;
+    if (n === 0) return;
+    const next = voices.voices[(Math.max(0, voiceIndex) + d + n) % n];
+    if (next) set('voiceURI', next.voiceURI);
+  };
   const scanning = settings.access === 'scan1' || settings.access === 'scan2';
 
   return (
-    <Sheet open={open} title="Settings" onClose={onClose} initialFocusId={focusVoice ? VOICE_PICKER_ID : undefined}>
+    <Sheet open={open} name="settings" title="Settings" onClose={onClose} initialFocusId={focusVoice ? VOICE_PICKER_ID : undefined} scanning={scanningSheet}>
       <section className="group" aria-labelledby="set-voice">
         <h3 className="group__title" id="set-voice">
           Voice
@@ -146,11 +173,21 @@ export function SettingsSheet({
                 </option>
               ))}
             </select>
+            {voices.voices.length > 1 ? (
+              <div className="field__row scan-cluster" data-scan-row="voice">
+                <Button variant="secondary" onClick={() => stepVoice(-1)} aria-label={`Previous voice, now ${current?.name ?? 'none'}`}>
+                  Previous voice
+                </Button>
+                <Button variant="secondary" onClick={() => stepVoice(1)} aria-label={`Next voice, now ${current?.name ?? 'none'}`}>
+                  Next voice
+                </Button>
+              </div>
+            ) : null}
           </div>
         )}
-        <Range label="Speed" value={settings.rate} min={RATE.min} max={RATE.max} step={RATE.step} display={`${settings.rate.toFixed(1)}x`} onChange={(v) => set('rate', v)} />
-        <Range label="Pitch" value={settings.pitch} min={PITCH.min} max={PITCH.max} step={PITCH.step} display={settings.pitch.toFixed(1)} onChange={(v) => set('pitch', v)} />
-        <div className="field__row">
+        <Range label="Speed" value={settings.rate} min={RATE.min} max={RATE.max} step={RATE.step} display={`${settings.rate.toFixed(1)}x`} down="Slower" up="Faster" onChange={(v) => set('rate', v)} />
+        <Range label="Pitch" value={settings.pitch} min={PITCH.min} max={PITCH.max} step={PITCH.step} display={settings.pitch.toFixed(1)} down="Lower" up="Higher" onChange={(v) => set('pitch', v)} />
+        <div className="field__row scan-cluster" data-scan-row="test-voice">
           <Button variant="quiet" icon="speaker" onClick={onTestVoice}>
             Test voice
           </Button>
@@ -200,7 +237,12 @@ export function SettingsSheet({
             { value: 'scan1', label: 'One switch' },
             { value: 'scan2', label: 'Two switches' },
           ]}
-          help="One switch scans on its own; press to choose. Two switches: Space moves, Enter chooses."
+          help={
+            <>
+              One switch scans on its own; press to choose. Two switches: Space moves, Enter chooses.
+              {scanningSheet ? ' While this sheet is open, scanning keeps working the way it did when you opened it, so you can change your mind. The new way to type starts when you close it.' : null}
+            </>
+          }
         />
         <Range
           label="Scan speed"
@@ -208,27 +250,24 @@ export function SettingsSheet({
           min={SCAN_MS.min}
           max={SCAN_MS.max}
           step={SCAN_MS.step}
+          stepBy={200}
           display={`${formatSeconds(settings.scanMs)} a step`}
+          down="Faster"
+          up="Slower"
           onChange={(v) => set('scanMs', v)}
           help={scanning ? 'How long the highlight stays on each row or key. There is no time limit to finish a sentence.' : 'Used when switch scanning is on.'}
         />
-        <div className="field">
-          <label className="field__label" htmlFor={loopsId}>
-            Passes before scanning pauses
-          </label>
-          <div className="field__row">
-            <input
-              id={loopsId}
-              className="input number"
-              type="number"
-              inputMode="numeric"
-              min={SCAN_LOOPS.min}
-              max={SCAN_LOOPS.max}
-              value={settings.scanLoops}
-              onChange={(e) => set('scanLoops', Number(e.target.value))}
-            />
-          </div>
-        </div>
+        <Range
+          label="Passes before scanning pauses"
+          value={settings.scanLoops}
+          min={SCAN_LOOPS.min}
+          max={SCAN_LOOPS.max}
+          step={1}
+          display={`${settings.scanLoops} ${settings.scanLoops === 1 ? 'pass' : 'passes'}`}
+          down="Fewer"
+          up="More"
+          onChange={(v) => set('scanLoops', v)}
+        />
         <Range
           label="Accept delay"
           value={settings.acceptDelayMs}
@@ -236,6 +275,8 @@ export function SettingsSheet({
           max={ACCEPT_DELAY.max}
           step={ACCEPT_DELAY.step}
           display={`${settings.acceptDelayMs} ms`}
+          down="Shorter"
+          up="Longer"
           onChange={(v) => set('acceptDelayMs', v)}
           help="A second press of the same key or switch within this time is ignored, so a tremor does not type twice."
         />
@@ -245,6 +286,7 @@ export function SettingsSheet({
         <h3 className="group__title" id="set-model">
           Model ranking
         </h3>
+        <div className="scan-cluster" data-scan-row="llm">
         <label className="toggle">
           <input type="checkbox" role="switch" checked={settings.llm} aria-describedby={llmHelpId} onChange={(e) => set('llm', e.target.checked)} />
           <span className="toggle__text">Model ranking</span>
@@ -252,6 +294,7 @@ export function SettingsSheet({
             {settings.llm ? 'On' : 'Off'}
           </span>
         </label>
+        </div>
         <p className="field__help" id={llmHelpId}>
           Off by default. When on, your keys and the last thing they said are sent to Anthropic&apos;s Claude API, which suggests the order of the sentences. Anthropic says it deletes them within 30 days unless it must keep them for policy or legal reasons. Every word is still checked against your keys, and nothing is spoken until you press Speak. Offline, your dictionary is used.
         </p>

@@ -1,29 +1,34 @@
 'use client';
 /**
  * The communication screen (design/artboards/In-context-app.dc.html).
- * Top to bottom: They said, SpeakBar, sentences, keypad, proof. Ghost mode (offline dictionary)
+ * Wide: They said, SpeakBar, sentences and proof beside the keypad. Compact (phones): SpeakBar, keypad,
+ * sentences, proof (lib/layout.ts). Ghost mode (offline dictionary)
  * always works; model ranking is optional, off by default, and never speaks on its own.
  */
 import { lattice, type Candidate } from '@ninth/core';
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactElement } from 'react';
 import { EMPTY, actionForKey, codesOf, composerReducer } from '@/lib/composer';
 import { loadDictionary, type DictState } from '@/lib/data';
 import { DecodeCache, buildRequest, decodeRemote, type RejectedSuggestion } from '@/lib/decodeClient';
 import { focusContext, mapKey } from '@/lib/keyboard';
+import { sectionOrder, useLayout, visibleSentences, type Layout, type Section } from '@/lib/layout';
 import { KEY_ROWS, type KeyDef } from '@/lib/keys';
 import { MAX_CANDIDATES, buildSentence, decodeWithPins, mergeCandidates, readings } from '@/lib/sentence';
-import { DEFAULT_SETTINGS, applyLook, isScan, readStoredLook, sanitizeSettings, stepScanMs, type Settings } from '@/lib/settings';
+import { DEFAULT_SETTINGS, applyLook, readStoredLook, sanitizeSettings, stepScanMs, type Settings } from '@/lib/settings';
 import { pickVoice, speak, speechSupported } from '@/lib/speech';
 import { deletePhrase, listPhrases, loadSettings, markPhraseUsed, savePhrase, saveSettings, storageAvailable, type Phrase } from '@/lib/storage';
+import { statusLines, statusSummary } from '@/lib/status';
 import { useOnline } from '@/lib/useOnline';
+import { useOverlayScan } from '@/lib/useOverlayScan';
 import { useScanner } from '@/lib/useScanner';
 import { useVoices } from '@/lib/useVoices';
-import { AppHeader, StatusPill } from './AppHeader';
+import { AppHeader } from './AppHeader';
 import { Button } from './Button';
 import { CandidateList } from './CandidateList';
 import { Footer } from './Footer';
 import { Icon } from './Icon';
 import { Keypad } from './Keypad';
+import { MenuSheet } from './MenuSheet';
 import { PartnerTurn } from './PartnerTurn';
 import { PhrasesSheet } from './PhrasesSheet';
 import { ProofPanel } from './ProofPanel';
@@ -33,22 +38,33 @@ import { ShowMode } from './ShowMode';
 import { SpeakBar } from './SpeakBar';
 
 const LLM_DEBOUNCE_MS = 400;
-const ACTIONS = ['speak', 'clear', 'save'] as const;
+const ACTIONS = ['speak', 'clear', 'save', 'show'] as const;
 const KEYPAD_ROWS = KEY_ROWS.length; // 4
-const CAND_ROW = KEYPAD_ROWS; // scan row 4
-const ACTION_ROW = KEYPAD_ROWS + 1; // scan row 5
+/**
+ * Scan grid (web-ui Req 8.1, 16.1): keypad rows first so any key is at most 4 + 3 = 7 steps away
+ * (Keypad README), then sentences, the actions under the SpeakBar, and the header (Menu, or
+ * Phrases / Voice / Settings on wide screens).
+ */
+export const CAND_ROW = KEYPAD_ROWS; // scan row 4
+export const ACTION_ROW = KEYPAD_ROWS + 1; // scan row 5
+export const MENU_ROW = KEYPAD_ROWS + 2; // scan row 6
+const WIDE_MENU = ['phrases', 'voice', 'settings'] as const;
 
-type SheetName = 'settings' | 'voice' | 'phrases' | null;
+type SheetName = 'menu' | 'settings' | 'voice' | 'phrases' | null;
 
 export function CommunicationScreen({
   initialDict,
   initialSettings,
+  layout: forcedLayout,
 }: {
   /** Inject a dictionary (tests, embeds); otherwise it loads from /data. */
   initialDict?: DictState;
   /** Starting settings before the stored ones load (tests, embeds). */
   initialSettings?: Partial<Settings>;
+  /** Force a layout (tests); otherwise it follows the viewport. */
+  layout?: Layout;
 } = {}) {
+  const layout = useLayout(forcedLayout);
   const [settings, setSettings] = useState<Settings>(() => sanitizeSettings({ ...DEFAULT_SETTINGS, ...initialSettings }));
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [dict, setDict] = useState<DictState>(initialDict ?? { status: 'loading' });
@@ -60,6 +76,7 @@ export function CommunicationScreen({
   const [phrases, setPhrases] = useState<Phrase[]>([]);
   const [phraseError, setPhraseError] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
+  const [moreSentences, setMoreSentences] = useState(false);
   const [announce, setAnnounce] = useState('');
   const online = useOnline();
   const voices = useVoices(settings.lang);
@@ -223,6 +240,7 @@ export function CommunicationScreen({
 
   const clearAll = useCallback(() => {
     dispatch({ type: 'clear' });
+    setMoreSentences(false);
     say('Cleared.');
   }, [say]);
 
@@ -253,12 +271,33 @@ export function CommunicationScreen({
 
   // ---- switch scanning ------------------------------------------------------------------------
   const scanMode = settings.access === 'scan1' ? 'scan1' : settings.access === 'scan2' ? 'scan2' : null;
-  const overlayOpen = sheet !== null || show !== null;
-  const actionsRef = useRef({ pressKey, selectCandidate, speakNow, clearAll, saveCurrent });
-  actionsRef.current = { pressKey, selectCandidate, speakNow, clearAll, saveCurrent };
+  const overlay: string | null = show !== null ? 'show' : sheet === 'voice' ? 'settings' : sheet;
+  const overlayOpen = overlay !== null;
+  // A sheet keeps scanning the way it was opened, so a switch user who picks Keyboard or Two switches
+  // in Settings can still change their mind before closing it (web-ui Req 16.4).
+  const latched = useRef<{ overlay: boolean; mode: typeof scanMode }>({ overlay: false, mode: null });
+  if (overlayOpen && !latched.current.overlay) latched.current = { overlay: true, mode: scanMode };
+  if (!overlayOpen && latched.current.overlay) latched.current = { overlay: false, mode: null };
+  const overlayScanMode = overlayOpen ? latched.current.mode : null;
+
+  const shownSentences = visibleSentences(sentence.candidates.length, layout, moreSentences, sentence.selectedIndex);
+  const sentenceToggle = shownSentences.more
+    ? { label: 'More sentences', onClick: () => setMoreSentences(true) }
+    : shownSentences.canCollapse
+      ? { label: 'Fewer sentences', onClick: () => setMoreSentences(false) }
+      : null;
+  const candCells = shownSentences.count + (sentenceToggle && shownSentences.count > 0 ? 1 : 0);
+  const menuCells = layout === 'wide' ? WIDE_MENU.length : 1;
+
+  const openSheet = useCallback((name: SheetName) => setSheet(name), []);
+  const showCurrent = useCallback(() => {
+    if (sentence.speakable && sentence.text) setShow({ text: sentence.text, reason: null });
+  }, [sentence.speakable, sentence.text]);
+  const actionsRef = useRef({ pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout });
+  actionsRef.current = { pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout };
   const scanner = useScanner({
     mode: scanMode,
-    rows: [...KEY_ROWS.map((r) => r.length), sentence.candidates.length, ACTIONS.length],
+    rows: [...KEY_ROWS.map((r) => r.length), candCells, ACTIONS.length, menuCells],
     loops: settings.scanLoops,
     scanMs: settings.scanMs,
     acceptDelayMs: settings.acceptDelayMs,
@@ -268,27 +307,55 @@ export function CommunicationScreen({
       if (row < KEYPAD_ROWS) {
         const def = KEY_ROWS[row]?.[cell];
         if (def) a.pressKey(def);
-      } else if (row === CAND_ROW) a.selectCandidate(cell);
-      else if (row === ACTION_ROW) {
+      } else if (row === CAND_ROW) {
+        if (cell < shownSentences.count) a.selectCandidate(cell);
+        else a.sentenceToggle?.onClick();
+      } else if (row === ACTION_ROW) {
         const act = ACTIONS[cell];
         if (act === 'speak') a.speakNow();
         else if (act === 'clear') a.clearAll();
         else if (act === 'save') a.saveCurrent();
+        else if (act === 'show') a.showCurrent();
+      } else if (row === MENU_ROW) {
+        a.openSheet(a.layout === 'wide' ? (WIDE_MENU[cell] ?? null) : 'menu');
       }
     },
   });
   const scanActive = scanMode !== null && (scanner.state.phase === 'rows' || scanner.state.phase === 'cells');
-  const scanRow = scanActive ? scanner.state.row : -1;
-  const litCell = scanActive && scanner.state.phase === 'cells' ? scanner.state.cell : -1;
+  const scanRow = scanActive && !overlayOpen ? scanner.state.row : -1;
+  const litCell = scanRow >= 0 && scanner.state.phase === 'cells' ? scanner.state.cell : -1;
+
+  const sheetScanner = useOverlayScan({
+    mode: overlayScanMode,
+    overlay,
+    findRoot: () => (overlay ? document.querySelector<HTMLElement>(`[data-overlay="${overlay}"]`) : null),
+    loops: settings.scanLoops,
+    scanMs: settings.scanMs,
+    acceptDelayMs: settings.acceptDelayMs,
+  });
 
   // ---- physical keyboard ----------------------------------------------------------------------
-  const handlers = useRef({ pressKey, speakNow, moveSelection, selectCandidate, scanner, access: settings.access, overlayOpen });
-  handlers.current = { pressKey, speakNow, moveSelection, selectCandidate, scanner, access: settings.access, overlayOpen };
+  const handlers = useRef({ pressKey, speakNow, moveSelection, selectCandidate, scanner, sheetScanner, overlayScanMode, access: settings.access, overlayOpen });
+  handlers.current = { pressKey, speakNow, moveSelection, selectCandidate, scanner, sheetScanner, overlayScanMode, access: settings.access, overlayOpen };
   useEffect(() => {
     let swallowKeyUp: string | null = null;
     const onKeyDown = (e: KeyboardEvent) => {
       const h = handlers.current;
-      if (h.overlayOpen || e.defaultPrevented) return;
+      if (e.defaultPrevented) return;
+      if (h.overlayOpen) {
+        // Inside a sheet, Space and Enter are the switch while scanning; otherwise the sheet's own controls own every key.
+        if (!h.overlayScanMode || e.ctrlKey || e.metaKey || e.altKey) return;
+        if (focusContext(document.activeElement) === 'text') return;
+        const isSpace = e.key === ' ' || e.code === 'Space';
+        if (!isSpace && e.key !== 'Enter') return;
+        e.preventDefault();
+        e.stopPropagation();
+        swallowKeyUp = e.key;
+        if (e.repeat) return;
+        if (isSpace && h.overlayScanMode === 'scan2') h.sheetScanner.advance();
+        else h.sheetScanner.select();
+        return;
+      }
       const intent = mapKey(e, h.access, focusContext(document.activeElement));
       if (!intent) return;
       if (e.repeat && intent.type !== 'move') {
@@ -336,9 +403,14 @@ export function CommunicationScreen({
 
   /** In switch modes a press anywhere outside a control is the switch (switch interfaces often click). */
   const onBackgroundPointer = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (!scanMode || overlayOpen) return;
     const t = e.target as Element;
-    if (t.closest('button, a, input, select, textarea, label, dialog')) return;
+    if (t.closest('button, a, input, select, textarea, label')) return;
+    if (overlayOpen) {
+      // A press on the sheet (or its backdrop) outside any control is the switch too.
+      if (overlayScanMode && t.closest('dialog')) sheetScanner.select();
+      return;
+    }
+    if (!scanMode || t.closest('dialog')) return;
     scanner.select();
   };
 
@@ -350,31 +422,10 @@ export function CommunicationScreen({
   }, [sentence.text]);
 
   // ---- view -----------------------------------------------------------------------------------
-  const scanning = isScan(settings.access);
-  const emberIsScan = scanning && scanActive;
-  const dictPill =
-    dict.status === 'ready' ? (
-      <StatusPill icon="check" tone="ok">
-        Offline dictionary ready
-      </StatusPill>
-    ) : dict.status === 'loading' ? (
-      <StatusPill>Loading your dictionary</StatusPill>
-    ) : (
-      <StatusPill icon="x" tone="warn">
-        Dictionary not loaded
-      </StatusPill>
-    );
-  const pills = (
-    <>
-      {dictPill}
-      {!online ? (
-        <StatusPill icon="offline" tone="info">
-          {dict.status === 'ready' ? 'Offline. Using your dictionary.' : 'Offline'}
-        </StatusPill>
-      ) : null}
-      <StatusPill>{settings.llm ? (online ? 'Model ranking on' : 'Model ranking paused offline') : 'Model ranking off'}</StatusPill>
-    </>
-  );
+  // While scanning, the scan highlight is the screen's one ember thing, so Speak turns quiet.
+  const emberIsScan = (scanMode !== null && scanActive) || (overlayScanMode !== null && overlayOpen);
+  const status = statusLines(dict.status, online, settings.llm);
+  const summary = statusSummary(dict.status, online, settings.llm);
 
   const candEmpty =
     dict.status === 'missing' || dict.status === 'error'
@@ -386,6 +437,96 @@ export function CommunicationScreen({
           : 'No sentence matches these keys yet. Keep typing, or press Back.';
 
   const alternatives = (i: number) => [...new Set(sentence.candidates.map((c) => c.words[i]).filter((w): w is string => !!w))];
+  const quickPhrases = dict.status === 'ready' ? (dict.pack?.phrases ?? []) : [];
+  const actionLit = (i: number) => scanRow === ACTION_ROW && litCell === i;
+
+  const sections: Record<Section, ReactElement> = {
+    partner: <PartnerTurn key="partner" value={partner} onChange={setPartner} />,
+    speak: (
+      <div key="speak" className={scanRow === ACTION_ROW ? 'speak-group nl-scanrow is-scanning order-speak' : 'speak-group nl-scanrow order-speak'} data-section="speak">
+        <SpeakBar
+          tokens={sentence.tokens}
+          words={sentence.words}
+          codes={codes}
+          canSpeak={sentence.speakable}
+          emptyText="Press a key to start"
+          speakVariant={emberIsScan ? 'quiet' : 'primary'}
+          speakLit={actionLit(0)}
+          speaking={speaking}
+          onSpeak={speakNow}
+        />
+        <div className="speak-actions">
+          <Button variant="secondary" icon="x" onClick={clearAll} disabled={codes.length === 0} lit={actionLit(1)}>
+            Clear
+          </Button>
+          <Button variant="quiet" icon="save" onClick={saveCurrent} disabled={!sentence.speakable} lit={actionLit(2)}>
+            Save phrase
+          </Button>
+          <Button variant="quiet" icon="show" onClick={showCurrent} disabled={!sentence.speakable} lit={actionLit(3)}>
+            Show
+          </Button>
+        </div>
+      </div>
+    ),
+    cands: (
+      <div key="cands" className="order-cands" data-section="cands">
+        {dict.status === 'missing' || dict.status === 'error' ? (
+          <div className="notice notice--warn" role="alert">
+            <Icon name="x" />
+            <p>
+              <strong>Dictionary not loaded.</strong> Your keys still show as digits, but sentences need the dictionary.
+              {online ? ' Reload the page to try again.' : ' Connect once and reload to get it; after that it works offline.'}
+            </p>
+          </div>
+        ) : null}
+        <CandidateList
+          candidates={sentence.candidates}
+          selectedIndex={sentence.selectedIndex}
+          punct={composer.punct}
+          scanning={scanRow === CAND_ROW}
+          litIndex={scanRow === CAND_ROW ? litCell : -1}
+          emptyText={candEmpty}
+          onSelect={selectCandidate}
+          shown={shownSentences.count}
+          toggle={sentenceToggle}
+        />
+      </div>
+    ),
+    proof: (
+      <div key="proof" className="order-proof" data-section="proof">
+        <ProofPanel words={sentence.words} labels={sentence.tokens} rejected={remoteNow?.rejected ?? []} rejectedCount={remoteNow?.rejectedCount ?? 0} alternatives={alternatives} />
+      </div>
+    ),
+    pad: (
+      <div key="pad" className="order-pad" id="keypad" tabIndex={-1} data-section="pad">
+        <Keypad
+          onPress={pressKeyPointer}
+          scanRow={scanRow < KEYPAD_ROWS ? scanRow : -1}
+          litKey={scanRow >= 0 && scanRow < KEYPAD_ROWS && litCell >= 0 ? [scanRow, litCell] : null}
+        />
+      </div>
+    ),
+    scan: (
+      <ScanBar
+        key="scan"
+        access={settings.access}
+        scanMs={settings.scanMs}
+        phase={scanner.state.phase}
+        onSlower={() => setSettings((s) => ({ ...s, scanMs: stepScanMs(s.scanMs, 1) }))}
+        onFaster={() => setSettings((s) => ({ ...s, scanMs: stepScanMs(s.scanMs, -1) }))}
+        onTurnOn={() => setSettings((s) => ({ ...s, access: 'scan1' }))}
+      />
+    ),
+    hint:
+      settings.access === 'keyboard' ? (
+        <p key="hint" className="hint order-hint">
+          Your keyboard works too: <kbd>0</kbd>–<kbd>9</kbd>, <kbd>*</kbd> and <kbd>#</kbd>. <kbd>Enter</kbd> speaks, <kbd>Backspace</kbd> goes back, arrows and <kbd>Alt</kbd>+<kbd>1</kbd>–<kbd>5</kbd> pick a sentence.
+        </p>
+      ) : (
+        <span key="hint" hidden />
+      ),
+  };
+  const order = sectionOrder(layout).columns;
 
   return (
     <div className="app" onPointerDown={onBackgroundPointer}>
@@ -393,86 +534,25 @@ export function CommunicationScreen({
         Skip to the keypad
       </a>
       <div className="app__inner">
-        <AppHeader pills={pills} onPhrases={() => setSheet('phrases')} onVoice={() => setSheet('voice')} onSettings={() => setSheet('settings')} />
+        <AppHeader
+          status={status}
+          summary={summary}
+          scanning={scanRow === MENU_ROW}
+          litCell={scanRow === MENU_ROW ? litCell : -1}
+          onMenu={() => setSheet('menu')}
+          onPhrases={() => setSheet('phrases')}
+          onVoice={() => setSheet('voice')}
+          onSettings={() => setSheet('settings')}
+        />
 
-        <main className="app-main">
-          <div className="app-main__talk">
-            <PartnerTurn value={partner} onChange={setPartner} />
-
-            <div className={scanRow === ACTION_ROW ? 'speak-group nl-scanrow is-scanning order-speak' : 'speak-group nl-scanrow order-speak'}>
-              <SpeakBar
-                tokens={sentence.tokens}
-                words={sentence.words}
-                codes={codes}
-                canSpeak={sentence.speakable}
-                emptyText="Press a key to start"
-                speakVariant={emberIsScan ? 'quiet' : 'primary'}
-                speakLit={scanRow === ACTION_ROW && litCell === 0}
-                speaking={speaking}
-                onSpeak={speakNow}
-              />
-              <div className="speak-actions">
-                <Button variant="secondary" icon="x" onClick={clearAll} disabled={codes.length === 0} lit={scanRow === ACTION_ROW && litCell === 1}>
-                  Clear
-                </Button>
-                <Button variant="quiet" icon="save" onClick={saveCurrent} disabled={!sentence.speakable} lit={scanRow === ACTION_ROW && litCell === 2}>
-                  Save phrase
-                </Button>
-                <Button variant="quiet" icon="show" onClick={() => sentence.text && setShow({ text: sentence.text, reason: null })} disabled={!sentence.speakable}>
-                  Show
-                </Button>
-              </div>
-            </div>
-
-            <div className="order-cands">
-              {dict.status === 'missing' || dict.status === 'error' ? (
-                <div className="notice notice--warn" role="alert">
-                  <Icon name="x" />
-                  <p>
-                    <strong>Dictionary not loaded.</strong> Your keys still show as digits, but sentences need the dictionary.
-                    {online ? ' Reload the page to try again.' : ' Connect once and reload to get it; after that it works offline.'}
-                  </p>
-                </div>
-              ) : null}
-              <CandidateList
-                candidates={sentence.candidates}
-                selectedIndex={sentence.selectedIndex}
-                punct={composer.punct}
-                scanning={scanRow === CAND_ROW}
-                litIndex={scanRow === CAND_ROW ? litCell : -1}
-                emptyText={candEmpty}
-                onSelect={selectCandidate}
-              />
-            </div>
-
-            <div className="order-proof">
-              <ProofPanel words={sentence.words} labels={sentence.tokens} rejected={remoteNow?.rejected ?? []} rejectedCount={remoteNow?.rejectedCount ?? 0} alternatives={alternatives} />
-            </div>
-          </div>
-
-          <div className="app-main__pad">
-            <div className="order-pad" id="keypad" tabIndex={-1}>
-              <Keypad
-                onPress={pressKeyPointer}
-                scanRow={scanRow < KEYPAD_ROWS ? scanRow : -1}
-                litKey={scanRow >= 0 && scanRow < KEYPAD_ROWS && litCell >= 0 ? [scanRow, litCell] : null}
-              />
-            </div>
-            <ScanBar
-              access={settings.access}
-              scanMs={settings.scanMs}
-              phase={scanner.state.phase}
-              onSlower={() => setSettings((s) => ({ ...s, scanMs: stepScanMs(s.scanMs, 1) }))}
-              onFaster={() => setSettings((s) => ({ ...s, scanMs: stepScanMs(s.scanMs, -1) }))}
-              onTurnOn={() => setSettings((s) => ({ ...s, access: 'scan1' }))}
-            />
-            {settings.access === 'keyboard' ? (
-              <p className="hint order-hint">
-                Your keyboard works too: <kbd>0</kbd>–<kbd>9</kbd>, <kbd>*</kbd> and <kbd>#</kbd>. <kbd>Enter</kbd> speaks, <kbd>Backspace</kbd> goes back, arrows and <kbd>Alt</kbd>+<kbd>1</kbd>–<kbd>5</kbd> pick a sentence.
-              </p>
-            ) : null}
-          </div>
-        </main>
+        {layout === 'wide' ? (
+          <main className="app-main">
+            <div className="app-main__talk">{order[0]!.map((k) => sections[k])}</div>
+            <div className="app-main__pad">{order[1]!.map((k) => sections[k])}</div>
+          </main>
+        ) : (
+          <main className="app-main app-main--compact">{order[0]!.map((k) => sections[k])}</main>
+        )}
 
         <Footer />
       </div>
@@ -484,8 +564,18 @@ export function CommunicationScreen({
         {spokenLive}
       </p>
 
+      <MenuSheet
+        open={sheet === 'menu'}
+        status={status}
+        scanning={overlayScanMode !== null}
+        onPhrases={() => setSheet('phrases')}
+        onVoice={() => setSheet('voice')}
+        onSettings={() => setSheet('settings')}
+        onClose={() => setSheet(null)}
+      />
       <SettingsSheet
         open={sheet === 'settings' || sheet === 'voice'}
+        scanning={overlayScanMode !== null}
         focusVoice={sheet === 'voice'}
         settings={settings}
         voices={voices}
@@ -496,6 +586,9 @@ export function CommunicationScreen({
       <PhrasesSheet
         open={sheet === 'phrases'}
         phrases={phrases}
+        quickPhrases={quickPhrases}
+        scanning={overlayScanMode !== null}
+        onSpeakQuick={(text) => speakText(text)}
         error={phraseError}
         onSpeak={(p) => {
           speakText(p.text);
@@ -508,7 +601,7 @@ export function CommunicationScreen({
         }}
         onClose={() => setSheet(null)}
       />
-      <ShowMode text={show?.text ?? null} reason={show?.reason ?? null} onClose={() => setShow(null)} />
+      <ShowMode text={show?.text ?? null} reason={show?.reason ?? null} scanning={overlayScanMode !== null} onClose={() => setShow(null)} />
     </div>
   );
 }

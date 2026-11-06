@@ -88,14 +88,17 @@ so that motor memory holds and I never tap a key three times.
 7.3 Key size SHALL be selectable: Large 96px or Extra large 128px, shrinking to fit narrow phones but never below 72px.
 
 ## Requirement 8: Switch scanning UI
-8.1 THE scan grid SHALL be: rows 0-3 the keypad rows, row 4 the sentences (skipped when empty), row 5 Speak, Clear,
-    Save phrase, so any key is reachable in at most 4 + 3 = 7 highlight steps.
+8.1 THE scan grid SHALL be: rows 0-3 the keypad rows, row 4 the sentences on show (plus More / Fewer sentences when
+    present; skipped when empty), row 5 Speak, Clear, Save phrase, Show, and row 6 the header (Menu on compact screens;
+    Phrases, Voice, Settings on wide ones), so any key is reachable in at most 4 + 3 = 7 highlight steps. Keypad rows
+    come first because typing is what a switch user does most (Keypad README; M1 review F3).
 8.2 THE active row SHALL get `is-scanning` (ember ring inside a plum ring) and then the active cell `is-lit`.
 8.3 WHILE `access` is `scan1`, THE app SHALL tick every `scanMs` (400-5,000 ms, default 1,200), and Space or Enter SHALL select.
 8.4 WHILE `access` is `scan2`, Space SHALL advance and Enter SHALL select, and THE app SHALL NOT tick.
 8.5 IN scan modes, a press on the page outside any control SHALL act as the switch.
 8.6 THE app SHALL show the scan speed with Slower and Faster buttons under the keypad, and the loops and accept delay in settings.
-8.7 WHILE a sheet or show mode is open, scanning SHALL pause.
+8.7 WHILE a sheet or show mode is open, scanning of the main screen SHALL pause and scanning SHALL move into the
+    sheet (Req 16).
 
 ## Requirement 9: Targets and text
 9.1 Every button, link, input and candidate SHALL be at least 56px tall and wide.
@@ -134,3 +137,52 @@ so that motor memory holds and I never tap a key three times.
      say "9-key predictive text"), and SHALL make no medical claim.
 14.3 THE footer and the About page SHALL carry: "Ninth Life is a general-purpose text entry and text-to-speech tool. It is
      not a medical device and is not intended to diagnose, treat or replace a clinical AAC assessment."
+
+## Requirement 15: Phone layout (M1 review F1)
+**User story:** As a person who types to talk on a phone, I want the keypad and my sentence on the first screen,
+so that I never scroll to reach a key.
+
+15.1 WHILE the viewport is narrower than 960px (compact), THE app SHALL order the screen: header, SpeakBar with its
+     actions, keypad, scan control, sentences, proof, "They said", keyboard hint, AND the DOM order (and so the focus
+     order) SHALL match that visual order.
+15.2 WHILE compact, THE header SHALL be one row: the icon and name, one status pill that sums up the dictionary,
+     offline and model state in a word or two (with the full state as screen reader text), and one Menu button.
+15.3 WHEN Menu is pressed, THE app SHALL open a Menu sheet with Phrases, Voice and Settings and the full status;
+     each choice SHALL open its sheet in place of the Menu.
+15.4 WHILE compact, THE app SHALL show at most 3 sentences and a "More sentences" button when there are more;
+     WHEN a sentence past the third is chosen (ArrowDown, Alt+4, Alt+5), THE full list SHALL open.
+15.5 AT 390 x 844 THE SpeakBar and the whole keypad SHALL be visible without scrolling with keys of at least 72px;
+     key size SHALL depend on the viewport only, never on the sentence, so keys do not move while typing.
+15.6 WHILE the viewport is 960px or wider, THE app SHALL keep the In-context-app artboard layout (every status pill,
+     Phrases, Voice and Settings in the header; talk column beside the keypad).
+15.7 THE sentence SHALL wrap and SHALL never be truncated at any width, and nothing SHALL scroll horizontally at 360px.
+
+## Requirement 16: Switch access everywhere (M1 review F4)
+**User story:** As a person who uses one or two switches, I want to reach every sheet and change every setting
+with my switch, so that I do not need someone else to change my settings.
+
+16.1 IN scan modes, THE main scan grid SHALL include the header row (Req 8.1), so Menu, Phrases, Voice and Settings
+     can be opened by switch.
+16.2 WHILE a sheet or show mode is open in a scan mode, THE app SHALL scan the sheet's controls with `scanReducer`:
+     one row per group of controls, the Close row first, starting by itself at the Close row; choosing a cell SHALL
+     do what a tap on it does.
+16.3 EVERY setting SHALL be changeable with a switch: radio groups and switches are scan cells, each slider has
+     buttons that lower and raise it (scan speed: Faster and Slower), and the voice picker has Previous voice and
+     Next voice.
+16.4 WHILE a sheet is open, scanning SHALL keep the mode it was opened with, so a switch user can turn scanning off
+     (Keyboard, Touch), change to the other scan mode, or turn it back on before closing; the new mode SHALL start
+     when the sheet closes.
+16.5 IN scan modes, Space and Enter SHALL be the switch inside sheets too (2 switches: Space moves, Enter chooses),
+     and a press on the sheet or its backdrop outside a control SHALL act as the switch.
+16.6 WHILE scanning, THE scan highlight SHALL be the only ember thing: Speak SHALL be quiet, and focus SHALL rest on
+     the sheet, not on a button, and SHALL NOT return to a button when the sheet closes.
+
+## Requirement 17: Quick phrases (M1 review F6)
+**User story:** As a person who types to talk, I want common phrases ready to speak, so that I can answer quickly.
+
+17.1 THE Phrases sheet SHALL show "Your phrases" (saved) and "Quick phrases" from the vocab pack
+     (`data/packs/core-en.json` `phrases`), in pack order.
+17.2 WHEN a quick phrase is chosen by touch, keyboard or switch, THE app SHALL speak it (or show it in show mode when
+     there is no voice); nothing SHALL be spoken without that choice.
+17.3 THE sheet SHALL show 12 quick phrases at first and 12 more per "More quick phrases" press, grouped 4 to a scan
+     row so a switch user picks a group, then a phrase.

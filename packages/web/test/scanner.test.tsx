@@ -49,4 +49,18 @@ describe('useScanner', () => {
     act(() => result.current.advance());
     expect(result.current.state.row).toBe(1);
   });
+
+  it('Req 16.2: autoStart lights the first row once rows exist; a new resetKey starts again', () => {
+    const onChoose = vi.fn();
+    const { result, rerender } = renderHook((p: { rows: number[]; key: string }) =>
+      useScanner({ mode: 'scan2', rows: p.rows, loops: 3, scanMs: 400, acceptDelayMs: 0, autoStart: true, resetKey: p.key, onChoose }),
+    { initialProps: { rows: [] as number[], key: 'menu' } });
+    expect(result.current.state.phase).toBe('idle');
+    rerender({ rows: [1, 3], key: 'menu' });
+    expect(result.current.state).toMatchObject({ phase: 'rows', row: 0 });
+    act(() => result.current.advance());
+    expect(result.current.state.row).toBe(1);
+    rerender({ rows: [1, 2, 2], key: 'settings' });
+    expect(result.current.state).toMatchObject({ phase: 'rows', row: 0 });
+  });
 });

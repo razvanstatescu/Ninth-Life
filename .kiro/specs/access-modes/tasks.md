@@ -15,8 +15,8 @@
 - [x] 6. `reset` (Req 3.4) and purity (Req 3.5) — S6
 
 ## Web UI (owner: web UI, `packages/web`)
-- [ ] 7. Timer that sends `tick` every `scanMs` while scanning; stops when paused (Req 4.1, 1.5)
-- [ ] 8. Settings for `scanMs` (400–5,000 ms), `scanLoops`, `acceptDelayMs` (Req 4.1, 4.2)
-- [ ] 9. Switch input: Space / Enter / click / whole-screen touch mapped to `select` (1-switch) or `advance` + `select` (2-switch), with debounce (Req 4.2, 4.3)
-- [ ] 10. Build `cfg.rows` from the live grid (candidates row, keypad rows, actions row) and act on `chosen` (Req 3.2)
+- [x] 7. Timer that sends `tick` every `scanMs` while scanning; stops when paused (Req 4.1, 1.5) — `packages/web/lib/useScanner.ts`
+- [x] 8. Settings for `scanMs` (400–5,000 ms), `scanLoops`, `acceptDelayMs` (Req 4.1, 4.2), each changeable by switch (web-ui Req 16.3)
+- [x] 9. Switch input: Space / Enter / click / whole-screen touch mapped to `select` (1-switch) or `advance` + `select` (2-switch), with debounce, on the main screen and inside sheets (Req 4.2, 4.3)
+- [x] 10. Build `cfg.rows` from the live grid and act on `chosen` (Req 3.2). Order: keypad rows 0-3, sentences 4, actions 5, header 6 — keypad first so any key is ≤ 7 steps (Keypad README); changed from "candidates in row 0" after the M1 review (F3). Sheets build their rows from `data-scan-row` (`lib/useOverlayScan.ts`)
 - [ ] 11. Playwright + axe check of scanning with reduced motion and visible focus (Req 4.1)
