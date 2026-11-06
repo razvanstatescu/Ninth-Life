@@ -74,6 +74,13 @@ frequency-weighted share of running text whose word is the first reading of its 
 `eval.lock` was regenerated with `pnpm data:freeze` to record the new lexicon and bigram hashes;
 the fixture itself is byte-identical (same SHA-256 `9fefd9db…`), so results stay comparable.
 
+License fallback: SCOWL size 95 includes UKACD (size 80), whose notice asks to be shown when it
+is "used in a software package". We only read membership at build time and ship no UKACD text, and
+`data/NOTICE.md` carries the notices anyway. If the team wants no doubt at all, `--scowl-level 70`
+uses only public-domain and notice-only lists without UKACD/ENABLE. Measured: B1 85.6% / 97.3%,
+Turk 79.7% / 95.3%, unreachable 15 (same), B0 62.5% / 91.9%; it down-weights 10,369 + 478 words
+instead of 4,369 + 962, i.e. more real words.
+
 ## Also measured, not decided: offensive readings (D7)
 `pnpm -F @ninth/eval report:offensive` writes `packages/eval/reports/offensive-readings.md`. It
 uses the LDNOOBW "List of Dirty, Naughty, Obscene, and Otherwise Bad Words" English list

@@ -12,14 +12,20 @@ numbers are in `packages/eval/build-stats/*.json` and `packages/eval/RESULTS.jso
 ```bash
 cd packages/eval
 pnpm data:venv       # python3 -m venv .venv && pip install -r requirements.txt (wordfreq 3.1.1)
-pnpm data:fetch      # downloads 7 files into .cache/ (gitignored), checks SHA-256 pins
+pnpm data:fetch      # downloads 9 files + the SCOWL archive into .cache/ (gitignored), checks SHA-256 pins
 pnpm data:build      # build_lexicon.py, build_bigrams.py, build_pack.py -> data/
 pnpm data:check      # rebuilds the test set in memory and compares with eval.lock
 pnpm test:py         # Python helper tests
 pnpm test            # vitest: data contract, fixture, simulated user, determinism
 pnpm quick           # 200-item seeded subset, prints the table
 pnpm eval            # full test set, rewrites RESULTS.json and RESULTS.md
+pnpm report:offensive  # reports/offensive-readings.md (input for decision D7)
 ```
+
+Data experiments: `build_lexicon.py --out <scratch>.json` and
+`build_bigrams.py --lexicon <scratch>.json --out <scratch>.bigram.json`, then
+`pnpm eval --no-write --lexicon <scratch>.json --bigram <scratch>.bigram.json`; `--letter-penalty 0`
+turns off core's one-letter penalty (ADR-core-002).
 
 Every build is deterministic: re-running on the same inputs gives byte-identical files (checked
 by comparing SHA-256 before and after a rebuild). `pnpm data:freeze` regenerates the frozen test
@@ -37,6 +43,8 @@ comparable with earlier ones.
 | `turk/readme.txt` | aactext.org/turk/turk/readme.txt | see "License reasoning" |
 | `turk/turk-dialogues.txt` | 1,420 dialogues, columns `set, id, turn1..turn6`; set = train 859 / dev 280 / test 280 | CC BY 4.0 (page) |
 | `turk/turk-dialogues-filtered.txt` | 1,154 distinct ids (readme says 1,155) with offensive content removed: train 707 / dev 230 / test 217 | CC BY 4.0 (page) |
+| `scowl/scowl-2020.12.07.tar.gz` → `scowl/final/`, `Copyright`, `README` | SCOWL word lists (Kevin Atkinson), sourceforge download; build-time word-class signal only (ADR-data-002) | permissive notice-only ("use, copy, modify, distribute and sell ... for any purpose"), see its `Copyright` |
+| `ldnoobw/en.txt`, `ldnoobw/LICENSE` | LDNOOBW "List of Dirty, Naughty, Obscene, and Otherwise Bad Words", English; only for the offensive-readings report | CC BY 4.0 |
 
 Not downloaded: `aac_comm.zip` (it bundles the two excluded files), `lm_test_switch.txt` and
 `lm_test_comm.txt` (excluded from CC BY 4.0 on the corpus page), the ARPA language models, and
@@ -50,12 +58,12 @@ surviving ids from the filtered file and the turn text and split from the clean 
 
 | File | Raw | gzip -9 | brotli 11 | Contents |
 |---|---|---|---|---|
-| `data/lexicon/en.v1.json` | 1,557,975 B | 401,447 B | 328,051 B | 58,906 words, 48,140 codes |
-| `data/lexicon/en.bigram.v1.json` | 339,147 B | 103,414 B | 85,587 B | 19,237 pairs over 2,972 contexts |
+| `data/lexicon/en.v1.json` | 1,558,083 B | 402,255 B | 328,257 B | 58,906 words, 48,140 codes |
+| `data/lexicon/en.bigram.v1.json` | 339,148 B | 103,418 B | 85,535 B | 19,237 pairs over 2,973 contexts |
 | `data/packs/core-en.json` | 5,564 B | | | 36 core words, 198 phrases |
 | `packages/eval/fixtures/test.v1.jsonl` | 164,854 B | | | 866 test items, 4,890 words |
 
-First load of lexicon + bigrams: 413.6 KB brotli (504.9 KB gzip), under the plan's 700 KB budget.
+First load of lexicon + bigrams: 413.8 KB brotli (505.7 KB gzip), under the plan's 700 KB budget.
 
 ### Lexicon build (`build_lexicon.py`)
 
@@ -70,6 +78,13 @@ entries were removed because they name a third-party phone brand (a mark and its
 which the product must never show (`.kiro/steering/trademarks.md`). The script keeps the banned
 list as SHA-256 hashes, so it never spells the marks.
 
+**Word-class down-weighting (step 4b, ADR-data-002, plan F2).** SCOWL 2020.12.07 (size 95, all
+spellings and categories) keeps case, so it tells apart dictionary words (46,725), names and other
+capitalized words (6,824), words it lists only in ALL CAPS, i.e. acronyms (962: bbc, nfl, dvd, btw),
+and words in no SCOWL list (4,369: lol, xbox, goin, https). The last two classes lose 1.0 Zipf
+(floored at 2.0): they sink below the other readings of their code but stay typeable. One-letter
+words are left to core's language-model penalty (ADR-core-002). Dropping instead of down-weighting
+made test items unreachable; the measurements are in section 4.
 Ambiguity, measured on the shipped file:
 
 | Statistic | Value |
@@ -77,13 +92,15 @@ Ambiguity, measured on the shipped file:
 | Codes with more than one word | 5,144 of 48,140 |
 | Word types sharing a code with another word | 15,910 of 58,906 (27.0%) |
 | Word types that are not the first reading of their code | 10,766 (18.3%) |
-| Running text whose word is the first reading (frequency-weighted) | 94.15% |
+| Running text whose word is the first reading (frequency-weighted) | 94.31% (94.15% before ADR-data-002) |
 | Largest code | 26 words (`727`: par, rap, pcs, sap, pas, ...) |
 | Examples | 63: of, me · 46: in, i'm, go · 43: he, if, i'd · 4663: good, home, gone, hood · 5299: jazz, lazy · 4768: isn't |
 
 The 27% type-collision rate is much higher than MacKay's 8.7% on `/usr/dict/words`, because
 wordfreq's top 60k includes many acronyms and short tokens (bbc, cbs, pcs, md). These are rare
-and sit low in each code's list. The frequency-weighted figure (94%) is what affects typing.
+and sit low in each code's list, lower still since ADR-data-002. The frequency-weighted figure
+(94%) is what affects typing. Dropping the SCOWL acronyms would bring the type rate to 25.8%,
+dropping words in no SCOWL list to 25.2%; neither improved the decoder (section 4).
 
 ### Size: over the plan's 550 KB raw estimate
 
@@ -93,13 +110,14 @@ Measured alternatives (same pipeline, `--top N`):
 
 | `--top` | Words | Raw | brotli | B1 top-1 | B1 top-5 | Unreachable items |
 |---|---|---|---|---|---|---|
-| 60,000 (shipped) | 58,906 | 1,558 KB | 328 KB | 85.5% | 97.1% | 15 |
+| 60,000 (shipped) | 58,906 | 1,558 KB | 328 KB | 85.6% | 97.3% | 15 |
 | 50,000 | 49,213 | 1,306 KB | 275 KB | | | |
 | 45,000 | 44,328 | 1,178 KB | 249 KB | | | |
 | 40,000 | 39,438 | 1,049 KB | 221 KB | 84.4% | 95.7% | 29 |
 
 (B1 numbers for 40k come from a scratch rebuild of both lexicon and bigrams on the 40k vocabulary,
-same test set. 50k and 45k were not evaluated.)
+same test set, before ADR-core-002 and ADR-data-002 (60k was 85.5% / 97.1% then). 50k and 45k
+were not evaluated.)
 
 **Proposal:** keep 60k. Transfer size is what matters for first load, and 60k is 107 KB more
 brotli than 40k for about 1 point of sentence top-1 and half the unreachable items. Note that
@@ -113,7 +131,7 @@ brotli than 40k for about 1 point of sentence top-1 and half the unreachable ite
 Training text: AACText `sent_train_aac.txt` (5,019 lines) plus all six turns of the 707 Turk
 train dialogues (4,242 turns). Lines are split into sentences on `. ! ?`, each starting with
 `<s>`. A token that cannot be typed or is not in the lexicon breaks the chain (no bigram across
-it). 57,026 tokens, 441 dropped, 19,582 bigram types.
+it). 57,026 tokens, 441 dropped, 19,584 bigram types.
 
 Model: interpolated bigram, modified Kneser-Ney discounts (D1 = 0.740, D2 = 1.137,
 D3+ = 1.407), interpolated with the **deployed** unigram (`zipfX10/10 − 9`, i.e. core's
@@ -167,6 +185,13 @@ the fetch tool returned 503). Re-check it once from a browser.
   (per the plan's research; neither page could be re-read here). Treated as BY-SA, which `data/`
   satisfies. Only the words are used, with no symbol sets (PCS, SymbolStix and Widgit are
   proprietary).
+- **SCOWL** (build-time signal only). Its `Copyright` file grants use, modification and
+  redistribution for any purpose with a notice; its sources are public domain or under similar
+  notice-only terms (WordNet, Ispell, VarCon, UKACD). Compatible with BY-SA. No SCOWL list is
+  committed or shipped; the lexicon's words and frequencies still come from wordfreq. Credited in
+  `data/NOTICE.md`.
+- **LDNOOBW blocklist** (measurement only): CC BY 4.0. Fetched into `.cache/`, never committed;
+  the report shows each listed word only as its first letter and a SHA-256 prefix.
 - **Fixture.** `packages/eval/fixtures/test.v1.jsonl` quotes the test splits verbatim. It is not
   under `data/` and not MIT: `fixtures/NOTICE.md` keeps the CC BY attribution.
 - **Never committed:** anything NonCommercial (DailyDialog, ARASAAC), and `lm_test_switch.txt`
@@ -208,13 +233,38 @@ random seeds) and two CLI runs give byte-identical files.
 
 | Config | Word acc | Sent top-1 | Sent top-5 | KSR | Scan steps/char |
 |---|---|---|---|---|---|
-| B0 dict | 91.4% | 62.4% | 91.8% | −1.3% | 3.61 |
-| B1 ghost | 96.8% | 85.5% | 97.1% | −0.1% | 3.57 |
+| B0 dict | 91.5% | 62.4% | 92.0% | −1.2% | 3.61 |
+| B1 ghost | 96.8% | 85.6% | 97.3% | −0.0% | 3.57 |
 | B2–B4 | not run (no LLM backend wired yet) | | | | |
 
 B1 beats the plan's 92% word-accuracy target on this test set. Latency for both is well under
 1 ms per decode (see `RESULTS.md`). Per-source breakdown: B1 reaches 88.7% top-1 on AACText and
-79.3% on the Turk replies, which are longer and more varied.
+79.7% on the Turk replies, which are longer and more varied.
+
+**Single-letter and junk readings (plan F2).** Before: B1 85.5% / 97.1% (740 / 841 items), Turk
+79.3% / 94.7%. Each option was measured on the full set with B0 and B1, and the Turk subset
+separately; full tables in ADR-core-002 and ADR-data-002. "Junk in top 5" = items whose five
+B1 sentences contain a word of that kind that is not in the gold sentence.
+
+| Option | B1 top-1 | B1 top-5 | Turk top-1 / top-5 | B0 top-1 / top-5 | Unreachable | Letter / acronym / no-SCOWL junk in top 5 | Kept? |
+|---|---|---|---|---|---|---|---|
+| before | 85.5% | 97.1% | 79.3% / 94.7% | 62.4% / 91.8% | 15 | 109 / 86 / 104 | |
+| (a) one-letter penalty −3 (core LM) | 85.5% | 97.2% | 79.3% / 95.0% | 62.4% / 91.9% | 15 | 18 / 93 / 121 | yes |
+| (a) + (b) SCOWL acronyms dropped | 85.5% | 97.3% | 79.3% / 95.3% | 62.4% / 92.0% | 15 | 18 / 0 / 126 | no: same as down, loses words |
+| (a) + (b) SCOWL acronyms down 1.0 | 85.5% | 97.3% | 79.3% / 95.3% | 62.4% / 92.0% | 15 | 18 / 12 / 126 | yes |
+| (a) + (b') no-vowel acronyms dropped | 84.6% | 96.5% | 79.3% / 95.3% | 61.7% / 91.2% | 23 | 27 / 87 / 86 | no |
+| (a) + (b') no-vowel acronyms down 1.0 | 85.3% | 97.5% | 79.3% / 95.3% | 62.4% / 91.9% | 15 | 19 / 84 / 108 | no: top-1 drops |
+| (a) + (c) no-SCOWL words dropped | 85.5% | 97.0% | 79.3% / 94.3% | 62.4% / 91.7% | 17 | 26 / 101 / 0 | no |
+| (a) + (c) no-SCOWL words down 1.0 | 85.6% | 97.2% | 79.7% / 95.0% | 62.4% / 91.9% | 15 | 18 / 100 / 50 | yes |
+| **(a) + (b) + (c) down 1.0 (shipped)** | **85.6%** | **97.3%** | **79.7% / 95.3%** | 62.4% / 92.0% | 15 | 18 / 15 / 50 | |
+
+Shipped: 741 / 843 items (+1 top-1, +2 top-5), no new unreachable items. The gains on the gold
+metrics are small because the test sentences seldom need a rare reading; the junk column is
+what a person sees in the other four suggestions.
+
+**Offensive readings (decision D7, open).** `reports/offensive-readings.md`: 14 identity slurs
+from the LDNOOBW list are in the lexicon, 7 share a code with ordinary words, and one appears
+among the B1 top 5 for 8 of 866 test items (0.9%), never at top 1. Nothing is filtered.
 
 **Plugging in an LLM (B2–B4):** write a module exporting
 `createProposer(): LlmProposer` (`packages/eval/src/decoders.ts`):
@@ -248,6 +298,8 @@ measuring B4.
 2. Lexicon size: keep 60k (1.56 MB raw, 328 KB brotli) or cut to ~40k? Or change the wire
    format? (section 2)
 3. wordfreq's top 60k includes some slurs as low-ranked readings of common codes (for example on
-   key 5453, after "like"). Should the lexicon filter a short list of slurs? Profanity in
-   general should stay, because people swear.
+   key 5453, after "like"). Should the lexicon filter a short list of slurs (plan D7)? Profanity in
+   general should stay, because people swear. Data: `packages/eval/reports/offensive-readings.md`
+   (a slur in the top 5 for 0.9% of test items; 7 of 14 slurs share a code with ordinary words).
+   The slur marks in `src/offensive.ts` are one person's judgment; review them before deciding.
 4. Universal Core list and license: re-read the UNC page from a browser.

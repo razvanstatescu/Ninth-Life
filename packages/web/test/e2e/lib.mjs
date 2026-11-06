@@ -36,9 +36,12 @@ export async function newContext(browser, { theme = 'night', width = 1280, heigh
 export async function openApp(page, path = '/') {
   await page.goto(BASE_URL + path, { waitUntil: 'load' });
   await page.locator('button[data-key="4"]').first().waitFor({ state: 'visible', timeout: 15000 });
-  await page.getByText(/dictionary ready/i).first().waitFor({ timeout: 20000 }).catch(() => {
-    throw new Error('The offline dictionary did not report ready within 20 s');
-  });
+  // The status text, visible or screen-reader only (the compact header shows a short pill).
+  await page
+    .waitForFunction(() => /offline dictionary ready/i.test(document.body?.textContent ?? ''), null, { timeout: 20000, polling: 50 })
+    .catch(() => {
+      throw new Error('The offline dictionary did not report ready within 20 s');
+    });
 }
 
 /** Wait for a condition evaluated in the page; returns its value. */

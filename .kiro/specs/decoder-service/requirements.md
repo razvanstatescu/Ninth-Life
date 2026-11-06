@@ -37,6 +37,11 @@ the keys I pressed, so that nothing I did not type can be spoken in my name.
 5. THE service SHALL return at most `k` candidates and no duplicates.
 6. WHEN a returned word is not in the client's lattice slot, THE service SHALL list it in `oov`
    (shown amber: "matches your keys, not in dictionary").
+7. WHEN a model candidate with one word per slot is rejected, THE service SHALL list in
+   `rejectedWords` each of its words that does not match its slot, as `{ slot, word, expectedCode }`
+   (ADR-decoder-001): at most 5 entries, model order, one per (slot, word); only normalized words
+   matching `^[a-z]+(?:'[a-z]+)*$` with at most 16 characters; never a word that appears in a
+   returned candidate; `[]` on degraded replies. Rejected words SHALL NOT be logged (DS-6.1).
 
 ## Requirement DS-2: Latency budget and graceful fallback
 

@@ -18,7 +18,7 @@ and in the eval CLI. `package.json` points `main`/`exports` at `src/index.ts`; c
 | `src/keymap.ts` | `KEYMAP`, `KEY_LETTERS`, `DIGITS`, `normalize`, `encodeWord`, `encodeSentence`, `tokenize`, `digitOf`, `isCode`, types `Mode`, `Digit` | Letters to keys. Normalization (NFKD, strip marks, lowercase, fold apostrophes). |
 | `src/validator.ts` | `validate`, `matchesCode`, `proof`, types `ProofState`, `WordProof` | The safety core: a candidate is speakable only if every word encodes to its code. |
 | `src/lexicon.ts` | `Lexicon`, `LexiconFile`, `TRIE_TOP_K`, `NEW_WORD_ZIPF` | Exact code -> words map, lazy digit trie with top-5 completions per node, vocab packs. |
-| `src/lm.ts` | `unigramModel`, `bigramModel`, `LanguageModel`, `BigramFile`, `BOS`, `LOGP_FLOOR` | log10 scores for the beam. |
+| `src/lm.ts` | `unigramModel`, `bigramModel`, `LanguageModel`, `BigramFile`, `LmOptions`, `BOS`, `LOGP_FLOOR`, `DEFAULT_LETTER_PENALTY`, `SPOKEN_LETTERS` | log10 scores for the beam, with the one-letter penalty (ADR-core-002). |
 | `src/decode.ts` | `lattice`, `beam`, `decodeGhost`, `Candidate`, `GhostOptions`, defaults | Ghost mode: offline decoding, no LLM. |
 | `src/format.ts` | `formatSentence`, `Punct` | Sentence case, `i` -> `I`, punctuation. Runs after validation and never changes words. |
 | `src/scan.ts` | `initialScan`, `scanReducer`, `ScanConfig`, `ScanState`, `ScanEvent`, `ScanResult` | Row/column switch scanning as a pure reducer (the UI owns the timer). |
@@ -60,6 +60,16 @@ Kneser-Ney style backoff): `logp[prev][w]` if listed, else `backoff[prev] + unig
 `backoff` 0 for an unseen `prev`. Both normalize inputs that are not already plain `[a-z']`, and the
 bigram reads own properties only (so `constructor` and `__proto__` are words, not prototype keys).
 
+**One-letter penalty** (ADR-core-002, plan F2): wordfreq lists every letter as a word (Zipf 4.5 -
+5.9), which put "H need water" in the top 5. Both models add `letterPenalty` (default -3 log10) to a
+one-letter word that is not in `spokenLetters` (default "a", "i"), floored at -9; in the bigram it
+applies to the listed value and, through the unigram, to the backoff branch. `{ letterPenalty: 0 }`
+turns it off. The lexicon and lattice are unchanged, so a spelled letter ("vitamin c") is still
+there; the property `Req 5.8` checks that an exhaustive beam returns the same sentences with and
+without the penalty. On the test set it removed stray letters from the B1 top 5 in 91 of the 109
+items that had one (the other 18 are one-word sentences on a one-digit code, where letters are the
+only readings).
+
 ### Ghost decode
 `lattice` = top `perSlot` (12) words per code (`[]` for an unknown code). `beam` keeps the best `B`
 (32) partial sentences by summed log-prob, extending each with every word in the next slot (the
@@ -93,12 +103,14 @@ B = beam width (32), R = rows.
 | `beam` / `decodeGhost` | O(n · B·S · log(B·S)) | O(B·S·n) |
 | `scanReducer` | O(R) per event | O(1) |
 
-Measured on `data/lexicon/en.v1.json` (58,908 words) under Node 22 on the dev container:
+Measured on `data/lexicon/en.v1.json` (58,906 words) under Node 22 on the dev container:
 JSON parse 32 ms, `fromJSON` 92 ms, lazy trie build 69 ms and about 22 MB of heap, `decodeGhost`
 0.1-1 ms for 3-7 words and about 2 ms for 18 words with the bigram. With the bigram,
 `["4","6333","92837"]` -> `i need water`, `i want to go home`, `can you help me`,
 `please call my mom` and `thank you very much` all decode top-1; the unigram alone gets
 `can you help of` and `i want to in good`, which is the gap the bigram (and the LLM) closes.
+Since ADR-core-002 the top 5 for `["4","6333","92837"]` are `i need water`, `i need waves`,
+`i need yates`, `i need waver`, `i neff water` (before: `h need water` at rank 5).
 
 ## Adding a Romanian or Spanish keymap
 

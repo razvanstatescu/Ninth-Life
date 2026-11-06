@@ -7,7 +7,8 @@ with a note in `docs/decisions/` and tell every owner.
 
 Clarifications and additive extensions (sentence splitting on punctuation, extra apostrophe folds,
 `beam(…, prev)`, extra exports, edge-case behaviour): see
-[ADR-core-001](../decisions/ADR-core-001-contract-clarifications.md).
+[ADR-core-001](../decisions/ADR-core-001-contract-clarifications.md). Language-model options and the
+default one-letter penalty: [ADR-core-002](../decisions/ADR-core-002-one-letter-penalty.md).
 
 Pure TypeScript, no DOM, no Node-only APIs. Runs in the browser, in the Vercel Node.js route (Node 22) and in the eval
 harness.
@@ -57,8 +58,11 @@ export interface BigramFile {             // data/lexicon/<lang>.bigram.v1.json
   backoff: Record<string, number>;              // log10 backoff weight for prev
 }
 export interface LanguageModel { logP(prev: string, word: string): number } // log10
-export function unigramModel(lex: Lexicon): LanguageModel;                // log10 p = zipf - 9, floor -9
-export function bigramModel(file: BigramFile, lex: Lexicon): LanguageModel; // KN-style backoff to unigram
+export const DEFAULT_LETTER_PENALTY = -3;                                  // ADR-core-002
+export const SPOKEN_LETTERS: readonly string[];                            // ['a', 'i']
+export interface LmOptions { letterPenalty?: number; spokenLetters?: readonly string[] } // default -3, ['a','i']; 0 = off
+export function unigramModel(lex: Lexicon, opts?: LmOptions): LanguageModel;                // log10 p = zipf - 9, floor -9; + letterPenalty for a one-letter word not in spokenLetters
+export function bigramModel(file: BigramFile, lex: Lexicon, opts?: LmOptions): LanguageModel; // KN-style backoff to unigram; same penalty on both branches
 
 // --- decode.ts (ghost mode) -----------------------------------------
 export interface Candidate { words: string[]; score: number; source: 'dict' | 'ghost' | 'llm' }
@@ -86,7 +90,7 @@ export function scanReducer(cfg: ScanConfig, s: ScanState, e: ScanEvent): { stat
 
 | File | Shape | Notes |
 |---|---|---|
-| `data/lexicon/en.v1.json` | `LexiconFile` | wordfreq 3.1.1 `top_n_list('en', 60000)`, Zipf >= 2.0, a-z plus internal apostrophe |
+| `data/lexicon/en.v1.json` | `LexiconFile` | wordfreq 3.1.1 `top_n_list('en', 60000)`, Zipf >= 2.0, a-z plus internal apostrophe; acronyms and words in no SCOWL list down-weighted 1.0 Zipf (ADR-data-002) |
 | `data/lexicon/en.bigram.v1.json` | `BigramFile` | AACText + Turk **train** splits only (test stays held out) |
 | `data/packs/core-en.json` | `VocabPack` | Universal Core 36 words + common AAC phrases, generic only, no personal names |
 | `data/NOTICE.md`, `data/LICENSE` | | attribution, CC BY-SA 4.0 |
@@ -120,7 +124,21 @@ export function createFetchHandler(cfg: FetchHandlerConfig): (req: Request) => P
 
 `POST /api/decode` takes the body in `docs/plan/00-source-plan.md` §4.3, plus an optional
 `beams: string[][]` (the client's top ghost sentences, at most 10; returned when the model fails).
-Each response candidate also carries `source: 'llm' | 'ghost'`. Limits: at most 20 codes, each at
+Each response candidate also carries `source: 'llm' | 'ghost'`.
+
+The 200 response (`DecodeResponse`, zod `DecodeResponseSchema` in `packages/decoder/src/schema.ts`):
+
+```ts
+{ v: 1;
+  candidates: { text: string; words: string[]; valid: true; oov: string[]; source: 'llm' | 'ghost' }[]; // <= k
+  rejected: number;                                                     // model candidates dropped
+  rejectedWords: { slot: number; word: string; expectedCode: string }[]; // additive, ADR-decoder-001
+  model: string; ms: number; degraded: boolean }
+```
+
+`rejectedWords`: at most 5, model order, one per (slot, word); each `word` is normalized,
+`^[a-z]+(?:'[a-z]+)*$`, at most 16 characters, does not match `expectedCode` (= `codes[slot]`) and is
+in no returned candidate. Shown struck through in the proof panel, never spoken, never logged. Limits: at most 20 codes, each at
 most 16 digits, partner at most 280 chars, at most 3 recent items, body at most 4 KB. The server and
 client both run `validate()`. The server stops waiting for the model at 1,200 ms; the client times
 out at 1,500 ms and stays in ghost mode. `NEXT_PUBLIC_DECODE_URL` can point the client elsewhere,

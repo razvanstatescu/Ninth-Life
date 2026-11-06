@@ -41,3 +41,9 @@
   - [ ] 11.3 Run `pnpm -F @ninth/eval eval --llm <module>`; record model, region and cost
 - [ ] 12. CI: `.github/workflows/eval.yml` runs `test`, `data:check` and `quick` on PRs touching core, eval or data (Req 2.1, 6.1)
 - [ ] 13. Confirm Turk dialogues license with the author (web page CC BY 4.0 vs readme CC BY-ND 3.0); if ND, rebuild bigrams with `--no-turk` (Req 1.7, 5.7)
+- [x] 14. Plan F2: measure single-letter and junk readings (Req 2.6, 5.8; ADR-core-002, ADR-data-002)
+  - [x] 14.1 `--lexicon`, `--bigram`, `--letter-penalty` CLI options; `lm.letterPenalty` in `RESULTS.json` (Req 2.6) — P14
+  - [x] 14.2 SCOWL fetch (pinned) and word classes; `--acronyms`, `--junk`, `--down-zipf`, `--scowl-level` build flags (Req 5.8) — P15
+  - [x] 14.3 Measured (a) letter penalty, (b) acronyms drop/down (SCOWL and no-vowel), (c) non-dictionary drop/down on B0/B1, full set and Turk subset; shipped (a) + (b) + (c) down 1.0; data rebuilt, `eval.lock` refreshed (fixture unchanged), `RESULTS.md` regenerated
+- [x] 15. Offensive-readings report for D7, LDNOOBW list (CC BY 4.0) in the cache only (Req 7.1–7.4) — P16
+- [ ] 16. Review the slur marks in `src/offensive.ts` with the team before deciding D7

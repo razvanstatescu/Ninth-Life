@@ -13,8 +13,9 @@ The browser always decodes offline first (ghost mode). If the person turns on mo
 browser sends the key codes, the offline lattice (up to 12 words per slot), its best ghost sentences
 and the partner's last line to `/api/decode`. The route asks Claude Haiku through the Anthropic API
 to choose the most likely sentences, then checks every word with `validate()` from `@ninth/core`.
-Anything that does not encode to the keys pressed is dropped and counted in `rejected`. The model
-can rank; it cannot add words.
+Anything that does not encode to the keys pressed is dropped and counted in `rejected`; up to five
+of the offending words come back in `rejectedWords` so the proof panel can strike them through
+(ADR-decoder-001). The model can rank; it cannot add words.
 
 ## Request flow
 
@@ -38,7 +39,7 @@ sequenceDiagram
     H-->>B: 200 ghost beams, degraded: true
   end
   H->>H: parse {"c":[...]} -> normalize -> validate each -> dedupe -> model first, then ghost -> top k
-  H-->>B: 200 {candidates, rejected, model, ms, degraded}
+  H-->>B: 200 {candidates, rejected, rejectedWords, model, ms, degraded}
 ```
 
 The client times out at 1,500 ms and re-runs `validate()` on whatever comes back; the proof panel
@@ -67,9 +68,18 @@ Response:
 {
   "v": 1,
   "candidates": [{ "text": "I need water", "words": ["i", "need", "water"], "valid": true, "oov": [], "source": "llm" }],
-  "rejected": 2, "model": "haiku-5.5", "ms": 640, "degraded": false
+  "rejected": 2,
+  "rejectedWords": [{ "slot": 2, "word": "wafer", "expectedCode": "92837" }],
+  "model": "haiku-5.5", "ms": 640, "degraded": false
 }
 ```
+
+`rejectedWords` (additive, ADR-decoder-001): words from rejected model sentences that do not match
+their slot, in model order, one per (slot, word), at most 5. Only sentences with one word per slot
+are used. Each word is core-normalized, `a-z` with internal apostrophes, at most 16 characters,
+and never a word of a returned candidate; any other string is left out. `[]` on degraded replies.
+The client re-checks every entry and shows it struck through (`nl-chip--reject`); it is never
+spoken.
 
 Limits: 20 codes, 16 digits each (2-9 only; initials mode: 1 digit), partner 280 chars, 3 recent
 items of 280 chars, 12 words per slot, 10 beams, `k` 1-5, body 4,096 bytes. Errors:
@@ -126,8 +136,9 @@ store, which ADR-001 rules out; the spend limit replaces them.
 
 - One JSON metrics line per request (`DecodeMetrics` in `src/log.ts`): outcome enum, status,
   timings, token counts, cost, model label, error class name, upstream status number. Never bodies,
-  words, codes, partner text, IPs, IP hashes, error messages or the API key. Property-tested
-  (`test/handler.test.ts`, "DS-6 privacy").
+  words, codes, partner text, IPs, IP hashes, error messages, rejected words or the API key.
+  Property-tested (`test/handler.test.ts`, "DS-6 privacy", including a reply whose rejected word
+  reaches the response but not the log).
 - IP hashes are `sha256(IP_HASH_SALT | UTC day | ip)`, kept in memory only.
 - Model ranking sends the codes, lattice, guesses and partner/recent text to Anthropic. Anthropic
   says it deletes API inputs and outputs within 30 days unless it must keep them for Usage Policy
@@ -209,8 +220,10 @@ per region.
 - `pnpm -F @ninth/decoder test --run`: schema boundaries, prompt examples validate, parser, the
   Anthropic client against a mocked `fetch` (URL, `x-api-key`, `anthropic-version`, body per model,
   no sampling parameters, cache checkpoint rule, HTTP error mapping, abort on the deadline), the soft
-  limiter, flags, handler paths, the fetch adapter and env wiring, and three fast-check properties
-  (soundness in letter and initials mode, no-body logging). No test needs `ANTHROPIC_API_KEY`.
+  limiter, flags, handler paths, the fetch adapter and env wiring, and four fast-check properties
+  (soundness in letter and initials mode, rejected words never in candidates and safe to show
+  (DS-1.7), no-body logging). Every reply in the rejected-words tests is checked against
+  `DecodeResponseSchema`. No test needs `ANTHROPIC_API_KEY`.
 - A live check needs a key: one request through the route, then a second to see
   `cache_read_input_tokens > 0` in the Console logs for Haiku 5.5.
 

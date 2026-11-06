@@ -32,7 +32,7 @@ Read the component README before building or changing that component. If somethi
 
 ## Components and rules that are easy to break
 
-- **Key:** letters lead (30px bold), the digit is small in the corner. `aria-label` is "4, G H I". Lit state = ember fill + plum inner ring + `glow-ember`; only one key lit at a time. Pressed = inner ember ring, never color alone.
+- **Key:** letters lead (30px bold), the digit is small in the corner. `aria-label` is "4 GHI, G H I" (visible text first for WCAG 2.5.3, then spaced letters). Lit state = ember fill + plum inner ring + `glow-ember`; only one key lit at a time. Pressed = inner ember ring, never color alone.
 - **Keypad:** fixed layout (1 punctuation, 2 to 9 letters, `*` Back, `0` Space, `#` Next). Never reorder keys, hide digits or add keys. Scanning: active row gets `is-scanning`, active key `is-lit`; highlight jumps, never slides.
 - **Button:** primary (ember) is one per screen and is almost always Speak (`nl-btn--xl`, 80px). Secondary, quiet and danger variants as in the README. Danger asks to confirm.
 - **Candidate:** up to 5, ranked; selecting does not speak, Speak does; `aria-pressed` for selection; every listed candidate already passed the proof check.

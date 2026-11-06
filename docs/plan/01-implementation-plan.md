@@ -98,14 +98,26 @@ so AACText numbers are optimistic. Report Turk (79.3% top-1) alongside.
 
 | # | Item | Owner | Proposed fix |
 |---|---|---|---|
-| F1 | Phone layout: header wraps to 4 rows and the keypad sits below the fold at 390×844 | B | Icon+label header collapses to one row (Settings/Phrases into a menu sheet); keypad before sentences on phones; show 3 sentences |
-| F2 | Single-letter readings rank too high ("H need water" at rank 5) | A, C | Penalize one-letter words other than "a" and "i" in the unigram model, or drop them from the lexicon |
-| F3 | Scan grid order differs: web puts keypad rows first (any key ≤ 7 steps), access-modes spec puts sentences in row 0 | A, B | Keep keypad-first (Keypad README); update the access-modes spec to match |
-| F4 | Settings and Phrases sheets are not reachable by switch scanning | B | Add a scan row for Settings/Phrases/Voice, and scan inside sheets |
-| F5 | No axe check in CI | B | Add `@axe-core/playwright` to web dev deps and a CI job |
-| F6 | Vocab pack phrases load but are not shown | B | Quick-phrases row in the Phrases sheet |
-| F7 | Rejected model words only show as a count unless the client re-check catches them | A | Return rejected words (not just a count) from the decoder so the proof panel can strike them through, as the design shows |
+| F1 | Phone layout: header wraps to 4 rows and the keypad sits below the fold at 390×844 | B | Icon+label header collapses to one row (Settings/Phrases into a menu sheet); keypad before sentences on phones; show 3 sentences — **done Nov 6 (f88bad7)** |
+| F2 | Single-letter readings rank too high ("H need water" at rank 5) | A, C | **Done 2026-11-06:** −3 log10 one-letter penalty in core's LMs (ADR-core-002) + SCOWL acronym/non-dictionary down-weighting (ADR-data-002); B1 85.6% / 97.3%, no new unreachable items — **done Nov 6 (one-letter penalty + acronym/non-dictionary down-weighting; ADR-core-002, ADR-data-002)** |
+| F3 | Scan grid order differs: web puts keypad rows first (any key ≤ 7 steps), access-modes spec puts sentences in row 0 | A, B | Keep keypad-first (Keypad README); update the access-modes spec to match — **done Nov 6** |
+| F4 | Settings and Phrases sheets are not reachable by switch scanning | B | Add a scan row for Settings/Phrases/Voice, and scan inside sheets — **done Nov 6** |
+| F5 | No axe check in CI | B | Add `@axe-core/playwright` to web dev deps and a CI job — **done Nov 6 (axe + keyboard + switch walkthroughs in CI e2e job)** |
+| F6 | Vocab pack phrases load but are not shown | B | Quick-phrases row in the Phrases sheet — **done Nov 6** |
+| F7 | Rejected model words only show as a count unless the client re-check catches them | A | **Done 2026-11-06:** additive `rejectedWords` in the decode response, struck through in the proof panel (ADR-decoder-001) — **done Nov 6 (`rejectedWords` in the decode response; ADR-decoder-001)** |
 | F8 | Fonts are self-hosted because Next 15.1.3's font list lacks Atkinson Hyperlegible Next/Mono | B | Fine for offline; revisit if Next is upgraded |
+
+## Later follow-ups (Nov 6, second pass)
+
+| # | Item | Owner | Notes |
+|---|---|---|---|
+| F9 | Lexicon parse is 108.6 ms on desktop and 457 ms on a Moto G-class profile (target < 100 ms desktop); first load is 687–692 KB gzip against a 700 KB budget | A, B | Proposals in `docs/testing/performance.md`: parallel data fetch, idle-time trie build, faster `fromJSON`, compact format, trim precache |
+| F10 | Selected sentence border is ember on Night (second ember next to Speak) | design | Design-system call: use moon/ink for the selected border |
+| F11 | Choosing Keyboard/Touch by switch turns scanning off with no way back by switch | B | Add a confirm step |
+| F12 | Link to `/welcome` from the app footer; precache `/welcome` | B | Small |
+| F13 | Keypad labels changed to "4 GHI, G H I" to pass WCAG 2.5.3 (label in name) | — | done Nov 6 |
+
+D7 data: `packages/eval/reports/offensive-readings.md` — a slur appears in the top 5 for 8 of 866 test items (0.9%), never at top 1. Nothing is filtered yet.
 
 ## Working agreements
 
@@ -125,7 +137,7 @@ so AACText numbers are optimistic. Report Turk (79.3% top-1) alongside.
 | D4 | Did anyone register for Kiroween 2025? | Ask the team | all |
 | D5 | Default LLM: Haiku 5.5 (code default, `claude-haiku-5-5`, 10x cheaper, caching works) or Haiku 4.5 (`DECODE_MODEL=claude-haiku-4-5`) | Decide at M3 from B3/B4 eval | A, C |
 | D6 | Turk dialogues license: web page says CC BY 4.0, download readme says CC BY-ND 3.0 | Ask Keith Vertanen; if ND, rebuild bigrams with `--no-turk` (perplexity 101 → 111) | C |
-| D7 | Filter offensive words out of suggestions (wordfreq ranks some as low readings of common codes) | Recommended yes: a short blocklist applied at lexicon build, words still typeable via "add word" | C |
+| D7 | Filter offensive words out of suggestions (wordfreq ranks some as low readings of common codes) | Recommended yes: a short blocklist applied at lexicon build, words still typeable via "add word". Data: `packages/eval/reports/offensive-readings.md` (slur in the top 5 for 0.9% of test items) | C |
 | D8 | Keep diacritics and capitals for display (ro "mâine", names "Ana") | Add optional display spelling to `LexiconFile` before ro/es packs | A, C |
 | D9 | Production origin | Same origin as the app (the route allows its own host); add preview/custom domains via `ALLOWED_ORIGINS` | A |
 | D10 | Anthropic account setup | **Decided:** a dedicated Console workspace for the key, monthly spend limit $40 (the hard cap), WAF rule 10/60 s per IP (ADR-001) | A |

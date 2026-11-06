@@ -13,10 +13,10 @@ describe('Keypad', () => {
     const pad = screen.getByRole('group', { name: 'Keypad' });
     const keys = within(pad).getAllByRole('button');
     expect(keys.map((k) => k.getAttribute('aria-label'))).toEqual([
-      '1, punctuation', '2, A B C', '3, D E F',
-      '4, G H I', '5, J K L', '6, M N O',
-      '7, P Q R S', '8, T U V', '9, W X Y Z',
-      'Back', '0, space', 'Next word',
+      '1 punctuation, .,?!', '2 ABC, A B C', '3 DEF, D E F',
+      '4 GHI, G H I', '5 JKL, J K L', '6 MNO, M N O',
+      '7 PQRS, P Q R S', '8 TUV, T U V', '9 WXYZ, W X Y Z',
+      'Back', '0 Space', 'Next word',
     ]);
     expect(keys.every((k) => k.tagName === 'BUTTON' && k.getAttribute('type') === 'button')).toBe(true);
   });
@@ -24,12 +24,12 @@ describe('Keypad', () => {
   it('calls onPress with the key and marks the scan row and lit key', () => {
     const onPress = vi.fn();
     const { container } = render(<Keypad onPress={onPress} scanRow={2} litKey={[2, 2]} />);
-    fireEvent.click(screen.getByRole('button', { name: '4, G H I' }));
+    fireEvent.click(screen.getByRole('button', { name: '4 GHI, G H I' }));
     expect(onPress).toHaveBeenCalledWith(expect.objectContaining({ id: '4' }));
     expect(container.querySelectorAll('.is-scanning')).toHaveLength(1);
     const lit = container.querySelectorAll('.is-lit');
     expect(lit).toHaveLength(1);
-    expect(lit[0]?.getAttribute('aria-label')).toBe('9, W X Y Z');
+    expect(lit[0]?.getAttribute('aria-label')).toBe('9 WXYZ, W X Y Z');
   });
 });
 

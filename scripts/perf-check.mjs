@@ -130,7 +130,8 @@ async function gcHeapMB(cdp) {
 }
 
 async function waitDictReady(page, timeout = 60000) {
-  return page.waitForFunction(() => /offline dictionary ready/i.test(document.body?.innerText ?? ''), null, { timeout, polling: 20 });
+  // textContent: the compact header keeps this text for screen readers only.
+  return page.waitForFunction(() => /offline dictionary ready/i.test(document.body?.textContent ?? ''), null, { timeout, polling: 20 });
 }
 
 /** Load core into the page and time the dictionary pipeline there. */

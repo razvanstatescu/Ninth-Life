@@ -31,3 +31,6 @@ Each task names the requirements it satisfies and the tests that cover them.
   - [ ] 11.4 Kill-switch drill: set `LLM_ENABLED=false`, redeploy, confirm 503, turn back on
 - [ ] 12. Eval week (plan D5): Haiku 5.5 vs Haiku 4.5 on the held-out set; p50/p95 latency, top-1 accuracy, rejection rate, cost per decode; set `DECODE_MODEL`
 - [ ] 13. Live checks with a key: Haiku 5.5 accepts `thinking: disabled` on 2026-10-21; `cache_read_input_tokens > 0` on the second call; the spend-limit error falls back to ghost
+- [x] 14. Plan F7: `rejectedWords` in the response, zod `DecodeResponseSchema` / `RejectedWordSchema`, web client re-check and proof-panel strike-through (DS-1.7, ADR-decoder-001)
+  - [x] 14.1 Property P5 and examples ("wafer" for 92837, cap 5, shape filter, length mismatch, degraded paths) (`test/handler.test.ts`)
+  - [x] 14.2 DS-6 privacy property covers a rejected word that reaches the response but not the log

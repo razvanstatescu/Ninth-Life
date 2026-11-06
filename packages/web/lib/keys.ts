@@ -16,22 +16,26 @@ export interface KeyDef {
   letters?: string;
   /** A word for function keys: Space, Next, Back, Punctuation. */
   word?: string;
-  /** Screen reader label: digit then spaced letters, "4, G H I". */
+  /**
+   * Screen reader label. Starts with the visible text ("4 GHI") so it passes WCAG 2.5.3
+   * (label in name) for voice-control users, then spells the letters ("G H I") so screen
+   * readers do not pronounce "ghi" as a word.
+   */
   ariaLabel: string;
 }
 
 function letterKey(d: Digit): KeyDef {
   const letters = KEY_LETTERS[d].toUpperCase();
-  return { id: d, digit: d, role: 'letter', letters, ariaLabel: `${d}, ${letters.split('').join(' ')}` };
+  return { id: d, digit: d, role: 'letter', letters, ariaLabel: `${d} ${letters.toUpperCase()}, ${letters.toUpperCase().split('').join(' ')}` };
 }
 
 export const KEY_ROWS: readonly (readonly KeyDef[])[] = [
-  [{ id: '1', digit: '1', role: 'punct', word: '.,?!', ariaLabel: '1, punctuation' }, letterKey('2'), letterKey('3')],
+  [{ id: '1', digit: '1', role: 'punct', word: '.,?!', ariaLabel: '1 punctuation, .,?!' }, letterKey('2'), letterKey('3')],
   [letterKey('4'), letterKey('5'), letterKey('6')],
   [letterKey('7'), letterKey('8'), letterKey('9')],
   [
     { id: '*', digit: '*', role: 'back', word: 'Back', ariaLabel: 'Back' },
-    { id: '0', digit: '0', role: 'space', word: 'Space', ariaLabel: '0, space' },
+    { id: '0', digit: '0', role: 'space', word: 'Space', ariaLabel: '0 Space' },
     { id: '#', digit: '#', role: 'next', word: 'Next', ariaLabel: 'Next word' },
   ],
 ];

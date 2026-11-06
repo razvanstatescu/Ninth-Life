@@ -81,6 +81,8 @@ Each property is a fast-check test in `packages/core/test/`, named after the req
 | P18 | If every code has a word, `decodeGhost` returns at least one candidate | Req 5.3 | "Req 5.3 decodeGhost finds a sentence ..." |
 | P19 | Same inputs ⇒ same output | Req 5.7 | "Req 5.7 ..." |
 | P20 | `tokenize(formatSentence(ws, p))` equals the normalized `ws`, still validates, ends with p | Req 6.4 | "Req 6.4 ..." (2 properties) |
+| P21 | For any lexicon, prev, word and penalty p <= 0: a one-letter word outside a/i scores in [off + p, off]; every other word scores exactly as with the penalty off | Req 4.5 | `lm.test.ts` "Req 4.5 the letter penalty only lowers ..." |
+| P22 | For any lexicon and codes: the lattice ignores the LM; an exhaustive beam and `decodeGhost(k = all)` return the same sentence set with and without the penalty; sentences without a penalised letter keep their exact score | Req 5.8 | `decode.test.ts` "Req 5.8 the letter penalty never removes a valid reading ..." |
 
 Example tests pin the behavior people see: `"isn't" -> "4768"`, `4663 -> good, home, gone`,
 `["i"] -> "I"`, `"4 6333 92837" -> "i need water"`, and the real-lexicon smoke test.

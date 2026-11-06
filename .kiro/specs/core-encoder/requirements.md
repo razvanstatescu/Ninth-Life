@@ -77,12 +77,16 @@ spoken that I did not type, so that I can trust it in front of other people.
 **User story:** As a person typing a sentence, I want likely word pairs ranked first ("go home" over
 "go good"), so that the first suggestion is usually right.
 
-4.1 THE unigram model SHALL score log10 p(w) = zipf(w) - 9 clamped to [-9, 0], and -9 for unknown words.
+4.1 THE unigram model SHALL score log10 p(w) = zipf(w) - 9 clamped to [-9, 0], and -9 for unknown words
+    (plus the one-letter penalty of 4.5).
 4.2 THE bigram model SHALL return the listed log10 P(w | prev) when present, otherwise
     backoff(prev) + unigram(w) with backoff 0 for an unseen prev, AND IF the file is not version 1
     THEN SHALL throw a TypeError.
 4.3 THE bigram model SHALL read only own properties of the JSON tables.
 4.4 THE language models SHALL return a finite log-probability <= 0 for any input strings.
+4.5 THE language models SHALL add `letterPenalty` (default -3 log10, ADR-core-002) to the score of a
+    one-letter word that is not in `spokenLetters` (default "a", "i"), never going below the floor,
+    AND SHALL leave every other score unchanged; `letterPenalty: 0` SHALL turn it off.
 
 ## Requirement 5: Ghost-mode decoding
 **User story:** As a person who is offline or has the LLM off, I want whole-sentence suggestions from
@@ -102,6 +106,9 @@ the dictionary alone, so that I can always talk.
 5.6 WHILE initials mode is selected, THE decoder SHALL fill each one-digit slot with the most
     frequent words starting on that key.
 5.7 THE decoder SHALL be deterministic: the same inputs SHALL give the same candidates.
+5.8 THE one-letter penalty SHALL NOT remove a valid reading from the lattice: with a beam wide enough
+    to hold every sentence, the penalised and unpenalised models SHALL yield the same sentences,
+    only in a different order.
 
 ## Requirement 6: Formatting
 **User story:** As a person speaking through the app, I want my sentence written properly, so that

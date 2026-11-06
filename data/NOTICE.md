@@ -6,7 +6,7 @@ them; changes are described per file. How to rebuild them: `docs/architecture/da
 
 | File | Built by | Derived from |
 |---|---|---|
-| `lexicon/en.v1.json` | `packages/eval/scripts/build_lexicon.py` | wordfreq 3.1.1 |
+| `lexicon/en.v1.json` | `packages/eval/scripts/build_lexicon.py` | wordfreq 3.1.1; SCOWL 2020.12.07 used only to classify words (no SCOWL list included) |
 | `lexicon/en.bigram.v1.json` | `packages/eval/scripts/build_bigrams.py` | AACText "Imagination of Crowds" train split; Turk dialogues train split; unigram from `en.v1.json` |
 | `packs/core-en.json` | `packages/eval/scripts/build_pack.py` | Universal Core vocabulary (36 words); AACText train split (phrases) |
 
@@ -25,7 +25,9 @@ issue on derived lists: treat ShareAlike as applying).
 combining marks removed, lowercased, curly apostrophes folded); kept only a-z words with
 internal apostrophes; merged words that normalize to the same string; removed
 apostrophe-less spellings of contractions ("dont", "im") that are at least 1.0 Zipf rarer than
-the contraction; removed two entries naming a third-party brand; grouped by 9-key code; stored Zipf × 10 rounded to an integer.
+the contraction; removed two entries naming a third-party brand; lowered by 1.0 Zipf (floor 2.0)
+the words that SCOWL lists only in capitals (acronyms) or not at all; grouped by 9-key code;
+stored Zipf × 10 rounded to an integer.
 
 wordfreq's upstream sources, as attributed in the wordfreq 3.1.1 README (reproduced so
 the attribution chain is kept):
@@ -49,6 +51,29 @@ the attribution chain is kept):
 - **NewsCrawl** (WMT) and **GlobalVoices** news text; **OSCAR** web text
   (Ortiz Suárez, Sagot and Romary, 2019); Twitter and Reddit word statistics. Per the
   wordfreq README, the Twitter data gives word statistics only and republishes no content.
+
+## SCOWL 2020.12.07 (classification signal for `lexicon/en.v1.json`)
+
+Kevin Atkinson, SCOWL (Spell Checker Oriented Word Lists), <http://wordlist.aspell.net/>.
+No SCOWL word list is included in this repository; the build only checks whether, and in which
+letter case, a wordfreq word appears in SCOWL (size 95) to decide whether to lower its frequency.
+The SCOWL notice, as its license asks:
+
+> Copyright 2000-2018 by Kevin Atkinson
+>
+> Permission to use, copy, modify, distribute and sell these word lists, the associated scripts,
+> the output created from the scripts, and its documentation for any purpose is hereby granted
+> without fee, provided that the above copyright notice appears in all copies and that both that
+> copyright notice and this permission notice appear in supporting documentation. Kevin Atkinson
+> makes no representations about the suitability of this array for any purpose. It is provided
+> "as is" without express or implied warranty.
+
+SCOWL incorporates public-domain lists (Moby Words II by Grady Ward, Alan Beale's 12Dicts, ENABLE,
+Brian Kelk's UK English Wordlist, US Census names) and lists under notice-only terms (WordNet 1.6,
+Copyright 1997 Princeton University; Ispell, Copyright 1993 Geoff Kuenning; VarCon, Copyright
+2000-2016 Kevin Atkinson and 2016 Benjamin Titze; UK Advanced Cryptics Dictionary, Copyright
+J Ross Beresford 1993-1999). Full text: `Copyright` in the SCOWL archive (fetched to
+`packages/eval/.cache/scowl/Copyright` by `pnpm -F @ninth/eval data:fetch`).
 
 ## AACText "Imagination of Crowds" corpus (`lexicon/en.bigram.v1.json`, `packs/core-en.json`)
 

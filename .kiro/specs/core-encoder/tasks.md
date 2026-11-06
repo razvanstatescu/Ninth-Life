@@ -34,3 +34,7 @@
 - [x] 16. Mutation check of the property suite; record findings in `docs/architecture/core.md` "PBT findings"
 - [ ] 17. Optional: per-word display forms (restore diacritics, e.g. "mâine") — needs a `LexiconFile` change (Req 1.2 follow-up)
 - [ ] 18. Optional: smaller trie (top-5 only on nodes with > 5 words below) if phones show memory pressure (Req 2.2 follow-up)
+- [x] 19. One-letter penalty in `unigramModel` / `bigramModel` (`LmOptions`, default -3, a/i exempt), plan F2, ADR-core-002 (Req 4.5, 5.8)
+  - [x] 19.1 Property P21: only one-letter scores drop, by at most the penalty (Req 4.5)
+  - [x] 19.2 Property P22: the penalty only reorders; exhaustive beams hold the same sentences (Req 5.8)
+  - [x] 19.3 Smoke: `4 6333 92837` has no stray letter in the top 5 on `en.v1.json` (Req 5.8)

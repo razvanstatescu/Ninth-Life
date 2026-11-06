@@ -42,6 +42,7 @@ a change in seconds and publish results when ready.
 2.3 THE results table SHALL have the columns of the plan section 3.4 template: config, word accuracy, sentence top-1, sentence top-5, KSR, scan steps per character, invalid pre-validator, p50 ms, p95 ms, $/1k.
 2.4 THE `RESULTS.md` file SHALL contain only numbers measured by the harness; a config that was not run SHALL be shown as "not run" with no numbers.
 2.5 WHEN the lexicon or bigram file hash differs from the lock, THE harness SHALL warn but SHALL still run.
+2.6 THE harness SHALL accept `--lexicon` and `--bigram` paths and a `--letter-penalty` (<= 0) for data experiments, AND SHALL record the language-model letter penalty in `RESULTS.json`.
 
 ## Requirement 3: Decoder configurations
 
@@ -81,6 +82,7 @@ numbers reflect the effort a person would spend.
 5.5 THE pack boost SHALL NOT change the first reading of any code.
 5.6 WHEN a data build is re-run on the same inputs, THE builder SHALL produce byte-identical output.
 5.7 THE `data/` directory SHALL carry the CC BY-SA 4.0 license and a NOTICE crediting wordfreq and its upstream sources, the AACText and Turk datasets, and UNC CLDS Universal Core.
+5.8 THE lexicon builder SHALL lower by `--down-zipf` (default 1.0, floored at the minimum Zipf) the words that SCOWL lists only in capitals (acronyms) and the words in no SCOWL list, SHALL NOT remove any word by doing so, and SHALL leave one-letter words, dictionary words and names unchanged (ADR-data-002). SCOWL SHALL be fetched with a pinned SHA-256 and SHALL NOT be committed.
 
 ## Requirement 6: Determinism
 
@@ -90,3 +92,13 @@ numbers always means a change in the code or data.
 6.1 WHEN the harness is run twice with the same inputs and seed, THE harness SHALL write byte-identical `RESULTS.json`.
 6.2 THE `RESULTS.json` file SHALL NOT contain timings, dates or host details.
 6.3 THE harness SHALL NOT use unseeded randomness.
+
+## Requirement 7: Offensive-readings report (decision D7)
+
+**User story:** As the team deciding D7, I want to know how often an offensive word shows up as a
+suggestion, so that we decide with data and without the report spreading the words.
+
+7.1 WHEN `pnpm -F @ninth/eval report:offensive` is run, THE harness SHALL write `reports/offensive-readings.md` counting, on the frozen test set with B1 at k = 5, the items whose top-5 sentences contain a blocklisted word that is not in the gold sentence, and each listed word's code and rank in its code.
+7.2 THE report SHALL NOT spell any blocklisted word: each SHALL be shown as its first letter plus dots and a SHA-256 prefix, including when it is another word's first reading.
+7.3 THE blocklist SHALL be a public list with a compatible license, fetched with a pinned SHA-256 into the gitignored cache and never committed; the slur marks SHALL be stored as SHA-256 hashes.
+7.4 THE report SHALL only measure; it SHALL NOT change the lexicon.

@@ -6,7 +6,7 @@ import { miniDict } from './fixtures';
 function press(label: string, times = 1) {
   for (let i = 0; i < times; i++) fireEvent.click(screen.getByRole('button', { name: label }));
 }
-const KEY = { 2: '2, A B C', 3: '3, D E F', 4: '4, G H I', 6: '6, M N O', 7: '7, P Q R S', 8: '8, T U V', 9: '9, W X Y Z', 0: '0, space' } as Record<string, string>;
+const KEY = { 2: '2 ABC, A B C', 3: '3 DEF, D E F', 4: '4 GHI, G H I', 6: '6 MNO, M N O', 7: '7 PQRS, P Q R S', 8: '8 TUV, T U V', 9: '9 WXYZ, W X Y Z', 0: '0 Space' } as Record<string, string>;
 function typeDigits(digits: string) {
   for (const d of digits) {
     if (d === '#') press('Next word');

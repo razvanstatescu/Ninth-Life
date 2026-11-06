@@ -86,6 +86,9 @@ Each property is a test in `packages/eval/test/` (P = property-based with fast-c
 | P11 | For any seed, two runs give byte-identical `RESULTS.json`; two CLI runs write identical bytes. | 6.1, 6.2 | `harness.test.ts` (P, 5 seeds + CLI) |
 | P12 | `sample(xs, n, seed)` is deterministic, order-preserving and repeat-free. | 2.1, 6.3 | `harness.test.ts` (P) |
 | P13 | Rebuilding the fixture from the cached inputs reproduces the locked SHA-256. | 1.1, 5.6 | `pnpm -F @ninth/eval data:check` |
+| P14 | CLI parses `--lexicon`, `--bigram`, `--letter-penalty` (refuses > 0); `RESULTS.json` records the penalty; turning it off changes no item's reachability. | 2.6 | `harness.test.ts` (E) |
+| P15 | Down-weighting never removes a word, never raises a score, lowers by at most `down_zipf`, never below the floor, and leaves one-letter, dictionary and name words unchanged (500 random vocabularies). | 5.8 | `scripts/test_build_lexicon.py` (P) |
+| P16 | For any set of listed words in a lexicon, the offensive report never spells one (including as a first reading) and shows its mask; a listed word in the gold sentence is not counted. | 7.1, 7.2 | `offensive.test.ts` (P + E) |
 
 ## Error handling
 

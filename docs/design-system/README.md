@@ -53,7 +53,7 @@ No mascots, no faces, no cartoon cat, no phone drawings.
 | Design-system component | CSS class | React component (packages/web) | Notes |
 |---|---|---|---|
 | Button | `nl-btn` `--primary/--secondary/--quiet/--danger/--xl` | `components/Button.tsx` | Primary is almost always Speak |
-| Key | `nl-key`, `is-lit` | `components/Key.tsx` | Letters lead, digit small; `aria-label="4, G H I"` |
+| Key | `nl-key`, `is-lit` | `components/Key.tsx` | Letters lead, digit small; `aria-label="4 GHI, G H I"` (WCAG 2.5.3) |
 | Keypad | `nl-keypad`, `nl-keypad__row`, `is-scanning` | `components/Keypad.tsx` | Fixed layout; scan highlight jumps, never slides |
 | ProofChip | `nl-chip--match/--new/--reject` | `components/ProofChip.tsx` | Rejected words are struck through and never spoken |
 | Candidate | `nl-candidate`, `is-selected` | `components/Candidate.tsx` | Selecting does not speak; `aria-pressed` |
