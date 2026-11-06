@@ -224,13 +224,42 @@ per region.
   (soundness in letter and initials mode, rejected words never in candidates and safe to show
   (DS-1.7), no-body logging). Every reply in the rejected-words tests is checked against
   `DecodeResponseSchema`. No test needs `ANTHROPIC_API_KEY`.
-- A live check needs a key: one request through the route, then a second to see
-  `cache_read_input_tokens > 0` in the Console logs for Haiku 5.5.
+- `pnpm -F @ninth/decoder test --run` also covers the live-check script against a fake fetch
+  (`test/live-check.test.ts`).
+
+## Live check (needs a key)
+
+`pnpm -F @ninth/decoder live-check` (`packages/decoder/scripts/live-check.ts`) answers ADR-001's
+open questions with three small real requests through the decoder's own `AnthropicLlmClient`,
+`buildPrompt` and `parseReply` (an invented "I need water" request; under $0.01 in all):
+
+| Check | Model | Pass when |
+|---|---|---|
+| Request shape | both | no `temperature`, `top_p` or `top_k`; Haiku 5.5 sends `thinking: {type: "disabled"}`, Haiku 4.5 no thinking field; `anthropic-version: 2026-10-21` |
+| Accepted | both | HTTP 200, no refusal, no `max_tokens` cut-off, no thinking block in the reply |
+| Reply | both | parses as `{"c": [...]}` and at least one sentence passes `validate()` |
+| Prompt cache | Haiku 5.5 | a second identical request reports `cache_read_input_tokens > 0` (one more try after 3 s if it reads 0) |
+| Response time | both | printed per call; above the route's 1,200 ms deadline is a warning, not a failure |
+
+```bash
+export ANTHROPIC_API_KEY=...            # in the shell only, never in a file
+pnpm -F @ninth/decoder live-check                                  # both models
+pnpm -F @ninth/decoder live-check -- --model claude-haiku-5-5      # one model
+pnpm -F @ninth/decoder live-check -- --require-key                 # exit 2 instead of skipping
+```
+
+It prints one line per call (status, time, input/output/cache tokens, stop reason) and one line
+per check, and exits 0 when every check passes, 1 when one fails (with the API's error type and
+message), and 0 with `live-check skipped: ANTHROPIC_API_KEY is not set` when there is no key. The
+key is never printed. The manual model run in `.github/workflows/eval.yml` runs it first.
+Quality, latency and cost over the test set come from the eval: `pnpm -F @ninth/eval llm`
+(`docs/architecture/data-and-eval.md` section 4).
 
 ## Open questions
 
-1. Default model (plan D5): Haiku 5.5 (code default) or Haiku 4.5; decide from the eval.
+1. Default model (plan D5): Haiku 5.5 (code default) or Haiku 4.5; decide from the eval
+   (`pnpm -F @ninth/eval llm`, full set about $0.28 on Haiku 5.5 and $2.37 on Haiku 4.5, estimated).
 2. Live confirmation that Haiku 5.5 accepts `thinking: {type: "disabled"}` on 2026-10-21 and that the
-   system prompt caches.
+   system prompt caches: run `pnpm -F @ninth/decoder live-check` ("Live check" above).
 3. Whether Haiku 4.5 at default sampling (no temperature 0.3) ranks as well as it did in the plan.
 4. The exact error Anthropic returns at the spend limit (the route treats any non-200 as a failure).

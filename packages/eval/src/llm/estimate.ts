@@ -110,7 +110,7 @@ export function formatEstimate(e: CostEstimate, label: string): string {
   const lines = [
     `Cost estimate for ${e.model} (${label}), before any call:`,
     ...e.perConfig.map((c) => `  ${c.config}: ${c.calls} requests, ${c.toSend} to send`),
-    `  ${e.unique} distinct requests (B3 reuses B2's), ${e.cached} already in the response cache, ${e.toSend} to send`,
+    `  ${e.unique} distinct requests (identical requests, such as B3's copy of B2's, are sent once), ${e.cached} already in the response cache, ${e.toSend} to send`,
     `  per call (${e.basis}): ~${e.inputPerCall} input tokens, ~${e.outputPerCall} output tokens`,
     `  expected ${usd(e.usd)} (no prompt-cache discount)` +
       (e.usdWarmCache < e.usd ? `; ${usd(e.usdWarmCache)} if the system prompt is read from the prompt cache` : '') +

@@ -235,7 +235,7 @@ random seeds) and two CLI runs give byte-identical files.
 |---|---|---|---|---|---|
 | B0 dict | 91.5% | 62.4% | 92.0% | −1.2% | 3.61 |
 | B1 ghost | 96.8% | 85.6% | 97.3% | −0.0% | 3.57 |
-| B2–B4 | not run (no LLM backend wired yet) | | | | |
+| B2–B4 | not run yet: needs `ANTHROPIC_API_KEY` (commands below) | | | | |
 
 B1 beats the plan's 92% word-accuracy target on this test set. Latency for both is well under
 1 ms per decode (see `RESULTS.md`). Per-source breakdown: B1 reaches 88.7% top-1 on AACText and
@@ -266,13 +266,88 @@ what a person sees in the other four suggestions.
 from the LDNOOBW list are in the lexicon, 7 share a code with ordinary words, and one appears
 among the B1 top 5 for 8 of 866 test items (0.9%), never at top 1. Nothing is filtered.
 
-**Plugging in an LLM (B2–B4):** write a module exporting
-`createProposer(): LlmProposer` (`packages/eval/src/decoders.ts`):
-`{ model, propose({ codes, mode, k, partner?, lattice?, beams? }) → { candidates: string[][], usd? } }`.
-Then run `pnpm -F @ninth/eval eval --llm path/to/module.ts`. B2 shows raw output, B3 filters it
-through `validate()`, and B4 also gets the lattice and the top 10 ghost beams. One few-shot example
-in `packages/decoder/src/prompt.ts` ("i am good") also appears in the test set; replace it before
-measuring B4.
+### Model runs (B2–B4, decision D5)
+
+`pnpm -F @ninth/eval llm` measures the three model configs on `@ninth/decoder`'s real code
+(spec Req 8; code `packages/eval/src/llm/`):
+
+| Config | What is sent | What the person would see |
+|---|---|---|
+| B2 LLM raw | `buildPrompt` with no lattice and no guesses (every slot "(none listed)"), partner line, k = 5 | the parsed sentences, unfiltered |
+| B3 LLM+val | the same request (a cache hit after B2) | B2 filtered by `validate()` |
+| B4 lattice+val | `handleDecode` with the request the app's `buildRequest` sends: 12 lattice words per slot, top 5 ghost beams, partner line, k = 5, trimmed to 4 KB; no request when a slot has no lexicon word (8 of 866 items), as in the app | the route's reply: valid model sentences first, then ghost beams; ghost beams only if the model fails |
+
+What a run records per item (`.cache/llm/runs/*.jsonl`) and per config (`RESULTS.md` section,
+`RESULTS.llm.json`): sentence top-1/top-5, word accuracy, KSR, the share of model sentences that
+fail `validate()` before the validator, p50/p95 of the recorded API call latency and the share
+above the route's 1,200 ms deadline, input/output/cache-read/cache-write tokens from `usage`, cost
+at `packages/decoder/src/models.ts` prices, refusals, unparseable replies, ghost-only replies.
+B0 and B1 run on the same items in the same section, so the rows compare like for like.
+
+How it behaves:
+- **Cost first.** Before any call it computes every request body offline and prints
+  `requests not yet cached × average tokens × price` (measured averages once the cache has
+  replies from that model). Above $1 it needs `--yes`; `--plan` stops after the estimate.
+- **Cache.** Each reply is stored in `packages/eval/.cache/llm/anthropic/<sha256>.json`
+  (gitignored), keyed by API version, URL and body (never headers, so never the key). Reruns
+  are free and give identical numbers; latency is the recorded time of the original call.
+- **Rate limits.** At most 4 requests in flight (`--concurrency`); 408, 429, 5xx and 529 are
+  retried with backoff (1 s doubling, the server's retry-after when given, 6 attempts). Any other
+  error stops the run with the API's error type and message, and nothing is written.
+- **Results.** One RESULTS.md section per model and mode, titled with model, mode, item count and
+  date, replaced by the next run of the same pair; `pnpm eval` keeps these sections.
+- **Dry run.** `--dry-run` runs the whole path (request body, cache, retries, parse, validate,
+  `handleDecode`) against an in-process fake Messages API, with no key and a separate cache. It
+  never writes into `packages/eval/`. CI runs it on every eval job.
+
+Estimated cost on the full 866 items (prompt-length estimate, 2026-11-06, no calls made yet;
+1,676 distinct requests for B2–B4 because B3 reuses B2's replies and B4 skips 8 items):
+
+| Model | Letter mode B2–B4 | Upper bound | Initials mode B4 only |
+|---|---|---|---|
+| Haiku 5.5 | ~$0.28 (~$0.12 with the system prompt read from the prompt cache) | $0.33 | ~$0.15 |
+| Haiku 4.5 | ~$2.37 (needs `--yes`) | $2.83 | ~$1.21 (needs `--yes`) |
+
+Commands once the key is in the environment:
+
+```bash
+pnpm -F @ninth/decoder live-check                                   # 3 calls, < $0.01
+pnpm -F @ninth/eval llm --model claude-haiku-5-5 --limit 50          # smoke, ~$0.02
+pnpm -F @ninth/eval llm --model claude-haiku-5-5                     # full set
+pnpm -F @ninth/eval llm --model claude-haiku-4-5 --yes               # full set, ~$2.40
+pnpm -F @ninth/eval llm --model claude-haiku-5-5 --mode initials --only B3,B4
+```
+
+The old plug-in (`pnpm -F @ninth/eval eval --llm <module>` exporting `createProposer()`) still
+works for experiments, but it is not the shipping path. None of the seven few-shot answers in
+`packages/decoder/src/prompt.ts` is a test-set sentence (test "Req 8.1").
+
+### Initials mode, offline (plan section 3.3, stretch "Phantom mode")
+
+One press per word on the key of its first letter, 0 between words. The decoder gets one digit per
+word (`lattice(codes, lex, 12, 'initials')`). On a miss the simulated user presses # through the
+12 readings the app cycles in initials mode and retypes in letter mode any word that is not among
+them (full code plus # presses, on top of the initial already pressed). Full set, 866 items:
+
+| Config | Word acc | Sent top-1 | Sent top-5 | Presses/char | Words retyped |
+|---|---|---|---|---|---|
+| B0 dict, initials | 14.6% | 0.0% | 0.0% | 1.26 | 2,306 of 4,890 |
+| B1 ghost, initials | 21.0% | 1.5% | 2.0% | 1.35 | 2,306 of 4,890 |
+| B1 ghost, letter (for comparison) | 96.8% | 85.6% | 97.3% | 1.00 | |
+
+The 12-word initials lattice holds 52.8% of the gold words and every word of only 27 of the 866
+gold sentences (3.1%). The floor, if every sentence came out first, is 0.40 presses per character
+(0.44 with one selection each), against 0.99 for letter mode.
+
+**Conclusion.** Initials mode is not viable offline: ghost mode gets 1.5% of sentences right, and
+the fallback makes it costlier than letter mode (1.35 vs 1.00 presses per character). It depends
+entirely on the model, and more than B4 can give as shipped: a ranker that keeps to listed words
+is capped at 3.1% of sentences, because half the gold words are not in the 12-word lattice, and
+the prompt's rule 2 tells the model to prefer listed words. Initials mode only pays off in
+presses if the model gets roughly 40% or more of sentences into the top 5 (estimate from the floor
+above and the measured miss cost; it varies with sentence length). The deciding measurement is
+B3 in initials mode (unconstrained, validated), with B4 as the shipped-prompt reference:
+`pnpm -F @ninth/eval llm --model claude-haiku-5-5 --mode initials --only B3,B4` (~$0.30).
 
 ## 5. Adding a language
 
@@ -294,6 +369,7 @@ measuring B4.
 
 ## 6. Open questions
 
+
 1. Turk dialogues license: CC BY 4.0 (page) or CC BY-ND 3.0 (readme)? (section 3)
 2. Lexicon size: keep 60k (1.56 MB raw, 328 KB brotli) or cut to ~40k? Or change the wire
    format? (section 2)
@@ -303,3 +379,6 @@ measuring B4.
    (a slur in the top 5 for 0.9% of test items; 7 of 14 slurs share a code with ordinary words).
    The slur marks in `src/offensive.ts` are one person's judgment; review them before deciding.
 4. Universal Core list and license: re-read the UNC page from a browser.
+5. Default model (D5): run the commands in section 4 "Model runs" when the key arrives. Haiku 4.5 on
+   the full set needs `--yes` (~$2.40). Initials mode: build it only if B3 in initials mode reaches
+   about 40% top-5 (section 4).
