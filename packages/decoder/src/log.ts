@@ -30,6 +30,8 @@ export interface DecodeMetrics {
   model?: string;
   /** Error class name only (e.g. "TimeoutError"), never the message. */
   errorName?: string;
+  /** HTTP status from the model API when a call failed (e.g. 429, 529). */
+  upstreamStatus?: number;
 }
 
 export type MetricsLogger = (m: DecodeMetrics) => void;
@@ -40,6 +42,12 @@ const SAFE_NAME = /^[A-Za-z][A-Za-z0-9_]{0,63}$/;
 export function safeErrorName(e: unknown): string {
   const n = (e as { name?: unknown } | null)?.name;
   return typeof n === 'string' && SAFE_NAME.test(n) ? n : 'Error';
+}
+
+/** A numeric HTTP status carried by an error, if any. */
+export function upstreamStatus(e: unknown): number | undefined {
+  const s = (e as { status?: unknown } | null)?.status;
+  return typeof s === 'number' && Number.isInteger(s) && s >= 100 && s < 600 ? s : undefined;
 }
 
 export const consoleMetrics: MetricsLogger = (m) => {

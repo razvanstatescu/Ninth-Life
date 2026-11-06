@@ -9,7 +9,7 @@ Clarifications and additive extensions (sentence splitting on punctuation, extra
 `beam(…, prev)`, extra exports, edge-case behaviour): see
 [ADR-core-001](../decisions/ADR-core-001-contract-clarifications.md).
 
-Pure TypeScript, no DOM, no Node-only APIs. Runs in the browser, in Lambda (Node 22) and in the eval
+Pure TypeScript, no DOM, no Node-only APIs. Runs in the browser, in the Vercel Node.js route (Node 22) and in the eval
 harness.
 
 ```ts
@@ -96,26 +96,35 @@ The web app (Next.js) loads these from `/data/...` (copied into `packages/web/pu
 
 ## 3. Decode HTTP API (`packages/decoder`)
 
-The decoder is framework-agnostic (see `docs/decisions/ADR-000-nextjs.md`):
+The decoder is framework-agnostic; production is one Next.js Route Handler on Vercel that calls the
+Anthropic Messages API directly (see `docs/decisions/ADR-001-anthropic-api-no-aws.md`, which
+supersedes the Lambda parts of ADR-000):
 
 ```ts
 // packages/decoder/src/handler.ts
 export interface DecodeDeps {
-  llm: LlmClient;                       // Bedrock in prod, fake in tests
-  quota: QuotaStore;                    // DynamoDB in Lambda, in-memory in dev
-  flags: { llmEnabled(): Promise<boolean> }; // SSM kill switch in Lambda, env var in Next.js
+  llm: LlmClient;                       // AnthropicLlmClient in prod, FakeLlmClient in tests/dev
+  quota: QuotaStore;                    // MemoryQuotaStore: best-effort, per serverless instance
+  flags: { llmEnabled(): Promise<boolean> }; // EnvFlags: LLM_ENABLED env var (default off)
   now(): number;
+  options?: { timeoutMs?: number; maxTokens?: number; log?: MetricsLogger }; // optional
 }
 export async function handleDecode(body: unknown, meta: { ipHash: string; origin?: string }, deps: DecodeDeps):
   Promise<{ status: number; json: unknown; headers?: Record<string, string> }>;
-// adapters: packages/decoder/src/adapters/lambda.ts  (API Gateway HTTP API v2 event)
-//           packages/web/app/api/decode/route.ts      (Next.js Route Handler, imports handleDecode)
+
+// packages/decoder/src/adapters/fetch.ts (Web-standard Request -> Response)
+export function configFromEnv(env?: Record<string, string | undefined>): FetchHandlerConfig & { warnings: string[] };
+export function createFetchHandler(cfg: FetchHandlerConfig): (req: Request) => Promise<Response>;
+// packages/web/app/api/decode/route.ts: POST = createFetchHandler(configFromEnv(process.env))
 ```
 
-`POST /v1/decode` (Lambda) and `POST /api/decode` (Next.js) take the same body. — see `docs/plan/00-source-plan.md` §4.3 for the request/response JSON. Limits:
-at most 20 codes, each at most 16 digits, partner at most 280 chars, at most 3 recent items, body at
-most 4 KB. The server and client both run `validate()`. Client times out at 1,500 ms and stays in
-ghost mode.
+`POST /api/decode` takes the body in `docs/plan/00-source-plan.md` §4.3, plus an optional
+`beams: string[][]` (the client's top ghost sentences, at most 10; returned when the model fails).
+Each response candidate also carries `source: 'llm' | 'ghost'`. Limits: at most 20 codes, each at
+most 16 digits, partner at most 280 chars, at most 3 recent items, body at most 4 KB. The server and
+client both run `validate()`. The server stops waiting for the model at 1,200 ms; the client times
+out at 1,500 ms and stays in ghost mode. `NEXT_PUBLIC_DECODE_URL` can point the client elsewhere,
+but is normally unset (same-origin `/api/decode`).
 
 ## 4. Settings and storage (`packages/web`)
 

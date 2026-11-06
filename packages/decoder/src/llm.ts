@@ -187,7 +187,6 @@ export class AnthropicLlmClient implements LlmClient {
       },
       body: JSON.stringify(anthropicBody(this.profile, prompt, opts.maxTokens)),
       signal: opts.signal,
-      cache: 'no-store',
     });
     if (!res.ok) {
       // Drain the body so the connection can be reused; never surface its text.

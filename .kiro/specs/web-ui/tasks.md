@@ -33,7 +33,7 @@
 - [x] 15. `lib/decodeClient.ts`: request within limits, 1,500 ms timeout, re-validation, LRU (Req 12.2-12.4)
   - [x] 15.1 Tests: timeout and error fallbacks (P2); invalid suggestions rejected
   - [x] 15.2 Screen test: rejected word shown, nothing spoken (P3, Req 3.4, 12.5)
-- [x] 16. `app/api/decode/route.ts` with `DECODE_ROUTE_ENABLED` guard, 4 KB limit, salted IP hash (Req 12.6)
+- [x] 16. `app/api/decode/route.ts`: production route over `@ninth/decoder` `createFetchHandler` (`LLM_ENABLED` kill switch, Origin check, 4 KB limit, salted IP hash) (Req 12.6)
 - [x] 17. Serwist `app/sw.ts`: precache shell, fonts, icons, `/data/**`; decode network-only (Req 5.1, 5.4)
 - [x] 18. Offline indicator pill (Req 5.2)
 - [x] 19. Phrases in IndexedDB on Save phrase only; delete with confirm (Req 13.1); "They said" in memory only (Req 13.2)

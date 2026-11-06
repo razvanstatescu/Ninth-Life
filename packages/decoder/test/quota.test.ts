@@ -1,14 +1,5 @@
-import { TransactWriteItemsCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { describe, expect, it } from 'vitest';
-import {
-  DynamoQuotaStore,
-  MemoryQuotaStore,
-  quotaKeys,
-  secondsToNextMinute,
-  secondsToNextUtcDay,
-  TTL_SECONDS,
-  type DynamoSender,
-} from '../src/quota.js';
+import { MemoryQuotaStore, quotaKeys, secondsToNextMinute, secondsToNextUtcDay, TTL_SECONDS } from '../src/quota.js';
 
 const T = Date.UTC(2026, 10, 6, 12, 0, 30); // 12:00:30 UTC
 
@@ -69,62 +60,11 @@ describe('time helpers', () => {
   });
 });
 
-describe('DynamoQuotaStore', () => {
-  function sender(fail?: number) {
-    const sent: unknown[] = [];
-    const s: DynamoSender = {
-      async send(cmd) {
-        sent.push(cmd);
-        if (fail !== undefined && cmd instanceof TransactWriteItemsCommand) {
-          const reasons = [0, 1, 2].map((i) => ({ Code: i === fail ? 'ConditionalCheckFailed' : 'None' }));
-          throw Object.assign(new Error('cancelled'), { name: 'TransactionCanceledException', CancellationReasons: reasons });
-        }
-        return {};
-      },
-    };
-    return { s, sent };
-  }
-
-  it('one transaction with three conditional increments and a 24 h TTL', async () => {
-    const { s, sent } = sender();
-    const q = new DynamoQuotaStore('tbl', undefined, s);
-    expect(await q.consume('h', T)).toEqual({ ok: true });
-    const cmd = sent[0] as TransactWriteItemsCommand;
-    expect(cmd).toBeInstanceOf(TransactWriteItemsCommand);
-    const items = cmd.input.TransactItems!;
-    expect(items).toHaveLength(3);
-    expect(items.map((i) => i.Update!.Key!.pk!.S)).toEqual(Object.values(quotaKeys('h', T)));
-    for (const i of items) {
-      expect(i.Update!.ConditionExpression).toContain('#n < :max');
-      expect(i.Update!.ExpressionAttributeValues![':ttl']!.N).toBe(String(Math.floor(T / 1000) + TTL_SECONDS));
-    }
-    expect(items.map((i) => i.Update!.ExpressionAttributeValues![':max']!.N)).toEqual(['30', '300', '20000']);
-    expect(items[2]!.Update!.ConditionExpression).toContain('#u < :maxUsd');
-  });
-
-  it.each([
-    [0, 'ip_minute'],
-    [1, 'ip_day'],
-    [2, 'global'],
-  ] as const)('maps a cancelled condition at index %i to %s', async (i, scope) => {
-    const q = new DynamoQuotaStore('tbl', undefined, sender(i).s);
-    expect(await q.consume('h', T)).toMatchObject({ ok: false, scope });
-  });
-
-  it('rethrows other errors (handler fails closed)', async () => {
-    const q = new DynamoQuotaStore('tbl', undefined, {
-      async send() {
-        throw Object.assign(new Error('x'), { name: 'ProvisionedThroughputExceededException' });
-      },
-    });
-    await expect(q.consume('h', T)).rejects.toThrow();
-  });
-
-  it('recordCost adds micro-dollars to the global day item', async () => {
-    const { s, sent } = sender();
-    await new DynamoQuotaStore('tbl', undefined, s).recordCost(T, 1540);
-    const cmd = sent[0] as UpdateItemCommand;
-    expect(cmd.input.Key!.pk!.S).toBe('g#d#2026-11-06');
-    expect(cmd.input.ExpressionAttributeValues![':u']!.N).toBe('1540');
+describe('MemoryQuotaStore expiry', () => {
+  it('a new UTC day starts fresh per-day counters', async () => {
+    const q = new MemoryQuotaStore({ ipPerMinute: 1, ipPerDay: 1, globalPerDay: 99, globalUsdMicrosPerDay: 1e9 });
+    expect((await q.consume('a', T)).ok).toBe(true);
+    expect((await q.consume('a', T + 60_000)).ok).toBe(false); // same UTC day
+    expect((await q.consume('a', T + TTL_SECONDS * 1000 + 1)).ok).toBe(true); // next day, old items gone
   });
 });

@@ -35,7 +35,7 @@
   - [x] 9.1 Seeded PRNG only; timings kept out of `RESULTS.json`
   - [x] 9.2 Property: same seed ⇒ byte-identical `RESULTS.json`, in-process and via the CLI (P11, P12)
 - [x] 10. Measured B0/B1 on the full test set; `RESULTS.md` regenerated
-- [ ] 11. B2–B4 with the decoder package's Bedrock client (Req 3.3–3.6, 4.6, 4.7) — owner: decoder + eval
+- [ ] 11. B2–B4 with the decoder package's Anthropic client (`AnthropicLlmClient`) (Req 3.3–3.6, 4.6, 4.7) — owner: decoder + eval
   - [ ] 11.1 `packages/decoder` exports a `createProposer()` wrapping `LlmClient` + `buildPrompt` + `parseReply`
   - [ ] 11.2 Replace the one few-shot example that also occurs in the test set ("i am good")
   - [ ] 11.3 Run `pnpm -F @ninth/eval eval --llm <module>`; record model, region and cost

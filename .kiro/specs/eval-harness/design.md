@@ -65,7 +65,7 @@ and word accuracy is computed on that.
 
 **LLM plug-in.** `--llm <module>` loads a module exporting `createProposer(): LlmProposer`.
 The decoder package can wrap its `LlmClient`, `buildPrompt` and `parseReply` without the harness
-depending on Bedrock.
+depending on the Anthropic API client.
 
 ## Correctness properties
 

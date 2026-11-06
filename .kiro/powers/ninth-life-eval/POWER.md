@@ -26,9 +26,9 @@ The numbers in `packages/eval/RESULTS.md` are the only numbers anyone may quote 
 |---|---|---|---|
 | B0 | dict | Classic 9-key: each code's words in frequency order, no context | offline |
 | B1 | ghost | Bigram beam over the lattice (ships as ghost mode) | offline |
-| B2 | LLM raw | LLM proposals with no validator; measures how often a model breaks the keys | `--llm` proposer, AWS access |
-| B3 | LLM+val | LLM proposals filtered by `validate()` | `--llm` proposer, AWS access |
-| B4 | lattice+val | LLM limited to lattice words and ghost beams, then `validate()` (shipping design) | `--llm` proposer, AWS access |
+| B2 | LLM raw | LLM proposals with no validator; measures how often a model breaks the keys | `--llm` proposer, `ANTHROPIC_API_KEY` |
+| B3 | LLM+val | LLM proposals filtered by `validate()` | `--llm` proposer, `ANTHROPIC_API_KEY` |
+| B4 | lattice+val | LLM limited to lattice words and ghost beams, then `validate()` (shipping design) | `--llm` proposer, `ANTHROPIC_API_KEY` |
 
 Targets from the plan are goals to beat, not claims: B1 word accuracy 92% or more; B4 sentence top-1 80%+ and top-5 95%+; B4 invalid spoken output 0% by construction; p50 under 900 ms, p95 under 1.5 s; under $2 per 1,000 decodes.
 
@@ -45,7 +45,7 @@ Targets from the plan are goals to beat, not claims: B1 word accuracy 92% or mor
    pnpm -F @ninth/eval eval
    ```
    Full frozen test set; writes `packages/eval/RESULTS.json` and `RESULTS.md`. Commit both with the change that moved them, and say so in the PR.
-4. **LLM configs (B2 to B4):** pass a proposer module, for example `pnpm -F @ninth/eval eval --llm <path-to-module>` exporting `createProposer()`. This calls Amazon Bedrock and costs money: confirm with the person first, and never run it in CI without the budget guard.
+4. **LLM configs (B2 to B4):** pass a proposer module, for example `pnpm -F @ninth/eval eval --llm <path-to-module>` exporting `createProposer()`. This calls the Anthropic API and costs money: confirm with the person first, and never run it in CI without the budget guard.
 5. **Data integrity:** if the harness warns that the lexicon or bigram SHA-256 differs from `eval.lock`, the data was rebuilt after the test set was frozen. Report it; do not silently re-freeze (`pnpm -F @ninth/eval data:freeze` is a deliberate decision).
 
 ## How to report

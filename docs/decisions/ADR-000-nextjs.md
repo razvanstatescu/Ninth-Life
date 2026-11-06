@@ -1,6 +1,7 @@
 # ADR-000: Next.js for the web app; decoder stays framework-agnostic
 
-- Status: accepted
+- Status: accepted; decision 2 (Lambda adapter) and 3 (production default is Lambda) **superseded by
+  [ADR-001](ADR-001-anthropic-api-no-aws.md)** on 2026-11-06: no AWS, the Vercel route calls the Anthropic API.
 - Date: 2026-11-06
 - Decided by: Razvan (team lead)
 

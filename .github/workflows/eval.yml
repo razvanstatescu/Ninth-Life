@@ -1,7 +1,7 @@
 name: eval
 
 # Runs the decoding eval and keeps RESULTS as an artifact. Offline configs only
-# (B0 dictionary, B1 ghost mode); B2 to B4 call Amazon Bedrock and are run by hand
+# (B0 dictionary, B1 ghost mode); B2 to B4 call the Anthropic API and are run by hand
 # with a proposer module (see .kiro/powers/ninth-life-eval/POWER.md).
 
 on:

@@ -10,7 +10,7 @@ Spec: `.kiro/specs/web-ui/` (requirements, design, tasks). Contracts: `docs/arch
 |---|---|---|
 | `/` | `app/page.tsx` → `components/CommunicationScreen.tsx` | The communication screen (static shell, client component) |
 | `/about` | `app/about/page.tsx` | What it does, proof, privacy, the not-a-medical-device statement |
-| `POST /api/decode` | `app/api/decode/route.ts` | Next.js adapter for `@ninth/decoder` `handleDecode`; 503 `llm_disabled` unless `DECODE_ROUTE_ENABLED=true` |
+| `POST /api/decode` | `app/api/decode/route.ts` | Production decode endpoint: `@ninth/decoder` `createFetchHandler` (Anthropic API); 503 `llm_disabled` unless `LLM_ENABLED=true` and `ANTHROPIC_API_KEY` is set |
 | `/sw.js` | built from `app/sw.ts` | Serwist service worker |
 | `/data/**` | `public/data` (copied) | Lexicon, bigram model and vocab pack, fetched at runtime |
 | `/manifest.webmanifest`, `/icons/*`, `/fonts/*` | `public/` | PWA manifest, icons from the logo SVGs, self-hosted fonts |
@@ -103,8 +103,9 @@ pnpm -F @ninth/web tokens       # regenerate styles/tokens.css after editing des
 pnpm -F @ninth/web icons        # regenerate public/icons from the logo SVGs (needs Playwright's Chromium)
 ```
 
-Model ranking in dev: `DECODE_ROUTE_ENABLED=true LLM_ENABLED=true` with AWS credentials for Bedrock in an EU region,
-or `DECODE_FAKE_LLM=true` for the decoder's fake model. Production points `NEXT_PUBLIC_DECODE_URL` at the Lambda.
+Model ranking in dev: `LLM_ENABLED=true ANTHROPIC_API_KEY=...` in `.env.local` (see `.env.example`), or
+`LLM_ENABLED=true DECODE_FAKE_LLM=true` for the decoder's fake model. Production uses the same route on Vercel;
+see `docs/architecture/decoder.md` for env vars, the WAF rule and the spend limit.
 
 ## Fonts
 

@@ -4,7 +4,7 @@ import type { DecodeRequest } from './schema.js';
 //
 // Design rules:
 // - The system prompt is a frozen constant (no dates, ids or request data) so that it is a stable
-//   cache prefix on models where Bedrock caching applies (Haiku 5.5: 512-token minimum).
+//   cache prefix where the model's caching minimum is met (Haiku 5.5: 512 tokens; Haiku 4.5: 4,096, not met).
 // - Few-shot examples live inside the system prompt, so one cache checkpoint covers them.
 // - Every example is invented and generic (no dataset text, no personal data), and every example
 //   answer encodes to its codes (checked in test/prompt.test.ts).

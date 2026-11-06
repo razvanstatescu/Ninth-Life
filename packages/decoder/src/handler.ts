@@ -1,7 +1,7 @@
 import { formatSentence, normalize, validate } from '@ninth/core';
 import type { Flags } from './flags.js';
 import type { LlmClient, LlmResult } from './llm.js';
-import { consoleMetrics, safeErrorName, type DecodeMetrics, type MetricsLogger } from './log.js';
+import { consoleMetrics, safeErrorName, upstreamStatus, type DecodeMetrics, type MetricsLogger } from './log.js';
 import { parseReply } from './parse.js';
 import { buildPrompt, estimateTokens } from './prompt.js';
 import type { QuotaStore } from './quota.js';
@@ -176,7 +176,7 @@ export async function handleDecode(
     });
     await deps.quota.recordCost(t0, reserve).catch(() => {});
     const outcome = e instanceof Timeout ? 'degraded_timeout' : 'degraded_error';
-    return ghostOnly(0, outcome, { llmMs: deps.now() - tLlm, usdMicros: reserve, model: deps.llm.model, errorName: safeErrorName(e) });
+    return ghostOnly(0, outcome, { llmMs: deps.now() - tLlm, usdMicros: reserve, model: deps.llm.model, errorName: safeErrorName(e), upstreamStatus: upstreamStatus(e) });
   }
   const llmMs = deps.now() - tLlm;
   const usdMicros = deps.llm.costMicros(result.usage);

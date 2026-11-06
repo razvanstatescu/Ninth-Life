@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Request and response shapes for POST /v1/decode (Lambda) and POST /api/decode (Next.js).
+// Request and response shapes for POST /api/decode (Next.js Route Handler on Vercel).
 // Source: docs/plan/00-source-plan.md §4.3 and docs/architecture/contracts.md §3.
 
 export const LIMITS = {

@@ -23,7 +23,7 @@ Knowledge-base page with measurements and limitations: `docs/architecture/core.m
 - `keymap.ts` has no dependencies. `validator.ts`, `lexicon.ts` and `lm.ts` depend only on it.
   `decode.ts` composes them. `format.ts` is standalone.
 - Pure functions and one class (`Lexicon`), no I/O: loading files is the caller's job
-  (`fetch` in the browser, `fs` in the eval CLI, bundled JSON in Lambda).
+  (`fetch` in the browser, `fs` in the eval CLI).
 - Safety is layered: `Lexicon.fromJSON` re-encodes every word (a bad data file cannot misfile a
   word), and `decodeGhost` still validates every beam before returning it. The decoder service
   runs the same `validate` on LLM output.

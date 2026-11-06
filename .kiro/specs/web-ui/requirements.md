@@ -121,7 +121,7 @@ so that motor memory holds and I never tap a key three times.
 12.3 IF the request fails, returns non-200 or takes more than 1,500 ms, THEN THE app SHALL stay in ghost mode without a message.
 12.4 THE app SHALL re-run `validate()` on every returned sentence; sentences that fail SHALL NOT be listed.
 12.5 THE app SHALL NOT speak model output on its own; only a Speak press speaks.
-12.6 THE Next.js route `/api/decode` SHALL return 503 `llm_disabled` unless `DECODE_ROUTE_ENABLED=true`.
+12.6 THE Next.js route `/api/decode` SHALL return 503 `llm_disabled` unless `LLM_ENABLED=true` and `ANTHROPIC_API_KEY` is set (default off). It is the production decode endpoint (ADR-001).
 
 ## Requirement 13: Storage and privacy
 13.1 Phrases SHALL be stored in IndexedDB only when the person presses Save phrase, and SHALL be deletable with a confirmation.

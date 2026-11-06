@@ -253,7 +253,7 @@ export function SettingsSheet({
           </span>
         </label>
         <p className="field__help" id={llmHelpId}>
-          Off by default. When on, your keys and the last thing they said are sent to a cloud model, which suggests the order of the sentences. Every word is still checked against your keys, and nothing is spoken until you press Speak. Offline, your dictionary is used.
+          Off by default. When on, your keys and the last thing they said are sent to Anthropic&apos;s Claude API, which suggests the order of the sentences. Anthropic says it deletes them within 30 days unless it must keep them for policy or legal reasons. Every word is still checked against your keys, and nothing is spoken until you press Speak. Offline, your dictionary is used.
         </p>
       </section>
     </Sheet>

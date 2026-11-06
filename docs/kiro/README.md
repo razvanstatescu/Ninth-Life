@@ -10,7 +10,7 @@ The hackathon judges Kiro use under **Technological Implementation** ("How thoro
 2. **Agent Hooks panel:** 9 hooks from 6 files should be listed, none with a "legacy" badge. If one is missing, run `node scripts/validate-kiro-config.mjs`.
 3. **Steering panel:** 7 files. `product.md` and `trademarks.md` are always on; open a `.tsx` under `packages/web/` and check `accessibility.md` and `design-system.md` join the context.
 4. **MCP panel:** `context7`, `playwright`, `aws-knowledge`, `github`. For GitHub, create a fine-grained PAT, `export GITHUB_PAT=...` before starting Kiro, and add `GITHUB_PAT` under Settings, "Mcp Approved Env Vars" [M-02]. Never paste the token into `mcp.json`.
-5. **Powers panel:** Add Custom Power, "Import power from a folder", choose `.kiro/powers/ninth-life-eval/` [PW-02]. Then install "Build AWS infrastructure with CDK and CloudFormation" and "Work with AWS" from the catalog [PW-03].
+5. **Powers panel:** Add Custom Power, "Import power from a folder", choose `.kiro/powers/ninth-life-eval/` [PW-02]. Catalog powers are optional; the CDK power is no longer needed (no AWS infrastructure since ADR-001) [PW-03].
 6. **Confirm the hook payload format** (closes open question H-03): quit Kiro, start it with `KIRO_HOOK_DEBUG=1` in the environment, ask the agent to edit one file, then read `ninth-life-hook-payloads.jsonl` in your OS temp folder (`/tmp` on Linux and macOS). Put the real field names into the register. Turn the variable off afterwards.
 7. **Check model IDs** with `/model` (or the model picker) and record the exact ID for Haiku 5.5 [A-05]; set it as the `KIRO_REVIEW_MODEL` repository variable.
 8. Request your hackathon credits (Kiro user ID or AWS account ID; deadline Dec 1, 2026, 12:00 pm PT; allow 48 business hours) [R-04].
@@ -25,7 +25,7 @@ The hackathon judges Kiro use under **Technological Implementation** ("How thoro
 | `.kiro/steering/trademarks.md` | Banned trademark words and other third-party material. `inclusion: always` | IDE, CLI, Web | lead |
 | `.kiro/steering/accessibility.md` | WCAG 2.2 AA plus design-system rules (56px targets, 16px text, one ember thing, never color alone, no pulsing). `fileMatch` on `packages/web/**/*.tsx`, `*.css` | IDE, CLI V3, Web [S-04] | web owner |
 | `.kiro/steering/design-system.md` | Pointer to `design/system/`, token and component rules, font loading. `fileMatch` on web `.tsx/.ts/.css` | IDE, CLI V3, Web | web owner |
-| `.kiro/steering/privacy.md` | No bodies in logs, EU-only Bedrock profile, no cookies, salted IP hashes. `fileMatch` on `packages/decoder/**`, `packages/infra/**`, `packages/web/app/api/**` | IDE, CLI V3, Web | lead |
+| `.kiro/steering/privacy.md` | No bodies in logs, model calls only from `/api/decode` to the Anthropic API, no cookies, salted IP hashes. `fileMatch` on `packages/decoder/**`, `packages/web/app/api/**` | IDE, CLI V3, Web | lead |
 | `.kiro/steering/voice.md` | Web Speech API rules. `inclusion: auto` (also `/voice`) | IDE, CLI V3, Web | web owner |
 | `.kiro/steering/data-licenses.md` | Dataset, font and asset licenses; NOTICE rules. `inclusion: auto` (also `/data-licenses`) | IDE, CLI V3, Web | data owner |
 | `.kiro/hooks/*.json` | 9 hooks in the v1 schema (table below) | IDE and CLI V3, including headless V3 runs; **not** Kiro Web; file triggers fire only on agent edits [H-01, H-07, C-04] | lead |
@@ -70,7 +70,7 @@ Why the `1>&2`: on exit 0 Kiro adds the command's STDOUT to the agent's context,
 5. **Vibe on purpose, once.** Build scanning v0 without a spec in a throwaway branch, count bugs and time, then rebuild it from the access-modes spec. Log both; it answers the "spec vs vibe" prompt with numbers.
 6. **Use the agents:** `a11y-auditor` after any UI change (start `pnpm dev` first); `license-checker` whenever `data/`, fixtures, fonts or assets change; `pr-reviewer` by hand on big PRs, or add the `kiro-review` label to get it in CI.
 7. **Use the power** before quoting any number: ask "run the eval and compare with RESULTS.md"; it activates `ninth-life-eval`.
-8. **MCP:** Context7 for current docs of Next.js, Serwist, fast-check, CDK; Playwright for walkthroughs and screenshots; AWS Knowledge for Bedrock model IDs, regions and quotas; GitHub for the Phrase Keeper repo. Save a short transcript excerpt when one of them changes a decision.
+8. **MCP:** Context7 for current docs of Next.js, Serwist, fast-check; Playwright for walkthroughs and screenshots; AWS Knowledge for Kiro and AWS docs; GitHub for the Phrase Keeper repo. Save a short transcript excerpt when one of them changes a decision.
 9. **Try each surface once on purpose:** IDE for specs and PBT, CLI V3 for a scripted task, one Kiro Web session (Pro or higher) on a small issue, Kiro Crew for the Phrase Keeper app. Note what differed.
 10. **Log as you go:** at least 3 rows per person per day in `docs/KIRO_LOG.md`.
 
@@ -108,9 +108,9 @@ The rules ask for a write-up on how Kiro was used, with these prompts [R-09]. Ke
 | Agent hooks: which workflows, what improved? | 9 hooks above | `log-task` rows; a screenshot of `secrets-guard` blocking a `.env` write (exit 2 message); a `core-pbt-on-save` failure the agent then fixed; a `trademark-guard` catch | [ ] |
 | Spec-driven development: structure, effect, vs vibe coding | 5 specs with EARS IDs; scanning v0 vibe vs spec rebuild | Spec files; task list with requirement IDs; bug count and time for both scanning versions | [ ] |
 | Steering: how, which strategy mattered most | 7 files: always (product, trademarks), fileMatch (accessibility, design-system, privacy), auto (voice, data-licenses) | One component generated with and without `accessibility.md` (diff of target sizes, focus, labels); a prompt where `claims-guard` changed copy | [ ] |
-| MCP: what it enabled | Context7, Playwright, AWS Knowledge, GitHub | Transcript excerpts: a doc lookup that changed code, a Playwright walkthrough with screenshots, a Bedrock model-ID or region lookup, a Phrase Keeper PR opened through GitHub MCP | [ ] |
+| MCP: what it enabled | Context7, Playwright, AWS Knowledge, GitHub | Transcript excerpts: a doc lookup that changed code, a Playwright walkthrough with screenshots, a model or API lookup, a Phrase Keeper PR opened through GitHub MCP | [ ] |
 | Property-based testing: what it caught, which requirements | Encoder, validator soundness and completeness, scanning reachability bound, eval determinism | Every shrunk counterexample with the requirement ID, test file and fix commit; IDE screenshot of a property linked to its requirement | [ ] |
-| Kiro powers: which, what third-party tooling | CDK power, Work with AWS, custom `ninth-life-eval` (and its conversion to the Agent Plugins format) | Install screenshot; a session where the power ran the eval and reported deltas; `POWER.md` | [ ] |
+| Kiro powers: which, what third-party tooling | custom `ninth-life-eval` (and its conversion to the Agent Plugins format) | Install screenshot; a session where the power ran the eval and reported deltas; `POWER.md` | [ ] |
 
 Before submitting, also check: `/.kiro` committed and not ignored (CI), no banned words anywhere (CI), the intended-purpose sentence verbatim in app, README, site, Devpost and video, every number traced to `packages/eval/RESULTS.md`.
 

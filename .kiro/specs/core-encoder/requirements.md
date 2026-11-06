@@ -5,8 +5,8 @@
 person presses keys 2-9, one press per letter (letter mode) or one press per word (initials mode),
 and the app speaks the sentence they meant. The deterministic validator guarantees that every
 spoken word encodes to the keys pressed, so a language model can rank words but can never put
-words in someone's mouth. The package runs unchanged in the browser, in Next.js server code, in
-AWS Lambda and in the eval CLI.
+words in someone's mouth. The package runs unchanged in the browser, in Next.js server code (the
+Vercel decode route) and in the eval CLI.
 
 Contract: `docs/architecture/contracts.md` §1. Clarifications: `docs/decisions/ADR-core-001-contract-clarifications.md`.
 

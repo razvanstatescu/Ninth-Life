@@ -25,7 +25,7 @@ Write for adults. No cartoons, no baby talk. Describe the tool ("type on 9 keys,
 ## What it does (v1)
 
 - Letter mode (default): one key press per letter, offline dictionary decoding ("ghost mode") that always works.
-- Optional language-model ranking ("LLM mode", opt-in, sends text to a cloud model in the EU) with the proof panel: every word shows whether it matches the keys.
+- Optional language-model ranking ("LLM mode", opt-in, sends text to Anthropic's Claude API) with the proof panel: every word shows whether it matches the keys.
 - Access: keyboard, touch, 1-switch and 2-switch scanning with adjustable speed.
 - Web Speech voices, voice picker, saved phrases on the device only.
 
@@ -52,7 +52,7 @@ Allowed: "free", "works offline", "runs in your browser", "every spoken word mat
 
 ## Honest limits to keep visible
 
-Needs literacy and spelling. Voices depend on the device. LLM mode sends the typed digits, candidate words and the partner's last line to a cloud model (Amazon Bedrock, EU). Not tested with AAC users unless the user-validation log says so.
+Needs literacy and spelling. Voices depend on the device. LLM mode sends the typed digits, candidate words and the partner's last line to Anthropic's Claude API (processed in Anthropic's infrastructure, not only in the EU; Anthropic says it deletes API inputs and outputs within 30 days unless it must keep them for policy or legal reasons). Not tested with AAC users unless the user-validation log says so.
 
 ## How we work
 

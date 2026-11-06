@@ -1,78 +1,51 @@
 /**
- * Next.js adapter for the decoder (docs/decisions/ADR-000-nextjs.md). Dev-only unless
- * DECODE_ROUTE_ENABLED=true: production uses the Lambda adapter, and an in-memory quota is not
- * enough on serverless.
+ * POST /api/decode: the production decode endpoint (Vercel), docs/decisions/ADR-001-anthropic-api-no-aws.md.
+ * Thin wrapper over @ninth/decoder's fetch adapter, which checks the Origin, the 4 KB limit and the
+ * kill switch, hashes the IP with a salt, applies a best-effort per-instance limiter, calls the
+ * Anthropic Messages API with a 1.2 s deadline and validates every word against the keys.
  *
- * Environment:
- *   DECODE_ROUTE_ENABLED  "true" turns this route on; anything else -> 503 llm_disabled
- *   LLM_ENABLED           "true" lets the decoder call the model (kill switch as an env var)
- *   MODEL_PROFILE         haiku-4.5 | haiku-5.5 | nova-micro (default haiku-4.5)
- *   DECODE_IP_SALT        salt for the per-day IP hash (a random one per process if unset)
- *   DECODE_FAKE_LLM       "true" uses the decoder's fake model (local demos without AWS)
+ * Environment (Vercel project settings; see packages/web/.env.example):
+ *   LLM_ENABLED        "true" turns model ranking on (kill switch; default off). Redeploy after a change.
+ *   ANTHROPIC_API_KEY  required for model calls; without it the route answers 503 llm_disabled
+ *   DECODE_MODEL       claude-haiku-5-5 (default) | claude-haiku-4-5
+ *   IP_HASH_SALT       salt for the per-day IP hash
+ *   ALLOWED_ORIGINS    extra allowed origins (the deployment's own origin is always allowed)
+ *   DECODE_FAKE_LLM    "true" uses a fake model in dev (ignored in production)
  *
+ * Per-IP rate limiting is the Vercel WAF rule; the hard cap is the Anthropic Console spend limit.
  * Request bodies are never logged.
  */
-import { createHash, randomBytes } from 'node:crypto';
-import {
-  BedrockLlmClient,
-  EnvFlags,
-  FakeLlmClient,
-  LIMITS,
-  MemoryQuotaStore,
-  handleDecode,
-  silentMetrics,
-  type DecodeDeps,
-} from '@ninth/decoder';
+import { configFromEnv, createFetchHandler } from '@ninth/decoder';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+/** The model deadline is 1.2 s and the client gives up at 1.5 s; 10 s is a generous ceiling. */
+export const maxDuration = 10;
 
-const JSON_HEADERS = { 'content-type': 'application/json', 'cache-control': 'no-store' };
+let handler: ((req: Request) => Promise<Response>) | null = null;
 
-function json(status: number, body: unknown, headers?: Record<string, string>): Response {
-  return new Response(JSON.stringify(body), { status, headers: { ...JSON_HEADERS, ...headers } });
-}
-
-let deps: DecodeDeps | null = null;
-const processSalt = randomBytes(16).toString('hex');
-
-function getDeps(): DecodeDeps {
-  if (deps) return deps;
-  const model = process.env.MODEL_PROFILE;
-  const llm =
-    process.env.DECODE_FAKE_LLM === 'true'
-      ? new FakeLlmClient('{"c":[]}')
-      : new BedrockLlmClient({ model: model === 'haiku-5.5' || model === 'nova-micro' ? model : 'haiku-4.5' });
-  deps = { llm, quota: new MemoryQuotaStore(), flags: new EnvFlags(), now: Date.now, options: { log: silentMetrics } };
-  return deps;
-}
-
-function hashIp(ip: string, now: number): string {
-  const salt = process.env.DECODE_IP_SALT || processSalt;
-  const day = new Date(now).toISOString().slice(0, 10);
-  return createHash('sha256').update(`${salt}|${day}|${ip}`).digest('hex').slice(0, 32);
+function getHandler(): (req: Request) => Promise<Response> {
+  if (handler) return handler;
+  const cfg = configFromEnv(process.env);
+  if (!cfg.production) for (const w of cfg.warnings) console.warn(`[decode] ${w}`);
+  handler = createFetchHandler(cfg);
+  return handler;
 }
 
 export async function POST(req: Request): Promise<Response> {
-  if (process.env.DECODE_ROUTE_ENABLED !== 'true') return json(503, { error: 'llm_disabled' });
-
-  const declared = Number(req.headers.get('content-length') ?? '0');
-  if (declared > LIMITS.maxBodyBytes) return json(413, { error: 'too_large', maxBytes: LIMITS.maxBodyBytes });
-  const raw = await req.text();
-  if (new TextEncoder().encode(raw).length > LIMITS.maxBodyBytes) {
-    return json(413, { error: 'too_large', maxBytes: LIMITS.maxBodyBytes });
-  }
-
-  const ip = (req.headers.get('x-forwarded-for') ?? '').split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'local';
   try {
-    const d = getDeps();
-    const res = await handleDecode(raw, { ipHash: hashIp(ip, d.now()), origin: req.headers.get('origin') ?? undefined }, d);
-    return json(res.status, res.json, res.headers);
+    return await getHandler()(req);
   } catch {
-    return json(503, { error: 'unavailable' });
+    return new Response(JSON.stringify({ error: 'unavailable' }), {
+      status: 503,
+      headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+    });
   }
 }
 
 export function GET(): Response {
-  return json(405, { error: 'method_not_allowed' }, { allow: 'POST' });
+  return new Response(JSON.stringify({ error: 'method_not_allowed' }), {
+    status: 405,
+    headers: { 'content-type': 'application/json', allow: 'POST' },
+  });
 }

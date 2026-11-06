@@ -11,22 +11,19 @@ export {
 export { buildPrompt, SYSTEM_PROMPT, FEW_SHOTS, type Prompt } from './prompt.js';
 export { parseReply } from './parse.js';
 export {
-  BedrockLlmClient,
+  AnthropicLlmClient,
   FakeLlmClient,
   LlmError,
+  ANTHROPIC_URL,
+  ANTHROPIC_VERSION,
   type LlmClient,
   type LlmResult,
   type LlmUsage,
   type FakeReply,
+  type FetchLike,
 } from './llm.js';
-export {
-  MemoryQuotaStore,
-  DynamoQuotaStore,
-  DEFAULT_LIMITS,
-  type QuotaStore,
-  type QuotaLimits,
-  type QuotaDecision,
-} from './quota.js';
-export { EnvFlags, SsmFlags, StaticFlags, FLAG_PARAMETER, type Flags } from './flags.js';
+export { MemoryQuotaStore, DEFAULT_LIMITS, type QuotaStore, type QuotaLimits, type QuotaDecision } from './quota.js';
+export { EnvFlags, StaticFlags, type Flags } from './flags.js';
 export { consoleMetrics, silentMetrics, type DecodeMetrics, type MetricsLogger } from './log.js';
-export { MODEL_PROFILES, HOME_REGION, type ModelKey, type ModelProfile } from './models.js';
+export { MODEL_PROFILES, DEFAULT_MODEL, isModelId, type ModelId, type ModelProfile } from './models.js';
+export { createFetchHandler, configFromEnv, hashIp, clientIp, originAllowed, type FetchHandlerConfig } from './adapters/fetch.js';

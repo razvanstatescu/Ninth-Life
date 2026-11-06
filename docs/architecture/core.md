@@ -2,7 +2,7 @@
 
 `packages/core` is the part of Ninth Life that turns key presses into words and decides what may be
 spoken. It is pure TypeScript with no DOM and no Node-only APIs, so the same code runs in the
-browser (ghost mode), in Next.js server code and Lambda (the decoder validates LLM output with it)
+browser (ghost mode), in Next.js server code (the decode route validates LLM output with it)
 and in the eval CLI. `package.json` points `main`/`exports` at `src/index.ts`; consumers transpile it.
 
 - Contract: `docs/architecture/contracts.md` §1, with clarifications in
