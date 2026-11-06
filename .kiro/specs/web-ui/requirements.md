@@ -186,3 +186,40 @@ with my switch, so that I do not need someone else to change my settings.
      there is no voice); nothing SHALL be spoken without that choice.
 17.3 THE sheet SHALL show 12 quick phrases at first and 12 more per "More quick phrases" press, grouped 4 to a scan
      row so a switch user picks a group, then a phrase.
+
+## Requirement 18: Speech robustness
+**User story:** As a person who types to talk, I want every sentence I choose to be spoken in full, in the right
+language, and never to get stuck, so that the people around me hear what I meant on whatever device I have.
+
+Builds on Req 4. Browser and OS behaviour behind each item: `docs/research/web-speech.md` (checked 2026-11-06).
+
+18.1 WHEN text is longer than the chunk limit, THE app SHALL split it at sentence ends, then at clause marks (`,` `;`
+     `:` and dashes), then at spaces, AND SHALL NOT split inside a word (a single word longer than the limit is a chunk
+     of its own); the chunks joined with single spaces SHALL equal the text with its whitespace collapsed.
+18.2 THE chunk limit SHALL follow the speech rate: 160 characters at rate 1 or faster, proportionally fewer at slower
+     rates, never fewer than 40, so that each chunk stays under the ~14 s cutoff of some network voices.
+18.3 THE app SHALL speak one chunk at a time, queuing the next only from the previous chunk's `end`, AND SHALL keep a
+     reference to each utterance until it ends, fails or its sentence is settled.
+18.4 WHEN no voice has been chosen, THE app SHALL pick a voice that speaks the sentence's language, preferring ordinary
+     voices over novelty or very low quality ones, then on-device over online voices, then the exact region; IF no voice
+     speaks the language, THEN it SHALL use the first voice in picker order.
+18.5 WHEN the remembered voice (by `voiceURI`) still exists and speaks the language, THE app SHALL use it; IF it is
+     gone, or another voice speaks the language and it does not, THEN THE app SHALL choose by 18.4.
+18.6 IF `voiceschanged` arrives with an empty list before the wait of Req 4.2 ends, THEN THE app SHALL keep waiting
+     AND SHALL NOT treat the device as having no voices.
+18.7 IF the wait ends with no voices, THEN THE app SHALL treat the device as having no voices (show mode on Speak),
+     SHALL look at the list again every 1 s up to 5 times, AND SHALL use voices as soon as they appear, by event or by
+     a later look.
+18.8 WHEN Speak is pressed while speech is playing or queued, THE app SHALL cancel it before speaking; WHILE the
+     engine is idle, THE app SHALL NOT call `cancel()` before speaking.
+18.9 WHEN a new sentence replaces one still speaking, or speech is stopped, THE app SHALL report the old sentence as
+     ended exactly once AND SHALL ignore its later events.
+18.10 IF a chunk has started and neither `end` nor `error` arrives within 3 times its estimated length plus 2 s, THEN
+      THE app SHALL cancel it and go on with the next chunk, or end the sentence after the last one.
+18.11 IF the engine reports an error other than `canceled` or `interrupted`, THEN THE app SHALL report the error type
+      once (never the text), SHALL drop the rest of the sentence, AND THE screen SHALL show the sentence in show mode
+      (Req 4.5); `canceled` or `interrupted` from outside SHALL count as the end.
+18.12 IF there is no speech engine, the text is empty, or the engine throws, THEN `speak()` SHALL return false so the
+      screen shows show mode (Req 4.5).
+18.13 THE app SHALL normalize voice language tags (`en_us`, `eng-US-f000`) before matching them, AND SHALL ignore the
+      `default` flag when every voice claims it.

@@ -1,6 +1,6 @@
 # Kiro log
 
-The dated evidence trail for the Kiroween 2026 write-up: what each of us did with Kiro, on which surface, with which feature, and what came of it. It feeds `docs/KIRO_WRITEUP.md`, so keep it honest. A row that says something did not work is as useful as one that says it did.
+The dated evidence trail for the Kiroween 2026 write-up: what each of us did with Kiro, on which surface, with which feature, and what came of it. It feeds `docs/submission/KIRO_WRITEUP.md`, so keep it honest. A row that says something did not work is as useful as one that says it did.
 
 How to add rows:
 

@@ -30,6 +30,19 @@ Start here. Every page below is kept in the repo, so the knowledge base is versi
 - [Assumptions register](research/assumptions-register.md)
 - [Anthropic models and prices](research/anthropic-models.md)
 - [Competitive landscape refresh](research/competitive-landscape.md)
+- [Web Speech API: voices, bugs and privacy](research/web-speech.md): voices per browser and OS, offline voices, ro-RO and es-ES, known bugs, what `lib/speech.ts` does about them
+
+## User feedback
+- [Session protocol](validation/protocol.md): tasks, measures, 30-minute script, safety and stop rule, public validation log (not a clinical study)
+- [Consent form](validation/consent.md): plain language, English and Romanian
+- [Outreach templates](validation/outreach.md): SLP departments, AAC clinics, associations, research groups (English and Romanian)
+- [Session notes template](validation/session-notes-template.md)
+
+## Submission
+- [Checklist](submission/CHECKLIST.md): every rules requirement and bonus, owners, status, dates, open questions
+- [Kiro write-up skeleton](submission/KIRO_WRITEUP.md): one section per rules prompt; TODOs need real Kiro evidence
+- [Devpost text draft](submission/DEVPOST.md): numbers from RESULTS.md only, marked as simulated-user measurements
+- [Video script](submission/VIDEO_SCRIPT.md): under 2:55, shot list, voice-over, on-screen text
 
 ## Kiro
 - [How we use Kiro](kiro/README.md): every file under `.kiro/`, daily workflow, credits, evidence checklist

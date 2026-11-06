@@ -25,7 +25,8 @@ describe('speech', () => {
     expect(chunks.join(' ').replace(/\s+/g, ' ')).toBe(long);
   });
 
-  it('splits a single overlong word', () => {
-    expect(chunkText('a'.repeat(25), 10)).toEqual(['a'.repeat(10), 'a'.repeat(10), 'a'.repeat(5)]);
+  it('Req 18.1: keeps a single overlong word whole instead of cutting it', () => {
+    expect(chunkText('a'.repeat(25), 10)).toEqual(['a'.repeat(25)]);
+    expect(chunkText(`go ${'a'.repeat(25)} now`, 10)).toEqual(['go', 'a'.repeat(25), 'now']);
   });
 });

@@ -61,3 +61,17 @@
 - [x] 30. Quick phrases from the pack in the Phrases sheet: 12 then More, rows of 4 (Req 17.1-17.3)
   - [x] 30.1 Tests: list, More, tap shows/speaks, voice path, switch path through show mode
 - [x] 31. Playwright pass at 390x844, 360x740 and 1440x1000, Night and Day, and scanning inside Settings (Req 15.5, 9.1, 9.2)
+
+## Speech robustness (Req 18)
+- [x] 32. `lib/speech.ts`: lossless chunker at sentence, clause and word boundaries, never mid-word; rate-aware chunk
+      limit; one chunk at a time with references held; per-chunk watchdog; supersede and stop settle once; cancel only
+      when busy; error reported once by type (Req 18.1-18.3, 18.8-18.12)
+  - [x] 32.1 Voice choice: language first, novelty and very low quality voices last, on-device before online, exact
+        region; remembered voice only if it speaks the language; tag normalization; Safari's all-default flag (Req 18.4, 18.5, 18.13)
+  - [x] 32.2 `lib/useVoices.ts`: ignore an early empty `voiceschanged`; re-check the list 5 times after an empty wait (Req 18.6, 18.7)
+  - [x] 32.3 Tests with a fake `speechSynthesis`: `test/speech-robustness.test.ts` (43 tests, names carry the Req IDs,
+        including a 400-text chunking property) and `test/speech.test.ts`
+- [ ] 33. Device check by hand of Req 18 on Chrome desktop (a network voice, rate 0.5, a 600-character text), Safari on
+      iPhone (first Speak, then Speak again while speaking), Chrome on Android, Edge on Windows; log results in
+      `docs/research/web-speech.md` (Req 18.2, 18.3, 18.8, 18.10)
+- [ ] 34. Pass `lang` from the active pack to `pickVoice` in the screen and Settings when ro/es packs land (Req 18.4; owner of the components)
