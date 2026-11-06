@@ -50,12 +50,12 @@ surviving ids from the filtered file and the turn text and split from the clean 
 
 | File | Raw | gzip -9 | brotli 11 | Contents |
 |---|---|---|---|---|
-| `data/lexicon/en.v1.json` | 1,558,026 B | 401,462 B | 327,983 B | 58,908 words, 48,142 codes |
+| `data/lexicon/en.v1.json` | 1,557,975 B | 401,447 B | 328,051 B | 58,906 words, 48,140 codes |
 | `data/lexicon/en.bigram.v1.json` | 339,147 B | 103,414 B | 85,587 B | 19,237 pairs over 2,972 contexts |
 | `data/packs/core-en.json` | 5,564 B | | | 36 core words, 198 phrases |
 | `packages/eval/fixtures/test.v1.jsonl` | 164,854 B | | | 866 test items, 4,890 words |
 
-First load of lexicon + bigrams: 413.6 KB brotli (505 KB gzip), under the plan's 700 KB budget.
+First load of lexicon + bigrams: 413.6 KB brotli (504.9 KB gzip), under the plan's 700 KB budget.
 
 ### Lexicon build (`build_lexicon.py`)
 
@@ -65,14 +65,17 @@ wordfreq 3.1.1 `top_n_list('en', 60000)`: 897 entries were not a-z words after n
 never applies at this list length). 58 apostrophe-less spellings of contractions were removed
 because the contraction is at least 1.0 Zipf more frequent and they share its code ("dont",
 "im", "cant", "wont", "youre", "thats" ...). Real words that collide with a contraction stay
-because they are close in frequency ("its", "were", "ill", "well", "lets", "id").
+because they are close in frequency ("its", "were", "ill", "well", "lets", "id"). Two
+entries were removed because they name a third-party phone brand (a mark and its possessive),
+which the product must never show (`.kiro/steering/trademarks.md`). The script keeps the banned
+list as SHA-256 hashes, so it never spells the marks.
 
 Ambiguity, measured on the shipped file:
 
 | Statistic | Value |
 |---|---|
-| Codes with more than one word | 5,144 of 48,142 |
-| Word types sharing a code with another word | 15,910 of 58,908 (27.0%) |
+| Codes with more than one word | 5,144 of 48,140 |
+| Word types sharing a code with another word | 15,910 of 58,906 (27.0%) |
 | Word types that are not the first reading of their code | 10,766 (18.3%) |
 | Running text whose word is the first reading (frequency-weighted) | 94.15% |
 | Largest code | 26 words (`727`: par, rap, pcs, sap, pas, ...) |
@@ -90,7 +93,7 @@ Measured alternatives (same pipeline, `--top N`):
 
 | `--top` | Words | Raw | brotli | B1 top-1 | B1 top-5 | Unreachable items |
 |---|---|---|---|---|---|---|
-| 60,000 (shipped) | 58,908 | 1,558 KB | 328 KB | 85.5% | 97.1% | 15 |
+| 60,000 (shipped) | 58,906 | 1,558 KB | 328 KB | 85.5% | 97.1% | 15 |
 | 50,000 | 49,213 | 1,306 KB | 275 KB | | | |
 | 45,000 | 44,328 | 1,178 KB | 249 KB | | | |
 | 40,000 | 39,438 | 1,049 KB | 221 KB | 84.4% | 95.7% | 29 |

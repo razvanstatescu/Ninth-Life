@@ -25,7 +25,7 @@ issue on derived lists: treat ShareAlike as applying).
 combining marks removed, lowercased, curly apostrophes folded); kept only a-z words with
 internal apostrophes; merged words that normalize to the same string; removed
 apostrophe-less spellings of contractions ("dont", "im") that are at least 1.0 Zipf rarer than
-the contraction; grouped by 9-key code; stored Zipf × 10 rounded to an integer.
+the contraction; removed two entries naming a third-party brand; grouped by 9-key code; stored Zipf × 10 rounded to an integer.
 
 wordfreq's upstream sources, as attributed in the wordfreq 3.1.1 README (reproduced so
 the attribution chain is kept):
