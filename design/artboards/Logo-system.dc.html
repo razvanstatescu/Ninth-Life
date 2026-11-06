@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Logo system</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;500;700&amp;family=Atkinson+Hyperlegible+Next:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#FFC56B}a:hover{color:#EEE8FF}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1200px; box-sizing: border-box; padding: 72px 80px; background: #140A2E; color: #F3EEFF; font-family: 'Atkinson Hyperlegible Next', system-ui, sans-serif; display: flex; flex-direction: column; gap: 40px">
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <h1 style="margin: 0; font-size: 48px; line-height: 54px; font-weight: 800; letter-spacing: -0.015em; color: #EEE8FF">Logo system</h1>
+    <p style="margin: 0; font-size: 26px; line-height: 34px; font-weight: 500; color: #BDB3E0">The icon is the logo. Below 48px it drops the eight dark keys and keeps the ember one.</p>
+  </div>
+  <div style="display: flex; gap: 32px">
+    <div style="flex: 1 1 0; background: #1F1243; border-radius: 28px; padding: 32px; display: flex; gap: 40px; align-items: flex-start">
+      <div style="display: flex; flex-direction: column; gap: 16px; align-items: flex-start">
+        <div style="padding: 26px; border: 2px dashed #8D80C2; border-radius: 12px">
+          <img src="/_blob/7e200d6225a31c7af60b530c70d64f0a" alt="Ninth Life icon with its clear space marked" style="width: 256px; height: 256px; display: block">
+        </div>
+        <p style="margin: 0; font-size: 16px; line-height: 24px; color: #BDB3E0; max-width: 310px">Clear space: one key's width on every side.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 16px; align-items: flex-start">
+        <div style="position: relative; width: 256px; height: 256px; margin-top: 28px">
+          <img src="/_blob/7e200d6225a31c7af60b530c70d64f0a" alt="Ninth Life icon with the maskable safe zone circle" style="width: 256px; height: 256px; display: block; border-radius: 56px">
+          <div style="position: absolute; left: 25.6px; top: 25.6px; width: 204.8px; height: 204.8px; box-sizing: border-box; border: 3px dashed #FFB13D; border-radius: 50%"></div>
+        </div>
+        <p style="margin: 28px 0 0; font-size: 16px; line-height: 24px; color: #BDB3E0; max-width: 270px">Maskable safe zone: everything that matters sits inside a circle of 40% radius, so Android crops never clip the ears.</p>
+      </div>
+    </div>
+    <div style="flex: 0 0 520px; background: #1F1243; border-radius: 28px; padding: 32px; display: flex; flex-direction: column; gap: 24px">
+      <h2 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 700">Sizes</h2>
+      <div style="display: flex; align-items: flex-end; gap: 24px">
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><img src="/_blob/7e200d6225a31c7af60b530c70d64f0a" alt="Icon at 128 pixels" style="width: 128px; height: 128px; display: block; border-radius: 28px"><span style="font-family: 'Atkinson Hyperlegible Mono', monospace; font-size: 15px; color: #BDB3E0">128</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><img src="/_blob/7e200d6225a31c7af60b530c70d64f0a" alt="Icon at 64 pixels" style="width: 64px; height: 64px; display: block; border-radius: 14px"><span style="font-family: 'Atkinson Hyperlegible Mono', monospace; font-size: 15px; color: #BDB3E0">64</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><img src="/_blob/7e200d6225a31c7af60b530c70d64f0a" alt="Icon at 48 pixels" style="width: 48px; height: 48px; display: block; border-radius: 11px"><span style="font-family: 'Atkinson Hyperlegible Mono', monospace; font-size: 15px; color: #BDB3E0">48</span></div>
+        <div style="width: 2px; height: 128px; background: #3A2A6E"></div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><img src="/_blob/dbcf50a48e209d46f2a6d65c32fa730c" alt="Favicon variant at 32 pixels" style="width: 32px; height: 32px; display: block; border-radius: 7px"><span style="font-family: 'Atkinson Hyperlegible Mono', monospace; font-size: 15px; color: #BDB3E0">32</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><img src="/_blob/dbcf50a48e209d46f2a6d65c32fa730c" alt="Favicon variant at 24 pixels" style="width: 24px; height: 24px; display: block; border-radius: 5px"><span style="font-family: 'Atkinson Hyperlegible Mono', monospace; font-size: 15px; color: #BDB3E0">24</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center"><img src="/_blob/dbcf50a48e209d46f2a6d65c32fa730c" alt="Favicon variant at 16 pixels" style="width: 16px; height: 16px; display: block; border-radius: 3px"><span style="font-family: 'Atkinson Hyperlegible Mono', monospace; font-size: 15px; color: #BDB3E0">16</span></div>
+      </div>
+      <p style="margin: 0; font-size: 16px; line-height: 24px; color: #BDB3E0">Full icon from 48px up: app icon, website header, video end card, avatars. Favicon variant below 48px: browser tabs and small UI.</p>
+    </div>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px">
+    <div style="background: #1F1243; border-radius: 28px; padding: 32px; display: flex; align-items: center; gap: 20px; min-height: 152px; box-sizing: border-box">
+      <img src="/_blob/7e200d6225a31c7af60b530c70d64f0a" alt="" style="width: 88px; height: 88px; display: block; border-radius: 20px">
+      <span style="font-size: 52px; line-height: 56px; font-weight: 800; letter-spacing: -0.02em; color: #EEE8FF">Ninth Life</span>
+    </div>
+    <div style="background: #F7F4FF; border-radius: 28px; padding: 32px; display: flex; align-items: center; gap: 20px; min-height: 152px; box-sizing: border-box">
+      <img src="/_blob/7e200d6225a31c7af60b530c70d64f0a" alt="" style="width: 88px; height: 88px; display: block; border-radius: 20px">
+      <span style="font-size: 52px; line-height: 56px; font-weight: 800; letter-spacing: -0.02em; color: #1A0F3A">Ninth Life</span>
+    </div>
+    <div style="background: #2A1856; border-radius: 28px; padding: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 152px; box-sizing: border-box">
+      <img src="/_blob/7e200d6225a31c7af60b530c70d64f0a" alt="" style="width: 88px; height: 88px; display: block; border-radius: 20px">
+      <span style="font-size: 32px; line-height: 36px; font-weight: 800; letter-spacing: -0.015em; color: #EEE8FF">Ninth Life</span>
+    </div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 16px">
+    <h2 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 700">Never</h2>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px">
+      <div style="background: #1F1243; border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+        <img src="/_blob/7e200d6225a31c7af60b530c70d64f0a" alt="Misuse example: icon with the ember key recolored" style="width: 104px; height: 104px; display: block; border-radius: 24px; filter: hue-rotate(150deg)">
+        <div style="display: flex; gap: 8px; align-items: flex-start"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; margin-top: 1px"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="#FF8FA6" stroke-width="2.5" stroke-linecap="round"></path></svg><p style="margin: 0; font-size: 16px; line-height: 22px">Recolor the ember key or the night ground.</p></div>
+      </div>
+      <div style="background: #1F1243; border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+        <img src="/_blob/7e200d6225a31c7af60b530c70d64f0a" alt="Misuse example: icon rotated" style="width: 104px; height: 104px; display: block; border-radius: 24px; transform: rotate(-14deg)">
+        <div style="display: flex; gap: 8px; align-items: flex-start"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; margin-top: 1px"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="#FF8FA6" stroke-width="2.5" stroke-linecap="round"></path></svg><p style="margin: 0; font-size: 16px; line-height: 22px">Tilt, squash or animate the icon.</p></div>
+      </div>
+      <div style="background: #1F1243; border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+        <div style="width: 104px; height: 104px; border-radius: 24px; overflow: hidden; position: relative"><img src="/_blob/7e200d6225a31c7af60b530c70d64f0a" alt="Misuse example: icon cropped so the ears are cut off" style="width: 170px; height: 170px; display: block; position: absolute; left: -33px; top: -52px"></div>
+        <div style="display: flex; gap: 8px; align-items: flex-start"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; margin-top: 1px"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="#FF8FA6" stroke-width="2.5" stroke-linecap="round"></path></svg><p style="margin: 0; font-size: 16px; line-height: 22px">Crop the ears or the tail.</p></div>
+      </div>
+      <div style="background: #1F1243; border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+        <div style="width: 104px; height: 104px; border-radius: 24px; background: #2A1856; display: grid; place-items: center"><span style="font-size: 20px; line-height: 24px; font-weight: 700; color: #BDB3E0; text-align: center">Phone,<br>face,<br>"T9"</span></div>
+        <div style="display: flex; gap: 8px; align-items: flex-start"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; margin-top: 1px"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="#FF8FA6" stroke-width="2.5" stroke-linecap="round"></path></svg><p style="margin: 0; font-size: 16px; line-height: 22px">Put it on a phone drawing, give the cat a face, or pair it with a trademark.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

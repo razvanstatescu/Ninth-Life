@@ -1,0 +1,31 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-06T13:48:00Z" },
+  "title": "Ninth Life brand",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 900, "title": "Ninth Life · the keypad bubble" },
+    "Directions.dc.html": { "x": 1520, "y": 0, "w": 1440, "h": 1120, "title": "Research and directions" },
+    "Logo-system.dc.html": { "x": 0, "y": 1240, "w": 1440, "h": 1200, "title": "Logo system" },
+    "Colour-type.dc.html": { "x": 1520, "y": 1240, "w": 1440, "h": 1200, "title": "Colour and type" },
+    "Interface-kit.dc.html": { "x": 0, "y": 2560, "w": 1440, "h": 1280, "title": "Interface kit" },
+    "In-context-app.dc.html": { "x": 1520, "y": 2560, "w": 1440, "h": 1000, "title": "In context · app", "expand": "fill" },
+    "In-context-web.dc.html": { "x": 0, "y": 3960, "w": 1440, "h": 2300, "title": "In context · website", "expand": "fill" },
+    "Video-social.dc.html": { "x": 1520, "y": 3960, "w": 1440, "h": 1680, "title": "In context · video and social" }
+  },
+  "order": [
+    "Main.dc.html",
+    "Directions.dc.html",
+    "Logo-system.dc.html",
+    "Colour-type.dc.html",
+    "Interface-kit.dc.html",
+    "In-context-app.dc.html",
+    "In-context-web.dc.html",
+    "Video-social.dc.html"
+  ],
+  "notes": {},
+  "designSystems": [
+    { "title": "Ninth Life", "namespace": "ninth-life", "artifact": "https://claude.ai/artifact/1Vov6WZtZzFNW7NgQ4NBfD", "version": null, "copiedAt": "2026-11-06T13:48:00Z" }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "ninth-life",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Ninth Life: 9-key predictive text, back as a way to talk. General-purpose text entry and text-to-speech tool.",
+  "license": "MIT",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "dev": "pnpm -F @ninth/web dev",
+    "lint:tm": "node scripts/tm-lint.mjs"
+  },
+  "devDependencies": {
+    "typescript": "5.6.3",
+    "vitest": "2.1.8",
+    "fast-check": "3.23.1",
+    "@types/node": "22.10.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
+  }
+}

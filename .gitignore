@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+coverage/
+cdk.out/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.DS_Store
+# eval-only datasets with NC licenses are fetched by script, never committed
+packages/eval/.cache/
+__pycache__/
+.venv/
+playwright-report/
+test-results/
+# NOTE: .kiro/ must never be ignored (hackathon rule). CI checks this.
