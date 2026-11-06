@@ -26,8 +26,8 @@ Read the component README before building or changing that component. If somethi
 ## Type
 
 - Families: **Atkinson Hyperlegible Next** for everything, **Atkinson Hyperlegible Mono** for key sequences.
-- Load them with `next/font` so the files are self-hosted at build time. Do not hotlink Google Fonts from the browser (no `@import` of fonts.googleapis.com in app CSS; `bundle.css` does that for previews only), because a runtime request sends every visitor's IP address to a third party.
-- Version note (checked 2026-11-06): `next/font/google` knows "Atkinson Hyperlegible Next" and "Atkinson Hyperlegible Mono" only from **Next.js 15.4.0**. The repo pins 15.1.3, where only the older "Atkinson Hyperlegible" exists. Either upgrade Next (also needed for security fixes) or use `next/font/local` with the OFL font files and their license in the repo.
+- They are self-hosted: woff2 files and their OFL texts in `packages/web/public/fonts/`, `@font-face` rules in `packages/web/styles/globals.css`. Keep it that way so the app works offline. Do not hotlink Google Fonts from the browser (no `@import` of fonts.googleapis.com in app CSS; `bundle.css` does that for design previews only), because a runtime request sends every visitor's IP address to a third party.
+- Do not switch to `next/font/google` on the current Next version: it knows "Atkinson Hyperlegible Next" and "Atkinson Hyperlegible Mono" only from **Next.js 15.4.0** (checked 2026-11-06); the repo pins 15.1.3, which only has the older "Atkinson Hyperlegible".
 - Styles: `utterance` 40px/600 is the largest text in the app; `candidate` 26px/600; `key-letters` 30px/700 with `key-digit` 15px mono; `body-lg` 20px is default app body; `label` 16px/600 is the smallest app text; `caption` 14px website and video only.
 
 ## Components and rules that are easy to break
