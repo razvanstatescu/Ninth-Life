@@ -17,9 +17,9 @@
   "dependencies": {
     "@ninth/core": "workspace:*",
     "@ninth/decoder": "workspace:*",
-    "next": "15.1.3",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
+    "next": "15.1.12",
+    "react": "19.0.9",
+    "react-dom": "19.0.9",
     "idb": "8.0.0",
     "@serwist/next": "9.0.11"
   },

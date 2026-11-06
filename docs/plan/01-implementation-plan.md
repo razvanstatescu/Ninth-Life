@@ -15,6 +15,10 @@ disagree, this page wins, and the reason sits in `docs/decisions/`.
 | 2 | Decoder is a pure `handleDecode()` with a Lambda adapter and a Next.js Route Handler adapter | Keep the AWS cost controls; allow a one-deploy fallback on Vercel | ADR-000 |
 | 3 | PWA via Serwist (`@serwist/next`) instead of Workbox directly | Serwist is the maintained Workbox successor with a Next.js integration | ADR-000 |
 | 4 | Plan assumptions are tracked in `docs/research/assumptions-register.md` | Several Kiro details in the source plan were "from memory" | — |
+| 5 | Next 15.1.12 / React 19.0.9 instead of 15.1.3 / 19.0.0 | Critical RCE (CVE-2025-66478 / CVE-2025-55182) in the earlier pair | ADR-000 amendment |
+| 6 | Kiro hooks read the event as JSON on stdin; agents use `permissions.rules`, no hooks inside agent configs; headless CLI needs `--v3` and exact tool IDs | Verified against kiro.dev on Nov 6 | assumptions register |
+| 7 | Kiro use is judged inside Technological Implementation (one of 5 equal criteria) plus the stage-one pass/fail, not as half the score | Rules page, Nov 6 | assumptions register |
+| 8 | Product copy must not say the tool is "for" a named condition (e.g. ALS) | MDCG intended purpose includes promotional statements | `.kiro/steering/product.md` |
 
 ## Architecture at a glance
 
@@ -52,7 +56,7 @@ disagree, this page wins, and the reason sits in `docs/decisions/`.
 | Gate | Date | Definition of done | Status |
 |---|---|---|---|
 | M0 | Nov 6 | Monorepo, contracts, design system imported, `.kiro/` skeleton, knowledge base started | done |
-| M1 | Nov 11 | Ghost mode in the browser: keypad → candidates → proof → speak, offline, core PBT green | in progress (started Nov 6) |
+| M1 | Nov 11 | Ghost mode in the browser: keypad → candidates → proof → speak, offline, core PBT green | done Nov 6 (follow-ups F1–F8) |
 | M2 | Nov 14 | Deployed PWA (Vercel), offline works, decoder Lambda synthesizes, RESULTS v1 (B0/B1) | — |
 | M3 | Nov 20 | LLM mode with proof panel, latency harness, model chosen (Haiku 4.5 / newer Haiku / Nova Micro) | — |
 | Cut 1 | Nov 23 | Drop ro/es and initials ("Phantom") mode if behind | — |
@@ -71,6 +75,7 @@ disagree, this page wins, and the reason sits in `docs/decisions/`.
 
 | What | Result | Source |
 |---|---|---|
+| All TS tests | 284 pass (core 63, decoder 117, eval 33, infra 18, web 53) + 4 Python; typecheck, build, tm-lint, Kiro config checks green | `pnpm -r test` |
 | Core tests | 63 pass, incl. property tests by requirement ID | `packages/core` |
 | Decoder + infra tests | 117 + 18 pass; CDK synthesizes without credentials | `packages/decoder`, `packages/infra` |
 | B0 dictionary order (866 items) | word acc 91.4%, sentence top-1 62.4%, top-5 91.8% | `packages/eval/RESULTS.md` |

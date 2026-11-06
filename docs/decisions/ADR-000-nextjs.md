@@ -26,3 +26,10 @@ is Next.js, so the team chose Next.js.
 - Ghost mode (offline dictionary decoding) runs entirely in the browser and never depends on either adapter.
 - The Vercel route needs its own rate limit if it is ever exposed in production (in-memory limits are not enough on serverless). Until then it is dev-only, guarded by `DECODE_ROUTE_ENABLED`.
 - Validation runs in `@ninth/core` on both server and client, whichever adapter served the request.
+
+## Amendment (2026-11-06): security upgrade
+Pinned versions moved from Next 15.1.3 / React 19.0.0 to **Next 15.1.12 / React 19.0.9**. The earlier
+pair is affected by CVE-2025-66478 / CVE-2025-55182 (critical remote code execution in React Server
+Components). Found by the research teammate; see `docs/research/assumptions-register.md`.
+`next/font/google` lists Atkinson Hyperlegible Next and Mono only from Next 15.4, so the fonts stay
+self-hosted in `packages/web/public/fonts` (OFL), which also keeps them available offline.
