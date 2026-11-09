@@ -1,14 +1,16 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { DisplayWord } from '@/lib/sentence';
 import { Button } from './Button';
 
 /**
  * design-system SpeakBar (nl-speakbar): the sentence about to be spoken (utterance, 40px),
  * its keys in mono under it, and Speak, the screen's one primary button.
- * Long sentences wrap; never truncate what someone is about to say. On phones in portrait the text
- * area has a fixed height (styles/app.css) so the keypad under it never moves while typing
+ * Long sentences wrap; never truncate what someone is about to say. On phones and in the split
+ * layout the text area has a fixed height (styles/app.css) so the keypad never moves while typing
  * (keyguards, motor memory; docs/research/mobile-layout.md): a longer sentence scrolls inside it,
  * kept scrolled to the newest word, and is focusable then so it can be scrolled from a keyboard.
+ * The phone layout leaves Speak out (it lives in the action bar under the keypad) and puts Clear /
+ * Undo in `extra`.
  */
 export function SpeakBar({
   tokens,
@@ -20,6 +22,9 @@ export function SpeakBar({
   speakLit,
   speaking,
   onSpeak,
+  hideSpeak = false,
+  digitsApart = false,
+  extra,
 }: {
   tokens: string[];
   words: DisplayWord[];
@@ -31,6 +36,15 @@ export function SpeakBar({
   speakLit?: boolean;
   speaking?: boolean;
   onSpeak: () => void;
+  /** The phone layout puts Speak in the action bar under the keypad. */
+  hideSpeak?: boolean;
+  /**
+   * Phone layout: the key line sits under the sentence box on one line (its end in view), so the
+   * sentence alone scrolls, in whole lines.
+   */
+  digitsApart?: boolean;
+  /** Controls at the end of the bar (the phone layout's Clear / Undo). */
+  extra?: ReactNode;
 }) {
   const empty = tokens.length === 0;
   const textRef = useRef<HTMLParagraphElement>(null);
@@ -43,8 +57,19 @@ export function SpeakBar({
     setOverflows(over);
     if (over) el.scrollTop = el.scrollHeight;
   }, [shown]);
-  return (
-    <div className="nl-speakbar">
+  // Apart from the sentence, the key line keeps its place even when empty, so nothing moves on the first key.
+  const digits =
+    empty && !digitsApart ? null : (
+      <span className="nl-speakbar__digits">
+        {empty ? null : (
+          <>
+            <span className="nl-sr-only">Keys: </span>
+            <span className="nl-speakbar__digits-end">{codes.join(' ')}</span>
+          </>
+        )}
+      </span>
+    );
+  const text = (
       <p ref={textRef} className={empty ? 'nl-speakbar__text is-empty' : 'nl-speakbar__text'} id="utterance" tabIndex={overflows ? 0 : undefined}>
         {empty
           ? emptyText
@@ -54,25 +79,56 @@ export function SpeakBar({
                 <span className={words[i]?.word === null ? 'nl-speakbar__partial' : undefined}>{t}</span>
               </span>
             ))}
-        {empty ? null : (
-          <span className="nl-speakbar__digits">
-            <span className="nl-sr-only">Keys: </span>
-            {codes.join(' ')}
-          </span>
-        )}
+        {digitsApart ? null : digits}
       </p>
-      <Button
-        variant={canSpeak ? speakVariant : 'quiet'}
-        size="xl"
-        icon="speaker"
-        disabled={!canSpeak}
-        lit={speakLit}
-        onClick={onSpeak}
-        aria-describedby="utterance"
-        data-action="speak"
-      >
-        {speaking ? 'Speaking' : 'Speak'}
-      </Button>
+  );
+  return (
+    <div className="nl-speakbar">
+      {digitsApart ? (
+        <div className="nl-speakbar__body">
+          {text}
+          {digits}
+        </div>
+      ) : (
+        text
+      )}
+      {hideSpeak ? null : <SpeakButton canSpeak={canSpeak} variant={speakVariant} lit={speakLit} speaking={speaking} onSpeak={onSpeak} />}
+      {extra}
     </div>
+  );
+}
+
+/** Speak: the screen's one primary button (in the SpeakBar, or in the phone action bar). */
+export function SpeakButton({
+  canSpeak,
+  variant,
+  lit,
+  speaking,
+  onSpeak,
+  className,
+}: {
+  canSpeak: boolean;
+  variant: 'primary' | 'quiet';
+  lit?: boolean;
+  speaking?: boolean;
+  onSpeak: () => void;
+  className?: string;
+}) {
+  return (
+    <Button
+      // Disabled: an outlined button, so its shape stays visible on the sunken card (a quiet button
+      // has the card's own fill and its label looked like it floated off-centre).
+      variant={canSpeak ? variant : 'secondary'}
+      size="xl"
+      icon="speaker"
+      disabled={!canSpeak}
+      lit={lit}
+      onClick={onSpeak}
+      aria-describedby="utterance"
+      data-action="speak"
+      className={className}
+    >
+      {speaking ? 'Speaking' : 'Speak'}
+    </Button>
   );
 }

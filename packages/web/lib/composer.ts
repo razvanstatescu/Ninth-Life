@@ -40,7 +40,9 @@ export type ComposerAction =
   | { type: 'pin'; index: number; word: string }
   | { type: 'select'; words: string[] }
   | { type: 'clear' }
-  | { type: 'spoken' };
+  | { type: 'spoken' }
+  /** Undo a Clear: put back the state from just before it. */
+  | { type: 'restore'; state: ComposerState };
 
 export const EMPTY: ComposerState = Object.freeze({ slots: [], open: false, punct: undefined, selected: null, spoken: false }) as ComposerState;
 
@@ -110,6 +112,8 @@ export function composerReducer(state: ComposerState, action: ComposerAction): C
       return EMPTY;
     case 'spoken':
       return { ...state, spoken: true };
+    case 'restore':
+      return action.state;
   }
 }
 

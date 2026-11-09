@@ -15,7 +15,9 @@ from `svh`, a split layout for phones held sideways, `viewport-fit=cover` with s
 double-tap zoom, no long-press menu on keys; checked on 20 viewports in Chromium and WebKit by
 `packages/web/test/e2e/responsive.mjs` (see `docs/architecture/web.md`, Layout). Open proposals: keypad at the bottom
 with Speak beside it on phones (F16), keys wider than tall (F17), keypad left/right setting (F18). Still untested on a
-real device, including the installed home-screen app.
+real device, including the installed home-screen app. Later the same day the phone layout itself was redone
+(web-ui Req 24): keypad at the bottom with Speak under it, keys wider than tall, suggestions above the keys
+(`mobile-patterns-mobbin.md`, `mobile-aac-evidence.md`), which closes F16 and F17.
 
 ## Summary: what to do
 

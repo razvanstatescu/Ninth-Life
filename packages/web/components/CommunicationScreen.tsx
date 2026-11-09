@@ -1,17 +1,18 @@
 'use client';
 /**
  * The communication screen (design/artboards/In-context-app.dc.html).
- * Wide: They said, SpeakBar, sentences and proof beside the keypad. Compact (phones): SpeakBar, keypad,
- * sentences, proof (lib/layout.ts). Ghost mode (offline dictionary)
+ * Wide: They said, SpeakBar, sentences and proof beside the keypad. Compact (tablets in portrait):
+ * SpeakBar, keypad, sentences, proof. Phone: sentence card, suggestions, keypad and the action bar
+ * [Menu] [Speak] [Show] in one screen (lib/layout.ts, web-ui Req 24). Ghost mode (offline dictionary)
  * always works; model ranking is optional, off by default, and never speaks on its own.
  */
 import { encodeWord, lattice, normalize, type Candidate, type Lexicon } from '@ninth/core';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactElement } from 'react';
-import { EMPTY, actionForKey, codesOf, composerReducer } from '@/lib/composer';
+import { EMPTY, actionForKey, codesOf, composerReducer, type ComposerState } from '@/lib/composer';
 import { loadDictionary, type DictState } from '@/lib/data';
 import { DecodeCache, buildRequest, decodeRemote, type RejectedSuggestion } from '@/lib/decodeClient';
 import { focusContext, mapKey } from '@/lib/keyboard';
-import { isTwoColumn, sectionOrder, useLayout, visibleSentences, type Layout, type Section } from '@/lib/layout';
+import { isTwoColumn, PHONE_TWO_ROWS_QUERY, phoneSuggestionRows, sectionOrder, useLayout, useMediaQuery, visibleSentences, type Layout, type Section } from '@/lib/layout';
 import { KEY_ROWS, type KeyDef } from '@/lib/keys';
 import { applyMyWords, buildDisplayMap, makeMyWord, mergeMyWords, showWord, type MyWord } from '@/lib/myWords';
 import { MAX_CANDIDATES, buildSentence, decodeAround, decodeWithPins, mergeCandidates, readings, spellTarget } from '@/lib/sentence';
@@ -46,22 +47,27 @@ import { Keypad } from './Keypad';
 import { MenuSheet } from './MenuSheet';
 import { MyWordsSheet } from './MyWordsSheet';
 import { PartnerTurn } from './PartnerTurn';
+import { PhoneSuggestions, phoneSuggestions } from './PhoneSuggestions';
 import { PhrasesSheet } from './PhrasesSheet';
 import { ProofPanel } from './ProofPanel';
 import { ScanBar } from './ScanBar';
 import { SettingsSheet } from './SettingsSheet';
+import { Sheet } from './Sheet';
 import { ShowMode } from './ShowMode';
-import { SpeakBar } from './SpeakBar';
+import { SpeakBar, SpeakButton } from './SpeakBar';
 import { SpellSheet } from './SpellSheet';
 
 const LLM_DEBOUNCE_MS = 400;
 const ACTIONS = ['speak', 'clear', 'save', 'show', 'spell'] as const;
+/** Phone layout: the action bar under the keypad, left to right (web-ui Req 24). */
+const PHONE_ACTIONS = ['menu', 'speak', 'show'] as const;
 const KEYPAD_ROWS = KEY_ROWS.length; // 4
 /**
  * Scan grid (web-ui Req 8.1, 16.1, 21.2): keypad rows first so any key is at most 4 + 3 = 7 steps
  * away (Keypad README), then sentences, "Add to my words" offers (empty, so skipped, unless a word on
  * show is not in the person's words), the actions under the SpeakBar, and the header (Menu, or
- * Phrases / Voice / Settings on wide screens).
+ * Phrases / Voice / Settings on wide screens). Phone layout: the same rows, with the action row being
+ * the action bar (Menu, Speak, Show) and the last row the sentence card's Clear (or Undo).
  */
 export const CAND_ROW = KEYPAD_ROWS; // scan row 4
 export const OFFER_ROW = KEYPAD_ROWS + 1; // scan row 5
@@ -69,7 +75,7 @@ export const ACTION_ROW = KEYPAD_ROWS + 2; // scan row 6
 export const MENU_ROW = KEYPAD_ROWS + 3; // scan row 7
 const WIDE_MENU = ['phrases', 'voice', 'settings'] as const;
 
-type SheetName = 'menu' | 'settings' | 'voice' | 'phrases' | 'words' | 'spell' | null;
+type SheetName = 'menu' | 'settings' | 'voice' | 'phrases' | 'words' | 'spell' | 'sentences' | null;
 const WORDS_NOT_SAVED = 'My words could not be saved on this device, so they last until you close the app. Storage may be off in this browser window.';
 
 export function CommunicationScreen({
@@ -103,6 +109,8 @@ export function CommunicationScreen({
   const [phraseError, setPhraseError] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
   const [moreSentences, setMoreSentences] = useState(false);
+  // Clear keeps what was cleared until the next key press, so a mistaken Clear can be undone.
+  const [undo, setUndo] = useState<ComposerState | null>(null);
   const [announce, setAnnounce] = useState('');
   // My words (web-ui Req 21): stored on this device, boosted in the lexicon, spelled the person's way.
   const [myWords, setMyWords] = useState<MyWord[]>(initialWords ?? []);
@@ -305,10 +313,21 @@ export function CommunicationScreen({
   }, [sentence.speakable, sentence.text, codes.length, speakText, say]);
 
   const clearAll = useCallback(() => {
+    if (composer.slots.length > 0) setUndo(composer);
     dispatch({ type: 'clear' });
     setMoreSentences(false);
-    say('Cleared.');
-  }, [say]);
+    say('Cleared. Undo brings it back.');
+  }, [say, composer]);
+  const undoClear = useCallback(() => {
+    if (!undo) return;
+    dispatch({ type: 'restore', state: undo });
+    setUndo(null);
+    say('Sentence back.');
+  }, [undo, say]);
+  // The next key press (or the Undo itself) ends the chance to undo.
+  useEffect(() => {
+    if (composer.slots.length > 0) setUndo(null);
+  }, [composer.slots.length]);
 
   const saveCurrent = useCallback(() => {
     if (!sentence.speakable) return;
@@ -465,16 +484,28 @@ export function CommunicationScreen({
   }, [sentence.words, display]);
   const addOffer = useCallback((word: string) => void addWord(showWord(word, display), 'spelled'), [addWord, display]);
   const menuCells = layout === 'wide' ? WIDE_MENU.length : 1;
+  // Phone layout (web-ui Req 24): suggestions above the keypad, the action bar under it.
+  const phone = layout === 'phone';
+  const tallPhone = useMediaQuery(PHONE_TWO_ROWS_QUERY);
+  const sugRows = phoneSuggestionRows(tallPhone);
+  const unspelledWord = sentence.words.find((w) => w.state === 'unspelled');
+  const spellOffer =
+    phone && canSpell && unspelledWord && sentence.candidates.length === 0 ? { label: `Spell ${unspelledWord.code}`, onClick: openSpell } : null;
+  const sug = phoneSuggestions(sentence.candidates, sentence.selectedIndex, spellOffer ? sugRows - 1 : sugRows, composer.punct, display);
+  const openSentences = useCallback(() => setSheet('sentences'), []);
+  const phoneCandCells = sug.items.length + (spellOffer || sug.more ? 1 : 0);
 
   const openSheet = useCallback((name: SheetName) => setSheet(name), []);
   const showCurrent = useCallback(() => {
     if (sentence.speakable && sentence.text) setShow({ text: sentence.text, reason: null });
   }, [sentence.speakable, sentence.text]);
-  const actionsRef = useRef({ pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout, openSpell, offers, addOffer });
-  actionsRef.current = { pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout, openSpell, offers, addOffer };
+  const actionsRef = useRef({ pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout, openSpell, offers, addOffer, phone, sug, spellOffer, openSentences, undo, undoClear });
+  actionsRef.current = { pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout, openSpell, offers, addOffer, phone, sug, spellOffer, openSentences, undo, undoClear };
   const scanner = useScanner({
     mode: scanMode,
-    rows: [...KEY_ROWS.map((r) => r.length), candCells, offers.length, ACTIONS.length, menuCells],
+    rows: phone
+      ? [...KEY_ROWS.map((r) => r.length), phoneCandCells, offers.length, PHONE_ACTIONS.length, 1]
+      : [...KEY_ROWS.map((r) => r.length), candCells, offers.length, ACTIONS.length, menuCells],
     loops: settings.scanLoops,
     scanMs: settings.scanMs,
     acceptDelayMs: settings.acceptDelayMs,
@@ -484,12 +515,25 @@ export function CommunicationScreen({
       if (row < KEYPAD_ROWS) {
         const def = KEY_ROWS[row]?.[cell];
         if (def) a.pressKey(def);
+      } else if (row === CAND_ROW && a.phone) {
+        const item = a.sug.items[cell];
+        if (item) a.selectCandidate(item.index);
+        else if (a.spellOffer) a.spellOffer.onClick();
+        else if (a.sug.more) a.openSentences();
       } else if (row === CAND_ROW) {
         if (cell < shownSentences.count) a.selectCandidate(cell);
         else a.sentenceToggle?.onClick();
       } else if (row === OFFER_ROW) {
         const o = a.offers[cell];
         if (o) a.addOffer(o.word);
+      } else if (row === ACTION_ROW && a.phone) {
+        const act = PHONE_ACTIONS[cell];
+        if (act === 'menu') a.openSheet('menu');
+        else if (act === 'speak') a.speakNow();
+        else if (act === 'show') a.showCurrent();
+      } else if (row === MENU_ROW && a.phone) {
+        if (a.undo) a.undoClear();
+        else a.clearAll();
       } else if (row === ACTION_ROW) {
         const act = ACTIONS[cell];
         if (act === 'speak') a.speakNow();
@@ -628,7 +672,41 @@ export function CommunicationScreen({
 
   const sections: Record<Section, ReactElement> = {
     partner: <PartnerTurn key="partner" value={partner} onChange={setPartner} />,
-    speak: (
+    speak: phone ? (
+      <div key="speak" className={scanRow === MENU_ROW ? 'phone-card nl-scanrow is-scanning order-speak' : 'phone-card nl-scanrow order-speak'} data-section="speak">
+        <SpeakBar
+          tokens={sentence.tokens}
+          words={sentence.words}
+          codes={codes}
+          canSpeak={sentence.speakable}
+          emptyText="Press a key to start"
+          speakVariant={emberIsScan ? 'quiet' : 'primary'}
+          speaking={speaking}
+          onSpeak={speakNow}
+          hideSpeak
+          digitsApart
+          extra={
+            undo ? (
+              <Button variant="secondary" onClick={undoClear} lit={scanRow === MENU_ROW && litCell === 0} className="phone-card__undo">
+                Undo
+              </Button>
+            ) : (
+              <Button
+                variant="secondary"
+                icon="x"
+                onClick={clearAll}
+                disabled={codes.length === 0}
+                lit={scanRow === MENU_ROW && litCell === 0}
+                aria-label="Clear"
+                className="phone-card__clear"
+              >
+                {null}
+              </Button>
+            )
+          }
+        />
+      </div>
+    ) : (
       <div key="speak" className={scanRow === ACTION_ROW ? 'speak-group nl-scanrow is-scanning order-speak' : 'speak-group nl-scanrow order-speak'} data-section="speak">
         <SpeakBar
           tokens={sentence.tokens}
@@ -657,7 +735,21 @@ export function CommunicationScreen({
         </div>
       </div>
     ),
-    cands: (
+    cands: phone ? (
+      <div key="cands" className="order-cands" data-section="cands">
+        <PhoneSuggestions
+          items={sug.items}
+          more={sug.more}
+          spell={spellOffer}
+          emptyText={dict.status === 'missing' || dict.status === 'error' ? 'Dictionary not loaded. Reload to try again.' : codes.length === 0 ? 'Sentences for your keys appear here.' : null}
+          rows={sugRows}
+          scanning={scanRow === CAND_ROW}
+          litIndex={scanRow === CAND_ROW ? litCell : -1}
+          onSelect={selectCandidate}
+          onMore={openSentences}
+        />
+      </div>
+    ) : (
       <div key="cands" className="order-cands" data-section="cands">
         {dict.status === 'missing' || dict.status === 'error' ? (
           <div className="notice notice--warn" role="alert">
@@ -706,6 +798,17 @@ export function CommunicationScreen({
         />
       </div>
     ),
+    actions: (
+      <div key="actions" className={scanRow === ACTION_ROW ? 'phone-actions nl-scanrow is-scanning' : 'phone-actions nl-scanrow'} data-section="actions">
+        <Button variant="quiet" icon="menu" onClick={() => setSheet('menu')} lit={actionLit(0)}>
+          Menu
+        </Button>
+        <SpeakButton canSpeak={sentence.speakable} variant={emberIsScan ? 'quiet' : 'primary'} lit={actionLit(1)} speaking={speaking} onSpeak={speakNow} className="phone-actions__speak" />
+        <Button variant="quiet" icon="show" onClick={showCurrent} disabled={!sentence.speakable} lit={actionLit(2)}>
+          Show
+        </Button>
+      </div>
+    ),
     scan: (
       <ScanBar
         key="scan"
@@ -727,9 +830,10 @@ export function CommunicationScreen({
       ),
   };
   const order = sectionOrder(layout).columns;
+  const PHONE_SCREEN: Section[] = ['speak', 'cands', 'pad', 'actions'];
 
   return (
-    <div className="app" onPointerDown={onBackgroundPointer}>
+    <div className={`app app--${layout}`} onPointerDown={onBackgroundPointer}>
       <a className="nl-skip" href="#keypad">
         Skip to the keypad
       </a>
@@ -743,9 +847,15 @@ export function CommunicationScreen({
           onPhrases={() => setSheet('phrases')}
           onVoice={() => setSheet('voice')}
           onSettings={() => setSheet('settings')}
+          actions={!phone}
         />
 
-        {isTwoColumn(layout) ? (
+        {phone ? (
+          <main className="app-main app-main--phone">
+            <div className="phone-screen">{order[0]!.filter((k) => PHONE_SCREEN.includes(k)).map((k) => sections[k])}</div>
+            <div className="phone-below">{order[0]!.filter((k) => !PHONE_SCREEN.includes(k)).map((k) => sections[k])}</div>
+          </main>
+        ) : isTwoColumn(layout) ? (
           <main className={layout === 'split' ? 'app-main app-main--split' : 'app-main'}>
             <div className="app-main__talk">{order[0]!.map((k) => sections[k])}</div>
             <div className="app-main__pad">{order[1]!.map((k) => sections[k])}</div>
@@ -773,7 +883,37 @@ export function CommunicationScreen({
         onVoice={() => setSheet('voice')}
         onSettings={() => setSheet('settings')}
         onClose={() => setSheet(null)}
+        sentence={
+          phone
+            ? {
+                canSave: sentence.speakable,
+                onSave: () => {
+                  saveCurrent();
+                  setSheet(null);
+                },
+                canSpell,
+                onSpell: openSpell,
+              }
+            : null
+        }
       />
+      {phone ? (
+        <Sheet open={sheet === 'sentences'} name="sentences" title="Sentences for your keys" onClose={() => setSheet(null)} scanning={overlayScanMode !== null}>
+          <div className="scan-cluster" data-scan-row="sentences">
+            <CandidateList
+              candidates={sentence.candidates}
+              selectedIndex={sentence.selectedIndex}
+              punct={composer.punct}
+              emptyText={null}
+              onSelect={(i) => {
+                selectCandidate(i);
+                setSheet(null);
+              }}
+              display={display}
+            />
+          </div>
+        </Sheet>
+      ) : null}
       <SettingsSheet
         open={sheet === 'settings' || sheet === 'voice'}
         scanning={overlayScanMode !== null}

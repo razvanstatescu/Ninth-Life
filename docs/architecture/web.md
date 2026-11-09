@@ -107,15 +107,21 @@ lexicon can only raise words. Spell sheet keys: 1-4 pick a letter and move on, a
 
 ## Layout
 
-| | Wide (>= 960px) | Compact (< 960px) | Split (phone held sideways) |
-|---|---|---|---|
-| When | 960px or wider | narrower than 960px | narrower than 960px, landscape, under 600px tall (`SPLIT_QUERY`) |
-| Header | Brand, every status pill, Phrases / Voice / Settings | One row: brand, one summary pill, Menu | As compact, at the top of the left column |
-| Main | Left: They said, SpeakBar, sentences, proof. Right: keypad, scan control, hint | SpeakBar, keypad, scan control, sentences (3 + More), proof, They said, hint | Left: SpeakBar, sentences (3 + More), proof, They said, scan control, hint. Right: the keypad alone, pinned |
-| Keys | key-size (96) or key-xl | `(100svh - 528px) / 4`, 72 to 96 (or 128 XL) | `(100svh - 72px) / 4`, 72 to 96 (or 128 XL) |
+| | Wide (>= 960px) | Compact (600-959px, tablets) | Split (phone held sideways) | Phone (< 600px, portrait) |
+|---|---|---|---|---|
+| When | 960px or wider | 600 to 959px wide | narrower than 960px, landscape, under 600px tall (`SPLIT_QUERY`) | narrower than 600px (`PHONE_QUERY`) |
+| Header | Brand, every status pill, Phrases / Voice / Settings | One row: brand, one summary pill, Menu | As compact, at the top of the left column | Brand and summary pill; no actions (Menu is in the action bar); hidden under 620px tall |
+| Main | Left: They said, SpeakBar, sentences, proof. Right: keypad, scan control, hint | SpeakBar, keypad, scan control, sentences (3 + More), proof, They said, hint | Left: SpeakBar, sentences (3 + More), proof, They said, scan control, hint. Right: the keypad alone, pinned | One screen: sentence card (+ Clear / Undo), 1-2 suggestion rows (+ More / Spell), keypad, action bar [Menu] [Speak] [Show]. Below: proof, They said, scan control, hint |
+| Keys | key-size (96) or key-xl | `(100svh - 528px) / 4`, 72 to 96 (or 128 XL) | `(100svh - 72px) / 4`, 72 to 96 (or 128 XL) | fill the height left over (`100cqh`), 72 to 96 tall (128 XL); width fills the screen (`100cqw / 3`) |
 
 The static HTML is the wide DOM; CSS `order` shows it in compact or split order until hydration swaps in the matching
-DOM order (so focus order matches). Phones and tablets (2026-11-09, docs/research/mobile-layout.md, web-ui Req
+DOM order (so focus order matches). Phone layout (2026-11-09, web-ui Req 24): built from
+`docs/research/mobile-patterns-mobbin.md` (dial pads and amount pads put the primary action under the keypad; keys
+fill the width; three suggestions as rows next to the input) and `docs/research/mobile-aac-evidence.md` (Safari gives a
+page 549px on an iPhone SE and 714px on an iPhone 17 with its toolbar showing). Components: `PhoneSuggestions.tsx`,
+`SpeakButton` and `SpeakBar` `hideSpeak` / `digitsApart` / `extra` (Clear, Undo), the Menu sheet's "This sentence"
+group, a "Sentences" sheet for More; Clear keeps an Undo until the next key (`composer` `restore`). Phones and tablets
+(2026-11-09, docs/research/mobile-layout.md, web-ui Req
 15.8-15.11, checked on 20 viewports by `test/e2e/responsive.mjs`):
 - **Keys never move while typing.** In compact and split the SpeakBar text area has a fixed height (two sentence lines
   and the key line; one sentence line on phones under 800px tall) and scrolls inside, kept on the newest word

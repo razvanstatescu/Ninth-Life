@@ -24,10 +24,14 @@ try {
     });
     check(/^I need water/.test((await speakText(page)).trim()), `typed 4 0 6333 0 92837 -> "${(await speakText(page)).trim()}"`);
 
-    // Choose sentence 2 with Alt+2, then move back up with ArrowUp.
-    const pressed = () => page.locator('[aria-pressed="true"]').first().innerText().catch(() => '');
+    // Choose sentence 2 with Alt+2, then move back up with ArrowUp. The list marks the chosen sentence
+    // pressed; the phone layout instead moves it into the sentence card (web-ui Req 24).
+    const pressed = async () =>
+      (await page.locator('[aria-pressed="true"]').count()) > 0 ? page.locator('[aria-pressed="true"]').first().innerText() : speakText(page);
     await page.keyboard.press('Alt+2');
-    await waitFor(page, () => !!document.querySelector('[aria-pressed="true"]'), null, { what: 'a chosen sentence' });
+    await waitFor(page, () => !!document.querySelector('[aria-pressed="true"]') || !/need water/i.test(document.querySelector('.nl-speakbar__text')?.textContent ?? ''), null, {
+      what: 'a chosen sentence',
+    });
     const second = (await pressed()).replace(/\s+/g, ' ').trim();
     const shown2 = (await speakText(page)).trim();
     check(second.length > 0 && !/need water/i.test(shown2), `Alt+2 chose a sentence ("${second}"), speak bar now "${shown2}"`);

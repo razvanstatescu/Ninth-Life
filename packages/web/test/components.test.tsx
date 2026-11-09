@@ -69,12 +69,12 @@ describe('ProofPanel (F7)', () => {
 });
 
 describe('SpeakBar', () => {
-  it('empty state: muted prompt and a disabled quiet Speak', () => {
+  it('empty state: muted prompt and a disabled outlined Speak (a quiet one vanishes on the sunken bar)', () => {
     render(<SpeakBar tokens={[]} words={[]} codes={[]} canSpeak={false} emptyText="Press a key to start" speakVariant="primary" onSpeak={() => undefined} />);
     expect(screen.getByText('Press a key to start').className).toContain('is-empty');
     const speak = screen.getByRole('button', { name: 'Speak' });
     expect((speak as HTMLButtonElement).disabled).toBe(true);
-    expect(speak.className).toContain('nl-btn--quiet');
+    expect(speak.className).toContain('nl-btn--secondary');
   });
 
   it('shows the sentence with its digit codes and an ember Speak', () => {

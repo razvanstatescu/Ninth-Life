@@ -44,7 +44,7 @@
 /* Key */
 .nl-key {
   position: relative; display: grid; place-items: center;
-  width: var(--nl-key, var(--key-size)); height: var(--nl-key, var(--key-size));
+  width: var(--nl-key-w, var(--nl-key, var(--key-size))); height: var(--nl-key, var(--key-size)); /* app: --nl-key-w lets phone keys fill the width (wider than tall) */
   border-radius: var(--radius-key); border: 0;
   background: var(--key); color: var(--on-key);
   font-family: var(--font-sans); cursor: pointer;
@@ -120,7 +120,7 @@
   font-family: var(--font-sans);
 }
 .nl-speakbar__text { flex: 1 1 280px; min-width: 0; margin: 0; font-size: 40px; line-height: 48px; font-weight: 600; overflow-wrap: anywhere; }
-.nl-speakbar__text.is-empty { color: var(--ink-muted); font-weight: 400; }
+.nl-speakbar__text.is-empty { color: var(--ink-muted); font-weight: 400; font-size: var(--type-heading-size); line-height: var(--type-heading-line); } /* app: the empty hint is a 22px heading, not 40px: it is a hint, not something to say */
 .nl-speakbar__partial { color: var(--ink-muted); text-decoration: underline dotted 2px; text-underline-offset: 6px; }
 .nl-speakbar__digits { display: block; margin-top: var(--space-1); font-family: var(--font-mono); font-size: 20px; line-height: 28px; font-weight: 500; letter-spacing: 0.06em; color: var(--ink-muted); }
 

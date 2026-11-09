@@ -323,3 +323,30 @@ Measured with `scripts/perf-check.mjs`; numbers and method in `docs/testing/perf
      pages-router chunks; an offline reload after one visit SHALL still reach "Offline dictionary ready" with no network.
 23.5 ON the Moto G-class profile (4x CPU, Slow 4G), the first load SHALL stay under 700 KB compressed and no key press
      typing "kitchen" SHALL take over 50 ms; on desktop, lexicon parse SHALL take under 100 ms.
+
+## Requirement 24: Phone-first screen (2026-11-09)
+**User story:** As a person who talks with my phone in one hand, I want the keypad and Speak where my thumb is, the
+sentence and its alternatives right above the keys, and nothing to scroll while I type, so that talking is fast and
+I do not reach across the screen.
+
+Evidence: `docs/research/mobile-patterns-mobbin.md` (real apps), `docs/research/mobile-aac-evidence.md` (visible
+viewport heights measured in the iOS Simulator, thumb reach, motor-impaired touch, AAC apps).
+
+24.1 WHILE the viewport is narrower than 600px (phone layout), THE app SHALL show one screen, top to bottom: the header
+     (brand and status), the sentence card, the sentence suggestions, the keypad and an action bar [Menu] [Speak] [Show];
+     proof, They said, the scan control and the hint SHALL follow below, AND the DOM (and focus) order SHALL match.
+24.2 THE action bar SHALL be under the keypad and SHALL hold the screen's only Speak, the widest control in the bar; a
+     disabled Speak SHALL keep a visible outline.
+24.3 Clear SHALL be in the sentence card, away from Speak; WHEN Clear is pressed, THE card SHALL offer Undo until the
+     next key press, AND Undo SHALL restore the sentence exactly.
+24.4 THE suggestions SHALL show the other sentences for the keys (not the one in the card) as one-line rows that keep
+     the end of the sentence in view and keep their rank numbers; "More" SHALL open every sentence in a sheet; WHEN a
+     word is not in the person's words, a "Spell <keys>" row SHALL be offered.
+24.5 THE Menu sheet SHALL also hold the sentence's Save phrase and Spell this word.
+24.6 THE keypad SHALL fill the width (keys wider than tall) and the height left over, keys 72 to 96px tall (128 with XL);
+     the screen SHALL fit, with no scrolling, at 549px (iPhone SE in Safari) and up, dropping first the second suggestion
+     row (under 760px), then the second sentence line (under 680px), then the header and the key line (under 620px).
+24.7 THE keypad SHALL NOT move while typing; the sentence box SHALL keep its height and scroll in whole lines, kept on
+     the newest word, AND the key line SHALL keep its place before the first key.
+24.8 IN switch scanning the rows SHALL follow the screen: keypad rows, suggestions (then More or Spell), offers, the action
+     bar (Menu, Speak, Show), then the card's Clear (or Undo).

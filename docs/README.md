@@ -32,6 +32,9 @@ Start here. Every page below is kept in the repo, so the knowledge base is versi
 - [Assumptions register](research/assumptions-register.md)
 - [Anthropic models and prices](research/anthropic-models.md)
 - [MiniMax models, prices and data terms](research/minimax-models.md)
+- [Phones and tablets: layout research](research/mobile-layout.md): viewports, platform pitfalls, AAC layout guidance
+- [Phone patterns from real apps (Mobbin)](research/mobile-patterns-mobbin.md): dial pads, primary actions, suggestions, the phone layout sketch
+- [Phone AAC evidence](research/mobile-aac-evidence.md): visible viewport heights measured in Safari, thumb reach, motor-impaired touch, AAC apps
 - [Competitive landscape refresh](research/competitive-landscape.md)
 - [Web Speech API: voices, bugs and privacy](research/web-speech.md): voices per browser and OS, offline voices, ro-RO and es-ES, known bugs, what `lib/speech.ts` does about them
 

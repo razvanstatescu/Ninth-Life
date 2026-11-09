@@ -45,6 +45,7 @@ export function AppHeader({
   onPhrases,
   onVoice,
   onSettings,
+  actions = true,
 }: {
   status: StatusLine[];
   summary: StatusLine & { full: string };
@@ -56,6 +57,8 @@ export function AppHeader({
   onPhrases: () => void;
   onVoice: () => void;
   onSettings: () => void;
+  /** False in the phone layout: Menu lives in the action bar under the keypad (web-ui Req 24). */
+  actions?: boolean;
 }) {
   const row = scanning ? 'nl-scanrow is-scanning' : 'nl-scanrow';
   return (
@@ -76,22 +79,26 @@ export function AppHeader({
           </StatusPill>
         </div>
       </div>
-      <div className={`app-header__actions app-header--wide ${row}`}>
-        <Button variant="quiet" compact icon="save" onClick={onPhrases} lit={scanning && litCell === 0}>
-          Phrases
-        </Button>
-        <Button variant="quiet" compact icon="voice" onClick={onVoice} lit={scanning && litCell === 1}>
-          Voice
-        </Button>
-        <Button variant="quiet" compact icon="gear" onClick={onSettings} lit={scanning && litCell === 2}>
-          Settings
-        </Button>
-      </div>
-      <div className={`app-header__actions app-header--compact ${row}`}>
-        <Button variant="quiet" compact icon="menu" onClick={onMenu} lit={scanning && litCell === 0} aria-haspopup="dialog">
-          Menu
-        </Button>
-      </div>
+      {actions ? (
+        <>
+          <div className={`app-header__actions app-header--wide ${row}`}>
+            <Button variant="quiet" compact icon="save" onClick={onPhrases} lit={scanning && litCell === 0}>
+              Phrases
+            </Button>
+            <Button variant="quiet" compact icon="voice" onClick={onVoice} lit={scanning && litCell === 1}>
+              Voice
+            </Button>
+            <Button variant="quiet" compact icon="gear" onClick={onSettings} lit={scanning && litCell === 2}>
+              Settings
+            </Button>
+          </div>
+          <div className={`app-header__actions app-header--compact ${row}`}>
+            <Button variant="quiet" compact icon="menu" onClick={onMenu} lit={scanning && litCell === 0} aria-haspopup="dialog">
+              Menu
+            </Button>
+          </div>
+        </>
+      ) : null}
     </header>
   );
 }

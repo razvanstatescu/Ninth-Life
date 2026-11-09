@@ -7,18 +7,34 @@
 //   ENGINE=webkit node ...                      (Safari's engine; CI runs Chromium)
 import { BASE_URL, check, done, loadPlaywright, openApp } from './lib.mjs';
 
-// CSS viewport sizes, portrait (width x height). Landscape is the same device turned.
-const DEVICES = [
-  ['small Android', 360, 740],
-  ['iPhone SE', 375, 667],
-  ['tall Android', 360, 800],
-  ['foldable cover screen', 344, 882],
-  ['iPhone 15', 393, 852],
-  ['iPhone 11 / XR (most common)', 414, 896],
-  ['iPhone 16 Pro Max', 440, 956],
+// Phones in portrait at the height a page really gets: Safari with its toolbar showing (iOS 26
+// Compact tab bar), Chrome on Android, and the installed home-screen app, as measured in
+// docs/research/mobile-aac-evidence.md (simulator; Android rows are estimates). Not tested: Safari's
+// optional Bottom tab bar on an iPhone SE (495px), where the action bar needs a scroll.
+const PHONES = [
+  ['iPhone SE, Safari', 375, 549],
+  ['iPhone SE, installed app', 375, 647],
+  ['iPhone 16e, Safari', 390, 699],
+  ['iPhone 17 Pro, Safari', 402, 714],
+  ['iPhone 17 Pro Max, Safari', 440, 796],
+  ['Android 360x800, Chrome', 360, 668],
+  ['Android 412x915, Chrome', 412, 783],
+  ['foldable cover screen', 344, 750],
+];
+// Landscape phones (full screen sizes; the split layout keeps the keypad to the right) and tablets
+// in both orientations.
+const TURNED = [
+  ['small Android landscape', 740, 360],
+  ['iPhone SE landscape', 667, 375],
+  ['iPhone 15 landscape', 852, 393],
+  ['iPhone 16 Pro Max landscape', 956, 440],
+  ['foldable cover screen landscape', 882, 344],
   ['iPad mini', 744, 1133],
+  ['iPad mini landscape', 1133, 744],
   ['iPad Air', 820, 1180],
+  ['iPad Air landscape', 1180, 820],
   ['Android tablet', 800, 1280],
+  ['Android tablet landscape', 1280, 800],
 ];
 const LONG = '4 6333 92837 75327 263 7663 27323'; // "i need water please and some bread"
 
@@ -28,9 +44,9 @@ const browser = await pw[engine].launch();
 console.log(`responsive check on ${BASE_URL} (${engine})`);
 
 try {
-  for (const [name, w, h] of DEVICES) {
-    for (const [orient, vw, vh] of [['portrait', w, h], ['landscape', h, w]]) {
-      const label = `${name} ${orient} ${vw}x${vh}`;
+  for (const [name, vw, vh] of [...PHONES, ...TURNED]) {
+    {
+      const label = `${name} ${vw}x${vh}`;
       const ctx = await browser.newContext({
         viewport: { width: vw, height: vh },
         deviceScaleFactor: 2,

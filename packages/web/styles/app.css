@@ -419,6 +419,90 @@
   .app-main__pad { top: var(--space-2); }
 }
 
+/* Phone layout (lib/layout.ts PHONE_QUERY, web-ui Req 24; docs/research/mobile-patterns-mobbin.md and
+   mobile-aac-evidence.md). One screen tall, measured in svh (Safari's visible height with its toolbar
+   showing: 549px on an iPhone SE, 714px on an iPhone 17): header, sentence card, suggestions, then the
+   keypad and the action bar in the thumb zone. The keypad area takes the height left over and sizes
+   its keys from it (container query units): 72 to 96px tall, as wide as the screen allows. Short
+   screens drop, in order: the second suggestion row (< 760px, lib/layout.ts), the second sentence
+   line (< 680px), the header and the key line (< 620px). The rest of the screen (proof, They said, scan control,
+   hint) follows below. The phone DOM only exists after hydration, so these rules key off .app--phone. */
+.app--phone { --app-pad-top: var(--space-2); --app-pad-x: var(--space-3); --app-pad-bottom: var(--space-6); --phone-head: calc(56px + var(--space-2)); }
+.app--phone .app__inner { gap: var(--space-2); }
+.app--phone .app-header { height: 56px; }
+.app--phone .app-main--phone { display: block; }
+.app--phone .phone-screen {
+  display: flex; flex-direction: column; gap: var(--space-2);
+  min-height: calc(100svh - max(var(--space-2), env(safe-area-inset-top)) - var(--phone-head));
+  padding-bottom: max(var(--space-2), env(safe-area-inset-bottom));
+}
+.app--phone .phone-screen > *, .app--phone .phone-below > * { order: 0; align-self: stretch; }
+.app--phone .phone-below { display: flex; flex-direction: column; gap: var(--space-4); padding-top: var(--space-8); }
+
+/* Sentence card: the sentence (scrolls inside its fixed height) and Clear, far from Speak. */
+.app--phone .phone-card { flex: none; }
+.app--phone .nl-speakbar { flex-wrap: nowrap; align-items: flex-start; gap: var(--space-2); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4); }
+.app--phone .nl-speakbar__body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+/* Whole lines only, so scrolling to the newest word never shows half a line. */
+.app--phone .nl-speakbar__text { flex: none; height: calc(2 * 48px); overflow-y: auto; overscroll-behavior: contain; } /* flex: none: the bar's flex-basis would set the height in this column */
+.app--phone .nl-speakbar__text.is-empty { padding-top: 10px; }
+/* The key line: one line, its end (the word being typed) in view. */
+.app--phone .nl-speakbar__digits { display: flex; justify-content: flex-end; overflow: hidden; white-space: nowrap; margin-top: 0; height: 20px; font-size: var(--type-label-size); line-height: 20px; }
+.app--phone .nl-speakbar__digits-end { margin-right: auto; }
+.app--phone .phone-card__clear { flex: none; width: var(--target-min); padding: 0; }
+.app--phone .phone-card__undo { flex: none; }
+
+/* Suggestions: fixed height, so the keypad never moves. 6px padding makes room for the scan ring. */
+.phone-sugg { flex: none; display: flex; flex-direction: column; gap: var(--space-2); height: calc(var(--target-min) + 12px); padding: 6px; margin: -6px; border-radius: calc(var(--radius-chip) + 6px); }
+.phone-sugg--2 { height: calc(2 * var(--target-min) + var(--space-2) + 12px); }
+.phone-sugg__row { display: flex; gap: var(--space-2); min-width: 0; height: var(--target-min); }
+.phone-sugg__item {
+  flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: var(--space-2);
+  height: var(--target-min); padding: 0 var(--space-3) 0 var(--space-2);
+  border-radius: var(--radius-chip); border: 2px solid var(--line); background: var(--surface); color: var(--ink);
+  font-family: var(--font-sans); font-size: 20px; line-height: 26px; font-weight: 600; text-align: left; cursor: pointer;
+}
+.phone-sugg__item:focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: 3px; }
+.phone-sugg__item.is-lit { box-shadow: 0 0 0 var(--scan-width) var(--ember), 0 0 0 calc(var(--scan-width) + 3px) var(--plum); }
+.phone-sugg__rank { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: var(--surface-sunken); font-family: var(--font-mono); font-size: var(--type-label-size); font-weight: 500; color: var(--ink-muted); }
+/* One line; when too long, the start is cut and the end (where readings differ) stays in view. The
+   auto margin left-aligns a short sentence; a long one overflows to the left and is clipped there. */
+.phone-sugg__text { flex: 1 1 auto; min-width: 0; overflow: hidden; display: flex; justify-content: flex-end; white-space: nowrap; }
+.phone-sugg__end { margin-right: auto; }
+.phone-sugg__text.is-cut { -webkit-mask-image: linear-gradient(to right, transparent, #000 28px); mask-image: linear-gradient(to right, transparent, #000 28px); }
+.phone-sugg__more { flex: none; padding: 0 var(--space-4); }
+.phone-sugg__spell { flex: 1 1 auto; }
+.phone-sugg__empty { margin: 0; padding: 0 var(--space-2); font-size: var(--type-body-size); line-height: var(--target-min); color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Keypad: fills the height left over, keys as wide as the screen allows (wider than tall). */
+.app--phone [data-section="pad"] {
+  flex: 1 1 0; min-height: calc(4 * var(--key-min) + 3 * var(--space-2) + 12px);
+  container-type: size; display: flex; align-items: flex-end; justify-content: center;
+}
+.app--phone .nl-keypad {
+  width: 100%; padding: 6px; gap: var(--space-2); border-radius: var(--radius-card);
+  --nl-key: clamp(var(--key-min), calc((100cqh - 3 * var(--space-2) - 12px) / 4), var(--key-size));
+  --nl-key-w: calc((100cqw - 2 * var(--space-2) - 12px) / 3);
+}
+[data-keysize="xl"] .app--phone .nl-keypad { --nl-key: clamp(var(--key-min), calc((100cqh - 3 * var(--space-2) - 12px) / 4), var(--key-xl)); }
+.app--phone .nl-keypad__row { gap: var(--space-2); }
+
+/* Action bar in the thumb zone: Menu, Speak (the one ember thing, widest), Show. */
+.phone-actions { flex: none; display: flex; gap: var(--space-2); padding: 6px; margin: -6px; border-radius: calc(var(--radius-key) + 6px); }
+.phone-actions .nl-btn { min-height: 64px; flex: none; padding: 0 var(--space-3); }
+.phone-actions .nl-btn--xl { min-height: 64px; font-size: 22px; }
+.phone-actions .phone-actions__speak { flex: 1 1 auto; min-width: 0; }
+
+@media (max-height: 679px) {
+  .app--phone .nl-speakbar__text { height: 48px; }
+}
+@media (max-height: 619px) {
+  .app--phone { --phone-head: 0px; }
+  .app--phone .app-header { display: none; }
+  .app--phone .nl-speakbar__text { height: 48px; }
+  .app--phone .nl-speakbar__digits { display: none; }
+}
+
 /* Safe areas: with viewport-fit=cover the page runs under the notch or Dynamic Island, the rounded
    corners and the home indicator (and under the status bar in the home-screen app), so padding is
    at least the inset on every side. */
