@@ -13,7 +13,7 @@
   },
   "lexicon": {
     "path": "data/lexicon/en.v1.json",
-    "sha256": "d27fc037658bffd78892139ba8ffa8b59b83ff3f906c02abb60d7c62da4f0667"
+    "sha256": "65e61364ef7d227621899c345a151bc642b048ff1b896582022f96e5df952b48"
   },
   "bigram": {
     "path": "data/lexicon/en.bigram.v1.json",

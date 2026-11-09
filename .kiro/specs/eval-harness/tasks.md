@@ -53,7 +53,10 @@
   - [x] 14.2 SCOWL fetch (pinned) and word classes; `--acronyms`, `--junk`, `--down-zipf`, `--scowl-level` build flags (Req 5.8) — P15
   - [x] 14.3 Measured (a) letter penalty, (b) acronyms drop/down (SCOWL and no-vowel), (c) non-dictionary drop/down on B0/B1, full set and Turk subset; shipped (a) + (b) + (c) down 1.0; data rebuilt, `eval.lock` refreshed (fixture unchanged), `RESULTS.md` regenerated
 - [x] 15. Offensive-readings report for D7, LDNOOBW list (CC BY 4.0) in the cache only (Req 7.1–7.4) — P16
-- [ ] 16. Review the slur marks in `src/offensive.ts` with the team before deciding D7
+- [ ] 16. Review the slur marks in `src/offensive.ts` with the team before deciding D7 (marks re-checked by one reviewer on 2026-11-09 and kept as they were; team review still open, and LDNOOBW misses about 20 candidate slurs, ADR-data-004 "Known gap")
+- [x] 16.1 D7: drop the listed slurs at lexicon build, `--slurs keep|down|drop` (default drop), hash list `scripts/slurs.sha256.json` shared with the report (Req 5.10, 7.3; ADR-data-004)
+  - [x] Measured keep / down / drop with the report and B0/B1: slur items in top 5 8 → 6 (down) → 0 (drop), B0/B1 unchanged; data rebuilt, `eval.lock` refreshed (fixture unchanged), `RESULTS.md` regenerated
+  - [x] Python `SlurFilterTest`; TS `test/data.test.ts` (no listed word in v1/v2, profanity kept); web `test/words.test.ts` (every listed word can be spelled and added to my words on the shipped `en.v2.json`)
 - [x] 17. Compact lexicon `data/lexicon/en.v2.json` from `build_lexicon.py` (`compact_lexicon`, `--compact-only`), ADR-data-003 (Req 5.9)
   - [x] Python: lossless + deterministic for 300 random v1 dicts, JavaScript key order, committed v2 in sync (`scripts/test_build_lexicon.py` `CompactTest`)
   - [x] TS: header, order, v1 and v2 load to the same Lexicon (`test/compact.test.ts`); `--lexicon data/lexicon/en.v2.json` gives the same `RESULTS.json` as v1 apart from the lexicon SHA-256

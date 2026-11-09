@@ -6,16 +6,16 @@ run say so. Method: `docs/architecture/data-and-eval.md` and `.kiro/specs/eval-h
 
 - Test set: `fixtures/test.v1.jsonl`, 866 items, SHA-256 `9fefd9dbeacda45a…` (see `eval.lock`)
 - Run: full set, 866 items, seed 9, k = 5, mode = letter
-- Lexicon: 58906 words (`data/lexicon/en.v1.json`, SHA-256 `d27fc037658bffd7…`); bigrams `data/lexicon/en.bigram.v1.json` (`d873fa2aa7d316e3…`)
+- Lexicon: 58892 words (`data/lexicon/en.v1.json`, SHA-256 `65e61364ef7d2276…`); bigrams `data/lexicon/en.bigram.v1.json` (`d873fa2aa7d316e3…`)
 - Language model: one-letter words other than "a" and "i" get a log10 penalty of -3 (ADR-core-002)
-- Latency: wall-clock per decode call on linux-x64, Node 22.23.4; not part of `RESULTS.json` (it varies run to run)
+- Latency: wall-clock per decode call on darwin-arm64, Node 22.22.2; not part of `RESULTS.json` (it varies run to run)
 
 ## Summary
 
 | Config | Word acc | Sent top-1 | Sent top-5 | KSR | Scan steps/char | Invalid pre-validator | p50 ms | p95 ms | $/1k |
 |---|---|---|---|---|---|---|---|---|---|
-| B0 dict | 91.5% | 62.4% | 92.0% | -1.2% | 3.61 | n/a | 0.18 | 0.80 | 0 |
-| B1 ghost | 96.8% | 85.6% | 97.3% | -0.0% | 3.57 | n/a | 0.22 | 1.06 | 0 |
+| B0 dict | 91.5% | 62.4% | 92.0% | -1.2% | 3.61 | n/a | 0.07 | 0.30 | 0 |
+| B1 ghost | 96.8% | 85.6% | 97.3% | -0.0% | 3.57 | n/a | 0.09 | 0.35 | 0 |
 | B2 LLM raw | not run | | | | | | | | |
 | B3 LLM+val | not run | | | | | | | | |
 | B4 lattice+val | not run | | | | | | | | |
@@ -57,8 +57,8 @@ ceiling for any ranker, B4 included, that keeps to listed words.
 
 | Config | Word acc | Sent top-1 | Sent top-5 | Presses/char | KSR | Words retyped in letter mode | Unreachable items | Scan steps/char | p50 ms | p95 ms |
 |---|---|---|---|---|---|---|---|---|---|---|
-| B0 dict | 14.6% | 0.0% | 0.0% | 1.26 | -25.8% | 2306 of 4890 | 15 | 5.36 | 0.55 | 1.75 |
-| B1 ghost | 21.0% | 1.5% | 2.0% | 1.35 | -34.6% | 2306 of 4890 | 15 | 5.89 | 0.82 | 2.42 |
+| B0 dict | 14.6% | 0.0% | 0.0% | 1.26 | -25.8% | 2306 of 4890 | 15 | 5.36 | 0.23 | 0.68 |
+| B1 ghost | 21.0% | 1.5% | 2.0% | 1.35 | -34.6% | 2306 of 4890 | 15 | 5.89 | 0.32 | 0.91 |
 
 | Config | Source | Items | Word acc | Sent top-1 | Sent top-5 | Presses/char |
 |---|---|---|---|---|---|---|

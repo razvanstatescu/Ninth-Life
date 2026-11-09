@@ -4,8 +4,8 @@
  *   pnpm -F @ninth/eval report:offensive    writes reports/offensive-readings.md
  *
  * Counts how often a word from a public blocklist shows up among the top-5 ghost-mode (B1)
- * sentences on the frozen test set, and where such words sit in the lexicon. It measures; it
- * filters nothing (D7 is still open).
+ * sentences on the frozen test set, and where such words sit in the lexicon. It measures the
+ * lexicon as built; since D7 (ADR-data-004) the build drops the words marked as slurs.
  *
  * Blocklist: LDNOOBW "List of Dirty, Naughty, Obscene, and Otherwise Bad Words", English list,
  * CC BY 4.0, fetched by `pnpm data:fetch` into .cache/ldnoobw/ (pinned by SHA-256, never committed).
@@ -14,7 +14,8 @@
  *
  * `SLUR_SHA256` marks the listed words that are identity slurs (race or ethnicity, sexual
  * orientation or gender identity, disability) rather than general profanity or sexual terms;
- * D7 is about slurs, and profanity in general should stay. Hashes only, like build_lexicon.py.
+ * D7 is about slurs, and profanity in general stays. Hashes only, read from
+ * scripts/slurs.sha256.json, the same file build_lexicon.py drops them with.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -31,27 +32,24 @@ export const BLOCKLIST = {
   sha256: 'af851ecef1d5f212caba17339b12ac39cc2fef7d78c74876f67237644fcee8bd',
 };
 
+/** The identity-slur hash list (decision D7, ADR-data-004): SHA-256 of the word and its keypad code. */
+export interface SlurList {
+  about: string;
+  words: { sha256: string; code: string }[];
+}
+export const SLUR_LIST_PATH = join(EVAL_DIR, 'scripts', 'slurs.sha256.json');
+export const SLUR_LIST = JSON.parse(readFileSync(SLUR_LIST_PATH, 'utf8')) as SlurList;
+
 /**
- * Identity slurs among the blocklisted words that occur in the lexicon (SHA-256 of the word), as
- * judged by the decoding-quality owner on 2026-11-06 (race or ethnicity, sexual orientation or
- * gender identity, disability; plural and spelling variants included). Review before acting on D7.
+ * Identity slurs among the blocklisted words that occur in the wordfreq lexicon (SHA-256 of the
+ * word), as judged by the decoding-quality owner on 2026-11-06 (race or ethnicity, sexual
+ * orientation or gender identity, disability; plural and spelling variants included). The lexicon
+ * build drops them (`build_lexicon.py --slurs drop`, the default).
  */
-export const SLUR_SHA256 = new Set<string>([
-  'e7b98c6aa5b944e0b315d350d423f895ac9e44fb84f1534b18c2572370a67b9e',
-  'daec0c235d3135fc1c60aee787f784c59c4d53b2041ff2bacd0d3bebda7246a8',
-  '9915ba2d822280f22c283df4e76584a40e0119fc58f73c5f84d4fdb04d04fa6f',
-  '8f5083e3e5c7dc8932f2bf58212f963f3a44752618c96297f82623f736c52738',
-  'c3de533e9b7fe63b79f648687a30d2861edd92fe7c3cd1f2c485e0a605367624',
-  'f59e28f8bb6499ddf0521ed7a60aeda00957aeb7ee605caf17a216f7a9a26d08',
-  '08a841e996781e9e77d30a4e4420a8f501a280b00624e6d1224bf54aaff73eba',
-  '120f6e5b4ea32f65bda68452fcfaaef06b0136e1d0e4a6f60bc3771fa0936dd6',
-  '3b1e0d7c5dd45583867e897943e37a940a7e7321022317dd3deea01963ee365e',
-  '544fc8545c8d08c5bf4b4cf3b3138adb5b407aa8316313a67fe940232a53fe14',
-  '94a877e2ce63725ecae04e85d09f50066b42e2c6a2ab3ce92aba7908e0dbd1bf',
-  '33740da8a87dc7defbdbb7d06549dd8d82a33000a25293ceb9af687eb16bef22',
-  '16ea09fc78ca83ca502cbcf2377acdf280bf18f61e259153f0868405eedab5ef',
-  '6b571f65fa6fa2c34955ef934ad74fab31fde32fe9eeac6c60da996587c73ae5',
-]);
+export const SLUR_SHA256 = new Set<string>(SLUR_LIST.words.map((x) => x.sha256));
+
+/** True when the word, or its stem before an apostrophe ("x's"), is on the slur list. */
+export const isListedSlur = (w: string): boolean => SLUR_SHA256.has(sha256(w)) || SLUR_SHA256.has(sha256(w.split("'")[0]!));
 
 export interface Hit {
   id: string;
@@ -134,23 +132,37 @@ export function analyse(items: TestItem[], lexFile: LexiconFile | LexiconFileV2,
 
 const pct = (n: number, d: number) => `${((100 * n) / d).toFixed(1)}%`;
 
-export function reportMarkdown(r: ReturnType<typeof analyse>, meta: { fixtureSha: string; lexSha: string; bigramSha: string }): string {
+/** The `slurs` block that build_lexicon.py writes to build-stats/lexicon.json. */
+export interface SlurFilterStats {
+  mode: string;
+  listed: number;
+  affected: number;
+}
+
+export function reportMarkdown(
+  r: ReturnType<typeof analyse>,
+  meta: { fixtureSha: string; lexSha: string; bigramSha: string; slurFilter?: SlurFilterStats | null },
+): string {
   const shown = r.hits.filter((h) => h.itemsTop5 > 0).sort((a, b) => b.itemsTop5 - a.itemsTop5 || a.id.localeCompare(b.id));
   const firsts = r.hits.filter((h) => h.rankInCode === 1);
   const slurs = r.hits.filter((h) => h.slur);
+  const f = meta.slurFilter;
   const row = (h: Hit) =>
     `| \`${h.mask}\` | \`${h.id}\` | ${h.slur ? 'slur' : 'other'} | ${h.code} | ${h.rankInCode} of ${h.readingsInCode} | ${h.rankInCode === 1 ? '(itself)' : `"${h.firstReading}"`} | ${h.zipf.toFixed(1)} | ${h.itemsTop5} | ${h.itemsTop1} |`;
   const head = '| Word | SHA-256 (8) | Kind | Code | Rank in code | First reading | Zipf | Items in top 5 | Items at top 1 |\n|---|---|---|---|---|---|---|---|---|';
-  return `# Offensive readings on the test set (input for decision D7)
+  const filterLine = f
+    ? `Slur filter (decision D7, ADR-data-004): \`build_lexicon.py --slurs ${f.mode}\`, ${f.affected} of the ${f.listed} words on \`scripts/slurs.sha256.json\` ${f.mode === 'drop' ? 'dropped from' : f.mode === 'down' ? 'sunk to the floor of' : 'kept in'} the lexicon (\`build-stats/lexicon.json\`).`
+    : 'Slur filter: no record in `build-stats/lexicon.json` (lexicon built without `--slurs`).';
+  return `# Offensive readings on the test set (decision D7)
 
 Generated by \`pnpm -F @ninth/eval report:offensive\` (\`src/offensive.ts\`). Do not edit by hand.
-It measures only: nothing is filtered (plan decision D7 is still open).
+It measures the lexicon as built. ${filterLine}
 
 - Blocklist: ${BLOCKLIST.name}, ${BLOCKLIST.license}, <${BLOCKLIST.url}>, \`en\` file SHA-256
   \`${BLOCKLIST.sha256.slice(0, 16)}…\`. Fetched by \`pnpm data:fetch\` into \`.cache/\` and never
   committed. It mixes identity slurs with general profanity and sexual terms, so each hit below is
   marked **slur** (race or ethnicity, sexual orientation or gender identity, disability) or
-  **other**. The plan's open question is about slurs; profanity in general should stay.
+  **other**. D7 is about slurs; profanity in general stays.
 - Words are never spelled here: first letter plus dots, and the first 8 hex digits of
   SHA-256(word) so you can check a word you have in mind (\`printf %s word | sha256sum\`).
 - Decoder: B1 ghost (shipping offline mode, bigram LM with the one-letter penalty), k = 5, letter
@@ -169,6 +181,7 @@ It measures only: nothing is filtered (plan decision D7 is still open).
 | Test items with any blocklisted word in the top 5 | ${r.itemsAny} of ${r.items} (${pct(r.itemsAny, r.items)}) |
 | Test items with a **slur** in the top 5 | ${r.itemsSlur} of ${r.items} (${pct(r.itemsSlur, r.items)}) |
 | Test items with a blocklisted word in the top-1 sentence | ${r.itemsTop1} |
+| Identity slurs on the build's drop list (\`scripts/slurs.sha256.json\`) | ${SLUR_SHA256.size} |
 
 ## Words that appeared in a top-5 suggestion
 
@@ -184,15 +197,17 @@ word at rank 2 is one press of # away from the first reading.
 ## Reading the numbers
 
 - A word that is the only reading of its code (rank "1 of 1") appears only when someone types
-  exactly its keys, so it is never an accident. ${slurs.filter((h) => h.readingsInCode === 1).length} of the ${slurs.length} slurs are like that.
+  exactly its keys, so it is never an accident. ${slurs.filter((h) => h.readingsInCode === 1).length} of the ${slurs.length} slurs in the lexicon are like that.
 - The other ${slurs.filter((h) => h.readingsInCode > 1).length} share a code with ordinary words. They are the ones that can show up by
   accident: as a lower-ranked sentence in the top 5 (${r.itemsSlur} test items here, ${pct(r.itemsSlur, r.items)}), or one or
   more presses of Next (#) away from the word the person wanted.
-- No blocklisted word reached a top-1 sentence on the test set. The test sentences are polite
+- ${r.itemsTop1 === 0 ? 'No blocklisted word reached a top-1 sentence on the test set.' : `A blocklisted word reached the top-1 sentence for ${r.itemsTop1} test items.`} The test sentences are polite
   conversation, so real use (other topics, rarer first readings) may expose more.
-- Filtering only the words marked **slur** would follow the hash-list pattern that
-  \`build_lexicon.py\` and \`test/data.test.ts\` already use for trademarks. A filtered word could
-  still be typed with "add word". General profanity (marked **other**) should stay either way.
+- The words marked **slur** are listed by hash in \`scripts/slurs.sha256.json\`; the lexicon build
+  drops them (ADR-data-004) and \`test/data.test.ts\` checks the committed lexicon by hash, as for
+  trademarks. A dropped word can still be typed on purpose: spell mode offers every letter on the
+  keys pressed, and "Add to my words" puts the word back in the person's own dictionary. General
+  profanity (marked **other**) stays.
 `;
 }
 
@@ -211,7 +226,9 @@ export function main(): number {
   const bigram = loadBigramFile();
   const r = analyse(items, lexicon.data, bigram.data, blocklistWords(buf.toString('utf8')));
   const out = join(EVAL_DIR, 'reports', 'offensive-readings.md');
-  writeFileSync(out, reportMarkdown(r, { fixtureSha, lexSha: lexicon.sha256, bigramSha: bigram.sha256 }));
+  const statsPath = join(EVAL_DIR, 'build-stats', 'lexicon.json');
+  const slurFilter = existsSync(statsPath) ? ((JSON.parse(readFileSync(statsPath, 'utf8')) as { slurs?: SlurFilterStats }).slurs ?? null) : null;
+  writeFileSync(out, reportMarkdown(r, { fixtureSha, lexSha: lexicon.sha256, bigramSha: bigram.sha256, slurFilter }));
   if (process.argv.includes('--list')) {
     // Local triage only (stdout, never written to the repo): spelled words with their hashes.
     for (const h of r.hits.sort((a, b) => a.code.localeCompare(b.code))) {

@@ -1,7 +1,10 @@
 /**
  * Spell mode, unknown keys, my words and word packs (web-ui Req 19-22): the pure parts.
  */
-import { Lexicon, encodeWord, normalize, validate, unigramModel } from '@ninth/core';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { Lexicon, encodeWord, normalize, validate, unigramModel, type LexiconFileV2 } from '@ninth/core';
 import { describe, expect, it, vi } from 'vitest';
 import { EMPTY, actionForKey, composerReducer, type ComposerAction } from '@/lib/composer';
 import { MY_WORD_BOOST, applyMyWords, buildDisplayMap, foldWord, makeMyWord, mergeMyWords, showWord, type MyWord } from '@/lib/myWords';
@@ -147,6 +150,41 @@ describe('my words (web-ui Req 21)', () => {
     expect(merged[0]).toMatchObject({ w: 'mihai', display: 'Mihai', boost: 3 });
     const m = makeMyWord('Ana', 'spelled', 2, 5);
     expect(m).toEqual({ w: 'ana', display: 'Ana', boost: 2, added: 5, source: 'spelled' });
+  });
+
+  it('Req 19.3 + 21.4 (decision D7, ADR-data-004): a slur the lexicon build drops is never suggested, but can still be spelled and added on purpose', () => {
+    // The shipped dictionary and the build's hash list. Words are recovered by trying every
+    // spelling the spell sheet offers for the listed keys, so this file never spells them, and
+    // failures name only a hash prefix.
+    const root = resolve(__dirname, '../../..');
+    const lexFile = JSON.parse(readFileSync(join(root, 'data', 'lexicon', 'en.v2.json'), 'utf8')) as LexiconFileV2;
+    const list = JSON.parse(readFileSync(join(root, 'packages', 'eval', 'scripts', 'slurs.sha256.json'), 'utf8')) as {
+      words: { sha256: string; code: string }[];
+    };
+    const hash = (w: string) => createHash('sha256').update(w).digest('hex');
+    /** Every word the spell sheet can make on these keys (one letter choice per key). */
+    const spellAll = (code: string): string[] =>
+      spellOptions(code).reduce<number[][]>((acc, o) => acc.flatMap((c) => o.map((_, j) => [...c, j])), [[]]).map((c) => spelledWord(code, c)!);
+    expect(list.words.length).toBeGreaterThan(0);
+    const lex = Lexicon.fromJSON(lexFile);
+    const found: { w: string; code: string; id: string }[] = [];
+    for (const { sha256, code } of list.words) {
+      const id = sha256.slice(0, 8);
+      let w: string | undefined;
+      for (const s of spellAll(code)) if (hash(s) === sha256) w = s;
+      expect(w !== undefined, `${id}: spell mode offers it on keys ${code}`).toBe(true);
+      expect(lex.has(w!), `${id}: not in the shipped dictionary`).toBe(false);
+      expect(lex.lookup(code).includes(w!), `${id}: not a reading of ${code}`).toBe(false);
+      found.push({ w: w!, code, id });
+    }
+    // "Add to my words" from spell mode puts each one back for this person only.
+    const mine = found.map(({ w }) => makeMyWord(w, 'spelled'));
+    applyMyWords(lex, mine.filter((m): m is MyWord => !('error' in m)));
+    for (const { w, code, id } of found) {
+      expect(lex.has(w), `${id}: known after adding`).toBe(true);
+      expect(lex.lookup(code).includes(w), `${id}: a reading of ${code} after adding`).toBe(true);
+      expect(validate([w], [code]), `${id}: passes the proof check`).toBe(true);
+    }
   });
 });
 

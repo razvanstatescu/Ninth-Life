@@ -8,6 +8,11 @@ Steps (plan section 3.2):
      with optional internal apostrophes; drop Zipf < MIN_ZIPF.
   3. Merge words that normalize to the same string (frequencies summed).
   3b. Drop the third-party trademarks listed (as hashes) in BANNED_SHA256.
+  3c. Identity slurs (decision D7, ADR-data-004), listed as hashes in slurs.sha256.json:
+     --slurs keep|down|drop   Shipped: "drop", so they are never suggested; a person can still
+                              type one on purpose with spell mode and "My words" (the web app adds
+                              any spelled word to the lexicon). "down" sets them to --min-zipf.
+     General profanity and sexual words are not on the list and stay.
   4. Drop apostrophe-less spellings of contractions ("dont", "im") when the contraction
      is at least 1.0 Zipf more frequent: they share its code and are almost always a
      misspelling of it. Real words ("its", "were", "ill", "well") are far closer in
@@ -29,7 +34,8 @@ Steps (plan section 3.2):
      Deterministic: the same v1 always gives the same bytes (test_build_lexicon.py).
 
 Usage: python packages/eval/scripts/build_lexicon.py [--top 60000] [--min-zipf 2.0]
-       [--acronyms keep|down|drop] [--junk keep|down|drop] [--scowl DIR] [--scowl-level 95]
+       [--acronyms keep|down|drop] [--junk keep|down|drop] [--slurs keep|down|drop]
+       [--slur-list FILE] [--scowl DIR] [--scowl-level 95]
        python packages/eval/scripts/build_lexicon.py --compact-only   (v2 from the existing v1, offline)
 """
 
@@ -62,6 +68,9 @@ CONTRACTION_GAP = 1.0
 # Shipped word-class filter settings (step 4b, ADR-data-002, measured in docs/architecture/data-and-eval.md). "keep" = off.
 DEFAULT_ACRONYMS = "down"
 DEFAULT_JUNK = "down"
+# Shipped slur filter (step 3c, decision D7, ADR-data-004).
+DEFAULT_SLURS = "drop"
+SLUR_LIST = Path(__file__).resolve().parent / "slurs.sha256.json"
 
 # Third-party trademarks the product must never show (.kiro/steering/trademarks.md). Stored as
 # SHA-256 of the normalized word so this file does not spell them (tm-lint scans scripts).
@@ -73,10 +82,42 @@ BANNED_SHA256 = {
 }
 
 
+def hash_listed(word: str, hashes: set[str]) -> bool:
+    """True when SHA-256 of the word, or of its stem before an apostrophe ("x's"), is in `hashes`."""
+    stem = word.split("'")[0]
+    return any(hashlib.sha256(w.encode("utf-8")).hexdigest() in hashes for w in (word, stem))
+
+
 def is_banned(word: str) -> bool:
     """True for a banned mark and its apostrophe forms ("x's")."""
-    stem = word.split("'")[0]
-    return any(hashlib.sha256(w.encode("utf-8")).hexdigest() in BANNED_SHA256 for w in (word, stem))
+    return hash_listed(word, BANNED_SHA256)
+
+
+def load_slur_hashes(path: Path = SLUR_LIST) -> set[str]:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    hashes = {e["sha256"] for e in data["words"]}
+    assert all(len(h) == 64 and all(c in "0123456789abcdef" for c in h) for h in hashes), path
+    return hashes
+
+
+def apply_slur_filter(zipf: dict[str, float], how: str, hashes: set[str], min_zipf: float, stats: dict,
+                      list_path: Path = SLUR_LIST) -> None:
+    """Step 3c, in place: drop (or sink to min_zipf) the words whose hash is listed. Stats record
+    counts and 8-digit hash prefixes only, never the words."""
+    hits = sorted(w for w in zipf if hash_listed(w, hashes)) if how != "keep" else []
+    for w in hits:
+        if how == "drop":
+            del zipf[w]
+        else:
+            zipf[w] = min_zipf
+    stats["slurs"] = {
+        "mode": how,
+        "list": f"packages/eval/scripts/{list_path.name}",
+        "list_sha256": hashlib.sha256(list_path.read_bytes()).hexdigest() if list_path.exists() else None,
+        "listed": len(hashes),
+        "affected": len(hits),
+        "affected_sha256_8": sorted(hashlib.sha256(w.encode("utf-8")).hexdigest()[:8] for w in hits),
+    }
 
 
 class Filters:
@@ -147,7 +188,8 @@ def apply_filters(zipf: dict[str, float], f: Filters, min_zipf: float, stats: di
     }
 
 
-def build(top: int, min_zipf: float, filters: Filters | None = None) -> tuple[dict, dict]:
+def build(top: int, min_zipf: float, filters: Filters | None = None, slurs: str = "keep",
+          slur_list: Path = SLUR_LIST) -> tuple[dict, dict]:
     import wordfreq
 
     version = getattr(wordfreq, "__version__", None)
@@ -183,6 +225,10 @@ def build(top: int, min_zipf: float, filters: Filters | None = None) -> tuple[di
 
     zipf = {w: math.log10(f) for w, f in freq.items()}
 
+    # Step 3c: identity slurs (D7, ADR-data-004).
+    hashes = load_slur_hashes(slur_list) if slurs != "keep" else set()
+    apply_slur_filter(zipf, slurs, hashes, min_zipf, stats, slur_list)
+
     # Step 4: apostrophe-less contraction spellings.
     best_contraction: dict[str, float] = {}
     for w, z in zipf.items():
@@ -199,6 +245,9 @@ def build(top: int, min_zipf: float, filters: Filters | None = None) -> tuple[di
     # Step 4b: word-class filters (ADR-data-002).
     filters = filters or Filters()
     apply_filters(zipf, filters, min_zipf, stats)
+    n_slurs = stats["slurs"]["affected"]
+    slur_note = "" if slurs == "keep" else (
+        f"; {n_slurs} identity slurs " + ("dropped" if slurs == "drop" else f"set to zipf {min_zipf}") + " (hash list, ADR-data-004)")
 
     groups: dict[str, list[tuple[str, float]]] = defaultdict(list)
     for w, z in zipf.items():
@@ -216,7 +265,8 @@ def build(top: int, min_zipf: float, filters: Filters | None = None) -> tuple[di
         "lang": "en",
         "source": f"wordfreq {version} top_n_list('en', {top}), zipf >= {min_zipf}, a-z plus internal apostrophe; "
         "normalized NFKD, marks stripped, lowercased; apostrophe-less contraction spellings dropped"
-        + (f"; {filters.describe()}" if filters.active else ""),
+        + (f"; {filters.describe()}" if filters.active else "")
+        + slur_note,
         "license": "CC-BY-SA-4.0",
         "codes": codes,
     }
@@ -328,6 +378,9 @@ def main() -> int:
     ap.add_argument("--acronym-signal", choices=["scowl", "novowel"], default="scowl")
     ap.add_argument("--junk", choices=["keep", "down", "drop"], default=DEFAULT_JUNK)
     ap.add_argument("--down-zipf", type=float, default=1.0)
+    ap.add_argument("--slurs", choices=["keep", "down", "drop"], default=DEFAULT_SLURS,
+                    help="identity slurs in --slur-list (ADR-data-004); keep reproduces the pre-D7 lexicon")
+    ap.add_argument("--slur-list", type=Path, default=SLUR_LIST)
     ap.add_argument("--scowl", type=Path, default=CACHE_DIR / "scowl" / "final")
     ap.add_argument("--scowl-level", type=int, default=95)
     ap.add_argument("--out", type=Path, default=DATA_DIR / "lexicon" / "en.v1.json")
@@ -342,7 +395,7 @@ def main() -> int:
         return 0
 
     filters = Filters(args.acronyms, args.junk, args.down_zipf, args.acronym_signal, args.scowl, args.scowl_level)
-    lex, stats = build(args.top, args.min_zipf, filters)
+    lex, stats = build(args.top, args.min_zipf, filters, args.slurs, args.slur_list)
     write_json(args.out, lex, one_key_per_line="codes")
     write_compact_from(args.out, args.v2_out)
     stats.update(collision_stats(lex))

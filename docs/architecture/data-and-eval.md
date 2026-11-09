@@ -58,8 +58,8 @@ surviving ids from the filtered file and the turn text and split from the clean 
 
 | File | Raw | gzip -9 | brotli 11 | Contents |
 |---|---|---|---|---|
-| `data/lexicon/en.v1.json` | 1,558,083 B | 402,255 B | 328,257 B | 58,906 words, 48,140 codes |
-| `data/lexicon/en.v2.json` | 483,570 B | 230,120 B | 193,816 B | the same 58,906 words in the compact v2 layout, codes derived on load (ADR-data-003); what the app ships |
+| `data/lexicon/en.v1.json` | 1,557,870 B | 402,220 B | 328,247 B | 58,892 words, 48,133 codes |
+| `data/lexicon/en.v2.json` | 483,539 B | 230,101 B | 194,071 B | the same 58,892 words in the compact v2 layout, codes derived on load (ADR-data-003); what the app ships |
 | `data/lexicon/en.bigram.v1.json` | 339,148 B | 103,418 B | 85,535 B | 19,237 pairs over 2,973 contexts |
 | `data/packs/core-en.json` | 5,564 B | | | 36 core words, 198 phrases |
 | `packages/eval/fixtures/test.v1.jsonl` | 164,854 B | | | 866 test items, 4,890 words |
@@ -80,10 +80,16 @@ entries were removed because they name a third-party phone brand (a mark and its
 which the product must never show (`.kiro/steering/trademarks.md`). The script keeps the banned
 list as SHA-256 hashes, so it never spells the marks.
 
+**Identity slurs (step 3c, ADR-data-004, plan D7).** `--slurs drop` (the default) leaves out the
+14 words, and their possessives, whose SHA-256 is in `scripts/slurs.sha256.json`: slurs on race or
+ethnicity, sexual orientation or gender identity, and disability, chosen from the LDNOOBW list.
+General profanity and sexual words stay. A dropped word can still be typed on purpose with spell
+mode and "Add to my words". `--slurs keep` rebuilds the lexicon from before the filter.
+
 **Word-class down-weighting (step 4b, ADR-data-002, plan F2).** SCOWL 2020.12.07 (size 95, all
-spellings and categories) keeps case, so it tells apart dictionary words (46,725), names and other
-capitalized words (6,824), words it lists only in ALL CAPS, i.e. acronyms (962: bbc, nfl, dvd, btw),
-and words in no SCOWL list (4,369: lol, xbox, goin, https). The last two classes lose 1.0 Zipf
+spellings and categories) keeps case, so it tells apart dictionary words (46,713), names and other
+capitalized words (6,823), words it lists only in ALL CAPS, i.e. acronyms (962: bbc, nfl, dvd, btw),
+and words in no SCOWL list (4,368: lol, xbox, goin, https). The last two classes lose 1.0 Zipf
 (floored at 2.0): they sink below the other readings of their code but stay typeable. One-letter
 words are left to core's language-model penalty (ADR-core-002). Dropping instead of down-weighting
 made test items unreachable; the measurements are in section 4.
@@ -91,9 +97,9 @@ Ambiguity, measured on the shipped file:
 
 | Statistic | Value |
 |---|---|
-| Codes with more than one word | 5,144 of 48,140 |
-| Word types sharing a code with another word | 15,910 of 58,906 (27.0%) |
-| Word types that are not the first reading of their code | 10,766 (18.3%) |
+| Codes with more than one word | 5,143 of 48,133 |
+| Word types sharing a code with another word | 15,902 of 58,892 (27.0%) |
+| Word types that are not the first reading of their code | 10,759 (18.3%) |
 | Running text whose word is the first reading (frequency-weighted) | 94.31% (94.15% before ADR-data-002) |
 | Largest code | 26 words (`727`: par, rap, pcs, sap, pas, ...) |
 | Examples | 63: of, me · 46: in, i'm, go · 43: he, if, i'd · 4663: good, home, gone, hood · 5299: jazz, lazy · 4768: isn't |
@@ -192,8 +198,10 @@ the fetch tool returned 503). Re-check it once from a browser.
   notice-only terms (WordNet, Ispell, VarCon, UKACD). Compatible with BY-SA. No SCOWL list is
   committed or shipped; the lexicon's words and frequencies still come from wordfreq. Credited in
   `data/NOTICE.md`.
-- **LDNOOBW blocklist** (measurement only): CC BY 4.0. Fetched into `.cache/`, never committed;
-  the report shows each listed word only as its first letter and a SHA-256 prefix.
+- **LDNOOBW blocklist** (measurement, and the source of the slur selection): CC BY 4.0. Fetched
+  into `.cache/`, never committed; the report shows each listed word only as its first letter and a
+  SHA-256 prefix, and the 14 slurs the build drops are committed only as hashes
+  (`scripts/slurs.sha256.json`, ADR-data-004). Credited in `data/NOTICE.md`.
 - **Fixture.** `packages/eval/fixtures/test.v1.jsonl` quotes the test splits verbatim. It is not
   under `data/` and not MIT: `fixtures/NOTICE.md` keeps the CC BY attribution.
 - **Never committed:** anything NonCommercial (DailyDialog, ARASAAC), and `lm_test_switch.txt`
@@ -264,9 +272,11 @@ Shipped: 741 / 843 items (+1 top-1, +2 top-5), no new unreachable items. The gai
 metrics are small because the test sentences seldom need a rare reading; the junk column is
 what a person sees in the other four suggestions.
 
-**Offensive readings (decision D7, open).** `reports/offensive-readings.md`: 14 identity slurs
-from the LDNOOBW list are in the lexicon, 7 share a code with ordinary words, and one appears
-among the B1 top 5 for 8 of 866 test items (0.9%), never at top 1. Nothing is filtered.
+**Offensive readings (decision D7, ADR-data-004).** `reports/offensive-readings.md`: before the
+filter, 14 identity slurs from the LDNOOBW list were in the lexicon, 7 shared a code with ordinary
+words, and one appeared among the B1 top 5 for 8 of 866 test items (0.9%), never at top 1.
+Sinking them to the Zipf floor ("down") still left 6 items; dropping them leaves 0, with B0 and B1
+unchanged on every metric. General profanity stays (4 items show one such word in the top 5).
 
 ### Model runs (B2–B4, decision D5)
 
@@ -375,11 +385,9 @@ B3 in initials mode (unconstrained, validated), with B4 as the shipped-prompt re
 1. Turk dialogues license: CC BY 4.0 (page) or CC BY-ND 3.0 (readme)? (section 3)
 2. Lexicon size: keep 60k (1.56 MB raw, 328 KB brotli) or cut to ~40k? Or change the wire
    format? (section 2)
-3. wordfreq's top 60k includes some slurs as low-ranked readings of common codes (for example on
-   key 5453, after "like"). Should the lexicon filter a short list of slurs (plan D7)? Profanity in
-   general should stay, because people swear. Data: `packages/eval/reports/offensive-readings.md`
-   (a slur in the top 5 for 0.9% of test items; 7 of 14 slurs share a code with ordinary words).
-   The slur marks in `src/offensive.ts` are one person's judgment; review them before deciding.
+3. Slurs (plan D7) are decided: the build drops 14 (ADR-data-004). Still open: LDNOOBW misses some
+   identity slurs (about 20 candidates are in the lexicon, several also ordinary words in other
+   senses). Adding one is a hash in `scripts/slurs.sha256.json` and a rebuild; owner C to judge.
 4. Universal Core list and license: re-read the UNC page from a browser.
 5. Default model (D5): run the commands in section 4 "Model runs" when the key arrives. Haiku 4.5 on
    the full set needs `--yes` (~$2.40). Initials mode: build it only if B3 in initials mode reaches

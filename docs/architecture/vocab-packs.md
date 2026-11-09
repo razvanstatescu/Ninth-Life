@@ -7,7 +7,7 @@ Code: `packages/web/lib/{spell,myWords,vocabPack}.ts`, `components/{SpellSheet,M
 
 ## Why
 
-The offline dictionary has 58,906 words, but no names: "Mihai" (keys 64424) has no dictionary word,
+The offline dictionary has 58,892 words, but no names: "Mihai" (keys 64424) has no dictionary word,
 so ghost mode alone could never type it. Spell mode lets the person fix the exact letters of one
 word (only the letters on the keys they pressed, so the proof check still holds), and "My words"
 keeps it for next time.

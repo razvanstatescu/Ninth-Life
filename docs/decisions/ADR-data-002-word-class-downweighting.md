@@ -2,7 +2,7 @@
 
 - Status: accepted
 - Date: 2026-11-06
-- Plan item: F2 (`docs/plan/01-implementation-plan.md`); open decision D7 is **not** decided here
+- Plan item: F2 (`docs/plan/01-implementation-plan.md`); open decision D7 is **not** decided here (see ADR-data-004)
 - Contract: `docs/architecture/contracts.md` §2 (`data/lexicon/en.v1.json`): same shape, new build step
 
 ## Context

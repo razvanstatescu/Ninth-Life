@@ -89,6 +89,11 @@ numbers reflect the effort a person would spend.
     same words and `zipfX10`, grouped by `zipfX10` highest first, in the order JavaScript reads v1 inside a group, with
     `derived_from.sha256` naming the v1 file; it SHALL be byte-identical for the same v1, AND the committed v2 SHALL be
     what the builder derives from the committed v1.
+5.10 THE lexicon builder SHALL by default leave out the words, and their possessives, whose SHA-256 is in
+    `packages/eval/scripts/slurs.sha256.json` (identity slurs, decision D7, ADR-data-004), SHALL record the mode, the
+    list's SHA-256, the counts and 8-digit hash prefixes (never the words) in `build-stats/lexicon.json`, and SHALL
+    rebuild the previous lexicon byte-for-byte with `--slurs keep`. General profanity SHALL NOT be on the list. A left-out
+    word SHALL stay typeable through spell mode and "Add to my words" (web-ui Req 19, 21).
 
 ## Requirement 6: Determinism
 
@@ -107,7 +112,7 @@ suggestion, so that we decide with data and without the report spreading the wor
 7.1 WHEN `pnpm -F @ninth/eval report:offensive` is run, THE harness SHALL write `reports/offensive-readings.md` counting, on the frozen test set with B1 at k = 5, the items whose top-5 sentences contain a blocklisted word that is not in the gold sentence, and each listed word's code and rank in its code.
 7.2 THE report SHALL NOT spell any blocklisted word: each SHALL be shown as its first letter plus dots and a SHA-256 prefix, including when it is another word's first reading.
 7.3 THE blocklist SHALL be a public list with a compatible license, fetched with a pinned SHA-256 into the gitignored cache and never committed; the slur marks SHALL be stored as SHA-256 hashes.
-7.4 THE report SHALL only measure; it SHALL NOT change the lexicon.
+7.4 THE report SHALL only measure; it SHALL NOT change the lexicon. (The lexicon build does the filtering, Req 5.10; the report reads its slur marks from the same hash list.)
 
 ## Requirement 8: Model runs (B2 to B4 against the Anthropic API)
 

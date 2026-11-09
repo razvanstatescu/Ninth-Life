@@ -12,7 +12,18 @@ from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from build_lexicon import Filters, apply_filters, compact_lexicon, js_code_order, write_compact, write_compact_from  # noqa: E402
+from build_lexicon import (  # noqa: E402
+    SLUR_LIST,
+    Filters,
+    apply_filters,
+    apply_slur_filter,
+    compact_lexicon,
+    hash_listed,
+    js_code_order,
+    load_slur_hashes,
+    write_compact,
+    write_compact_from,
+)
 from ninth_common import DATA_DIR, encode_word  # noqa: E402
 
 V1 = DATA_DIR / "lexicon" / "en.v1.json"
@@ -86,6 +97,55 @@ class FilterTest(unittest.TestCase):
                 s = scowl.get(w, set())
                 if len(w.replace("'", "")) == 1 or "lower" in s or (s and s != {"caps"}):
                     self.assertEqual(after[w], before[w], w)
+
+
+def _h(w: str) -> str:
+    return hashlib.sha256(w.encode("utf-8")).hexdigest()
+
+
+class SlurFilterTest(unittest.TestCase):
+    """Decision D7, ADR-data-004: words on the hash list are dropped (or sunk), nothing else moves.
+    Stand-in words ("zork", "blarg") play the listed words, so this file spells no slur."""
+
+    LIST = {_h("zork"), _h("blarg")}
+
+    def run_filter(self, how: str):
+        z = {"zork": 3.0, "zork's": 2.4, "zorkish": 2.6, "blarg": 2.2, "water": 5.0, "like": 6.0}
+        stats: dict = {}
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "slurs.sha256.json"
+            path.write_text(json.dumps({"words": [{"sha256": h, "code": "0"} for h in sorted(self.LIST)]}), encoding="utf-8")
+            self.assertEqual(load_slur_hashes(path), self.LIST)
+            apply_slur_filter(z, how, self.LIST, 2.0, stats, path)
+        return z, stats["slurs"]
+
+    def test_req_5_10_drop_removes_listed_words_and_their_possessives_only(self):
+        z, s = self.run_filter("drop")
+        self.assertEqual(z, {"zorkish": 2.6, "water": 5.0, "like": 6.0})
+        self.assertEqual((s["mode"], s["listed"], s["affected"]), ("drop", 2, 3))
+        # Stats name hash prefixes, never the words.
+        self.assertEqual(sorted(s["affected_sha256_8"]), sorted(_h(w)[:8] for w in ("zork", "zork's", "blarg")))
+        self.assertNotIn("zork", json.dumps(s))
+
+    def test_req_5_10_down_sinks_to_the_floor_and_keep_changes_nothing(self):
+        z, s = self.run_filter("down")
+        self.assertEqual(z, {"zork": 2.0, "zork's": 2.0, "zorkish": 2.6, "blarg": 2.0, "water": 5.0, "like": 6.0})
+        z, s = self.run_filter("keep")
+        self.assertEqual(z["zork"], 3.0)
+        self.assertEqual(s["affected"], 0)
+
+    def test_req_5_10_shipped_list_is_hashes_with_codes(self):
+        data = json.loads(SLUR_LIST.read_text(encoding="utf-8"))
+        self.assertGreater(len(data["words"]), 0)
+        for e in data["words"]:
+            self.assertRegex(e["sha256"], r"^[0-9a-f]{64}$")
+            self.assertRegex(e["code"], r"^[2-9]+$")
+
+    @unittest.skipUnless(V1.exists(), "data/lexicon files not built")
+    def test_req_5_10_shipped_lexicon_has_no_listed_word(self):
+        hashes = load_slur_hashes()
+        words = [w for v in json.loads(V1.read_text(encoding="utf-8"))["codes"].values() for w, _ in v]
+        self.assertEqual([_h(w)[:8] for w in words if hash_listed(w, hashes)], [])
 
 
 class CompactTest(unittest.TestCase):
