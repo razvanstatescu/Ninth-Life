@@ -102,6 +102,14 @@ Reading it:
 **Decision for now: `MiniMax-M3`, `DECODE_TIMEOUT_MS=2000`** (same top-1 as 3,000 ms in this
 sample, and late reorders end a second sooner). Revisit Flash if MiniMax speeds it up.
 
+**Re-run on the merged code (2026-11-09, prompt v6 + slur-filtered lexicon, same 200 items):**
+B4 top-1 96.5% with no deadline, **96.0% at the 2,000 ms deadline** (93.4% before), top-5 99.5%;
+offline B1 unchanged at 85.4%. Latency p50 908 ms, p90 2,590 ms, but a heavier tail this run (p95
+5,566 ms, one call 17.8 s, one retry), so only 88% of calls finished within 2 s; the gain still
+holds because the misses fall back to the ghost answer. Output 31 tokens per call, $0.14 per
+1,000 decodes. `packages/eval/RESULTS.md` has the full table. M3 now matches Flash's no-deadline
+quality at M3's speed, so the M3 decision stands.
+
 ## Prompt experiments (2026-11-09, MiniMax-M3, B4, letter mode)
 
 Question: does a prompt tuned for M3 close the gap to Flash? Each variant is a full 200-item B4 run

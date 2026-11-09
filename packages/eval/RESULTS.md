@@ -74,16 +74,16 @@ Written by `pnpm -F @ninth/eval llm --model MiniMax-M3 --limit 200`; the next ru
 
 - Model: `MiniMax-M3` (`minimax-m3`), MiniMax Anthropic-compatible API, `anthropic-version: 2023-06-01`
 - Run: 2026-11-09 (UTC), seeded sample of 200 items (`--limit 200`, seed 9), k = 5, mode = letter, concurrency 4
-- This run: 292 requests sent, 306 replies from the response cache, 0 retries, $0.10 spent
+- This run: 392 requests sent, 206 replies from the response cache, 1 retries, $0.07 spent
 - B0 and B1 rows are the offline baselines on the same items. Tokens and cost come from each reply's `usage` at `packages/decoder/src/models.ts` list prices; "In tok/call" counts uncached, cache-read and cache-write input. Latency is the recorded time of each successful API call (a cached reply keeps its original time); "Calls > 1.2 s" would have fallen back to ghost beams at the route's deadline.
 
 | Config | Word acc | Sent top-1 | Sent top-5 | KSR | Invalid pre-validator | p50 ms | p95 ms | Calls > 1.2 s | Calls | In tok/call | Out tok/call | Cache-read tok/call | $/1k |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| B0 dict | 90.8% | 62.0% | 92.5% | -1.4% | n/a | 0.08 | 0.35 | n/a |  |  |  |  | 0 |
-| B1 ghost | 96.5% | 84.5% | 98.0% | 0.0% | n/a | 0.07 | 0.38 | n/a |  |  |  |  | 0 |
-| B2 LLM raw | 29.1% | 4.5% | 5.5% | -16.5% | 97.0% | 1004.11 | 3284.44 | 29.5% | 200 | 1,290 | 37 | 390 | $0.339 |
-| B3 LLM+val | 91.2% | 5.5% | 5.5% | -1.6% | 97.0% | 1004.11 | 3284.44 | 29.5% | 200 | 1,290 | 37 | 390 | $0.339 |
-| B4 lattice+val | 98.3% | 93.5% | 98.0% | 0.3% | 0.0% | 898.51 | 2618.51 | 24.2% | 198 | 1,369 | 49 | 494 | $0.348 |
+| B0 dict | 90.8% | 62.0% | 92.5% | -1.4% | n/a | 0.07 | 0.31 | n/a |  |  |  |  | 0 |
+| B1 ghost | 96.5% | 84.5% | 98.0% | 0.0% | n/a | 0.07 | 0.37 | n/a |  |  |  |  | 0 |
+| B2 LLM raw | 28.6% | 3.5% | 5.5% | -17.2% | 96.3% | 921.25 | 1726.47 | 19.0% | 200 | 1,370 | 33 | 877 | $0.241 |
+| B3 LLM+val | 91.0% | 4.5% | 5.5% | -1.7% | 96.3% | 921.25 | 1726.47 | 19.0% | 200 | 1,370 | 33 | 877 | $0.241 |
+| B4 lattice+val | 98.9% | 95.5% | 98.5% | 0.5% | 0.5% | 907.05 | 5565.88 | 24.8% | 198 | 1,450 | 31 | 1,381 | $0.139 |
 
 | Config | Source | Items | Word acc | Sent top-1 | Sent top-5 |
 |---|---|---|---|---|---|
@@ -91,16 +91,16 @@ Written by `pnpm -F @ninth/eval llm --model MiniMax-M3 --limit 200`; the next ru
 | B0 dict | turk | 66 | 92.3% | 59.1% | 89.4% |
 | B1 ghost | aac | 134 | 96.9% | 88.1% | 97.8% |
 | B1 ghost | turk | 66 | 96.0% | 77.3% | 98.5% |
-| B2 LLM raw | aac | 134 | 34.8% | 4.5% | 6.0% |
-| B2 LLM raw | turk | 66 | 22.0% | 4.5% | 4.5% |
-| B3 LLM+val | aac | 134 | 90.4% | 6.0% | 6.0% |
-| B3 LLM+val | turk | 66 | 92.3% | 4.5% | 4.5% |
-| B4 lattice+val | aac | 134 | 98.3% | 94.0% | 98.5% |
-| B4 lattice+val | turk | 66 | 98.3% | 92.4% | 97.0% |
+| B2 LLM raw | aac | 134 | 37.6% | 4.5% | 7.5% |
+| B2 LLM raw | turk | 66 | 17.2% | 1.5% | 1.5% |
+| B3 LLM+val | aac | 134 | 90.0% | 6.0% | 7.5% |
+| B3 LLM+val | turk | 66 | 92.3% | 1.5% | 1.5% |
+| B4 lattice+val | aac | 134 | 98.7% | 94.8% | 98.5% |
+| B4 lattice+val | turk | 66 | 99.2% | 97.0% | 98.5% |
 
-- B2 LLM raw: 200 calls, $0.07, 0 refusals, 0 unparseable replies
-- B3 LLM+val: 200 calls, $0.07, 0 refusals, 0 unparseable replies
-- B4 lattice+val: 198 calls, $0.07, 0 refusals, 0 unparseable replies, 0 answered from ghost beams only, 2 not sent (a slot with no lexicon word, as in the app)
+- B2 LLM raw: 200 calls, $0.05, 0 refusals, 0 unparseable replies
+- B3 LLM+val: 200 calls, $0.05, 0 refusals, 0 unparseable replies
+- B4 lattice+val: 198 calls, $0.03, 0 refusals, 0 unparseable replies, 0 answered from ghost beams only, 2 not sent (a slot with no lexicon word, as in the app)
 <!-- /llm-run:MiniMax-M3:letter -->
 
 <!-- llm-run:MiniMax-M3.1-Flash:letter -->
