@@ -94,6 +94,9 @@ before). One run in three was at 51 ms, so treat 50 ms as met at the median, not
 2. **The first visit costs about 0.6 MB, not 1.8 MB.** The worker downloads 76 KB of its own (the
    HTML for `/` and `/about`, the two latin fonts and small icons, which carry a content revision and
    are fetched with `cache: 'reload'`); the dictionary is taken from the HTTP cache.
+   Since F12 (2026-11-09) the worker also precaches `/welcome`: one more entry, its HTML, 40 KB raw
+   and 8 KB gzip (27 to 28 entries, upper bound 537 to 545 KB gzip, measured from `public/sw.js` after
+   `pnpm -F @ninth/web build`). Its JS chunk, CSS, fonts and icons were already precached.
 3. **The dictionary is ready about 2.4 s sooner on Slow 4G** (5.7 s): one round trip instead of
    three, and 173 KB less to download.
 4. **No key press waits for an index.** The slow 5th press of "kitchen" (578 ms) is now 27 ms. In

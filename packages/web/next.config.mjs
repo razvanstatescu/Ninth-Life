@@ -99,7 +99,7 @@ const withSerwist = withSerwistInit({
   disable: process.env.NODE_ENV === 'development',
   cacheOnNavigation: true,
   reloadOnOnline: false, // never reload under someone mid-sentence
-  additionalPrecacheEntries: [{ url: '/', revision: rev }, { url: '/about', revision: rev }, ...publicEntries()],
+  additionalPrecacheEntries: [{ url: '/', revision: rev }, { url: '/about', revision: rev }, { url: '/welcome', revision: rev }, ...publicEntries()],
   manifestTransforms: [async (entries) => ({ manifest: entries.filter((e) => !UNUSED_CHUNK.test(e.url)), warnings: [] })],
   // The lexicon is about 0.5 MB; precache it whole so ghost mode works offline from the first visit.
   maximumFileSizeToCacheInBytes: 16 * 1024 * 1024,

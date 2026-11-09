@@ -115,7 +115,7 @@ so AACText numbers are optimistic. Report Turk (79.3% top-1) alongside.
 | F9 | Lexicon parse is 108.6 ms on desktop and 457 ms on a Moto G-class profile (target < 100 ms desktop); first load is 687–692 KB gzip against a 700 KB budget | A, B | Proposals in `docs/testing/performance.md`: parallel data fetch, idle-time trie build, faster `fromJSON`, compact format, trim precache — **done Nov 6: first load 530 KB, desktop parse 56 ms, slowest key 43 ms on Moto profile (ADR-data-003)** |
 | F10 | Selected sentence border is ember on Night (second ember next to Speak) | design | Design-system call: use moon/ink for the selected border |
 | F11 | Choosing Keyboard/Touch by switch turns scanning off with no way back by switch | B | Add a confirm step — **done Nov 6** |
-| F12 | Link to `/welcome` from the app footer; precache `/welcome` | B | Small |
+| F12 | Link to `/welcome` from the app footer; precache `/welcome` | B | **done Nov 9**: "How Ninth Life works" in the footer on `/` and `/about`; `/welcome` precached (+1 entry, +8 KB gzip; `docs/testing/performance.md`) |
 | F14 | Type words not in the dictionary (spell mode), My words, word pack import/export | B | **done Nov 6** (web-ui Req 19-22, `docs/architecture/vocab-packs.md`) |
 | F13 | Keypad labels changed to "4 GHI, G H I" to pass WCAG 2.5.3 (label in name) | — | done Nov 6 |
 
