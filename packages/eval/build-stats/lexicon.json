@@ -7,6 +7,29 @@
   "rejected_low_zipf": 0,
   "rejected_trademark": 2,
   "merged_after_normalize": 137,
+  "slurs": {
+    "mode": "drop",
+    "list": "packages/eval/scripts/slurs.sha256.json",
+    "list_sha256": "0c908bef1649dc2990357efe69b0f65080284739cf78e1815acb174324aedf4b",
+    "listed": 14,
+    "affected": 14,
+    "affected_sha256_8": [
+      "08a841e9",
+      "120f6e5b",
+      "16ea09fc",
+      "33740da8",
+      "3b1e0d7c",
+      "544fc854",
+      "6b571f65",
+      "8f5083e3",
+      "94a877e2",
+      "9915ba2d",
+      "c3de533e",
+      "daec0c23",
+      "e7b98c6a",
+      "f59e28f8"
+    ]
+  },
   "dropped_bare_contractions": [
     "aint",
     "alzheimers",
@@ -77,12 +100,12 @@
     },
     "word_classes": {
       "acronym": 962,
-      "dict": 46725,
-      "none": 4369,
-      "proper": 6824
+      "dict": 46713,
+      "none": 4368,
+      "proper": 6823
     },
     "acronyms_affected": 962,
-    "junk_affected": 4369,
+    "junk_affected": 4368,
     "acronym_examples": [
       "bbc",
       "nfl",
@@ -138,13 +161,13 @@
       "messi"
     ]
   },
-  "words": 58906,
-  "codes": 48140,
-  "ambiguous_codes": 5144,
-  "word_types_sharing_a_code": 15910,
-  "pct_word_types_sharing_a_code": 27.01,
-  "word_types_not_first_in_code": 10766,
-  "pct_word_types_not_first_in_code": 18.28,
+  "words": 58892,
+  "codes": 48133,
+  "ambiguous_codes": 5143,
+  "word_types_sharing_a_code": 15902,
+  "pct_word_types_sharing_a_code": 27.0,
+  "word_types_not_first_in_code": 10759,
+  "pct_word_types_not_first_in_code": 18.27,
   "token_weighted_pct_first_in_code": 94.31,
   "max_words_per_code": 26,
   "largest_codes": {
@@ -241,7 +264,13 @@
     ]
   },
   "file": "data/lexicon/en.v1.json",
-  "raw_bytes": 1558083,
-  "gzip9_bytes": 402255,
-  "brotli11_bytes": 328257
+  "raw_bytes": 1557870,
+  "gzip9_bytes": 402220,
+  "brotli11_bytes": 328247,
+  "v2": {
+    "file": "data/lexicon/en.v2.json",
+    "raw_bytes": 483539,
+    "gzip9_bytes": 230101,
+    "brotli11_bytes": 194071
+  }
 }

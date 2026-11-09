@@ -119,7 +119,7 @@ so AACText numbers are optimistic. Report Turk (79.3% top-1) alongside.
 | F14 | Type words not in the dictionary (spell mode), My words, word pack import/export | B | **done Nov 6** (web-ui Req 19-22, `docs/architecture/vocab-packs.md`) |
 | F13 | Keypad labels changed to "4 GHI, G H I" to pass WCAG 2.5.3 (label in name) | — | done Nov 6 |
 
-D7 data: `packages/eval/reports/offensive-readings.md` — a slur appears in the top 5 for 8 of 866 test items (0.9%), never at top 1. Nothing is filtered yet.
+D7 data: `packages/eval/reports/offensive-readings.md` — before the filter a slur appeared in the top 5 for 8 of 866 test items (0.9%), never at top 1. **Decided Nov 9 (ADR-data-004):** the build drops the 14 listed slurs, now 0 of 866; still typeable with spell mode and "Add to my words". Follow-up for C: LDNOOBW misses some slurs (about 20 candidates in the lexicon); adding one is a hash and a rebuild.
 
 ## Working agreements
 
@@ -139,7 +139,7 @@ D7 data: `packages/eval/reports/offensive-readings.md` — a slur appears in the
 | D4 | Did anyone register for Kiroween 2025? | Ask the team | all |
 | D5 | Default LLM: Haiku 5.5 (code default, `claude-haiku-5-5`, 10x cheaper, caching works) or Haiku 4.5 (`DECODE_MODEL=claude-haiku-4-5`) | Decide at M3 from B3/B4 eval | A, C |
 | D6 | Turk dialogues license: web page says CC BY 4.0, download readme says CC BY-ND 3.0 | Ask Keith Vertanen; if ND, rebuild bigrams with `--no-turk` (perplexity 101 → 111) | C |
-| D7 | Filter offensive words out of suggestions (wordfreq ranks some as low readings of common codes) | Recommended yes: a short blocklist applied at lexicon build, words still typeable via "add word". Data: `packages/eval/reports/offensive-readings.md` (slur in the top 5 for 0.9% of test items) | C |
+| D7 | Filter offensive words out of suggestions (wordfreq ranks some as low readings of common codes) | **Decided:** the lexicon build drops the 14 identity slurs on a hash list (`build_lexicon.py --slurs drop`); general profanity stays; a dropped word can still be spelled and added with "Add to my words". Slur in the top 5: 8 of 866 test items → 0; B0/B1 unchanged (ADR-data-004, `packages/eval/reports/offensive-readings.md`) | C |
 | D8 | Keep diacritics and capitals for display (ro "mâine", names "Ana") | Add optional display spelling to `LexiconFile` before ro/es packs | A, C |
 | D9 | Production origin | Same origin as the app (the route allows its own host); add preview/custom domains via `ALLOWED_ORIGINS` | A |
 | D10 | Anthropic account setup | **Decided:** a dedicated Console workspace for the key, monthly spend limit $40 (the hard cap), WAF rule 10/60 s per IP (ADR-001) | A |

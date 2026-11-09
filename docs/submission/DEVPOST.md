@@ -103,7 +103,7 @@ AAC, write: "Not tested with people who use AAC yet." Never present feedback as 
   formatter and the switch-scanning reducer, with property-based tests named by requirement.
 - **@ninth/decoder**: one route that calls Anthropic's Claude API with a lattice-constrained prompt, validates every
   candidate, and falls back to ghost mode on any error or after 1,500 ms; a kill switch and a spend limit keep it free.
-- **Data:** a 58,906-word English lexicon and word-pair model built from open data (wordfreq, AACText, Turk dialogues),
+- **Data:** a 58,892-word English lexicon and word-pair model built from open data (wordfreq, AACText, Turk dialogues),
   CC BY-SA 4.0 with a NOTICE.
 - **Kiro:** specs with EARS requirements, steering, hooks, custom agents, MCP and a custom power.
   See the Kiro write-up: [KIRO_WRITEUP link]. [Fill only from KIRO_WRITEUP.md once its TODOs are evidence.]

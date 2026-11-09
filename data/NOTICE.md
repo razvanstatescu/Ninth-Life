@@ -6,7 +6,7 @@ them; changes are described per file. How to rebuild them: `docs/architecture/da
 
 | File | Built by | Derived from |
 |---|---|---|
-| `lexicon/en.v1.json` | `packages/eval/scripts/build_lexicon.py` | wordfreq 3.1.1; SCOWL 2020.12.07 used only to classify words (no SCOWL list included) |
+| `lexicon/en.v1.json` | `packages/eval/scripts/build_lexicon.py` | wordfreq 3.1.1; SCOWL 2020.12.07 used only to classify words (no SCOWL list included); LDNOOBW used only to choose the identity slurs left out (no LDNOOBW list included) |
 | `lexicon/en.v2.json` | `packages/eval/scripts/build_lexicon.py` (from `en.v1.json`) | the same words and frequencies as `en.v1.json` in a compact layout without codes (ADR-data-003); this is the file the web app ships |
 | `lexicon/en.bigram.v1.json` | `packages/eval/scripts/build_bigrams.py` | AACText "Imagination of Crowds" train split; Turk dialogues train split; unigram from `en.v1.json` |
 | `packs/core-en.json` | `packages/eval/scripts/build_pack.py` | Universal Core vocabulary (36 words); AACText train split (phrases) |
@@ -26,7 +26,8 @@ issue on derived lists: treat ShareAlike as applying).
 combining marks removed, lowercased, curly apostrophes folded); kept only a-z words with
 internal apostrophes; merged words that normalize to the same string; removed
 apostrophe-less spellings of contractions ("dont", "im") that are at least 1.0 Zipf rarer than
-the contraction; removed two entries naming a third-party brand; lowered by 1.0 Zipf (floor 2.0)
+the contraction; removed two entries naming a third-party brand; removed 14 identity slurs listed
+by SHA-256 in `packages/eval/scripts/slurs.sha256.json` (ADR-data-004); lowered by 1.0 Zipf (floor 2.0)
 the words that SCOWL lists only in capitals (acronyms) or not at all; grouped by 9-key code;
 stored Zipf × 10 rounded to an integer.
 
@@ -75,6 +76,17 @@ Copyright 1997 Princeton University; Ispell, Copyright 1993 Geoff Kuenning; VarC
 2000-2016 Kevin Atkinson and 2016 Benjamin Titze; UK Advanced Cryptics Dictionary, Copyright
 J Ross Beresford 1993-1999). Full text: `Copyright` in the SCOWL archive (fetched to
 `packages/eval/.cache/scowl/Copyright` by `pnpm -F @ninth/eval data:fetch`).
+
+## LDNOOBW English list (selection of words removed from `lexicon/en.v1.json`)
+
+"List of Dirty, Naughty, Obscene, and Otherwise Bad Words", English file, by the LDNOOBW project
+contributors, <https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words>.
+Licensed **CC BY 4.0** (<https://creativecommons.org/licenses/by/4.0/>).
+No part of the list is included in this repository: `pnpm -F @ninth/eval data:fetch` downloads it
+into `packages/eval/.cache/ldnoobw/` (pinned by SHA-256) for the offensive-readings report. The
+words on it that are in the lexicon were reviewed by hand, and the 14 identity slurs among them
+are recorded only as SHA-256 hashes (`packages/eval/scripts/slurs.sha256.json`), which the lexicon
+build leaves out. General profanity on the list is kept.
 
 ## AACText "Imagination of Crowds" corpus (`lexicon/en.bigram.v1.json`, `packs/core-en.json`)
 

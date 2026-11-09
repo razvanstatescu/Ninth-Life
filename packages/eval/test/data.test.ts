@@ -4,8 +4,9 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { bigramModel, encodeWord, Lexicon, normalize, type BigramFile, type LexiconFile } from '@ninth/core';
+import { bigramModel, encodeWord, Lexicon, normalize, type BigramFile, type LexiconFile, type LexiconFileV2 } from '@ninth/core';
 import { PATHS, REPO_ROOT, sha256 } from '../src/fixture';
+import { isListedSlur, SLUR_LIST } from '../src/offensive';
 
 const lexFile = JSON.parse(readFileSync(PATHS.lexicon, 'utf8')) as LexiconFile;
 const bigFile = JSON.parse(readFileSync(PATHS.bigram, 'utf8')) as BigramFile;
@@ -58,6 +59,28 @@ describe('data/lexicon/en.v1.json (LexiconFile)', () => {
       .map(([w]) => w)
       .filter((w) => banned.has(sha256(w)) || banned.has(sha256(w.split("'")[0]!)));
     expect(hits).toEqual([]);
+  });
+
+  it('Req 5.10 contains no identity slur from the D7 list (or its possessive), checked by hash, in v1 or the shipped v2', () => {
+    // scripts/slurs.sha256.json, the list build_lexicon.py --slurs drop uses (ADR-data-004).
+    expect(SLUR_LIST.words.length).toBeGreaterThan(0);
+    for (const { sha256: h, code } of SLUR_LIST.words) {
+      expect(h).toMatch(/^[0-9a-f]{64}$/);
+      expect(code).toMatch(/^[2-9]+$/);
+    }
+    const v1 = Object.values(lexFile.codes).flat().map(([w]) => w);
+    const v2File = JSON.parse(readFileSync(PATHS.lexiconV2, 'utf8')) as LexiconFileV2;
+    const v2 = v2File.words.flatMap(([, ws]) => ws.split(' '));
+    // Hash prefixes only, so a failure never prints the word.
+    const hits = [...v1, ...v2].filter(isListedSlur).map((w) => sha256(w).slice(0, 8));
+    expect(hits).toEqual([]);
+    expect(v2.length).toBe(v1.length);
+  });
+
+  it('Req 5.10 keeps general profanity, which D7 does not filter (hash of a common one)', () => {
+    // A mild, frequent swear word that is on LDNOOBW but marked "other" (reports/offensive-readings.md).
+    const kept = '85fc17f7069acd39a5c636cd0a6530651096128da447959f5e250824857dc559';
+    expect(Object.values(lexFile.codes).flat().some(([w]) => sha256(w) === kept)).toBe(true);
   });
 
   it('loads in @ninth/core without dropping words', () => {

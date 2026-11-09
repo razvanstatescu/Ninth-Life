@@ -1,0 +1,19 @@
+{
+  "about": "Identity slurs (race or ethnicity, sexual orientation or gender identity, disability) kept out of the shipped lexicon (decision D7, ADR-data-004). SHA-256 of the normalized word, so no file in the repo spells them; possessives (\"x's\") are matched by their stem. `code` is the word's keypad code, so a test can recover the word by trying every spelling of those keys. Selected on 2026-11-06 by the decoding-quality owner from the LDNOOBW English list (CC BY 4.0, fetched into .cache/, never committed): the listed words that are in the wordfreq lexicon and are slurs; general profanity and sexual words on that list are kept on purpose. Used by scripts/build_lexicon.py (--slurs), src/offensive.ts and test/data.test.ts.",
+  "words": [
+    { "sha256": "e7b98c6aa5b944e0b315d350d423f895ac9e44fb84f1534b18c2572370a67b9e", "code": "2666" },
+    { "sha256": "daec0c235d3135fc1c60aee787f784c59c4d53b2041ff2bacd0d3bebda7246a8", "code": "26667" },
+    { "sha256": "9915ba2d822280f22c283df4e76584a40e0119fc58f73c5f84d4fdb04d04fa6f", "code": "324" },
+    { "sha256": "8f5083e3e5c7dc8932f2bf58212f963f3a44752618c96297f82623f736c52738", "code": "324468" },
+    { "sha256": "c3de533e9b7fe63b79f648687a30d2861edd92fe7c3cd1f2c485e0a605367624", "code": "5453" },
+    { "sha256": "f59e28f8bb6499ddf0521ed7a60aeda00957aeb7ee605caf17a216f7a9a26d08", "code": "63476" },
+    { "sha256": "08a841e996781e9e77d30a4e4420a8f501a280b00624e6d1224bf54aaff73eba", "code": "64442" },
+    { "sha256": "120f6e5b4ea32f65bda68452fcfaaef06b0136e1d0e4a6f60bc3771fa0936dd6", "code": "644437" },
+    { "sha256": "544fc8545c8d08c5bf4b4cf3b3138adb5b407aa8316313a67fe940232a53fe14", "code": "6664" },
+    { "sha256": "3b1e0d7c5dd45583867e897943e37a940a7e7321022317dd3deea01963ee365e", "code": "7254" },
+    { "sha256": "33740da8a87dc7defbdbb7d06549dd8d82a33000a25293ceb9af687eb16bef22", "code": "7436253" },
+    { "sha256": "6b571f65fa6fa2c34955ef934ad74fab31fde32fe9eeac6c60da996587c73ae5", "code": "7663" },
+    { "sha256": "94a877e2ce63725ecae04e85d09f50066b42e2c6a2ab3ce92aba7908e0dbd1bf", "code": "7727842" },
+    { "sha256": "16ea09fc78ca83ca502cbcf2377acdf280bf18f61e259153f0868405eedab5ef", "code": "872669" }
+  ]
+}

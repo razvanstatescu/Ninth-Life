@@ -25,6 +25,7 @@ Start here. Every page below is kept in the repo, so the knowledge base is versi
 - [ADR-002: MiniMax as a second model provider (interim)](decisions/ADR-002-minimax-provider.md)
 - [ADR-core-001: core contract clarifications](decisions/ADR-core-001-contract-clarifications.md)
 - [ADR-data-001: keep the 60k lexicon](decisions/ADR-data-001-lexicon-size.md)
+- [ADR-data-004: drop identity slurs from the lexicon, still typeable on purpose](decisions/ADR-data-004-slur-filter.md)
 - Other ADRs: `decisions/ADR-*.md`
 
 ## Research
