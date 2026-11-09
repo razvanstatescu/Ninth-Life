@@ -107,3 +107,47 @@ sample, and late reorders end a second sooner). Revisit Flash if MiniMax speeds 
 1. Latency from the Vercel region (production), which may differ from a laptop in the EU.
 2. Ranking quality versus Haiku 5.5 on the same 200 items (needs an Anthropic key).
 3. Whether a prompt tuned for M3 (few-shots, shorter system prompt) closes the gap to Flash.
+
+## Initials mode with the model (2026-11-09, 200-item seeded sample)
+
+Initials mode ("Phantom", plan section 3.3) takes one press per word, on the key of its first
+letter. Run: `pnpm -F @ninth/eval llm --model MiniMax-M3 --mode initials --limit 200`, the same
+200 items (seed 9) as the letter-mode eval above; full table in `packages/eval/RESULTS.md`. The
+model column is B4 as the app would send it (12 readings per slot, validator). "At 2 s" counts
+the model's answer when the call finished within the route's 2,000 ms deadline and the offline
+answer otherwise. Letter columns are the 200-item rows from `RESULTS.md` (85.4% / 94.4% in the
+table above count only the 198 items with a model call). KSR is keystroke savings against a full
+keyboard (negative = more presses).
+
+| | Initials B0 dict | Initials B1 offline | Initials B4 MiniMax-M3 | Letter B1 offline | Letter B4 MiniMax-M3 |
+|---|---|---|---|---|---|
+| Word accuracy | 15.2% | 20.6% | 22.4% | 96.5% | 98.3% |
+| Sentence top-1 | 0.0% | 0.0% | 0.0% | 84.5% | 93.5% |
+| Sentence top-5 | 0.0% | 0.0% | 0.0% | 98.0% | 98.0% |
+| Top-1 at 2 s deadline | | | 0.0% (92% ranked by the model) | | 93.4% (94% ranked) |
+| KSR | -24.7% | -35.3% | -31.8% | 0.0% | 0.3% |
+| Presses per character | 1.25 | 1.35 | 1.32 | about 1.00 | about 1.00 |
+| Latency p50 / p95 | 0.24 / 0.84 ms | 0.32 / 0.97 ms | 961 / 2,637 ms | 0.07 / 0.38 ms | 899 / 2,619 ms |
+| Cost per 1,000 decodes | 0 | 0 | $0.40 | 0 | $0.35 |
+
+Reading it:
+- **The model does not rescue initials mode.** Not one of the 200 sentences comes out right in
+  the top 5, with or without the model, at any deadline. The model adds 1.8 points of word
+  accuracy (22.4% versus 20.6%), which a person would barely notice.
+- **The limit is the input, not the ranker.** One key is 3 or 4 letters and thousands of words.
+  The 12 readings the app offers per slot hold 51% of the gold words and every word of only 2 of
+  the 200 sentences (1.0%; 3.1% on the full 866). The model keeps to those readings (0.4% of its
+  top-1 words fall outside them), so any ranker is capped near that ceiling. Its answers are
+  fluent but generic ("i can you", "this is a").
+- **It costs presses instead of saving them.** Fixing the words means cycling # through the
+  readings or retyping half the words in letter mode. That is 1.32 presses per character
+  with the model, against about 1.00 in letter mode. Letter mode with the model is better on
+  every measure here.
+- Spend for this run: $0.08 for 186 distinct calls, including 9 replies cached by an
+  interrupted first attempt.
+
+**Recommendation: cut initials mode at Cut 1 (Nov 23).** Keep it out of the settings sheet
+(it has no control there today) and out of the demo and Devpost copy. The core and eval code can
+stay, since it costs nothing and the eval keeps measuring it. Worth revisiting only with a
+different input design, for example the initial plus the word's length or a second letter, and
+the eval would need to show that design beating letter mode on presses per character first.

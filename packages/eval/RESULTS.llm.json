@@ -1,6 +1,184 @@
 {
   "harness": "ninth-eval/1",
   "runs": {
+    "MiniMax-M3:initials": {
+      "harness": "ninth-eval/1",
+      "model": "MiniMax-M3",
+      "label": "minimax-m3",
+      "anthropicVersion": "2023-06-01",
+      "mode": "initials",
+      "k": 5,
+      "fixture": {
+        "path": "fixtures/test.v1.jsonl",
+        "sha256": "9fefd9dbeacda45ac7b0897336df2be952ca94a6e7f92ab24f27ef88f4ff9749"
+      },
+      "subset": {
+        "items": 200,
+        "limit": 200,
+        "seed": 9
+      },
+      "configs": [
+        {
+          "id": "B0",
+          "label": "B0 dict",
+          "status": "ok",
+          "metrics": {
+            "items": 200,
+            "words": 1081,
+            "wordAcc": 0.1517,
+            "top1": 0,
+            "top5": 0,
+            "ksr": -0.2474,
+            "scanStepsPerChar": 5.2512,
+            "pressesPerChar": 1.2474,
+            "invalidPreValidator": null,
+            "unreachable": 3,
+            "usdPer1k": null,
+            "retypedWords": 529
+          },
+          "bySource": {
+            "aac": {
+              "items": 134,
+              "words": 603,
+              "wordAcc": 0.1526,
+              "top1": 0,
+              "top5": 0,
+              "ksr": -0.254,
+              "scanStepsPerChar": 5.3201,
+              "pressesPerChar": 1.254,
+              "invalidPreValidator": null,
+              "unreachable": 2,
+              "usdPer1k": null,
+              "retypedWords": 287
+            },
+            "turk": {
+              "items": 66,
+              "words": 478,
+              "wordAcc": 0.1506,
+              "top1": 0,
+              "top5": 0,
+              "ksr": -0.2394,
+              "scanStepsPerChar": 5.1696,
+              "pressesPerChar": 1.2394,
+              "invalidPreValidator": null,
+              "unreachable": 1,
+              "usdPer1k": null,
+              "retypedWords": 242
+            }
+          }
+        },
+        {
+          "id": "B1",
+          "label": "B1 ghost",
+          "status": "ok",
+          "metrics": {
+            "items": 200,
+            "words": 1081,
+            "wordAcc": 0.2063,
+            "top1": 0,
+            "top5": 0,
+            "ksr": -0.353,
+            "scanStepsPerChar": 5.8852,
+            "pressesPerChar": 1.353,
+            "invalidPreValidator": null,
+            "unreachable": 3,
+            "usdPer1k": null,
+            "retypedWords": 529
+          },
+          "bySource": {
+            "aac": {
+              "items": 134,
+              "words": 603,
+              "wordAcc": 0.2322,
+              "top1": 0,
+              "top5": 0,
+              "ksr": -0.3441,
+              "scanStepsPerChar": 5.8604,
+              "pressesPerChar": 1.3441,
+              "invalidPreValidator": null,
+              "unreachable": 2,
+              "usdPer1k": null,
+              "retypedWords": 287
+            },
+            "turk": {
+              "items": 66,
+              "words": 478,
+              "wordAcc": 0.1736,
+              "top1": 0,
+              "top5": 0,
+              "ksr": -0.3636,
+              "scanStepsPerChar": 5.9146,
+              "pressesPerChar": 1.3636,
+              "invalidPreValidator": null,
+              "unreachable": 1,
+              "usdPer1k": null,
+              "retypedWords": 242
+            }
+          }
+        },
+        {
+          "id": "B4",
+          "label": "B4 lattice+val",
+          "status": "ok",
+          "metrics": {
+            "items": 200,
+            "words": 1081,
+            "wordAcc": 0.2239,
+            "top1": 0,
+            "top5": 0,
+            "ksr": -0.3184,
+            "scanStepsPerChar": 5.6849,
+            "pressesPerChar": 1.3184,
+            "invalidPreValidator": 0.0686,
+            "unreachable": 3,
+            "usdPer1k": 0.4032,
+            "retypedWords": 526
+          },
+          "bySource": {
+            "aac": {
+              "items": 134,
+              "words": 603,
+              "wordAcc": 0.2454,
+              "top1": 0,
+              "top5": 0,
+              "ksr": -0.3088,
+              "scanStepsPerChar": 5.651,
+              "pressesPerChar": 1.3088,
+              "invalidPreValidator": 0.0363,
+              "unreachable": 2,
+              "usdPer1k": 0.3921,
+              "retypedWords": 286
+            },
+            "turk": {
+              "items": 66,
+              "words": 478,
+              "wordAcc": 0.1967,
+              "top1": 0,
+              "top5": 0,
+              "ksr": -0.3298,
+              "scanStepsPerChar": 5.725,
+              "pressesPerChar": 1.3298,
+              "invalidPreValidator": 0.1361,
+              "unreachable": 1,
+              "usdPer1k": 0.4258,
+              "retypedWords": 240
+            }
+          },
+          "llm": {
+            "calls": 200,
+            "inputTokens": 199929,
+            "outputTokens": 12780,
+            "cacheReadTokens": 87360,
+            "cacheWriteTokens": 0,
+            "usd": 0.080649,
+            "refusals": 0,
+            "unparseable": 0,
+            "degraded": 7,
+            "skipped": 0
+          }
+        }
+      ]
+    },
     "MiniMax-M3:letter": {
       "harness": "ninth-eval/1",
       "model": "MiniMax-M3",

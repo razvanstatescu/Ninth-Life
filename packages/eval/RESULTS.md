@@ -138,3 +138,31 @@ Written by `pnpm -F @ninth/eval llm --model MiniMax-M3.1-Flash --limit 200`; the
 - B3 LLM+val: 200 calls, $0.13, 0 refusals, 82 unparseable replies
 - B4 lattice+val: 198 calls, $0.04, 0 refusals, 0 unparseable replies, 0 answered from ghost beams only, 2 not sent (a slot with no lexicon word, as in the app)
 <!-- /llm-run:MiniMax-M3.1-Flash:letter -->
+
+<!-- llm-run:MiniMax-M3:initials -->
+## Model ranking: MiniMax-M3, initials mode, 200 items, 2026-11-09
+
+Written by `pnpm -F @ninth/eval llm --model MiniMax-M3 --mode initials --limit 200`; the next run of this model and mode replaces this section.
+
+- Model: `MiniMax-M3` (`minimax-m3`), MiniMax Anthropic-compatible API, `anthropic-version: 2023-06-01`
+- Run: 2026-11-09 (UTC), seeded sample of 200 items (`--limit 200`, seed 9), k = 5, mode = initials, concurrency 4
+- This run: 177 requests sent, 23 replies from the response cache, 0 retries, $0.07 spent
+- B0 and B1 rows are the offline baselines on the same items. Tokens and cost come from each reply's `usage` at `packages/decoder/src/models.ts` list prices; "In tok/call" counts uncached, cache-read and cache-write input. Latency is the recorded time of each successful API call (a cached reply keeps its original time); "Calls > 1.2 s" would have fallen back to ghost beams at the route's deadline.
+
+| Config | Word acc | Sent top-1 | Sent top-5 | KSR | Presses/char | Invalid pre-validator | p50 ms | p95 ms | Calls > 1.2 s | Calls | In tok/call | Out tok/call | Cache-read tok/call | $/1k |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| B0 dict | 15.2% | 0.0% | 0.0% | -24.7% | 1.25 | n/a | 0.24 | 0.84 | n/a |  |  |  |  | 0 |
+| B1 ghost | 20.6% | 0.0% | 0.0% | -35.3% | 1.35 | n/a | 0.32 | 0.97 | n/a |  |  |  |  | 0 |
+| B4 lattice+val | 22.4% | 0.0% | 0.0% | -31.8% | 1.32 | 6.9% | 961.01 | 2636.65 | 26.0% | 200 | 1,436 | 64 | 437 | $0.403 |
+
+| Config | Source | Items | Word acc | Sent top-1 | Sent top-5 |
+|---|---|---|---|---|---|
+| B0 dict | aac | 134 | 15.3% | 0.0% | 0.0% |
+| B0 dict | turk | 66 | 15.1% | 0.0% | 0.0% |
+| B1 ghost | aac | 134 | 23.2% | 0.0% | 0.0% |
+| B1 ghost | turk | 66 | 17.4% | 0.0% | 0.0% |
+| B4 lattice+val | aac | 134 | 24.5% | 0.0% | 0.0% |
+| B4 lattice+val | turk | 66 | 19.7% | 0.0% | 0.0% |
+
+- B4 lattice+val: 200 calls, $0.08, 0 refusals, 0 unparseable replies, 7 answered from ghost beams only, 0 not sent (a slot with no lexicon word, as in the app)
+<!-- /llm-run:MiniMax-M3:initials -->
