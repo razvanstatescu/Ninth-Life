@@ -86,12 +86,18 @@ export function AppHeader({
           {scanPill ? <StatusPill icon="switch" tone="info">{scanPill}</StatusPill> : null}
         </div>
         {partner ? (
-          // The name is the visible text (WCAG 2.5.3, voice control) plus a hidden hint.
-          <button type="button" className="header-partner" onClick={partner.onEdit}>
-            <span className="header-partner__label">They said</span>{' '}
-            <span className="header-partner__text">{partner.text || 'Add'}</span>
-            <span className="nl-sr-only">{partner.text ? ', change' : ': what the other person said'}</span>
-          </button>
+          // A speech-bubble button at the end of the header, the same 56px square as Clear. With a line
+          // it widens to show it; the name keeps the visible words (WCAG 2.5.3, voice control).
+          partner.text ? (
+            <Button variant="secondary" icon="said" onClick={partner.onEdit} className="header-partner">
+              <span className="nl-sr-only">They said: </span>
+              <span className="header-partner__text">{partner.text}</span>
+            </Button>
+          ) : (
+            <Button variant="secondary" icon="said" onClick={partner.onEdit} aria-label="They said" className="header-partner header-partner--empty">
+              {null}
+            </Button>
+          )
         ) : null}
       </div>
       {actions ? (

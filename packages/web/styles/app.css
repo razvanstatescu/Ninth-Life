@@ -402,16 +402,16 @@ body:has(.app--shell) { min-height: 0; }
 .app--shell .app-header .app-header--wide { display: none; }
 .app--shell .app-header .app-header--compact { display: flex; }
 
-/* Header: They said, one line, the rest of the header's width; the whole thing opens the They said sheet. */
-.header-partner {
-  flex: 1 1 auto; min-width: var(--target-min); min-height: var(--target-min); display: flex; align-items: center; gap: var(--space-2);
-  padding: 0 var(--space-3); border-radius: var(--radius-chip); border: 2px solid var(--line-strong); background: transparent; color: var(--ink);
-  font-family: var(--font-sans); font-size: var(--type-label-size); line-height: 20px; cursor: pointer; text-align: left;
-}
-.header-partner:focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: 3px; }
-.header-partner__label { flex: none; font-weight: 700; color: var(--ink-muted); }
-.header-partner__text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
-.app--shell .app-header__start { flex: 1 1 auto; min-width: 0; }
+/* Header: They said, a speech-bubble button at the end of the row (the same square as Clear below it);
+   with a line it widens to show the line, one row, cut with an ellipsis. Opens the They said sheet. */
+.header-partner { flex: 0 1 auto; margin-left: auto; min-width: var(--target-min); max-width: 100%; justify-content: flex-start; padding: 0 var(--space-4) 0 15px; font-size: var(--type-label-size); font-weight: 600; }
+.header-partner--empty { flex: none; width: var(--target-min); padding: 0; justify-content: center; }
+.header-partner .nl-icon { flex: none; }
+.header-partner__text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app--shell .app-header__start { flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; }
+/* The status pills keep one line; the They said button gives up the room (down to its icon). */
+.app--shell .app-header__pills { flex: none; flex-wrap: nowrap; }
+.app--shell .app-header .pill { flex: none; white-space: nowrap; }
 
 /* Sentence card: the sentence (scrolls inside its fixed height, whole lines) and Clear, far from Speak. */
 .app--shell .phone-card { flex: none; min-width: 0; }

@@ -364,8 +364,10 @@ scrolls, so that nothing I need is ever out of reach.
 25.2 Check the words (the proof panel), They said, Save phrase, Spell this word, Phrases, My words, Voice, Settings and
      About (with the intended-purpose sentence) SHALL be reachable from the main screen in one tap (Menu, the header's They
      said, or the contextual suggestion row) AND SHALL open in sheets.
-25.3 THE They said sheet SHALL open in its text field; Done SHALL save the line and close the sheet; the header SHALL show
-     the line.
+25.3 THE header's They said control SHALL be a speech-bubble button at the end of the header, the same square as Clear,
+     named "They said"; WHEN a line is set it SHALL widen to show the line on one row (cut with an ellipsis), its name
+     holding the visible words. THE They said sheet SHALL open in its text field; Done SHALL save the line and close the
+     sheet.
 25.4 WHILE switch scanning is on, THE header SHALL show a Scanning pill; its speed and on/off SHALL be in Settings.
 25.5 A tablet in landscape SHALL show the header, sentence card, suggestions and action bar on the left and the keypad
      on the right, level with the action bar; in portrait the stack of Req 24.

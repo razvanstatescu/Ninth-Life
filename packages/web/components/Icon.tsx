@@ -17,6 +17,8 @@ const PATHS = {
   flip: ['M5 10a7 7 0 0 1 12.5-3.5', 'M18 3v4h-4', 'M19 14a7 7 0 0 1-12.5 3.5', 'M6 21v-4h4'],
   /** A letter over a line: spell a word, my words. */
   spell: ['M4 17l5-12 5 12', 'M6 12.5h6', 'M15 20h6'],
+  /** A speech bubble: what the other person said (They said). */
+  said: ['M4 5h16v11h-9l-5 4v-4H4z', 'M8 9.5h8M8 12.5h5'],
   offline: ['M3 3l18 18', 'M8.5 16.5a5 5 0 0 1 7 0', 'M5 13a10 10 0 0 1 5-2.7M14 10.4A10 10 0 0 1 19 13', 'M2 9.5a15 15 0 0 1 4.6-2.8M11 5.6A15 15 0 0 1 22 9.5', 'M12 20h.01'],
 } as const;
 
