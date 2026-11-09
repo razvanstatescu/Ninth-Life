@@ -52,6 +52,10 @@ const ALLOWED = [
   'packages/eval/.cache/',                  // downloaded eval-only datasets, never committed
 ];
 
+// Repo-relative path prefixes never scanned: other checkouts of this same repo (Claude Code agent
+// worktrees), which carry their own copies of the allowed files at different paths.
+const SKIP_PREFIXES = ['.claude/worktrees/'];
+
 const BINARY_EXT = new Set([
   '.png', '.jpg', '.jpeg', '.gif', '.webp', '.avif', '.ico', '.icns', '.bmp', '.tiff',
   '.woff', '.woff2', '.ttf', '.otf', '.eot', '.mp3', '.mp4', '.mov', '.webm', '.wav', '.ogg',
@@ -87,6 +91,7 @@ function scanFile(absPath) {
   const repoPath = toRepoPath(absPath);
   if (repoPath.startsWith('..')) return { repoPath, hits: [], skipped: 'outside repo' };
   if (isAllowed(repoPath)) return { repoPath, hits: [], skipped: 'allowed' };
+  if (SKIP_PREFIXES.some((p) => repoPath.startsWith(p))) return { repoPath, hits: [], skipped: 'other checkout' };
   if (repoPath.split('/').some((part) => SKIP_DIRS.has(part))) return { repoPath, hits: [], skipped: 'skipped dir' };
   if (BINARY_EXT.has(extname(absPath).toLowerCase())) return { repoPath, hits: [], skipped: 'binary' };
   let stat;

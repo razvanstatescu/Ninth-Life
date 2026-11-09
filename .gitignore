@@ -15,3 +15,5 @@ __pycache__/
 playwright-report/
 test-results/
 # NOTE: .kiro/ must never be ignored (hackathon rule). CI checks this.
+# Claude Code agent worktrees (local only)
+.claude/worktrees/
