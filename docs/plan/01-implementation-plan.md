@@ -20,6 +20,7 @@ disagree, this page wins, and the reason sits in `docs/decisions/`.
 | 7 | Kiro use is judged inside Technological Implementation (one of 5 equal criteria) plus the stage-one pass/fail, not as half the score | Rules page, Nov 6 | assumptions register |
 | 8 | Product copy must not say the tool is "for" a named condition (e.g. ALS) | MDCG intended purpose includes promotional statements | `.kiro/steering/product.md` |
 | 9 | No EU-only processing claim: model ranking sends text to Anthropic's API | Follows from change 2 | ADR-001 |
+| 10 | MiniMax (Anthropic-compatible API, `MiniMax-M3`) as a second, env-selected provider; copy names the provider in use; configurable model deadline | Development continues with a MiniMax key (2026-11-09) | ADR-002 |
 
 ## Architecture at a glance
 

@@ -68,7 +68,7 @@ export function estimateCost(plan: readonly PlannedCall[], profile: ModelProfile
     const slots = (c.prompt.user.match(/^\d+ \[/gm) ?? []).length;
     inTok += useMeasured ? mIn : Math.ceil((estimateTokens(c.prompt.system) + estimateTokens(c.prompt.user)) * f);
     outTok += useMeasured ? mOut : Math.min(c.maxTokens, 4 + k * (slots * 3 + 2));
-    outMax += c.maxTokens;
+    outMax += c.maxTokens + (profile.thinkingHeadroom ?? 0); // the body's real max_tokens
     sysTok = Math.ceil(estimateTokens(c.prompt.system) * f);
     cacheable ||= shouldCache(profile, c.prompt.system);
   }

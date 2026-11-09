@@ -65,6 +65,14 @@ describe('response cache and transport (Req 8.2, 8.3)', () => {
     expect(t.fatal).toBeUndefined();
   });
 
+  it('keeps the default sleep when the caller passes sleep: undefined (the CLI does)', async () => {
+    const replies = [json({}, 529), json(okBody())];
+    const t = new ApiTransport({ network: async () => replies.shift()!, cache: new ResponseCache(), sleep: undefined, baseDelayMs: 1, maxDelayMs: 1 });
+    const res = await t.fetchFor(() => {})('u', init('{}'));
+    expect(res.status).toBe(200);
+    expect(t.retries).toBe(1);
+  });
+
   it('Req 8.3 gives up after the last attempt and stops all further calls', async () => {
     let calls = 0;
     const t = new ApiTransport({ network: async () => (calls++, json({}, 529)), cache: new ResponseCache(), sleep: noSleep, maxAttempts: 3 });

@@ -1,26 +1,32 @@
 /**
- * Live smoke check against the Anthropic Messages API (ADR-001 open questions; decoder.md
- * "Live check"). Uses the decoder's own client, prompt and parser; sends 3 small requests in all.
+ * Live smoke check against the Anthropic Messages API and MiniMax's Anthropic-compatible endpoint
+ * (ADR-001 and ADR-002 open questions; decoder.md "Live check"). Uses the decoder's own client,
+ * prompt and parser; sends 1-3 small requests per model.
  *
- *   pnpm -F @ninth/decoder live-check                 both models
+ *   pnpm -F @ninth/decoder live-check                 every model whose key is set
  *   pnpm -F @ninth/decoder live-check -- --model claude-haiku-5-5
+ *   pnpm -F @ninth/decoder live-check -- --model MiniMax-M3
  *   pnpm -F @ninth/decoder live-check -- --require-key  exit 2 instead of skipping without a key
  *
  * Checks, per model:
- *   - the request carries no temperature / top_p / top_k; Haiku 5.5 sends thinking {type: "disabled"},
- *     Haiku 4.5 sends no thinking field (anthropic-version 2026-10-21);
- *   - the API answers 200, with no refusal, no max_tokens cut-off and (Haiku 5.5) no thinking block;
+ *   - the request carries no temperature / top_p / top_k; Haiku 5.5 and MiniMax-M3 send thinking
+ *     {type: "disabled"}, Haiku 4.5 and MiniMax-M3.1-Flash send no thinking field;
+ *   - the API answers 200, with no refusal, no max_tokens cut-off and (thinking disabled) no thinking block;
  *   - the reply parses and at least one sentence passes validate();
  *   - Haiku 5.5 only: a second, identical request reports cache_read_input_tokens > 0;
  *   - the response time of each call (reported; above the route's 1,200 ms deadline is a warning).
  * Prints a short report. Exit 0 when every check passes or when there is no key (skipped), 1 when a
  * check fails, 2 with --require-key and no key. The key is read from ANTHROPIC_API_KEY and is never
- * printed or written anywhere.
+ * printed or written anywhere. Keys: ANTHROPIC_API_KEY for Claude, MINIMAX_API_KEY for MiniMax
+ * (MINIMAX_BASE_URL overrides the MiniMax host).
  */
 import { validate } from '@ninth/core';
 import {
-  ANTHROPIC_VERSION,
+  ANTHROPIC_MODELS,
+  apiVersionFor,
   AnthropicLlmClient,
+  MINIMAX_MODELS,
+  messagesUrl,
   DEFAULT_TIMEOUT_MS,
   buildPrompt,
   isModelId,
@@ -54,7 +60,11 @@ interface Seen {
 }
 
 export interface LiveCheckOptions {
+  /** Anthropic key (ANTHROPIC_API_KEY). */
   apiKey: string | undefined;
+  /** MiniMax key (MINIMAX_API_KEY). */
+  minimaxApiKey?: string;
+  minimaxBaseUrl?: string;
   models?: ModelId[];
   fetch?: FetchLike;
   sleep?: (ms: number) => Promise<void>;
@@ -70,9 +80,14 @@ export interface LiveCheckResult {
 
 export async function runLiveCheck(o: LiveCheckOptions): Promise<LiveCheckResult> {
   const log = o.log ?? ((l: string) => console.log(l));
-  const apiKey = o.apiKey?.trim();
-  if (!apiKey) {
-    log('live-check skipped: ANTHROPIC_API_KEY is not set (no request was sent).');
+  const keys = { anthropic: o.apiKey?.trim(), minimax: o.minimaxApiKey?.trim() };
+  const keyName = { anthropic: 'ANTHROPIC_API_KEY', minimax: 'MINIMAX_API_KEY' } as const;
+  const requested: ModelId[] = o.models ?? [...(keys.anthropic ? ANTHROPIC_MODELS : []), ...(keys.minimax ? MINIMAX_MODELS : [])];
+  const runnable = requested.filter((m) => keys[MODEL_PROFILES[m].provider]);
+  if (runnable.length === 0) {
+    const missing = [...new Set(requested.map((m) => keyName[MODEL_PROFILES[m].provider]))];
+    const names = missing.length ? missing : ['ANTHROPIC_API_KEY', 'MINIMAX_API_KEY'];
+    log(`live-check skipped: ${names.map((n) => `${n} is not set`).join(' and ')} (no request was sent).`);
     return { status: 'skipped', failures: [], warnings: [] };
   }
   const realFetch: FetchLike = o.fetch ?? ((u, i) => fetch(u, i));
@@ -83,15 +98,21 @@ export async function runLiveCheck(o: LiveCheckOptions): Promise<LiveCheckResult
   const prompt = buildPrompt(PROBE);
   const maxTokens = maxTokensFor(PROBE.codes.length, PROBE.k);
 
-  log(`live-check: anthropic-version ${ANTHROPIC_VERSION}, max_tokens ${maxTokens}, route deadline ${DEFAULT_TIMEOUT_MS} ms`);
-  for (const model of o.models ?? (['claude-haiku-5-5', 'claude-haiku-4-5'] as ModelId[])) {
+  log(`live-check: max_tokens ${maxTokens}, route deadline ${DEFAULT_TIMEOUT_MS} ms`);
+  for (const model of requested) {
     const profile = MODEL_PROFILES[model];
+    const apiKey = keys[profile.provider];
+    if (!apiKey) {
+      log(`${model}: skipped, ${keyName[profile.provider]} is not set`);
+      continue;
+    }
+    const baseUrl = profile.provider === 'minimax' ? o.minimaxBaseUrl : undefined;
     const fail = (msg: string) => {
       failures.push(`${model}: ${msg}`);
       log(`  FAIL ${msg}`);
     };
     const ok = (msg: string) => log(`  ok   ${msg}`);
-    log(`${model} (${profile.label})`);
+    log(`${model} (${profile.label}) at ${messagesUrl(profile.provider, baseUrl)}, anthropic-version ${apiVersionFor(profile.provider)}`);
 
     const call = async (n: number): Promise<Seen | undefined> => {
       let seen: Seen | undefined;
@@ -103,7 +124,7 @@ export async function runLiveCheck(o: LiveCheckOptions): Promise<LiveCheckResult
         seen = { status: res.status, ms, request: JSON.parse(String(init.body)) as Record<string, unknown>, response: body };
         return res;
       };
-      const client = new AnthropicLlmClient({ apiKey, model, fetch: recording });
+      const client = new AnthropicLlmClient({ apiKey, model, fetch: recording, baseUrl });
       let text = '';
       let error: unknown;
       try {
@@ -142,7 +163,9 @@ export async function runLiveCheck(o: LiveCheckOptions): Promise<LiveCheckResult
         else ok('no thinking field, accepted (HTTP 200)');
         const reason = s.response?.stop_reason;
         if (reason === 'refusal' || reason === 'max_tokens') fail(`stop_reason ${reason}`);
-        if ((s.response?.content ?? []).some((b) => b.type === 'thinking' || b.type === 'redacted_thinking')) fail('reply contains a thinking block');
+        const thought = (s.response?.content ?? []).some((b) => b.type === 'thinking' || b.type === 'redacted_thinking');
+        if (thought && profile.disableThinking) fail('reply contains a thinking block');
+        else if (thought) log('  note reply contains a thinking block (expected: this model always thinks)');
         const reply = parseReply(text);
         const valid = reply.candidates.filter((c) => validate(c, PROBE.codes, PROBE.mode));
         if (reply.unparseable) fail('reply is not {"c": [...]} JSON');
@@ -153,7 +176,7 @@ export async function runLiveCheck(o: LiveCheckOptions): Promise<LiveCheckResult
     };
 
     const first = await call(1);
-    if (!first || first.status !== 200 || !profile.disableThinking) continue;
+    if (!first || first.status !== 200 || !profile.disableThinking || profile.provider !== 'anthropic') continue;
     // Haiku 5.5 caches the frozen system prompt: an identical request should read it back.
     let second = await call(2);
     if (second && second.status === 200 && !(second.response?.usage?.cache_read_input_tokens ?? 0)) {
@@ -181,7 +204,7 @@ function parseCli(argv: string[]): { models?: ModelId[]; requireKey: boolean } {
     if (a === '--require-key') requireKey = true;
     else if (a === '--model') {
       const v = argv[++i];
-      if (!isModelId(v)) throw new Error('--model must be claude-haiku-5-5 or claude-haiku-4-5');
+      if (!isModelId(v)) throw new Error(`--model must be one of ${[...ANTHROPIC_MODELS, ...MINIMAX_MODELS].join(', ')}`);
       models = [...(models ?? []), v];
     } else throw new Error(`unknown option ${a}`);
   }
@@ -192,7 +215,12 @@ const direct = process.argv[1] !== undefined && /live-check\.ts$/.test(process.a
 if (direct) {
   (async () => {
     const cli = parseCli(process.argv.slice(2));
-    const r = await runLiveCheck({ apiKey: process.env.ANTHROPIC_API_KEY, models: cli.models });
+    const r = await runLiveCheck({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+      minimaxApiKey: process.env.MINIMAX_API_KEY,
+      minimaxBaseUrl: process.env.MINIMAX_BASE_URL,
+      models: cli.models,
+    });
     if (r.status === 'skipped') return cli.requireKey ? 2 : 0;
     return r.status === 'pass' ? 0 : 1;
   })().then(

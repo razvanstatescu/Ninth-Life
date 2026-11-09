@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import withSerwistInit from '@serwist/next';
+import { publicDecodeEnv } from './lib/publicEnv.mjs';
 
 /** One revision per build for the precached HTML pages. */
 function revision() {
@@ -109,7 +110,8 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   // Content hashes of /data files for lib/data.ts (dataUrl), so page and precache use one URL.
-  env: { NEXT_PUBLIC_DATA_REV: JSON.stringify(dataRev) },
+  // Decode provider (for the privacy copy) and client timeout, derived from the route's server env.
+  env: { NEXT_PUBLIC_DATA_REV: JSON.stringify(dataRev), ...publicDecodeEnv(process.env) },
   // Workspace packages ship TypeScript source.
   transpilePackages: ['@ninth/core', '@ninth/decoder'],
   webpack(config) {

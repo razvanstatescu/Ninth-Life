@@ -117,7 +117,7 @@ export function renderSection(run: LlmRunResults, timing: Timing, ctx: SectionCo
     `Written by \`${ctx.command}\`; the next run of this model and mode replaces this section.` +
       (ctx.dryRun ? ' **Dry run: every reply came from the in-process fake API; the numbers only show that the path works.**' : ''),
     '',
-    `- Model: \`${run.model}\` (\`${run.label}\`), Anthropic Messages API, \`anthropic-version: ${run.anthropicVersion}\``,
+    `- Model: \`${run.model}\` (\`${run.label}\`), ${run.model.startsWith('MiniMax') ? 'MiniMax Anthropic-compatible API' : 'Anthropic Messages API'}, \`anthropic-version: ${run.anthropicVersion}\``,
     `- Run: ${ctx.date} (UTC), ${subset}, k = ${run.k}, mode = ${run.mode}, concurrency ${ctx.concurrency}`,
     `- This run: ${n.sent} requests sent, ${n.hits} replies from the response cache, ${n.retries} retries, ${money(n.spentUsd)} spent`,
     `- B0 and B1 rows are the offline baselines on the same items. Tokens and cost come from each reply's \`usage\` at \`packages/decoder/src/models.ts\` list prices; "In tok/call" counts uncached, cache-read and cache-write input. Latency is the recorded time of each successful API call (a cached reply keeps its original time); "Calls > 1.2 s" would have fallen back to ghost beams at the route's deadline.`,

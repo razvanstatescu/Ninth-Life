@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Brand } from '@/components/AppHeader';
 import { Footer, NOT_A_MEDICAL_DEVICE } from '@/components/Footer';
+import { providerCopy } from '@/lib/rankingProvider';
 
 export const metadata: Metadata = {
   title: 'About Ninth Life',
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default function AboutPage() {
+  const provider = providerCopy();
   return (
     <div className="app">
       <div className="app__inner">
@@ -41,7 +43,7 @@ export default function AboutPage() {
             </p>
             <p>
               Model ranking is off by default. When you turn it on, your keys, the dictionary words for them and the last thing the other person said are sent to
-              Anthropic&apos;s Claude API, which suggests the order of the sentences. It cannot add words: everything it suggests goes through the same check, and
+              {provider.service}, which suggests the order of the sentences. It cannot add words: everything it suggests goes through the same check, and
               nothing is spoken until you press Speak.
             </p>
           </section>
@@ -52,8 +54,7 @@ export default function AboutPage() {
               <li>No account, no cookies, no analytics.</li>
               <li>Ninth Life does not store what you say. Saved phrases stay on this device, and only when you press Save phrase.</li>
               <li>
-                With model ranking on, Anthropic receives what is sent for ranking. Anthropic says it deletes API inputs and outputs within 30 days, keeps them
-                longer only for policy enforcement or legal reasons, and does not use them to train its models by default.
+                With model ranking on, {provider.company} receives what is sent for ranking. {provider.retention}
               </li>
               <li>
                 Speech uses your browser&apos;s voices. Voices marked &quot;on this device&quot; keep your words on the device; online voices send the text to the

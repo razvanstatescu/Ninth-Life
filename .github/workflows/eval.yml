@@ -18,7 +18,7 @@ on:
       llm_model:
         description: "B2-B4 with the Anthropic API: none (default, nothing is sent) or a model"
         type: choice
-        options: [none, claude-haiku-5-5, claude-haiku-4-5]
+        options: [none, claude-haiku-5-5, claude-haiku-4-5, MiniMax-M3, MiniMax-M3.1-Flash]
         default: none
       llm_limit:
         description: "Items for the model run: a number (seeded sample) or 'full' (866 items)"
@@ -95,10 +95,14 @@ jobs:
       - name: Live check (thinking disabled, prompt cache, response time)
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          MINIMAX_BASE_URL: ${{ vars.MINIMAX_BASE_URL }}
         run: pnpm -s -F @ninth/decoder live-check -- --require-key --model "$MODEL"
       - name: B2-B4 with the Anthropic API
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          MINIMAX_BASE_URL: ${{ vars.MINIMAX_BASE_URL }}
         run: |
           OUT="$RUNNER_TEMP/llm-results"
           mkdir -p "$OUT"
@@ -124,5 +128,6 @@ jobs:
           path: |
             ${{ runner.temp }}/llm-results/
             packages/eval/.cache/llm/anthropic/
+            packages/eval/.cache/llm/minimax/
           if-no-files-found: ignore
           retention-days: 30

@@ -2,12 +2,17 @@
  * POST /api/decode: the production decode endpoint (Vercel), docs/decisions/ADR-001-anthropic-api-no-aws.md.
  * Thin wrapper over @ninth/decoder's fetch adapter, which checks the Origin, the 4 KB limit and the
  * kill switch, hashes the IP with a salt, applies a best-effort per-instance limiter, calls the
- * Anthropic Messages API with a 1.2 s deadline and validates every word against the keys.
+ * Anthropic Messages API (or MiniMax's Anthropic-compatible API) with a 1.2 s deadline by default
+ * and validates every word against the keys.
  *
  * Environment (Vercel project settings; see packages/web/.env.example):
  *   LLM_ENABLED        "true" turns model ranking on (kill switch; default off). Redeploy after a change.
- *   ANTHROPIC_API_KEY  required for model calls; without it the route answers 503 llm_disabled
- *   DECODE_MODEL       claude-haiku-5-5 (default) | claude-haiku-4-5
+ *   ANTHROPIC_API_KEY  key for the Claude models
+ *   MINIMAX_API_KEY    key for the MiniMax models (ADR-002); alone, it makes MiniMax-M3 the default
+ *   MINIMAX_BASE_URL   MiniMax host (default https://api.minimax.io/anthropic)
+ *   DECODE_MODEL       claude-haiku-5-5 (default) | claude-haiku-4-5 | MiniMax-M3 | MiniMax-M3.1-Flash
+ *                      without the key of the chosen model's provider the route answers 503 llm_disabled
+ *   DECODE_TIMEOUT_MS  model deadline (default 1200, 300-9000)
  *   IP_HASH_SALT       salt for the per-day IP hash
  *   ALLOWED_ORIGINS    extra allowed origins (the deployment's own origin is always allowed)
  *   DECODE_FAKE_LLM    "true" uses a fake model in dev (ignored in production)
@@ -19,7 +24,7 @@ import { configFromEnv, createFetchHandler } from '@ninth/decoder';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-/** The model deadline is 1.2 s and the client gives up at 1.5 s; 10 s is a generous ceiling. */
+/** The model deadline is 1.2 s by default (at most 9 s) and the client waits 300 ms more; 10 s is the ceiling. */
 export const maxDuration = 10;
 
 let handler: ((req: Request) => Promise<Response>) | null = null;

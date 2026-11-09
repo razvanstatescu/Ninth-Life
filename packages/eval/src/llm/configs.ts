@@ -18,9 +18,9 @@
  */
 import { decodeGhost, lattice, normalize, validate, type LanguageModel, type Lexicon, type Mode } from '@ninth/core';
 import {
-  ANTHROPIC_URL,
-  ANTHROPIC_VERSION,
+  apiVersionFor,
   AnthropicLlmClient,
+  messagesUrl,
   LlmError,
   StaticFlags,
   anthropicBody,
@@ -55,8 +55,10 @@ export interface LlmRunContext {
   lm: LanguageModel;
   profile: ModelProfile;
   transport: ApiTransport;
-  /** Sent as x-api-key; never stored. A placeholder in a dry run. */
+  /** Sent as x-api-key (and Bearer for MiniMax); never stored. A placeholder in a dry run. */
   apiKey: string;
+  /** MiniMax base URL override (MINIMAX_BASE_URL). */
+  baseUrl?: string;
 }
 
 /** The request the app sends for these keys (decodeClient.ts buildRequest), or null when it sends none. */
@@ -163,11 +165,11 @@ function dedupe(cands: string[][]): string[][] {
 }
 
 function failIfFatal(t: ApiTransport): void {
-  if (t.fatal) throw new Error(`Anthropic API error ${t.fatal.status} (${t.fatal.detail}) after ${t.fatal.attempts} attempt(s); no results written`);
+  if (t.fatal) throw new Error(`Messages API error ${t.fatal.status} (${t.fatal.detail}) after ${t.fatal.attempts} attempt(s); no results written`);
 }
 
 function client(ctx: LlmRunContext, records: CallRecord[]): AnthropicLlmClient {
-  return new AnthropicLlmClient({ apiKey: ctx.apiKey, model: ctx.profile.id, fetch: ctx.transport.fetchFor((r) => records.push(r)) });
+  return new AnthropicLlmClient({ apiKey: ctx.apiKey, model: ctx.profile.id, baseUrl: ctx.baseUrl, fetch: ctx.transport.fetchFor((r) => records.push(r)) });
 }
 
 /** B2 or B3: one unconstrained call; B3 keeps only sentences that pass validate(). */
@@ -250,7 +252,7 @@ export interface PlannedCall {
 }
 
 const bodyKey = (profile: ModelProfile, prompt: Prompt, maxTokens: number) =>
-  requestKey(ANTHROPIC_URL, ANTHROPIC_VERSION, JSON.stringify(anthropicBody(profile, prompt, maxTokens)));
+  requestKey(messagesUrl(profile.provider), apiVersionFor(profile.provider), JSON.stringify(anthropicBody(profile, prompt, maxTokens)));
 
 /**
  * The exact requests a run will send, without sending any: B2/B3 build the same prompt the

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Icon } from '@/components/Icon';
 import { NOT_A_MEDICAL_DEVICE } from '@/components/Footer';
+import { providerCopy } from '@/lib/rankingProvider';
 import { ProofChip } from '@/components/ProofChip';
 import { KeypadDemo } from '@/components/site/KeypadDemo';
 import { METHOD_URL, REPO_URL, RESULTS_URL, getDemoData, getResults } from '@/components/site/site-data';
@@ -186,9 +187,8 @@ export default function WelcomePage() {
                 </h3>
                 <p>
                   It is off until you turn it on in Settings. Then Ninth Life sends your keys, the dictionary words that match them, its own best guesses and the
-                  other person&apos;s last line to Anthropic&apos;s Claude API to rank the sentences. Processing is not limited to the EU. Anthropic says it deletes
-                  API inputs and outputs within 30 days unless it must keep them for policy or legal reasons, and does not train on them by default. Our server
-                  logs timings and counts, never your words.
+                  other person&apos;s last line to {providerCopy().service} to rank the sentences. Processing is not limited to the EU. {providerCopy().retention} Our
+                  server logs timings and counts, never your words.
                 </p>
               </div>
               <div className="site-card site-card--line">

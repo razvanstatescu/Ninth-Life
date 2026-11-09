@@ -1,8 +1,9 @@
 # Decoder service
 
-Last updated 2026-11-06. Code: `packages/decoder`, route `packages/web/app/api/decode/route.ts`.
-Spec: `.kiro/specs/decoder-service/`. Decision: `docs/decisions/ADR-001-anthropic-api-no-aws.md`.
-Model facts and sources: `docs/research/anthropic-models.md`.
+Last updated 2026-11-09. Code: `packages/decoder`, route `packages/web/app/api/decode/route.ts`.
+Spec: `.kiro/specs/decoder-service/`. Decisions: `docs/decisions/ADR-001-anthropic-api-no-aws.md`,
+`docs/decisions/ADR-002-minimax-provider.md` (MiniMax as a second provider).
+Model facts and sources: `docs/research/anthropic-models.md`, `docs/research/minimax-models.md`.
 
 Ninth Life is a general-purpose text entry and text-to-speech tool. It is not a medical device and
 is not intended to diagnose, treat or replace a clinical AAC assessment.
@@ -16,6 +17,39 @@ to choose the most likely sentences, then checks every word with `validate()` fr
 Anything that does not encode to the keys pressed is dropped and counted in `rejected`; up to five
 of the offending words come back in `rejectedWords` so the proof panel can strike them through
 (ADR-decoder-001). The model can rank; it cannot add words.
+
+## Providers (ADR-002)
+
+The route calls one provider, picked from the env. Both speak the Anthropic Messages protocol, so
+the prompt, parser, validator and guards are the same.
+
+| | Anthropic | MiniMax |
+|---|---|---|
+| Key | `ANTHROPIC_API_KEY` | `MINIMAX_API_KEY` |
+| Models | `claude-haiku-5-5` (default), `claude-haiku-4-5` | `MiniMax-M3` (default with only the MiniMax key), `MiniMax-M3.1-Flash` |
+| Endpoint | `https://api.anthropic.com/v1/messages` | `MINIMAX_BASE_URL` + `/v1/messages`, default `https://api.minimax.io/anthropic` |
+| Headers | `x-api-key`, `anthropic-version: 2026-10-21` | `Authorization: Bearer`, `x-api-key`, `anthropic-version: 2023-06-01` |
+| Thinking | Haiku 5.5 `disabled`; Haiku 4.5 none | M3 `disabled`; M3.1-Flash always on, `effort: low`, +1,024 `max_tokens` |
+| Prompt cache | Haiku 5.5 `cache_control` checkpoint | none sent (not documented) |
+| Hard cap | Console workspace spend limit | your MiniMax balance / account limits |
+
+`DECODE_MODEL` picks a model explicitly; its provider decides which key is read. Without that key
+the route answers 503 `llm_disabled`. `DECODE_TIMEOUT_MS` (default 1,200, 300-9,000) sets the
+model deadline; `next.config.mjs` gives the client that plus 300 ms and names the provider in the
+opt-in copy (`packages/web/lib/publicEnv.mjs`). Both are build-time: restart dev or redeploy after
+a change.
+
+### Local dev with MiniMax
+
+```bash
+cp packages/web/.env.example packages/web/.env.local
+# in .env.local: LLM_ENABLED=true, MINIMAX_API_KEY=<your key>, IP_HASH_SALT=$(openssl rand -hex 32)
+# also: DECODE_TIMEOUT_MS=2000 (measured, docs/research/minimax-models.md); optional MINIMAX_BASE_URL=<host>/anthropic
+MINIMAX_API_KEY=<your key> pnpm -F @ninth/decoder live-check -- --model MiniMax-M3   # latency + shape
+pnpm dev                                                                             # Settings, Model ranking: On
+```
+
+The dev log prints `[decode] model ranking: MiniMax-M3 (minimax)` on the first request.
 
 ## Request flow
 

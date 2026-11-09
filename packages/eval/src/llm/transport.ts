@@ -176,7 +176,8 @@ export class ApiTransport {
       sleep: realSleep,
       now: () => performance.now(),
       log: () => {},
-      ...opts,
+      // Options passed as undefined (e.g. the CLI's `sleep: deps.sleep`) keep their defaults.
+      ...(Object.fromEntries(Object.entries(opts).filter(([, v]) => v !== undefined)) as TransportOptions),
     };
   }
 

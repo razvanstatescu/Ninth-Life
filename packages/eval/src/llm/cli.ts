@@ -1,12 +1,13 @@
 /**
- * B2-B4 with the Anthropic API (spec eval-harness Req 8).
+ * B2-B4 with the Anthropic API or MiniMax's Anthropic-compatible API (spec eval-harness Req 8, ADR-002).
  *
  *   pnpm -F @ninth/eval llm --plan                         cost estimate only, no calls, no key
  *   pnpm -F @ninth/eval llm --dry-run --limit 20           whole path against the fake API
  *   pnpm -F @ninth/eval llm --model claude-haiku-5-5       real run (needs ANTHROPIC_API_KEY)
+ *   pnpm -F @ninth/eval llm --model MiniMax-M3             real run (needs MINIMAX_API_KEY)
  *
  * Options:
- *   --model <id>        claude-haiku-5-5 (default) or claude-haiku-4-5
+ *   --model <id>        claude-haiku-5-5 (default), claude-haiku-4-5, MiniMax-M3 or MiniMax-M3.1-Flash
  *   --limit <n>         seeded sample of n items (default: the full frozen test set)
  *   --seed <n>          sample seed (default 9)
  *   --mode <m>          letter (default) or initials (the codes become each word's first key)
@@ -23,14 +24,14 @@
  *   --items-out <path>  per-item JSONL (default .cache/llm/runs/<model>-<mode>-<date>.jsonl)
  *   --cache-dir <dir>   response cache root (default packages/eval/.cache/llm)
  *
- * Exit codes: 0 done, 1 error (nothing written), 2 no ANTHROPIC_API_KEY, 3 estimate above $1
+ * Exit codes: 0 done, 1 error (nothing written), 2 no API key for the model's provider, 3 estimate above $1
  * without --yes.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { bigramModel, Lexicon, type Mode } from '@ninth/core';
-import { ANTHROPIC_VERSION, costMicros, DEFAULT_MODEL, isModelId, MODEL_PROFILES, type ModelId } from '@ninth/decoder';
+import { apiVersionFor, costMicros, DEFAULT_MODEL, isModelId, MODEL_IDS, MODEL_PROFILES, type ModelId } from '@ninth/decoder';
 import type { LlmConfig } from '../decoders';
 import { EVAL_DIR, loadBigramFile, loadFixture, loadLexiconFile, PATHS, readLock } from '../fixture';
 import { sample } from '../rng';
@@ -79,7 +80,7 @@ export function parseLlmArgs(argv: string[]): LlmArgs {
     };
     if (x === '--model') {
       const v = val();
-      if (!isModelId(v)) throw new Error(`--model must be claude-haiku-5-5 or claude-haiku-4-5 (got ${v})`);
+      if (!isModelId(v)) throw new Error(`--model must be one of ${MODEL_IDS.join(', ')} (got ${v})`);
       a.model = v;
     } else if (x === '--limit') a.limit = int(1);
     else if (x === '--seed') a.seed = int(0);
@@ -139,7 +140,7 @@ export async function llmMain(argv: string[], deps: LlmMainDeps = {}): Promise<n
   const selected: TestItem[] = args.limit ? sample(items, args.limit, args.seed) : items.slice();
 
   // A dry run never shares cache entries with real replies.
-  const cache = new ResponseCache(join(args.cacheDir, args.dryRun ? 'fake' : 'anthropic'));
+  const cache = new ResponseCache(join(args.cacheDir, args.dryRun ? 'fake' : profile.provider));
   const plan = await planCalls(
     ids,
     selected.map((it) => ({ id: it.id, codes: codesFor(it, args.mode), partner: it.partner })),
@@ -152,9 +153,10 @@ export async function llmMain(argv: string[], deps: LlmMainDeps = {}): Promise<n
   out(`  items: ${selected.length}${args.limit ? ` (seeded sample, seed ${args.seed})` : ' (full frozen test set)'}, mode ${args.mode}, configs ${ids.join(', ')}\n\n`);
   if (args.plan) return 0;
 
-  const apiKey = args.dryRun ? 'dry-run-placeholder' : (env.ANTHROPIC_API_KEY ?? '').trim();
+  const keyEnv = profile.provider === 'minimax' ? 'MINIMAX_API_KEY' : 'ANTHROPIC_API_KEY';
+  const apiKey = args.dryRun ? 'dry-run-placeholder' : (env[keyEnv] ?? '').trim();
   if (!apiKey) {
-    err('ANTHROPIC_API_KEY is not set: nothing was sent. Export it (never write it to a file) or use --dry-run / --plan.\n');
+    err(`${keyEnv} is not set: nothing was sent. Export it (never write it to a file) or use --dry-run / --plan.\n`);
     return 2;
   }
   if (!args.dryRun && est.usd > CONFIRM_ABOVE_USD && !args.yes) {
@@ -169,7 +171,8 @@ export async function llmMain(argv: string[], deps: LlmMainDeps = {}): Promise<n
     sleep: deps.sleep,
     log: (m) => err(`  ${m}\n`),
   });
-  const ctx: LlmRunContext = { lex, lm, profile, transport, apiKey };
+  const baseUrl = profile.provider === 'minimax' ? env.MINIMAX_BASE_URL : undefined;
+  const ctx: LlmRunContext = { lex, lm, profile, transport, apiKey, baseUrl };
   const run = await runEval({
     items,
     select: () => selected,
@@ -192,7 +195,7 @@ export async function llmMain(argv: string[], deps: LlmMainDeps = {}): Promise<n
     harness: HARNESS_VERSION,
     model: profile.id,
     label: profile.label,
-    anthropicVersion: ANTHROPIC_VERSION,
+    anthropicVersion: apiVersionFor(profile.provider),
     mode: args.mode,
     k: args.k,
     fixture: { path: lock.fixture.path, sha256 },

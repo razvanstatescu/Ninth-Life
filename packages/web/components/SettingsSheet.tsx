@@ -10,6 +10,7 @@ import {
   sanitizeSettings,
   type Settings,
 } from '@/lib/settings';
+import { providerCopy } from '@/lib/rankingProvider';
 import { pickVoice } from '@/lib/speech';
 import type { VoicesState } from '@/lib/useVoices';
 import { Button } from './Button';
@@ -356,7 +357,7 @@ export function SettingsSheet({
         </label>
         </div>
         <p className="field__help" id={llmHelpId}>
-          Off by default. When on, your keys and the last thing they said are sent to Anthropic&apos;s Claude API, which suggests the order of the sentences. Anthropic says it deletes them within 30 days unless it must keep them for policy or legal reasons. Every word is still checked against your keys, and nothing is spoken until you press Speak. Offline, your dictionary is used.
+          Off by default. When on, your keys and the last thing they said are sent to {providerCopy().service}, which suggests the order of the sentences. {providerCopy().retention} Every word is still checked against your keys, and nothing is spoken until you press Speak. Offline, your dictionary is used.
         </p>
       </section>
     </Sheet>

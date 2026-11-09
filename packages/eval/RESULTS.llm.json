@@ -1,0 +1,575 @@
+{
+  "harness": "ninth-eval/1",
+  "runs": {
+    "MiniMax-M3:letter": {
+      "harness": "ninth-eval/1",
+      "model": "MiniMax-M3",
+      "label": "minimax-m3",
+      "anthropicVersion": "2023-06-01",
+      "mode": "letter",
+      "k": 5,
+      "fixture": {
+        "path": "fixtures/test.v1.jsonl",
+        "sha256": "9fefd9dbeacda45ac7b0897336df2be952ca94a6e7f92ab24f27ef88f4ff9749"
+      },
+      "subset": {
+        "items": 200,
+        "limit": 200,
+        "seed": 9
+      },
+      "configs": [
+        {
+          "id": "B0",
+          "label": "B0 dict",
+          "status": "ok",
+          "metrics": {
+            "items": 200,
+            "words": 1081,
+            "wordAcc": 0.9084,
+            "top1": 0.62,
+            "top5": 0.925,
+            "ksr": -0.0136,
+            "scanStepsPerChar": 3.6177,
+            "pressesPerChar": 1.0136,
+            "invalidPreValidator": null,
+            "unreachable": 3,
+            "usdPer1k": null
+          },
+          "bySource": {
+            "aac": {
+              "items": 134,
+              "words": 603,
+              "wordAcc": 0.8972,
+              "top1": 0.6343,
+              "top5": 0.9403,
+              "ksr": -0.0195,
+              "scanStepsPerChar": 3.6432,
+              "pressesPerChar": 1.0195,
+              "invalidPreValidator": null,
+              "unreachable": 2,
+              "usdPer1k": null
+            },
+            "turk": {
+              "items": 66,
+              "words": 478,
+              "wordAcc": 0.9226,
+              "top1": 0.5909,
+              "top5": 0.8939,
+              "ksr": -0.0067,
+              "scanStepsPerChar": 3.5874,
+              "pressesPerChar": 1.0067,
+              "invalidPreValidator": null,
+              "unreachable": 1,
+              "usdPer1k": null
+            }
+          }
+        },
+        {
+          "id": "B1",
+          "label": "B1 ghost",
+          "status": "ok",
+          "metrics": {
+            "items": 200,
+            "words": 1081,
+            "wordAcc": 0.9648,
+            "top1": 0.845,
+            "top5": 0.98,
+            "ksr": 0,
+            "scanStepsPerChar": 3.5668,
+            "pressesPerChar": 1,
+            "invalidPreValidator": null,
+            "unreachable": 3,
+            "usdPer1k": null
+          },
+          "bySource": {
+            "aac": {
+              "items": 134,
+              "words": 603,
+              "wordAcc": 0.9685,
+              "top1": 0.8806,
+              "top5": 0.9776,
+              "ksr": -0.0023,
+              "scanStepsPerChar": 3.5857,
+              "pressesPerChar": 1.0023,
+              "invalidPreValidator": null,
+              "unreachable": 2,
+              "usdPer1k": null
+            },
+            "turk": {
+              "items": 66,
+              "words": 478,
+              "wordAcc": 0.9603,
+              "top1": 0.7727,
+              "top5": 0.9848,
+              "ksr": 0.0027,
+              "scanStepsPerChar": 3.5443,
+              "pressesPerChar": 0.9973,
+              "invalidPreValidator": null,
+              "unreachable": 1,
+              "usdPer1k": null
+            }
+          }
+        },
+        {
+          "id": "B2",
+          "label": "B2 LLM raw",
+          "status": "ok",
+          "metrics": {
+            "items": 200,
+            "words": 1081,
+            "wordAcc": 0.2914,
+            "top1": 0.045,
+            "top5": 0.055,
+            "ksr": -0.1649,
+            "scanStepsPerChar": 4.5784,
+            "pressesPerChar": 1.1649,
+            "invalidPreValidator": 0.9703,
+            "unreachable": 3,
+            "usdPer1k": 0.3387
+          },
+          "bySource": {
+            "aac": {
+              "items": 134,
+              "words": 603,
+              "wordAcc": 0.3483,
+              "top1": 0.0448,
+              "top5": 0.0597,
+              "ksr": -0.158,
+              "scanStepsPerChar": 4.5392,
+              "pressesPerChar": 1.158,
+              "invalidPreValidator": 0.9669,
+              "unreachable": 2,
+              "usdPer1k": 0.3297
+            },
+            "turk": {
+              "items": 66,
+              "words": 478,
+              "wordAcc": 0.2197,
+              "top1": 0.0455,
+              "top5": 0.0455,
+              "ksr": -0.1731,
+              "scanStepsPerChar": 4.6248,
+              "pressesPerChar": 1.1731,
+              "invalidPreValidator": 0.9793,
+              "unreachable": 1,
+              "usdPer1k": 0.357
+            }
+          },
+          "llm": {
+            "calls": 200,
+            "inputTokens": 180105,
+            "outputTokens": 7443,
+            "cacheReadTokens": 77946,
+            "cacheWriteTokens": 0,
+            "usd": 0.067742,
+            "refusals": 0,
+            "unparseable": 0,
+            "degraded": 0,
+            "skipped": 0
+          }
+        },
+        {
+          "id": "B3",
+          "label": "B3 LLM+val",
+          "status": "ok",
+          "metrics": {
+            "items": 200,
+            "words": 1081,
+            "wordAcc": 0.9121,
+            "top1": 0.055,
+            "top5": 0.055,
+            "ksr": -0.0161,
+            "scanStepsPerChar": 3.6875,
+            "pressesPerChar": 1.0161,
+            "invalidPreValidator": 0.9703,
+            "unreachable": 3,
+            "usdPer1k": 0.3387
+          },
+          "bySource": {
+            "aac": {
+              "items": 134,
+              "words": 603,
+              "wordAcc": 0.9038,
+              "top1": 0.0597,
+              "top5": 0.0597,
+              "ksr": -0.0221,
+              "scanStepsPerChar": 3.728,
+              "pressesPerChar": 1.0221,
+              "invalidPreValidator": 0.9669,
+              "unreachable": 2,
+              "usdPer1k": 0.3297
+            },
+            "turk": {
+              "items": 66,
+              "words": 478,
+              "wordAcc": 0.9226,
+              "top1": 0.0455,
+              "top5": 0.0455,
+              "ksr": -0.0089,
+              "scanStepsPerChar": 3.6395,
+              "pressesPerChar": 1.0089,
+              "invalidPreValidator": 0.9793,
+              "unreachable": 1,
+              "usdPer1k": 0.357
+            }
+          },
+          "llm": {
+            "calls": 200,
+            "inputTokens": 180105,
+            "outputTokens": 7443,
+            "cacheReadTokens": 77946,
+            "cacheWriteTokens": 0,
+            "usd": 0.067742,
+            "refusals": 0,
+            "unparseable": 0,
+            "degraded": 0,
+            "skipped": 0
+          }
+        },
+        {
+          "id": "B4",
+          "label": "B4 lattice+val",
+          "status": "ok",
+          "metrics": {
+            "items": 200,
+            "words": 1081,
+            "wordAcc": 0.9833,
+            "top1": 0.935,
+            "top5": 0.98,
+            "ksr": 0.0029,
+            "scanStepsPerChar": 3.5651,
+            "pressesPerChar": 0.9971,
+            "invalidPreValidator": 0,
+            "unreachable": 3,
+            "usdPer1k": 0.3484
+          },
+          "bySource": {
+            "aac": {
+              "items": 134,
+              "words": 603,
+              "wordAcc": 0.9834,
+              "top1": 0.9403,
+              "top5": 0.9851,
+              "ksr": 0.0011,
+              "scanStepsPerChar": 3.5775,
+              "pressesPerChar": 0.9989,
+              "invalidPreValidator": 0,
+              "unreachable": 2,
+              "usdPer1k": 0.3336
+            },
+            "turk": {
+              "items": 66,
+              "words": 478,
+              "wordAcc": 0.9833,
+              "top1": 0.9242,
+              "top5": 0.9697,
+              "ksr": 0.0049,
+              "scanStepsPerChar": 3.5505,
+              "pressesPerChar": 0.9951,
+              "invalidPreValidator": 0,
+              "unreachable": 1,
+              "usdPer1k": 0.3784
+            }
+          },
+          "llm": {
+            "calls": 198,
+            "inputTokens": 173266,
+            "outputTokens": 9777,
+            "cacheReadTokens": 97814,
+            "cacheWriteTokens": 0,
+            "usd": 0.069681,
+            "refusals": 0,
+            "unparseable": 0,
+            "degraded": 0,
+            "skipped": 2
+          }
+        }
+      ]
+    },
+    "MiniMax-M3.1-Flash:letter": {
+      "harness": "ninth-eval/1",
+      "model": "MiniMax-M3.1-Flash",
+      "label": "minimax-m3.1-flash",
+      "anthropicVersion": "2023-06-01",
+      "mode": "letter",
+      "k": 5,
+      "fixture": {
+        "path": "fixtures/test.v1.jsonl",
+        "sha256": "9fefd9dbeacda45ac7b0897336df2be952ca94a6e7f92ab24f27ef88f4ff9749"
+      },
+      "subset": {
+        "items": 200,
+        "limit": 200,
+        "seed": 9
+      },
+      "configs": [
+        {
+          "id": "B0",
+          "label": "B0 dict",
+          "status": "ok",
+          "metrics": {
+            "items": 200,
+            "words": 1081,
+            "wordAcc": 0.9084,
+            "top1": 0.62,
+            "top5": 0.925,
+            "ksr": -0.0136,
+            "scanStepsPerChar": 3.6177,
+            "pressesPerChar": 1.0136,
+            "invalidPreValidator": null,
+            "unreachable": 3,
+            "usdPer1k": null
+          },
+          "bySource": {
+            "aac": {
+              "items": 134,
+              "words": 603,
+              "wordAcc": 0.8972,
+              "top1": 0.6343,
+              "top5": 0.9403,
+              "ksr": -0.0195,
+              "scanStepsPerChar": 3.6432,
+              "pressesPerChar": 1.0195,
+              "invalidPreValidator": null,
+              "unreachable": 2,
+              "usdPer1k": null
+            },
+            "turk": {
+              "items": 66,
+              "words": 478,
+              "wordAcc": 0.9226,
+              "top1": 0.5909,
+              "top5": 0.8939,
+              "ksr": -0.0067,
+              "scanStepsPerChar": 3.5874,
+              "pressesPerChar": 1.0067,
+              "invalidPreValidator": null,
+              "unreachable": 1,
+              "usdPer1k": null
+            }
+          }
+        },
+        {
+          "id": "B1",
+          "label": "B1 ghost",
+          "status": "ok",
+          "metrics": {
+            "items": 200,
+            "words": 1081,
+            "wordAcc": 0.9648,
+            "top1": 0.845,
+            "top5": 0.98,
+            "ksr": 0,
+            "scanStepsPerChar": 3.5668,
+            "pressesPerChar": 1,
+            "invalidPreValidator": null,
+            "unreachable": 3,
+            "usdPer1k": null
+          },
+          "bySource": {
+            "aac": {
+              "items": 134,
+              "words": 603,
+              "wordAcc": 0.9685,
+              "top1": 0.8806,
+              "top5": 0.9776,
+              "ksr": -0.0023,
+              "scanStepsPerChar": 3.5857,
+              "pressesPerChar": 1.0023,
+              "invalidPreValidator": null,
+              "unreachable": 2,
+              "usdPer1k": null
+            },
+            "turk": {
+              "items": 66,
+              "words": 478,
+              "wordAcc": 0.9603,
+              "top1": 0.7727,
+              "top5": 0.9848,
+              "ksr": 0.0027,
+              "scanStepsPerChar": 3.5443,
+              "pressesPerChar": 0.9973,
+              "invalidPreValidator": null,
+              "unreachable": 1,
+              "usdPer1k": null
+            }
+          }
+        },
+        {
+          "id": "B2",
+          "label": "B2 LLM raw",
+          "status": "ok",
+          "metrics": {
+            "items": 200,
+            "words": 1081,
+            "wordAcc": 0.9297,
+            "top1": 0.495,
+            "top5": 0.5,
+            "ksr": -0.0177,
+            "scanStepsPerChar": 3.6963,
+            "pressesPerChar": 1.0177,
+            "invalidPreValidator": 0.0887,
+            "unreachable": 3,
+            "usdPer1k": 0.6266
+          },
+          "bySource": {
+            "aac": {
+              "items": 134,
+              "words": 603,
+              "wordAcc": 0.9254,
+              "top1": 0.5448,
+              "top5": 0.5522,
+              "ksr": -0.0255,
+              "scanStepsPerChar": 3.7463,
+              "pressesPerChar": 1.0255,
+              "invalidPreValidator": 0.0851,
+              "unreachable": 2,
+              "usdPer1k": 0.585
+            },
+            "turk": {
+              "items": 66,
+              "words": 478,
+              "wordAcc": 0.9351,
+              "top1": 0.3939,
+              "top5": 0.3939,
+              "ksr": -0.0085,
+              "scanStepsPerChar": 3.6368,
+              "pressesPerChar": 1.0085,
+              "invalidPreValidator": 0.1,
+              "unreachable": 1,
+              "usdPer1k": 0.711
+            }
+          },
+          "llm": {
+            "calls": 200,
+            "inputTokens": 145891,
+            "outputTokens": 169289,
+            "cacheReadTokens": 117739,
+            "cacheWriteTokens": 0,
+            "usd": 0.125324,
+            "refusals": 0,
+            "unparseable": 82,
+            "degraded": 0,
+            "skipped": 0
+          }
+        },
+        {
+          "id": "B3",
+          "label": "B3 LLM+val",
+          "status": "ok",
+          "metrics": {
+            "items": 200,
+            "words": 1081,
+            "wordAcc": 0.9371,
+            "top1": 0.495,
+            "top5": 0.5,
+            "ksr": -0.0161,
+            "scanStepsPerChar": 3.6865,
+            "pressesPerChar": 1.0161,
+            "invalidPreValidator": 0.0887,
+            "unreachable": 3,
+            "usdPer1k": 0.6266
+          },
+          "bySource": {
+            "aac": {
+              "items": 134,
+              "words": 603,
+              "wordAcc": 0.9337,
+              "top1": 0.5448,
+              "top5": 0.5522,
+              "ksr": -0.0236,
+              "scanStepsPerChar": 3.7351,
+              "pressesPerChar": 1.0236,
+              "invalidPreValidator": 0.0851,
+              "unreachable": 2,
+              "usdPer1k": 0.585
+            },
+            "turk": {
+              "items": 66,
+              "words": 478,
+              "wordAcc": 0.9414,
+              "top1": 0.3939,
+              "top5": 0.3939,
+              "ksr": -0.0071,
+              "scanStepsPerChar": 3.6288,
+              "pressesPerChar": 1.0071,
+              "invalidPreValidator": 0.1,
+              "unreachable": 1,
+              "usdPer1k": 0.711
+            }
+          },
+          "llm": {
+            "calls": 200,
+            "inputTokens": 145891,
+            "outputTokens": 169289,
+            "cacheReadTokens": 117739,
+            "cacheWriteTokens": 0,
+            "usd": 0.125324,
+            "refusals": 0,
+            "unparseable": 82,
+            "degraded": 0,
+            "skipped": 0
+          }
+        },
+        {
+          "id": "B4",
+          "label": "B4 lattice+val",
+          "status": "ok",
+          "metrics": {
+            "items": 200,
+            "words": 1081,
+            "wordAcc": 0.9889,
+            "top1": 0.96,
+            "top5": 0.985,
+            "ksr": 0.0049,
+            "scanStepsPerChar": 3.5572,
+            "pressesPerChar": 0.9951,
+            "invalidPreValidator": 0,
+            "unreachable": 3,
+            "usdPer1k": 0.1861
+          },
+          "bySource": {
+            "aac": {
+              "items": 134,
+              "words": 603,
+              "wordAcc": 0.9867,
+              "top1": 0.9552,
+              "top5": 0.9851,
+              "ksr": 0.0019,
+              "scanStepsPerChar": 3.5771,
+              "pressesPerChar": 0.9981,
+              "invalidPreValidator": 0,
+              "unreachable": 2,
+              "usdPer1k": 0.1747
+            },
+            "turk": {
+              "items": 66,
+              "words": 478,
+              "wordAcc": 0.9916,
+              "top1": 0.9697,
+              "top5": 0.9848,
+              "ksr": 0.0085,
+              "scanStepsPerChar": 3.5336,
+              "pressesPerChar": 0.9915,
+              "invalidPreValidator": 0,
+              "unreachable": 1,
+              "usdPer1k": 0.2091
+            }
+          },
+          "llm": {
+            "calls": 198,
+            "inputTokens": 151206,
+            "outputTokens": 20911,
+            "cacheReadTokens": 125490,
+            "cacheWriteTokens": 0,
+            "usd": 0.037215,
+            "refusals": 0,
+            "unparseable": 0,
+            "degraded": 0,
+            "skipped": 2
+          }
+        }
+      ]
+    }
+  }
+}

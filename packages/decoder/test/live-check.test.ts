@@ -86,3 +86,30 @@ describe('live-check (eval-harness Req 8.9)', () => {
     expect(out).toMatch(/live-check skipped/);
   });
 });
+
+describe('live-check with MiniMax (ADR-002)', () => {
+  it('runs only the MiniMax models when only MINIMAX_API_KEY is set, with Bearer auth and no cache retry', async () => {
+    const lines: string[] = [];
+    const seen: { url: string; auth?: string; model?: unknown }[] = [];
+    const fetchImpl = async (url: string, init: RequestInit) => {
+      const h = init.headers as Record<string, string>;
+      seen.push({ url, auth: h.authorization, model: JSON.parse(String(init.body)).model });
+      const content = [{ type: 'thinking', thinking: '...' }, { type: 'text', text: '{"c":[["i","need","water"]]}' }];
+      return new Response(JSON.stringify({ content, stop_reason: 'end_turn', usage: { input_tokens: 900, output_tokens: 30 } }), { status: 200 });
+    };
+    const r = await runLiveCheck({ apiKey: undefined, minimaxApiKey: 'mm-key', fetch: fetchImpl, log: (l) => void lines.push(l), sleep: async () => {} });
+    expect(seen.map((s) => s.model)).toEqual(['MiniMax-M3', 'MiniMax-M3.1-Flash']);
+    expect(seen.every((s) => s.url === 'https://api.minimax.io/anthropic/v1/messages' && s.auth === 'Bearer mm-key')).toBe(true);
+    // MiniMax-M3 disables thinking, so a thinking block there is a failure; Flash always thinks.
+    expect(r.status).toBe('fail');
+    expect(r.failures).toEqual(['MiniMax-M3: reply contains a thinking block']);
+    expect(lines.join('\n')).not.toContain('mm-key');
+  });
+
+  it('skips a requested MiniMax model without its key', async () => {
+    const lines: string[] = [];
+    const r = await runLiveCheck({ apiKey: 'k', models: ['MiniMax-M3'], log: (l) => void lines.push(l) });
+    expect(r.status).toBe('skipped');
+    expect(lines.join('\n')).toMatch(/MINIMAX_API_KEY is not set/);
+  });
+});

@@ -1,7 +1,8 @@
 /**
  * Model ranking client (contracts.md §3, source plan §4.3). Optional and off by default.
  * - Sends the keys (codes plus the offline lattice) and the partner's last line. Nothing else.
- * - Any non-200, bad JSON or more than 1,500 ms -> null, and the screen stays in ghost mode.
+ * - Any non-200, bad JSON or more than DECODE_TIMEOUT_MS (1,500 ms by default; set at build time
+ *   from the server's DECODE_TIMEOUT_MS, lib/publicEnv.mjs) -> null, and the screen stays in ghost mode.
  * - Every returned sentence is checked again here with validate(); the proof panel uses this result.
  * - Words the server says the model got wrong (`rejectedWords`, F7) are checked too and only ever
  *   shown struck through; they never become candidates.
@@ -9,7 +10,16 @@
  */
 import { proof, validate, type Candidate, type Lexicon, type Mode, type WordProof } from '@ninth/core';
 
-export const DECODE_TIMEOUT_MS = 1500;
+export const DEFAULT_DECODE_TIMEOUT_MS = 1500;
+
+/** Client budget: NEXT_PUBLIC_DECODE_TIMEOUT_MS (inlined at build), clamped to 500-9,500 ms. */
+export function clientTimeoutMs(v: string | undefined = process.env.NEXT_PUBLIC_DECODE_TIMEOUT_MS): number {
+  const n = Number(v);
+  if (!v || !Number.isFinite(n)) return DEFAULT_DECODE_TIMEOUT_MS;
+  return Math.min(9500, Math.max(500, Math.round(n)));
+}
+
+export const DECODE_TIMEOUT_MS = clientTimeoutMs();
 export const LIMITS = { codes: 20, codeLen: 16, partner: 280, recent: 3, perSlot: 12, beams: 10, bodyBytes: 4096 } as const;
 
 export function decodeUrl(): string {

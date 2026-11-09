@@ -66,3 +66,75 @@ ceiling for any ranker, B4 included, that keeps to listed words.
 | B0 dict | turk | 300 | 14.0% | 0.0% | 0.0% | 1.24 |
 | B1 ghost | aac | 566 | 23.8% | 1.9% | 2.5% | 1.33 |
 | B1 ghost | turk | 300 | 17.4% | 0.7% | 1.0% | 1.36 |
+
+<!-- llm-run:MiniMax-M3:letter -->
+## Model ranking: MiniMax-M3, letter mode, 200 items, 2026-11-09
+
+Written by `pnpm -F @ninth/eval llm --model MiniMax-M3 --limit 200`; the next run of this model and mode replaces this section.
+
+- Model: `MiniMax-M3` (`minimax-m3`), MiniMax Anthropic-compatible API, `anthropic-version: 2023-06-01`
+- Run: 2026-11-09 (UTC), seeded sample of 200 items (`--limit 200`, seed 9), k = 5, mode = letter, concurrency 4
+- This run: 292 requests sent, 306 replies from the response cache, 0 retries, $0.10 spent
+- B0 and B1 rows are the offline baselines on the same items. Tokens and cost come from each reply's `usage` at `packages/decoder/src/models.ts` list prices; "In tok/call" counts uncached, cache-read and cache-write input. Latency is the recorded time of each successful API call (a cached reply keeps its original time); "Calls > 1.2 s" would have fallen back to ghost beams at the route's deadline.
+
+| Config | Word acc | Sent top-1 | Sent top-5 | KSR | Invalid pre-validator | p50 ms | p95 ms | Calls > 1.2 s | Calls | In tok/call | Out tok/call | Cache-read tok/call | $/1k |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| B0 dict | 90.8% | 62.0% | 92.5% | -1.4% | n/a | 0.08 | 0.35 | n/a |  |  |  |  | 0 |
+| B1 ghost | 96.5% | 84.5% | 98.0% | 0.0% | n/a | 0.07 | 0.38 | n/a |  |  |  |  | 0 |
+| B2 LLM raw | 29.1% | 4.5% | 5.5% | -16.5% | 97.0% | 1004.11 | 3284.44 | 29.5% | 200 | 1,290 | 37 | 390 | $0.339 |
+| B3 LLM+val | 91.2% | 5.5% | 5.5% | -1.6% | 97.0% | 1004.11 | 3284.44 | 29.5% | 200 | 1,290 | 37 | 390 | $0.339 |
+| B4 lattice+val | 98.3% | 93.5% | 98.0% | 0.3% | 0.0% | 898.51 | 2618.51 | 24.2% | 198 | 1,369 | 49 | 494 | $0.348 |
+
+| Config | Source | Items | Word acc | Sent top-1 | Sent top-5 |
+|---|---|---|---|---|---|
+| B0 dict | aac | 134 | 89.7% | 63.4% | 94.0% |
+| B0 dict | turk | 66 | 92.3% | 59.1% | 89.4% |
+| B1 ghost | aac | 134 | 96.9% | 88.1% | 97.8% |
+| B1 ghost | turk | 66 | 96.0% | 77.3% | 98.5% |
+| B2 LLM raw | aac | 134 | 34.8% | 4.5% | 6.0% |
+| B2 LLM raw | turk | 66 | 22.0% | 4.5% | 4.5% |
+| B3 LLM+val | aac | 134 | 90.4% | 6.0% | 6.0% |
+| B3 LLM+val | turk | 66 | 92.3% | 4.5% | 4.5% |
+| B4 lattice+val | aac | 134 | 98.3% | 94.0% | 98.5% |
+| B4 lattice+val | turk | 66 | 98.3% | 92.4% | 97.0% |
+
+- B2 LLM raw: 200 calls, $0.07, 0 refusals, 0 unparseable replies
+- B3 LLM+val: 200 calls, $0.07, 0 refusals, 0 unparseable replies
+- B4 lattice+val: 198 calls, $0.07, 0 refusals, 0 unparseable replies, 0 answered from ghost beams only, 2 not sent (a slot with no lexicon word, as in the app)
+<!-- /llm-run:MiniMax-M3:letter -->
+
+<!-- llm-run:MiniMax-M3.1-Flash:letter -->
+## Model ranking: MiniMax-M3.1-Flash, letter mode, 200 items, 2026-11-09
+
+Written by `pnpm -F @ninth/eval llm --model MiniMax-M3.1-Flash --limit 200`; the next run of this model and mode replaces this section.
+
+- Model: `MiniMax-M3.1-Flash` (`minimax-m3.1-flash`), MiniMax Anthropic-compatible API, `anthropic-version: 2023-06-01`
+- Run: 2026-11-09 (UTC), seeded sample of 200 items (`--limit 200`, seed 9), k = 5, mode = letter, concurrency 4
+- This run: 180 requests sent, 418 replies from the response cache, 0 retries, $0.05 spent
+- B0 and B1 rows are the offline baselines on the same items. Tokens and cost come from each reply's `usage` at `packages/decoder/src/models.ts` list prices; "In tok/call" counts uncached, cache-read and cache-write input. Latency is the recorded time of each successful API call (a cached reply keeps its original time); "Calls > 1.2 s" would have fallen back to ghost beams at the route's deadline.
+
+| Config | Word acc | Sent top-1 | Sent top-5 | KSR | Invalid pre-validator | p50 ms | p95 ms | Calls > 1.2 s | Calls | In tok/call | Out tok/call | Cache-read tok/call | $/1k |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| B0 dict | 90.8% | 62.0% | 92.5% | -1.4% | n/a | 0.07 | 0.32 | n/a |  |  |  |  | 0 |
+| B1 ghost | 96.5% | 84.5% | 98.0% | 0.0% | n/a | 0.07 | 0.38 | n/a |  |  |  |  | 0 |
+| B2 LLM raw | 93.0% | 49.5% | 50.0% | -1.8% | 8.9% | 8695.77 | 15461.95 | 100.0% | 200 | 1,318 | 846 | 589 | $0.627 |
+| B3 LLM+val | 93.7% | 49.5% | 50.0% | -1.6% | 8.9% | 8695.77 | 15461.95 | 100.0% | 200 | 1,318 | 846 | 589 | $0.627 |
+| B4 lattice+val | 98.9% | 96.0% | 98.5% | 0.5% | 0.0% | 1555.38 | 4024.87 | 70.7% | 198 | 1,397 | 106 | 634 | $0.186 |
+
+| Config | Source | Items | Word acc | Sent top-1 | Sent top-5 |
+|---|---|---|---|---|---|
+| B0 dict | aac | 134 | 89.7% | 63.4% | 94.0% |
+| B0 dict | turk | 66 | 92.3% | 59.1% | 89.4% |
+| B1 ghost | aac | 134 | 96.9% | 88.1% | 97.8% |
+| B1 ghost | turk | 66 | 96.0% | 77.3% | 98.5% |
+| B2 LLM raw | aac | 134 | 92.5% | 54.5% | 55.2% |
+| B2 LLM raw | turk | 66 | 93.5% | 39.4% | 39.4% |
+| B3 LLM+val | aac | 134 | 93.4% | 54.5% | 55.2% |
+| B3 LLM+val | turk | 66 | 94.1% | 39.4% | 39.4% |
+| B4 lattice+val | aac | 134 | 98.7% | 95.5% | 98.5% |
+| B4 lattice+val | turk | 66 | 99.2% | 97.0% | 98.5% |
+
+- B2 LLM raw: 200 calls, $0.13, 0 refusals, 82 unparseable replies
+- B3 LLM+val: 200 calls, $0.13, 0 refusals, 82 unparseable replies
+- B4 lattice+val: 198 calls, $0.04, 0 refusals, 0 unparseable replies, 0 answered from ghost beams only, 2 not sent (a slot with no lexicon word, as in the app)
+<!-- /llm-run:MiniMax-M3.1-Flash:letter -->

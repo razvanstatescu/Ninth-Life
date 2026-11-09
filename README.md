@@ -23,8 +23,9 @@ Early development (milestone M1: ghost mode in the browser). See
 1. **Ghost mode (always on, offline).** The browser decodes the key codes with a frequency
    dictionary and a bigram model. No network needed.
 2. **Model ranking (opt-in).** The browser sends the possible words per slot (the lattice) and the
-   partner's last line to the app's `/api/decode` route, which asks Claude Haiku through the
-   Anthropic API to pick the most likely sentence.
+   partner's last line to the app's `/api/decode` route, which asks a model to pick the most likely
+   sentence: Claude Haiku through the Anthropic API, or MiniMax-M3 through MiniMax's
+   Anthropic-compatible API ([ADR-002](docs/decisions/ADR-002-minimax-provider.md)).
 3. **Proof.** Every candidate goes through a deterministic validator: each word must encode to
    exactly the keys pressed. Anything else is shown struck through and is never spoken.
 
@@ -55,7 +56,9 @@ pnpm test
 pnpm dev
 ```
 
-Requires Node 22 and pnpm 10.
+Requires Node 22 and pnpm 10. Ghost mode needs no key. For model ranking, copy
+`packages/web/.env.example` to `packages/web/.env.local`, set `LLM_ENABLED=true` and either
+`ANTHROPIC_API_KEY` or `MINIMAX_API_KEY` ([decoder docs](docs/architecture/decoder.md#providers-adr-002)).
 
 ## License
 
