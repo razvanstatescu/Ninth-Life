@@ -124,6 +124,15 @@
 .partner__text.is-empty { color: var(--ink-muted); }
 .partner__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
 .partner__form { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+/* Listen, Done and Cancel share one row (equal widths) under the field. */
+.partner__buttons { flex: 1 1 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: var(--space-3); padding: 6px; margin: -6px; border-radius: calc(var(--radius-key) + 6px); }
+.partner__buttons .nl-btn { padding: 0 var(--space-3); }
+.partner__notice .partner__buttons { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+/* Listening: the button reads Stop and keeps a strong outline (no motion: design rule). */
+.partner__listen.is-listening { background: var(--surface-sunken); border-color: var(--ink); }
+.partner__notice { flex: 1 1 100%; display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); border-radius: var(--radius-chip); border: 2px solid var(--line-strong); }
+.partner__notice p { margin: 0; font-size: var(--type-label-size); line-height: var(--type-label-line); }
+.partner__status { flex: 1 1 100%; margin: 0; font-size: var(--type-label-size); line-height: var(--type-label-line); color: var(--ink-muted); }
 
 /* Inputs */
 .input, .select {

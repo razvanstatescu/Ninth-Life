@@ -158,7 +158,7 @@ but is normally unset (same-origin `/api/decode`).
 ```ts
 type Settings = { mode: 'letter'|'initials'; access: 'keyboard'|'touch'|'scan1'|'scan2';
   scanMs: number; scanLoops: number; acceptDelayMs: number; voiceURI?: string; rate: number; pitch: number;
-  llm: boolean; theme: 'night'|'day'|'system'; targetSize: 'l'|'xl'; lang: 'en' };
+  llm: boolean; dictation: boolean; theme: 'night'|'day'|'system'; targetSize: 'l'|'xl'; lang: 'en' };
 type Phrase = { id: string; text: string; lang: string; uses: number; lastUsed: number; pinned: boolean };
 type VocabPack = { id: string; lang: string; version: number; words: { w: string; boost: number }[]; phrases: string[] };
 ```

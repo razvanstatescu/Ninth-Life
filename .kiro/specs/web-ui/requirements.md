@@ -375,3 +375,19 @@ scrolls, so that nothing I need is ever out of reach.
      sentence, AND SHALL ask for a portrait lock where the browser allows it; a tablet SHALL work in both orientations.
      (Known exception to WCAG 1.3.4, ADR-003.)
 25.7 THE layout SHALL follow the window (an iPad window can be 375px wide) and the phone test SHALL use the screen.
+
+## Requirement 26: Voice to text for They said (2026-11-09, ADR-004)
+
+**User story:** As the other person in the conversation, I want to say my line instead of typing it, so the app can use
+it without either of us typing.
+
+26.1 WHERE the browser has speech recognition, THE They said field SHALL show a Listen button; elsewhere it SHALL NOT.
+26.2 THE first Listen SHALL say where the audio goes (the browser maker's speech service; Ninth Life never receives or
+     keeps it) with "Allow and listen" and "Not now"; nothing SHALL be recorded before Allow.
+26.3 Allow SHALL be remembered (the `dictation` setting, off by default, in Settings as "Listen in They said"); Listen
+     SHALL hear one phrase and fill the field as words are heard; the line SHALL be saved only with Done.
+26.4 WHEN the browser can recognise English on the device, THE recognition SHALL run on the device.
+26.5 WHILE listening the button SHALL read Stop and a status line SHALL say "Listening"; Stop SHALL keep what was heard;
+     typing, Cancel, Escape and closing SHALL turn the microphone off.
+26.6 A blocked or missing microphone, nothing heard, no connection or no service SHALL be said in words in the status
+     line, pointing to typing.

@@ -712,8 +712,10 @@ export function CommunicationScreen({
   const quickPhrases = dict.status === 'ready' ? (dict.pack?.phrases ?? []) : [];
   const actionLit = (i: number) => scanRow === ACTION_ROW && litCell === i;
 
+  // Voice to text for They said (web-ui Req 26): allowed once, from the notice or Settings.
+  const dictation = { allowed: settings.dictation, onAllow: () => setSettings((s) => ({ ...s, dictation: true })) };
   const sections: Record<Section, ReactElement> = {
-    partner: <PartnerTurn key="partner" value={partner} onChange={setPartner} />,
+    partner: <PartnerTurn key="partner" value={partner} onChange={setPartner} dictation={dictation} />,
     speak: phone ? (
       <div key="speak" className={scanRow === MENU_ROW ? 'phone-card nl-scanrow is-scanning order-speak' : 'phone-card nl-scanrow order-speak'} data-section="speak">
         <SpeakBar
@@ -961,7 +963,7 @@ export function CommunicationScreen({
       {phone ? (
         <Sheet open={sheet === 'partner'} name="partner" title="They said" onClose={() => setSheet(null)} scanning={overlayScanMode !== null}>
           <p className="sheet__lead">What the other person just said. With model ranking on, it helps rank your sentences; it is never stored.</p>
-          {sheet === 'partner' ? <PartnerTurn value={partner} onChange={setPartner} startEditing onDone={() => setSheet(null)} /> : null}
+          {sheet === 'partner' ? <PartnerTurn value={partner} onChange={setPartner} startEditing onDone={() => setSheet(null)} dictation={dictation} /> : null}
         </Sheet>
       ) : null}
       {phone ? (

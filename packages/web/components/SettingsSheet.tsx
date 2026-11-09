@@ -10,10 +10,12 @@ import {
   sanitizeSettings,
   type Settings,
 } from '@/lib/settings';
+import { useDictationSupported } from '@/lib/dictation';
 import { providerCopy } from '@/lib/rankingProvider';
 import { pickVoice } from '@/lib/speech';
 import type { VoicesState } from '@/lib/useVoices';
 import { Button } from './Button';
+import { DICTATION_NOTICE } from './PartnerTurn';
 import { Sheet } from './Sheet';
 
 export const VOICE_PICKER_ID = 'voice-picker';
@@ -172,6 +174,8 @@ export function SettingsSheet({
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => onChange(sanitizeSettings({ ...settings, [k]: v }));
   const current = pickVoice(voices.voices, settings.voiceURI);
   const llmHelpId = useId();
+  const dictationHelpId = useId();
+  const dictationOk = useDictationSupported();
   const voiceIndex = current ? voices.voices.findIndex((v) => v.voiceURI === current.voiceURI) : -1;
   const stepVoice = (d: 1 | -1) => {
     const n = voices.voices.length;
@@ -360,6 +364,26 @@ export function SettingsSheet({
           Off by default. When on, your keys and the last thing they said are sent to {providerCopy().service}, which suggests the order of the sentences. {providerCopy().retention} Every word is still checked against your keys, and nothing is spoken until you press Speak. Offline, your dictionary is used.
         </p>
       </section>
+
+      {dictationOk ? (
+        <section className="group" aria-labelledby="set-dictation">
+          <h3 className="group__title" id="set-dictation">
+            Voice to text
+          </h3>
+          <div className="scan-cluster" data-scan-row="dictation">
+            <label className="toggle">
+              <input type="checkbox" role="switch" checked={settings.dictation} aria-describedby={dictationHelpId} onChange={(e) => set('dictation', e.target.checked)} />
+              <span className="toggle__text">Listen in They said</span>
+              <span className="toggle__state" aria-hidden="true">
+                {settings.dictation ? 'On' : 'Off'}
+              </span>
+            </label>
+          </div>
+          <p className="field__help" id={dictationHelpId}>
+            {DICTATION_NOTICE} Off until you allow it.
+          </p>
+        </section>
+      ) : null}
     </Sheet>
   );
 }

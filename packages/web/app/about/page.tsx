@@ -60,6 +60,11 @@ export default function AboutPage() {
                 Speech uses your browser&apos;s voices. Voices marked &quot;on this device&quot; keep your words on the device; online voices send the text to the
                 browser maker.
               </li>
+              <li>
+                Listen in They said uses your browser&apos;s speech service: the other person&apos;s voice may be sent to the browser maker (Google in Chrome,
+                Apple in Safari) to turn it into text, unless the browser can do it on this device. It is off until you allow it, and Ninth Life never receives or
+                keeps the audio.
+              </li>
             </ul>
           </section>
 
