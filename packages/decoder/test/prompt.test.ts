@@ -57,6 +57,15 @@ describe('user turn', () => {
     expect(u).toContain('<k>2</k>');
   });
 
+  it('puts the conversation and the guesses before the slots (measured: docs/research/minimax-models.md, Prompt experiments)', () => {
+    const u = renderUserTurn({ mode: 'letter', codes: ['4'], lattice: [['i']], beams: [['i']], partner: 'hi', recent: ['ok'], k: 1 });
+    const at = (tag: string) => u.indexOf(tag);
+    expect(at('<partner>')).toBeLessThan(at('<recent>'));
+    expect(at('<recent>')).toBeLessThan(at('<guesses>'));
+    expect(at('<guesses>')).toBeLessThan(at('<slots>'));
+    expect(at('<slots>')).toBeLessThan(at('<k>'));
+  });
+
   it('strips tag characters from partner text so it cannot close our tags', () => {
     const u = renderUserTurn({
       mode: 'letter',
