@@ -28,6 +28,11 @@
         "aws___retrieve_skill"
       ]
     },
+    "mobbin": {
+      "url": "https://api.mobbin.com/mcp",
+      "disabled": false,
+      "autoApprove": []
+    },
     "github": {
       "url": "https://api.githubcopilot.com/mcp/",
       "headers": {
