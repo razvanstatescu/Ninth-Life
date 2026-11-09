@@ -15,6 +15,7 @@ and the brand book `design/system/README.md`.
 | Build | Next.js production build, service worker and precache manifest | `pnpm -F @ninth/web build` | `ci / build` and `ci / e2e` | same |
 | Accessibility (axe) | No serious or critical axe violations of the WCAG 2.0/2.1/2.2 A and AA rules on `/`, `/welcome`, `/about` and the open Settings sheet, Night and Day, at 1280 and 390 px | `packages/web/test/e2e/axe.mjs` (`@axe-core/playwright` 4.14.0) | `ci / e2e` | see below |
 | Keyboard walkthrough | Keyboard only: type "i need water" with digits, choose a sentence (Alt+2, ArrowUp), Tab to Settings, Enter opens it, focus moves in, Escape closes it, focus returns; focus ring 4 px | `packages/web/test/e2e/keyboard.mjs` | `ci / e2e` | see below |
+| Phones and tablets | 10 devices (344-440px phones, 744-820px tablets) in portrait and landscape: whole keypad and Speak on screen, no sideways scroll, keys >= 72px, targets >= 56px, text >= 16px, keypad does not move while a long sentence is typed (touch taps) | `packages/web/test/e2e/responsive.mjs` (`ENGINE=webkit` for Safari's engine) | `ci / e2e` (Chromium) | see below |
 | Single-switch walkthrough | Space as the only switch: one-switch scanning types "hi" (4 4) in 5 presses; no second ember fill while a key is lit; the accept delay filters presses closer than 150 ms | `packages/web/test/e2e/switch.mjs` | `ci / e2e` | see below |
 | Performance | First load bytes, dictionary ready time, key-press latency, parse (v2 and v1), completion index build, decode latency, heap, offline reload, what the service worker really downloads and any dictionary file downloaded twice, on a Moto G-class profile and on desktop | `scripts/perf-check.mjs`, results in [performance.md](performance.md) | `ci / e2e`, report only (table in the job summary) | see below |
 | Eval | Decoding accuracy on the frozen 866-item test set (the only numbers the website may quote) | `packages/eval`, results `packages/eval/RESULTS.md`, method `docs/architecture/data-and-eval.md` | `eval` workflow (weekly and by hand), not on PRs | `pnpm -F @ninth/eval quick` / `eval` |
@@ -39,6 +40,7 @@ pnpm -F @ninth/web exec next start -p 3202     # leave running in another shell
 node packages/web/test/e2e/axe.mjs             # AXE_STRICT=1 also fails on moderate/minor
 node packages/web/test/e2e/keyboard.mjs
 node packages/web/test/e2e/switch.mjs
+node packages/web/test/e2e/responsive.mjs      # ENGINE=webkit for Safari's engine
 node scripts/perf-check.mjs                    # --runs 5, --json out.json, PERF_STRICT=1 to gate
 ```
 

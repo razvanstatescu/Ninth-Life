@@ -107,14 +107,27 @@ lexicon can only raise words. Spell sheet keys: 1-4 pick a letter and move on, a
 
 ## Layout
 
-| | Wide (>= 960px) | Compact (< 960px) |
-|---|---|---|
-| Header | Brand, every status pill, Phrases / Voice / Settings | One row: brand, one summary pill, Menu |
-| Main | Left: They said, SpeakBar, sentences, proof. Right: keypad, scan control, hint | SpeakBar, keypad, scan control, sentences (3 + More), proof, They said, hint |
+| | Wide (>= 960px) | Compact (< 960px) | Split (phone held sideways) |
+|---|---|---|---|
+| When | 960px or wider | narrower than 960px | narrower than 960px, landscape, under 600px tall (`SPLIT_QUERY`) |
+| Header | Brand, every status pill, Phrases / Voice / Settings | One row: brand, one summary pill, Menu | As compact, at the top of the left column |
+| Main | Left: They said, SpeakBar, sentences, proof. Right: keypad, scan control, hint | SpeakBar, keypad, scan control, sentences (3 + More), proof, They said, hint | Left: SpeakBar, sentences (3 + More), proof, They said, scan control, hint. Right: the keypad alone, pinned |
+| Keys | key-size (96) or key-xl | `(100svh - 528px) / 4`, 72 to 96 (or 128 XL) | `(100svh - 72px) / 4`, 72 to 96 (or 128 XL) |
 
-The static HTML is the wide DOM; CSS `order` shows it in compact order on phones until hydration swaps in the compact
-DOM order (so focus order matches). Compact keys are capped by `(100dvh - 480px) / 4` (min 72px) so the SpeakBar and
-keypad fit at 390 x 844; the size depends on the viewport only, never on the sentence.
+The static HTML is the wide DOM; CSS `order` shows it in compact or split order until hydration swaps in the matching
+DOM order (so focus order matches). Phones and tablets (2026-11-09, docs/research/mobile-layout.md, web-ui Req
+15.8-15.11, checked on 20 viewports by `test/e2e/responsive.mjs`):
+- **Keys never move while typing.** In compact and split the SpeakBar text area has a fixed height (two sentence lines
+  and the key line; one sentence line on phones under 800px tall) and scrolls inside, kept on the newest word
+  (`SpeakBar.tsx`). The full sentence is also in the sentence list and in Show mode.
+- **Short phones** (up to 760px tall in portrait): denser keypad panel (12px padding, 8px gaps). Up to 700px tall
+  (iPhone SE): Speak is target-min (56px) tall instead of 80px and section gaps are 12px. Narrow phones show "Save" and
+  "Spell"; the accessible names stay "Save phrase" and "Spell this word".
+- **Key size uses `svh`**, not `dvh`, so keys do not resize when the browser toolbar shows or hides.
+- **Safe areas:** `viewport-fit=cover`; the page, sheets and Show mode pad by `env(safe-area-inset-*)`.
+- **Gestures:** `touch-action: manipulation` (no double-tap zoom, pinch zoom stays), `overscroll-behavior: none` (no
+  pull-to-refresh wiping a sentence), no iOS long-press menu on keys. The voice `<select>` draws its own chevron
+  because iOS ignores `min-height` on a native select (it was 33px).
 
 ## Speech caveats
 

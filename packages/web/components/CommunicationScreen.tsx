@@ -11,7 +11,7 @@ import { EMPTY, actionForKey, codesOf, composerReducer } from '@/lib/composer';
 import { loadDictionary, type DictState } from '@/lib/data';
 import { DecodeCache, buildRequest, decodeRemote, type RejectedSuggestion } from '@/lib/decodeClient';
 import { focusContext, mapKey } from '@/lib/keyboard';
-import { sectionOrder, useLayout, visibleSentences, type Layout, type Section } from '@/lib/layout';
+import { isTwoColumn, sectionOrder, useLayout, visibleSentences, type Layout, type Section } from '@/lib/layout';
 import { KEY_ROWS, type KeyDef } from '@/lib/keys';
 import { applyMyWords, buildDisplayMap, makeMyWord, mergeMyWords, showWord, type MyWord } from '@/lib/myWords';
 import { MAX_CANDIDATES, buildSentence, decodeAround, decodeWithPins, mergeCandidates, readings, spellTarget } from '@/lib/sentence';
@@ -645,8 +645,8 @@ export function CommunicationScreen({
           <Button variant="secondary" icon="x" onClick={clearAll} disabled={codes.length === 0} lit={actionLit(1)}>
             Clear
           </Button>
-          <Button variant="quiet" icon="save" onClick={saveCurrent} disabled={!sentence.speakable} lit={actionLit(2)}>
-            Save phrase
+          <Button variant="quiet" icon="save" onClick={saveCurrent} disabled={!sentence.speakable} lit={actionLit(2)} aria-label="Save phrase">
+            Save<span className="save-btn__more"> phrase</span>
           </Button>
           <Button variant="quiet" icon="show" onClick={showCurrent} disabled={!sentence.speakable} lit={actionLit(3)}>
             Show
@@ -745,8 +745,8 @@ export function CommunicationScreen({
           onSettings={() => setSheet('settings')}
         />
 
-        {layout === 'wide' ? (
-          <main className="app-main">
+        {isTwoColumn(layout) ? (
+          <main className={layout === 'split' ? 'app-main app-main--split' : 'app-main'}>
             <div className="app-main__talk">{order[0]!.map((k) => sections[k])}</div>
             <div className="app-main__pad">{order[1]!.map((k) => sections[k])}</div>
           </main>

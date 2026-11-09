@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { chunk } from '@/components/PhrasesSheet';
-import { COMPACT_SENTENCES, sectionOrder, visibleSentences } from '@/lib/layout';
+import { COMPACT_SENTENCES, isTwoColumn, sectionOrder, SPLIT_QUERY, visibleSentences } from '@/lib/layout';
 import { statusLines, statusSummary } from '@/lib/status';
 
 describe('layout (web-ui Req 15)', () => {
@@ -28,6 +28,25 @@ describe('layout (web-ui Req 15)', () => {
     expect(visibleSentences(3, 'compact', false)).toEqual({ count: 3, more: false, canCollapse: false });
     expect(visibleSentences(0, 'compact', false)).toEqual({ count: 0, more: false, canCollapse: false });
     expect(visibleSentences(5, 'wide', false)).toEqual({ count: 5, more: false, canCollapse: false });
+  });
+
+  it('split (phone held sideways): talk column, then a keypad column holding only the keypad', () => {
+    const [talk, pad] = sectionOrder('split').columns;
+    expect(pad).toEqual(['pad']); // a pinned column taller than the screen would hide what sits under the keys
+    expect(talk).toEqual(['speak', 'cands', 'proof', 'partner', 'scan', 'hint']);
+    expect(isTwoColumn('split')).toBe(true);
+    expect(isTwoColumn('wide')).toBe(true);
+    expect(isTwoColumn('compact')).toBe(false);
+    // Sentences behave as on phones: 3, then More.
+    expect(visibleSentences(5, 'split', false)).toEqual({ count: 3, more: true, canCollapse: false });
+  });
+
+  it('split matches only phones held sideways, and the CSS uses the same query', async () => {
+    expect(SPLIT_QUERY).toBe('(max-width: 959px) and (min-width: 560px) and (max-height: 599px) and (orientation: landscape)');
+    const { readFileSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const css = readFileSync(resolve(__dirname, '../styles/app.css'), 'utf8');
+    expect(css).toContain(`@media ${SPLIT_QUERY} {`);
   });
 
   it('Req 15.4: a sentence chosen past the third opens the full list and keeps it open', () => {

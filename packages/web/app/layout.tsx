@@ -26,6 +26,9 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   // Zoom stays available (WCAG 1.4.4): no maximumScale.
+  // The page may run under the notch, rounded corners and home indicator; styles/app.css pads by
+  // env(safe-area-inset-*) so nothing interactive sits there.
+  viewportFit: 'cover',
   themeColor: '#140a2e',
   colorScheme: 'dark light',
 };

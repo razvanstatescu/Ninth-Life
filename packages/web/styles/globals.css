@@ -41,10 +41,16 @@ html {
   font-family: var(--font-sans);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* No pull-to-refresh or scroll chaining: a pull at the top of the page must not reload it and
+     wipe a half-typed sentence (docs/research/mobile-layout.md). */
+  overscroll-behavior: none;
+  /* A double tap in a gap between keys must not zoom the page. Pinch zoom stays on (WCAG 1.4.4). */
+  touch-action: manipulation;
 }
 
 body {
   margin: 0;
+  overscroll-behavior: none;
   min-height: 100vh;
   background: var(--ground);
   color: var(--ink);

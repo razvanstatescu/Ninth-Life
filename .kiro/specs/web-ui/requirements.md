@@ -157,6 +157,16 @@ so that I never scroll to reach a key.
 15.6 WHILE the viewport is 960px or wider, THE app SHALL keep the In-context-app artboard layout (every status pill,
      Phrases, Voice and Settings in the header; talk column beside the keypad).
 15.7 THE sentence SHALL wrap and SHALL never be truncated at any width, and nothing SHALL scroll horizontally at 360px.
+15.8 ON every phone and tablet in `test/e2e/responsive.mjs` (344 to 440px wide phones and 744 to 820px tablets, portrait
+     and landscape) THE whole keypad and Speak SHALL be visible without scrolling, keys SHALL be at least 72px, other
+     targets at least 56px and app text at least 16px (added 2026-11-09, docs/research/mobile-layout.md).
+15.9 WHILE a phone is held sideways (narrower than 960px, landscape, under 600px tall), THE app SHALL use the split
+     layout: the keypad pinned on the right and sized to the screen height, everything else in a column on its left.
+15.10 THE keypad SHALL NOT move on screen while a sentence is typed, however long it gets: wherever the SpeakBar sits
+     above or beside it, its text area SHALL keep one height and scroll inside, kept scrolled to the newest word.
+15.11 Key size SHALL follow the small viewport height (svh), so keys do not resize when the browser toolbar shows or
+     hides; the page SHALL pad by the safe-area insets (viewport-fit=cover), SHALL NOT reload on pull-to-refresh and
+     SHALL NOT zoom on a double tap, and pinch zoom SHALL stay available.
 
 ## Requirement 16: Switch access everywhere (M1 review F4)
 **User story:** As a person who uses one or two switches, I want to reach every sheet and change every setting

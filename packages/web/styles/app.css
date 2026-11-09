@@ -3,7 +3,10 @@
 
 .app {
   min-height: 100vh;
-  padding: var(--space-6) var(--space-6) var(--space-12);
+  /* Page padding per layout; the safe-area block at the end of this file widens it under a notch,
+     the Dynamic Island, rounded corners or the home indicator (viewport-fit=cover, app/layout.tsx). */
+  --app-pad-top: var(--space-6); --app-pad-x: var(--space-6); --app-pad-bottom: var(--space-12);
+  padding: var(--app-pad-top) var(--app-pad-x) var(--app-pad-bottom);
 }
 .app__inner {
   max-width: 1360px; margin: 0 auto;
@@ -56,7 +59,7 @@
 }
 
 @media (max-width: 959px) {
-  .app { padding: var(--space-4) var(--space-4) var(--space-12); }
+  .app { --app-pad-top: var(--space-4); --app-pad-x: var(--space-4); }
   .app__inner { gap: var(--space-4); }
 
   .app-header { flex-wrap: nowrap; gap: var(--space-2); }
@@ -86,8 +89,19 @@
      390 x 844 phone (web-ui Req 15.1). 480px is everything above and around the keys with a
      one-line sentence: header, SpeakBar, actions, gaps and the keypad's own padding. Key size
      depends only on the viewport, never on the sentence, so keys do not move while typing. */
-  .nl-keypad { --nl-key: clamp(var(--key-min), min(calc((100vw - 104px) / 3), calc((100vh - 480px) / 4), calc((100dvh - 480px) / 4)), var(--key-size)); }
-  [data-keysize="xl"] .nl-keypad { --nl-key: clamp(var(--key-min), min(calc((100vw - 104px) / 3), calc((100vh - 480px) / 4), calc((100dvh - 480px) / 4)), var(--key-xl)); }
+  /* 528px: as above with the SpeakBar text area at its fixed two-line height. svh, not dvh: the
+     small viewport does not change when the browser toolbar shows or hides, so keys never resize
+     mid-sentence (100vh first for browsers without svh). */
+  .nl-keypad { --nl-key: clamp(var(--key-min), min(calc((100vw - 104px) / 3), calc((100vh - 528px) / 4), calc((100svh - 528px) / 4)), var(--key-size)); }
+  [data-keysize="xl"] .nl-keypad { --nl-key: clamp(var(--key-min), min(calc((100vw - 104px) / 3), calc((100vh - 528px) / 4), calc((100svh - 528px) / 4)), var(--key-xl)); }
+
+  /* The keypad sits under the SpeakBar here, so the SpeakBar keeps one height whatever the
+     sentence: two sentence lines and the key line, scrolling inside when longer (SpeakBar.tsx).
+     One sentence line on phones under 800px tall. */
+  .nl-speakbar__text { height: calc(2 * 48px + var(--space-1) + 28px); overflow-y: auto; overscroll-behavior: contain; }
+}
+@media (max-width: 959px) and (max-height: 799px) {
+  .nl-speakbar__text { height: calc(48px + var(--space-1) + 28px); }
 }
 
 /* Status in the Menu sheet, and its three choices */
@@ -119,7 +133,14 @@
   font-size: var(--type-body-lg-size); line-height: var(--type-body-lg-line);
 }
 .input { flex: 1 1 260px; min-width: 0; }
-.select { width: 100%; }
+/* Safari and Chrome on iOS draw a native <select> at their own height (33px) and ignore min-height,
+   so the select draws its own chevron in --ink (both themes) and keeps target-min height. */
+.select {
+  width: 100%; -webkit-appearance: none; appearance: none; padding-right: var(--space-12);
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%), linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+  background-position: calc(100% - 26px) 50%, calc(100% - 18px) 50%;
+  background-size: 8px 8px; background-repeat: no-repeat;
+}
 .input:focus-visible, .select:focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: 3px; }
 .input::placeholder { color: var(--ink-muted); opacity: 1; }
 
@@ -268,8 +289,12 @@
 .proof__offer .proof__note { flex: 1 1 240px; min-width: 0; overflow-wrap: anywhere; }
 .proof__offer strong { font-weight: 700; }
 
-/* "Spell this word" in the actions row: just "Spell" on narrow phones (the name stays "Spell this word"). */
-@media (max-width: 599px) { .spell-btn__more { display: none; } }
+/* "Spell this word" and "Save phrase" in the actions row: just "Spell" and "Save" on narrow phones, so
+   the four actions stay one row down to 360px (their accessible names keep the full words). */
+@media (max-width: 599px) { .spell-btn__more, .save-btn__more { display: none; } }
+@media (max-width: 959px) and (min-width: 560px) and (max-height: 599px) and (orientation: landscape) {
+  .spell-btn__more, .save-btn__more { display: none; }
+}
 
 /* Spell mode (components/SpellSheet.tsx): the word, its keys, then one row of letters per key. */
 .spell { display: flex; flex-direction: column; gap: var(--space-6); }
@@ -336,4 +361,80 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .scan-cluster, .seg__opt, .app-header__actions, .proof__offers, .spell__letter { transition: box-shadow 120ms linear; }
+}
+
+/* Short phones in portrait (iPhone SE 375 x 667, 360 x 740 Androids): a denser keypad panel so the
+   whole keypad shows under the SpeakBar without scrolling. Keys keep their size (at least key-min);
+   only the panel padding (24 -> 12px) and the gaps between keys (12 -> 8px, the minimum spacing
+   between targets) shrink. */
+@media (max-width: 959px) and (max-height: 760px) and (orientation: portrait) {
+  .nl-keypad { padding: var(--space-3); gap: var(--space-2); }
+  .nl-keypad__row { gap: var(--space-2); }
+}
+/* The shortest phones (667px, iPhone SE): Speak stays the one ember button but is target-min tall
+   instead of 80px, and the gaps between sections step down from 16 to 12px. */
+@media (max-width: 599px) and (max-height: 700px) and (orientation: portrait) {
+  .app { --app-pad-top: var(--space-3); }
+  .app__inner, .app-main--compact { gap: var(--space-3); }
+  .nl-speakbar .nl-btn--xl { min-height: var(--target-min); }
+  .speak-group { gap: var(--space-2); }
+}
+
+/* Split layout: a phone held sideways (lib/layout.ts SPLIT_QUERY, same media query). Two columns:
+   header, SpeakBar, sentences and the rest on the left; the keypad on the right, pinned while the
+   left column scrolls, and sized so all four rows fit the screen height:
+   4 keys + 3 gaps of 8px + 2 x 12px panel padding + 12px above and below = 4 x key + 72px. */
+@media (max-width: 959px) and (min-width: 560px) and (max-height: 599px) and (orientation: landscape) {
+  .app { --app-pad-top: var(--space-3); --app-pad-bottom: var(--space-6); }
+  .app__inner {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto 1fr;
+    grid-template-areas: "header pad" "talk pad" "footer pad";
+    gap: var(--space-4); align-items: start;
+  }
+  .app-header { grid-area: header; }
+  .app-main, .app-main--compact, .app-main--split { display: contents; }
+  .app-main__talk { grid-area: talk; display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+  .app-main__pad { grid-area: pad; display: flex; flex-direction: column; align-items: center; position: sticky; top: var(--space-3); }
+  .app-footer { grid-area: footer; }
+  /* Before the page script runs the HTML is the wide DOM; keep the split order inside the columns. */
+  .order-speak { order: 1; } .order-cands { order: 2; } .order-proof { order: 3; }
+  .order-partner { order: 4; } .order-scan { order: 5; } .order-hint { order: 6; }
+  .order-pad, .order-scan { align-self: stretch; }
+  .order-pad { display: flex; justify-content: center; }
+  .nl-keypad {
+    padding: var(--space-3); gap: var(--space-2);
+    --nl-key: clamp(var(--key-min), min(calc((100vh - 72px) / 4), calc((100svh - 72px) / 4)), var(--key-size));
+  }
+  [data-keysize="xl"] .nl-keypad { --nl-key: clamp(var(--key-min), min(calc((100vh - 72px) / 4), calc((100svh - 72px) / 4)), var(--key-xl)); }
+  /* Two sentence lines and the key line, scrolling inside when longer, so Speak stays on screen
+     even on a 360px-tall phone (SpeakBar.tsx). */
+  .nl-speakbar__text { height: calc(2 * 48px + var(--space-1) + 28px); }
+  .nl-keypad__row { gap: var(--space-2); }
+}
+
+/* The shortest landscape screens (a foldable's cover screen, 344px): 8px above the keypad so all
+   four rows of key-min keys fit. */
+@media (max-width: 959px) and (min-width: 560px) and (max-height: 359px) and (orientation: landscape) {
+  .app { --app-pad-top: var(--space-2); }
+  .app-main__pad { top: var(--space-2); }
+}
+
+/* Safe areas: with viewport-fit=cover the page runs under the notch or Dynamic Island, the rounded
+   corners and the home indicator (and under the status bar in the home-screen app), so padding is
+   at least the inset on every side. */
+.app {
+  padding-top: max(var(--app-pad-top), env(safe-area-inset-top));
+  padding-right: max(var(--app-pad-x), env(safe-area-inset-right));
+  padding-bottom: max(var(--app-pad-bottom), env(safe-area-inset-bottom));
+  padding-left: max(var(--app-pad-x), env(safe-area-inset-left));
+}
+.sheet__head { padding-top: max(var(--space-6), env(safe-area-inset-top)); padding-right: max(var(--space-6), env(safe-area-inset-right)); }
+.sheet__body { padding-bottom: max(var(--space-12), calc(env(safe-area-inset-bottom) + var(--space-6))); padding-right: max(var(--space-8), env(safe-area-inset-right)); }
+.show {
+  padding: max(var(--space-8), env(safe-area-inset-top)) max(var(--space-8), env(safe-area-inset-right))
+    max(var(--space-8), env(safe-area-inset-bottom)) max(var(--space-8), env(safe-area-inset-left));
+}
+@media (max-width: 599px) {
+  .sheet__head { padding: max(var(--space-4), env(safe-area-inset-top)) max(var(--space-4), env(safe-area-inset-right)) var(--space-4) max(var(--space-4), env(safe-area-inset-left)); }
+  .sheet__body { padding-right: max(var(--space-4), env(safe-area-inset-right)); padding-left: max(var(--space-4), env(safe-area-inset-left)); }
 }

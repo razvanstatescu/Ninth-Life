@@ -100,6 +100,9 @@ jobs:
       - name: Single-switch walkthrough
         if: ${{ !cancelled() }}
         run: node packages/web/test/e2e/switch.mjs
+      - name: Phones and tablets (portrait and landscape)
+        if: ${{ !cancelled() }}
+        run: node packages/web/test/e2e/responsive.mjs
       - name: Device performance report (report only)
         if: ${{ !cancelled() }}
         run: node scripts/perf-check.mjs --runs 3 --json packages/web/test-results/perf.json | tee -a "$GITHUB_STEP_SUMMARY"

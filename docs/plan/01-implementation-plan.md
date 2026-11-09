@@ -118,6 +118,10 @@ so AACText numbers are optimistic. Report Turk (79.3% top-1) alongside.
 | F12 | Link to `/welcome` from the app footer; precache `/welcome` | B | **done Nov 9**: "How Ninth Life works" in the footer on `/` and `/about`; `/welcome` precached (+1 entry, +8 KB gzip; `docs/testing/performance.md`) |
 | F14 | Type words not in the dictionary (spell mode), My words, word pack import/export | B | **done Nov 6** (web-ui Req 19-22, `docs/architecture/vocab-packs.md`) |
 | F13 | Keypad labels changed to "4 GHI, G H I" to pass WCAG 2.5.3 (label in name) | — | done Nov 6 |
+| F15 | Phones and tablets: keypad below the fold on small phones and on every phone held sideways; keys moved down as the sentence wrapped; 33px voice select on iOS | B | **done Nov 9**: split layout for phones in landscape, fixed-height SpeakBar text, svh key sizing, safe areas, no pull-to-refresh or double-tap zoom; 20 viewports checked by `test/e2e/responsive.mjs` (web-ui Req 15.8-15.11, `docs/research/mobile-layout.md`) |
+| F16 | Proposal (research): on phones in portrait, keypad at the bottom with Speak beside it, as dial and PIN pads do; sentences between SpeakBar and keypad | design, B | Open: changes focus order, web-ui Req 15.1 and accessibility rule 7; needs a design-system decision |
+| F17 | Proposal (research): keys wider than tall on phones (fill 3 columns); a CHI 2017 study recommends >= 18 mm targets for people with upper-body motor impairments (96px is about 16 mm) | design | Open |
+| F18 | Proposal (research): "keypad on the left / right" setting for landscape and tablets (one hand, wheelchair mounts); keyguard spacing option | design, B | Open |
 
 D7 data: `packages/eval/reports/offensive-readings.md` — before the filter a slur appeared in the top 5 for 8 of 866 test items (0.9%), never at top 1. **Decided Nov 9 (ADR-data-004):** the build drops the 14 listed slurs, now 0 of 866; still typeable with spell mode and "Add to my words". Follow-up for C: LDNOOBW misses some slurs (about 20 candidates in the lexicon); adding one is a hash and a rebuild.
 
