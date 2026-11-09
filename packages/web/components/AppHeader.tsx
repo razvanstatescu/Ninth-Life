@@ -46,6 +46,8 @@ export function AppHeader({
   onVoice,
   onSettings,
   actions = true,
+  partner = null,
+  scanPill = null,
 }: {
   status: StatusLine[];
   summary: StatusLine & { full: string };
@@ -59,6 +61,10 @@ export function AppHeader({
   onSettings: () => void;
   /** False in the phone layout: Menu lives in the action bar under the keypad (web-ui Req 24). */
   actions?: boolean;
+  /** Phones and tablets: "They said" as a header button (the line, or an invitation to add it). */
+  partner?: { text: string; onEdit: () => void } | null;
+  /** Phones and tablets: switch scanning state, shown as a pill (the scan bar is not on the screen). */
+  scanPill?: string | null;
 }) {
   const row = scanning ? 'nl-scanrow is-scanning' : 'nl-scanrow';
   return (
@@ -77,7 +83,16 @@ export function AppHeader({
             <span aria-hidden="true">{summary.text}</span>
             <span className="nl-sr-only">{summary.full}</span>
           </StatusPill>
+          {scanPill ? <StatusPill icon="switch" tone="info">{scanPill}</StatusPill> : null}
         </div>
+        {partner ? (
+          // The name is the visible text (WCAG 2.5.3, voice control) plus a hidden hint.
+          <button type="button" className="header-partner" onClick={partner.onEdit}>
+            <span className="header-partner__label">They said</span>{' '}
+            <span className="header-partner__text">{partner.text || 'Add'}</span>
+            <span className="nl-sr-only">{partner.text ? ', change' : ': what the other person said'}</span>
+          </button>
+        ) : null}
       </div>
       {actions ? (
         <>

@@ -8,8 +8,20 @@ export const PARTNER_MAX = 280;
  * "They said": an optional line typed by the other person. It is only used as context for model
  * ranking when that is on, and is never stored.
  */
-export function PartnerTurn({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [editing, setEditing] = useState(false);
+export function PartnerTurn({
+  value,
+  onChange,
+  startEditing = false,
+  onDone,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  /** Open straight in the text field (the They said sheet on phones and tablets: one tap, then type). */
+  startEditing?: boolean;
+  /** Called after Done or Cancel (the sheet closes itself then). */
+  onDone?: () => void;
+}) {
+  const [editing, setEditing] = useState(startEditing);
   const [draft, setDraft] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
   const changeRef = useRef<HTMLButtonElement>(null);
@@ -26,6 +38,7 @@ export function PartnerTurn({ value, onChange }: { value: string; onChange: (v: 
   const done = () => {
     onChange(draft.trim().slice(0, PARTNER_MAX));
     setEditing(false);
+    onDone?.();
   };
 
   if (editing) {
@@ -69,6 +82,7 @@ export function PartnerTurn({ value, onChange }: { value: string; onChange: (v: 
             onClick={() => {
               setDraft(value);
               setEditing(false);
+              onDone?.();
             }}
           >
             Cancel

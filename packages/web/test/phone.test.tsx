@@ -24,17 +24,18 @@ afterEach(() => {
 });
 
 describe('phone layout (web-ui Req 24)', () => {
-  it('24.1 one screen top to bottom: sentence card, suggestions, keypad, action bar; the rest below, in DOM (and focus) order', () => {
-    expect(sectionOrder('phone').columns).toEqual([['speak', 'cands', 'pad', 'actions', 'proof', 'partner', 'scan', 'hint']]);
-    const { container } = render(<CommunicationScreen initialDict={miniDict()} layout="phone" />);
-    const screenSections = [...container.querySelectorAll('.phone-screen > [data-section]')].map((el) => el.getAttribute('data-section'));
+  it('24.1 one screen top to bottom: sentence card, suggestions, keypad, action bar, in DOM (and focus) order; nothing below', () => {
+    expect(sectionOrder('stack').columns).toEqual([['speak', 'cands', 'pad', 'actions']]);
+    const { container } = render(<CommunicationScreen initialDict={miniDict()} layout="stack" />);
+    const screenSections = [...container.querySelectorAll('.shell-screen > [data-section]')].map((el) => el.getAttribute('data-section'));
     expect(screenSections).toEqual(['speak', 'cands', 'pad', 'actions']);
-    const below = [...container.querySelectorAll('.phone-below > [data-section]')].map((el) => el.getAttribute('data-section'));
-    expect(below).toEqual(['proof']);
+    // Nothing below the screen: proof, They said and About are in sheets (web-ui Req 25).
+    expect(container.querySelector('.app-footer')).toBeNull();
+    expect(container.querySelector('[data-section="proof"]')).toBeNull();
   });
 
   it('24.2 the action bar under the keypad is Menu, Speak, Show, and it holds the only Speak', () => {
-    const { container } = render(<CommunicationScreen initialDict={miniDict()} layout="phone" />);
+    const { container } = render(<CommunicationScreen initialDict={miniDict()} layout="stack" />);
     const bar = container.querySelector<HTMLElement>('[data-section="actions"]')!;
     expect(within(bar).getAllByRole('button').map((b) => b.textContent?.trim())).toEqual(['Menu', 'Speak', 'Show']);
     expect(container.querySelectorAll('[data-action="speak"]')).toHaveLength(1);
@@ -47,7 +48,7 @@ describe('phone layout (web-ui Req 24)', () => {
   });
 
   it('24.3 Clear sits in the sentence card, far from Speak, and Undo brings the sentence back until the next key', () => {
-    const { container } = render(<CommunicationScreen initialDict={miniDict()} layout="phone" />);
+    const { container } = render(<CommunicationScreen initialDict={miniDict()} layout="stack" />);
     typeDigits('406333');
     const said = utterance();
     expect(said).toContain('need');
@@ -63,7 +64,7 @@ describe('phone layout (web-ui Req 24)', () => {
   });
 
   it('24.4 suggestions leave out the sentence already in the card, and More opens every sentence', () => {
-    render(<CommunicationScreen initialDict={miniDict()} layout="phone" />);
+    render(<CommunicationScreen initialDict={miniDict()} layout="stack" />);
     typeDigits('4');
     const card = utterance();
     const rows = [...document.querySelectorAll('.phone-sugg__item')].map((b) => b.textContent ?? '');
@@ -85,18 +86,21 @@ describe('phone layout (web-ui Req 24)', () => {
     expect(phoneSuggestions(cands.slice(0, 2), 0, 2)).toEqual({ items: [{ index: 1, text: 'B' }], more: false });
   });
 
-  it('24.5 the Menu sheet holds the sentence actions the phone screen leaves out: Save phrase and Spell this word', () => {
-    render(<CommunicationScreen initialDict={miniDict()} layout="phone" />);
+  it('24.5 the Menu sheet holds what the screen leaves out: Save phrase, Spell, Check the words, They said, About', () => {
+    render(<CommunicationScreen initialDict={miniDict()} layout="stack" />);
     typeDigits('4');
     press('Menu');
     const menu = document.querySelector<HTMLElement>('[data-scan-row="sentence"]')!;
-    expect(within(menu).getAllByRole('button').map((b) => b.textContent)).toEqual(['Save phrase', 'Spell this word']);
+    expect(within(menu).getAllByRole('button').map((b) => b.textContent)).toEqual(['Save phrase', 'Spell this word', 'Check the words', 'They said']);
+    // The footer's links and the intended-purpose sentence are in the Menu too.
+    expect(screen.getByRole('link', { name: 'About Ninth Life' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'How Ninth Life works' })).toBeTruthy();
   });
 
   it('24.6 one-switch scanning: the action row is the action bar (Menu, Speak, Show) and the last row is Clear', () => {
     vi.useFakeTimers();
     try {
-      const { container } = render(<CommunicationScreen initialDict={miniDict()} layout="phone" initialSettings={{ access: 'scan2', acceptDelayMs: 0 }} />);
+      const { container } = render(<CommunicationScreen initialDict={miniDict()} layout="stack" initialSettings={{ access: 'scan2', acceptDelayMs: 0 }} />);
       const bar = container.querySelector<HTMLElement>('[data-section="actions"]')!;
       expect(bar.className).toContain('nl-scanrow');
       expect(container.querySelector('[data-section="speak"]')!.className).toContain('nl-scanrow');

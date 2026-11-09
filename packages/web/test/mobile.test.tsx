@@ -14,18 +14,24 @@ const read = (rel: string) => readFileSync(resolve(__dirname, '..', rel), 'utf8'
 const css = (f: string) => read(`styles/${f}`);
 
 describe('phones and tablets', () => {
-  it.each(['compact', 'split', 'wide'] as const)('%s: short action labels keep their full accessible names', (layout) => {
+  it.each(['compact', 'wide'] as const)('%s: short action labels keep their full accessible names', (layout) => {
     render(<CommunicationScreen initialDict={miniDict()} layout={layout} />);
     expect(screen.getByRole('button', { name: 'Save phrase' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Spell this word' })).toBeTruthy();
   });
 
-  it('split renders two columns with only the keypad in the right one', () => {
+  it('split (tablet landscape) renders the one-screen shell: card, suggestions, action bar, then the keypad', () => {
     const { container } = render(<CommunicationScreen initialDict={miniDict()} layout="split" />);
     const main = container.querySelector('main.app-main--split')!;
     expect(main).toBeTruthy();
-    const pad = main.querySelector('.app-main__pad')!;
-    expect([...pad.children].map((c) => c.getAttribute('data-section'))).toEqual(['pad']);
+    expect([...main.querySelectorAll('.shell-screen > [data-section]')].map((c) => c.getAttribute('data-section'))).toEqual(['speak', 'cands', 'actions', 'pad']);
+    expect(container.querySelector('.app-footer')).toBeNull();
+  });
+
+  it('rotate (a phone held sideways) shows only the turn-upright screen', () => {
+    render(<CommunicationScreen initialDict={miniDict()} layout="rotate" />);
+    expect(screen.getByRole('alert').textContent).toContain('Turn your phone upright');
+    expect(document.querySelector('button[data-key]')).toBeNull();
   });
 
   it('keys are sized from the small viewport (svh), never dvh, so they do not resize with the toolbar', () => {

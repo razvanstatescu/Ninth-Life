@@ -20,6 +20,7 @@ export function MenuSheet({
   onSettings,
   onClose,
   sentence,
+  about,
 }: {
   open: boolean;
   status: StatusLine[];
@@ -29,8 +30,17 @@ export function MenuSheet({
   onVoice: () => void;
   onSettings: () => void;
   onClose: () => void;
-  /** Phone layout: the sentence's Save phrase and Spell this word. */
-  sentence?: { canSave: boolean; onSave: () => void; canSpell: boolean; onSpell: () => void } | null;
+  /** Phones and tablets: the sentence's actions that are not on the screen, and They said. */
+  sentence?: {
+    canSave: boolean;
+    onSave: () => void;
+    canSpell: boolean;
+    onSpell: () => void;
+    onProof?: () => void;
+    onPartner?: () => void;
+  } | null;
+  /** Phones and tablets: the About links and this sentence (the footer is not on the screen). */
+  about?: string | null;
 }) {
   return (
     <Sheet open={open} name="menu" title="Menu" onClose={onClose} scanning={scanning}>
@@ -46,6 +56,16 @@ export function MenuSheet({
             <Button variant="secondary" icon="spell" onClick={sentence.onSpell} disabled={!sentence.canSpell}>
               Spell this word
             </Button>
+            {sentence.onProof ? (
+              <Button variant="secondary" icon="check" onClick={sentence.onProof}>
+                Check the words
+              </Button>
+            ) : null}
+            {sentence.onPartner ? (
+              <Button variant="secondary" icon="voice" onClick={sentence.onPartner}>
+                They said
+              </Button>
+            ) : null}
           </div>
         </section>
       ) : null}
@@ -77,6 +97,22 @@ export function MenuSheet({
           ))}
         </div>
       </section>
+      {about ? (
+        <section className="group" aria-labelledby="menu-about">
+          <h3 className="group__title" id="menu-about">
+            About
+          </h3>
+          <div className="menu scan-cluster" data-scan-row="about">
+            <a className="nl-btn nl-btn--secondary" href="/welcome">
+              How Ninth Life works
+            </a>
+            <a className="nl-btn nl-btn--secondary" href="/about">
+              About Ninth Life
+            </a>
+          </div>
+          <p className="menu__note">{about}</p>
+        </section>
+      ) : null}
     </Sheet>
   );
 }

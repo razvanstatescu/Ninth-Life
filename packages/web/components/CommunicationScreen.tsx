@@ -2,17 +2,32 @@
 /**
  * The communication screen (design/artboards/In-context-app.dc.html).
  * Wide: They said, SpeakBar, sentences and proof beside the keypad. Compact (tablets in portrait):
- * SpeakBar, keypad, sentences, proof. Phone: sentence card, suggestions, keypad and the action bar
- * [Menu] [Speak] [Show] in one screen (lib/layout.ts, web-ui Req 24). Ghost mode (offline dictionary)
+ * SpeakBar, keypad, sentences, proof. Phones and tablets (stack, split): sentence card, suggestions,
+ * keypad and the action bar [Menu] [Speak] [Show] in one screen with no page scroll; proof, They said
+ * and the rest are in sheets (lib/layout.ts, web-ui Req 24 and 25, ADR-003). Phones held sideways
+ * get the rotate screen. Ghost mode (offline dictionary)
  * always works; model ranking is optional, off by default, and never speaks on its own.
  */
 import { encodeWord, lattice, normalize, type Candidate, type Lexicon } from '@ninth/core';
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactElement } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactElement } from 'react';
 import { EMPTY, actionForKey, codesOf, composerReducer, type ComposerState } from '@/lib/composer';
 import { loadDictionary, type DictState } from '@/lib/data';
 import { DecodeCache, buildRequest, decodeRemote, type RejectedSuggestion } from '@/lib/decodeClient';
 import { focusContext, mapKey } from '@/lib/keyboard';
-import { isTwoColumn, PHONE_TWO_ROWS_QUERY, phoneSuggestionRows, sectionOrder, useLayout, useMediaQuery, visibleSentences, type Layout, type Section } from '@/lib/layout';
+import {
+  isShell,
+  isTwoColumn,
+  sectionOrder,
+  SPLIT_ROWS_QUERIES,
+  splitSuggestionRows,
+  STACK_ROWS_QUERIES,
+  stackSuggestionRows,
+  useLayout,
+  useMediaQuery,
+  visibleSentences,
+  type Layout,
+  type Section,
+} from '@/lib/layout';
 import { KEY_ROWS, type KeyDef } from '@/lib/keys';
 import { applyMyWords, buildDisplayMap, makeMyWord, mergeMyWords, showWord, type MyWord } from '@/lib/myWords';
 import { MAX_CANDIDATES, buildSentence, decodeAround, decodeWithPins, mergeCandidates, readings, spellTarget } from '@/lib/sentence';
@@ -41,13 +56,14 @@ import { useVoices } from '@/lib/useVoices';
 import { AppHeader } from './AppHeader';
 import { Button } from './Button';
 import { CandidateList } from './CandidateList';
-import { Footer } from './Footer';
+import { Footer, NOT_A_MEDICAL_DEVICE } from './Footer';
 import { Icon } from './Icon';
 import { Keypad } from './Keypad';
 import { MenuSheet } from './MenuSheet';
 import { MyWordsSheet } from './MyWordsSheet';
 import { PartnerTurn } from './PartnerTurn';
 import { PhoneSuggestions, phoneSuggestions } from './PhoneSuggestions';
+import { RotateNotice, usePortraitLock } from './RotateNotice';
 import { PhrasesSheet } from './PhrasesSheet';
 import { ProofPanel } from './ProofPanel';
 import { ScanBar } from './ScanBar';
@@ -59,7 +75,7 @@ import { SpellSheet } from './SpellSheet';
 
 const LLM_DEBOUNCE_MS = 400;
 const ACTIONS = ['speak', 'clear', 'save', 'show', 'spell'] as const;
-/** Phone layout: the action bar under the keypad, left to right (web-ui Req 24). */
+/** Phones and tablets (stack, split): the action bar, left to right (web-ui Req 24). */
 const PHONE_ACTIONS = ['menu', 'speak', 'show'] as const;
 const KEYPAD_ROWS = KEY_ROWS.length; // 4
 /**
@@ -75,7 +91,7 @@ export const ACTION_ROW = KEYPAD_ROWS + 2; // scan row 6
 export const MENU_ROW = KEYPAD_ROWS + 3; // scan row 7
 const WIDE_MENU = ['phrases', 'voice', 'settings'] as const;
 
-type SheetName = 'menu' | 'settings' | 'voice' | 'phrases' | 'words' | 'spell' | 'sentences' | null;
+type SheetName = 'menu' | 'settings' | 'voice' | 'phrases' | 'words' | 'spell' | 'sentences' | 'proof' | 'partner' | null;
 const WORDS_NOT_SAVED = 'My words could not be saved on this device, so they last until you close the app. Storage may be off in this browser window.';
 
 export function CommunicationScreen({
@@ -484,15 +500,41 @@ export function CommunicationScreen({
   }, [sentence.words, display]);
   const addOffer = useCallback((word: string) => void addWord(showWord(word, display), 'spelled'), [addWord, display]);
   const menuCells = layout === 'wide' ? WIDE_MENU.length : 1;
-  // Phone layout (web-ui Req 24): suggestions above the keypad, the action bar under it.
-  const phone = layout === 'phone';
-  const tallPhone = useMediaQuery(PHONE_TWO_ROWS_QUERY);
-  const sugRows = phoneSuggestionRows(tallPhone);
+  // Phones and tablets (web-ui Req 24, 25): one screen, suggestions next to the keypad, the action bar.
+  const phone = isShell(layout);
+  const stackRows = stackSuggestionRows({
+    r2: useMediaQuery(STACK_ROWS_QUERIES.r2),
+    r3: useMediaQuery(STACK_ROWS_QUERIES.r3),
+    r4: useMediaQuery(STACK_ROWS_QUERIES.r4),
+  });
+  const splitRows = splitSuggestionRows({ r3: useMediaQuery(SPLIT_ROWS_QUERIES.r3), r4: useMediaQuery(SPLIT_ROWS_QUERIES.r4) });
+  const sugRows = layout === 'split' ? splitRows : stackRows;
   const unspelledWord = sentence.words.find((w) => w.state === 'unspelled');
-  const spellOffer =
-    phone && canSpell && unspelledWord && sentence.candidates.length === 0 ? { label: `Spell ${unspelledWord.code}`, onClick: openSpell } : null;
+  // One contextual row, in this order: spell a word the dictionary lacks, or add a word to my words.
+  const spellOffer: { label: string; icon: 'spell' | 'plus'; onClick: () => void } | null = !phone
+    ? null
+    : canSpell && unspelledWord && sentence.candidates.length === 0
+      ? { label: `Spell ${unspelledWord.code}`, icon: 'spell', onClick: openSpell }
+      : offers[0]
+        ? { label: `Add ${offers[0].label} to my words`, icon: 'plus', onClick: () => addOffer(offers[0]!.word) }
+        : null;
   const sug = phoneSuggestions(sentence.candidates, sentence.selectedIndex, spellOffer ? sugRows - 1 : sugRows, composer.punct, display);
   const openSentences = useCallback(() => setSheet('sentences'), []);
+  // The shells size the keys from the room the keypad area gets (styles/app.css --pad-w / --pad-h).
+  // Measured here rather than with container query units, which Chrome resolved to 0 in this layout.
+  const padRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = padRef.current;
+    if (!el || !phone || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver((entries) => {
+      const r = entries[0]?.contentRect;
+      if (!r) return;
+      el.style.setProperty('--pad-w', `${Math.round(r.width)}px`);
+      el.style.setProperty('--pad-h', `${Math.round(r.height)}px`);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [phone, layout]);
   const phoneCandCells = sug.items.length + (spellOffer || sug.more ? 1 : 0);
 
   const openSheet = useCallback((name: SheetName) => setSheet(name), []);
@@ -504,7 +546,7 @@ export function CommunicationScreen({
   const scanner = useScanner({
     mode: scanMode,
     rows: phone
-      ? [...KEY_ROWS.map((r) => r.length), phoneCandCells, offers.length, PHONE_ACTIONS.length, 1]
+      ? [...KEY_ROWS.map((r) => r.length), phoneCandCells, 0, PHONE_ACTIONS.length, 1]
       : [...KEY_ROWS.map((r) => r.length), candCells, offers.length, ACTIONS.length, menuCells],
     loops: settings.scanLoops,
     scanMs: settings.scanMs,
@@ -790,7 +832,7 @@ export function CommunicationScreen({
       </div>
     ),
     pad: (
-      <div key="pad" className="order-pad" id="keypad" tabIndex={-1} data-section="pad">
+      <div key="pad" className="order-pad" id="keypad" tabIndex={-1} data-section="pad" ref={padRef}>
         <Keypad
           onPress={pressKeyPointer}
           scanRow={scanRow < KEYPAD_ROWS ? scanRow : -1}
@@ -830,10 +872,12 @@ export function CommunicationScreen({
       ),
   };
   const order = sectionOrder(layout).columns;
-  const PHONE_SCREEN: Section[] = ['speak', 'cands', 'pad', 'actions'];
+  usePortraitLock(layout === 'stack' || layout === 'rotate');
+
+  if (layout === 'rotate') return <RotateNotice />;
 
   return (
-    <div className={`app app--${layout}`} onPointerDown={onBackgroundPointer}>
+    <div className={phone ? `app app--${layout} app--shell` : `app app--${layout}`} onPointerDown={onBackgroundPointer}>
       <a className="nl-skip" href="#keypad">
         Skip to the keypad
       </a>
@@ -848,15 +892,16 @@ export function CommunicationScreen({
           onVoice={() => setSheet('voice')}
           onSettings={() => setSheet('settings')}
           actions={!phone}
+          partner={phone ? { text: partner, onEdit: () => setSheet('partner') } : null}
+          scanPill={phone && scanMode ? (scanActive ? 'Scanning' : 'Scanning paused') : null}
         />
 
         {phone ? (
-          <main className="app-main app-main--phone">
-            <div className="phone-screen">{order[0]!.filter((k) => PHONE_SCREEN.includes(k)).map((k) => sections[k])}</div>
-            <div className="phone-below">{order[0]!.filter((k) => !PHONE_SCREEN.includes(k)).map((k) => sections[k])}</div>
+          <main className={`app-main app-main--${layout}`}>
+            <div className="shell-screen">{order.flat().map((k) => sections[k])}</div>
           </main>
         ) : isTwoColumn(layout) ? (
-          <main className={layout === 'split' ? 'app-main app-main--split' : 'app-main'}>
+          <main className="app-main">
             <div className="app-main__talk">{order[0]!.map((k) => sections[k])}</div>
             <div className="app-main__pad">{order[1]!.map((k) => sections[k])}</div>
           </main>
@@ -864,7 +909,7 @@ export function CommunicationScreen({
           <main className="app-main app-main--compact">{order[0]!.map((k) => sections[k])}</main>
         )}
 
-        <Footer />
+        {phone ? null : <Footer />}
       </div>
 
       <p className="nl-sr-only" role="status" aria-live="polite">
@@ -893,10 +938,32 @@ export function CommunicationScreen({
                 },
                 canSpell,
                 onSpell: openSpell,
+                onProof: () => setSheet('proof'),
+                onPartner: () => setSheet('partner'),
               }
             : null
         }
+        about={phone ? NOT_A_MEDICAL_DEVICE : null}
       />
+      {phone ? (
+        <Sheet open={sheet === 'proof'} name="proof" title="Check the words" onClose={() => setSheet(null)} scanning={overlayScanMode !== null}>
+          <ProofPanel
+            words={sentence.words}
+            labels={sentence.tokens}
+            rejected={remoteNow?.rejected ?? []}
+            rejectedCount={remoteNow?.rejectedCount ?? 0}
+            alternatives={alternatives}
+            offers={offers}
+            onAddWord={addOffer}
+          />
+        </Sheet>
+      ) : null}
+      {phone ? (
+        <Sheet open={sheet === 'partner'} name="partner" title="They said" onClose={() => setSheet(null)} scanning={overlayScanMode !== null}>
+          <p className="sheet__lead">What the other person just said. With model ranking on, it helps rank your sentences; it is never stored.</p>
+          {sheet === 'partner' ? <PartnerTurn value={partner} onChange={setPartner} startEditing onDone={() => setSheet(null)} /> : null}
+        </Sheet>
+      ) : null}
       {phone ? (
         <Sheet open={sheet === 'sentences'} name="sentences" title="Sentences for your keys" onClose={() => setSheet(null)} scanning={overlayScanMode !== null}>
           <div className="scan-cluster" data-scan-row="sentences">

@@ -48,10 +48,11 @@ export function PhoneSuggestions({
 }: {
   items: PhoneSuggestion[];
   more: boolean;
-  /** "Spell 7663": the current word is not in the person's words. */
-  spell: { label: string; onClick: () => void } | null;
+  /** One contextual row: "Spell 7663" (a word the dictionary lacks) or "Add Mihai to my words". */
+  spell: { label: string; icon?: 'spell' | 'plus'; onClick: () => void } | null;
   emptyText: string | null;
-  rows: 1 | 2;
+  /** Rows that fit (1 to 4 by screen height, lib/layout.ts). */
+  rows: number;
   scanning?: boolean;
   litIndex?: number;
   onSelect: (index: number) => void;
@@ -103,7 +104,7 @@ export function PhoneSuggestions({
       {rowEls.length > 0 ? rowEls : !spell && emptyText ? <p className="phone-sugg__empty">{emptyText}</p> : null}
       {spell ? (
         <div className="phone-sugg__row">
-          <Button variant="secondary" icon="spell" className="phone-sugg__spell" lit={litIndex === lastCell} onClick={spell.onClick}>
+          <Button variant="secondary" icon={spell.icon ?? 'spell'} className="phone-sugg__spell" lit={litIndex === lastCell} onClick={spell.onClick}>
             {spell.label}
           </Button>
         </div>

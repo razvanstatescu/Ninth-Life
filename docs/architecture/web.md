@@ -107,6 +107,12 @@ lexicon can only raise words. Spell sheet keys: 1-4 pick a letter and move on, a
 
 ## Layout
 
+One-screen shells for touch devices (ADR-003, web-ui Req 25): `stack` (portrait phones and tablets, the Phone column
+below), `split` (tablets in landscape: header, card, suggestions and action bar left, keypad right) and `rotate` (a phone
+held sideways: "Turn your phone upright"). Proof, They said, Save phrase, Spell, Phrases, My words, Voice, Settings and
+About are sheets; the main page never scrolls. Keys are sized from the measured keypad area (`--pad-w`, `--pad-h`).
+Laptops and desktops keep Wide and Compact.
+
 | | Wide (>= 960px) | Compact (600-959px, tablets) | Split (phone held sideways) | Phone (< 600px, portrait) |
 |---|---|---|---|---|
 | When | 960px or wider | 600 to 959px wide | narrower than 960px, landscape, under 600px tall (`SPLIT_QUERY`) | narrower than 600px (`PHONE_QUERY`) |

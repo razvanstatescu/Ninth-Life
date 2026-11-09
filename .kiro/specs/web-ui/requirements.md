@@ -335,9 +335,9 @@ I do not reach across the screen.
 Evidence: `docs/research/mobile-patterns-mobbin.md` (real apps), `docs/research/mobile-aac-evidence.md` (visible
 viewport heights measured in the iOS Simulator, thumb reach, motor-impaired touch, AAC apps).
 
-24.1 WHILE the viewport is narrower than 600px (phone layout), THE app SHALL show one screen, top to bottom: the header
-     (brand and status), the sentence card, the sentence suggestions, the keypad and an action bar [Menu] [Speak] [Show];
-     proof, They said, the scan control and the hint SHALL follow below, AND the DOM (and focus) order SHALL match.
+24.1 ON a phone in portrait (and a narrow window), THE app SHALL show one screen, top to bottom: the header (brand,
+     status, They said), the sentence card, the sentence suggestions, the keypad and an action bar [Menu] [Speak]
+     [Show], AND the DOM (and focus) order SHALL match; everything else is in sheets (Req 25).
 24.2 THE action bar SHALL be under the keypad and SHALL hold the screen's only Speak, the widest control in the bar; a
      disabled Speak SHALL keep a visible outline.
 24.3 Clear SHALL be in the sentence card, away from Speak; WHEN Clear is pressed, THE card SHALL offer Undo until the
@@ -353,3 +353,23 @@ viewport heights measured in the iOS Simulator, thumb reach, motor-impaired touc
      the newest word, AND the key line SHALL keep its place before the first key.
 24.8 IN switch scanning the rows SHALL follow the screen: keypad rows, suggestions (then More or Spell), offers, the action
      bar (Menu, Speak, Show), then the card's Clear (or Undo).
+
+## Requirement 25: One screen on phones and tablets; phones portrait only (2026-11-09, ADR-003)
+**User story:** As a person who talks with a phone or a tablet, I want everything I need on one screen that never
+scrolls, so that nothing I need is ever out of reach.
+
+25.1 ON a touch device THE main screen SHALL NOT scroll: header, sentence card, suggestions, keypad and action bar SHALL
+     fit the visible height (from 549px, an iPhone SE in Safari, and 1133 x 616, an iPad mini in landscape with two tabs);
+     sheets MAY scroll.
+25.2 Check the words (the proof panel), They said, Save phrase, Spell this word, Phrases, My words, Voice, Settings and
+     About (with the intended-purpose sentence) SHALL be reachable from the main screen in one tap (Menu, the header's They
+     said, or the contextual suggestion row) AND SHALL open in sheets.
+25.3 THE They said sheet SHALL open in its text field; Done SHALL save the line and close the sheet; the header SHALL show
+     the line.
+25.4 WHILE switch scanning is on, THE header SHALL show a Scanning pill; its speed and on/off SHALL be in Settings.
+25.5 A tablet in landscape SHALL show the header, sentence card, suggestions and action bar on the left and the keypad
+     on the right, level with the action bar; in portrait the stack of Req 24.
+25.6 A phone (shorter screen side under 600px) held sideways SHALL show only "Turn your phone upright", SHALL keep the
+     sentence, AND SHALL ask for a portrait lock where the browser allows it; a tablet SHALL work in both orientations.
+     (Known exception to WCAG 1.3.4, ADR-003.)
+25.7 THE layout SHALL follow the window (an iPad window can be 375px wide) and the phone test SHALL use the screen.

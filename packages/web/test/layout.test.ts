@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { chunk } from '@/components/PhrasesSheet';
-import { COMPACT_SENTENCES, isTwoColumn, sectionOrder, SPLIT_QUERY, visibleSentences } from '@/lib/layout';
+import { chooseLayout, COMPACT_SENTENCES, isShell, isTwoColumn, sectionOrder, SPLIT_QUERY, stackSuggestionRows, splitSuggestionRows, visibleSentences } from '@/lib/layout';
 import { statusLines, statusSummary } from '@/lib/status';
 
 describe('layout (web-ui Req 15)', () => {
@@ -30,15 +30,40 @@ describe('layout (web-ui Req 15)', () => {
     expect(visibleSentences(5, 'wide', false)).toEqual({ count: 5, more: false, canCollapse: false });
   });
 
-  it('split (phone held sideways): talk column, then a keypad column holding only the keypad', () => {
-    const [talk, pad] = sectionOrder('split').columns;
-    expect(pad).toEqual(['pad']); // a pinned column taller than the screen would hide what sits under the keys
-    expect(talk).toEqual(['speak', 'cands', 'proof', 'partner', 'scan', 'hint']);
+  it('split (tablet in landscape, web-ui Req 25): card, suggestions and action bar on the left, the keypad alone on the right', () => {
+    const [left, pad] = sectionOrder('split').columns;
+    expect(left).toEqual(['speak', 'cands', 'actions']);
+    expect(pad).toEqual(['pad']);
     expect(isTwoColumn('split')).toBe(true);
     expect(isTwoColumn('wide')).toBe(true);
     expect(isTwoColumn('compact')).toBe(false);
-    // Sentences behave as on phones: 3, then More.
-    expect(visibleSentences(5, 'split', false)).toEqual({ count: 3, more: true, canCollapse: false });
+    expect(isShell('split')).toBe(true);
+    expect(isShell('stack')).toBe(true);
+    expect(isShell('wide')).toBe(false);
+  });
+
+  it('ADR-003: touch phones are portrait only, touch tablets use both orientations, desktops keep their layouts', () => {
+    const base = { wide: false, split: false, narrow: false };
+    // Phones (shorter screen side < 600px).
+    expect(chooseLayout({ ...base, touch: true, landscape: false, shortSide: 393, narrow: true })).toBe('stack');
+    expect(chooseLayout({ ...base, touch: true, landscape: true, shortSide: 393, split: true })).toBe('rotate');
+    // Tablets, whatever the window width.
+    expect(chooseLayout({ ...base, touch: true, landscape: false, shortSide: 820 })).toBe('stack');
+    expect(chooseLayout({ ...base, touch: true, landscape: true, shortSide: 820, wide: true })).toBe('split');
+    expect(chooseLayout({ ...base, touch: true, landscape: false, shortSide: 1024, wide: true })).toBe('stack');
+    // Mouse and keyboard windows.
+    expect(chooseLayout({ ...base, touch: false, landscape: true, shortSide: 900, wide: true })).toBe('wide');
+    expect(chooseLayout({ ...base, touch: false, landscape: false, shortSide: 900 })).toBe('compact');
+    expect(chooseLayout({ ...base, touch: false, landscape: false, shortSide: 900, narrow: true })).toBe('stack');
+    expect(chooseLayout({ ...base, touch: false, landscape: true, shortSide: 900, split: true })).toBe('split');
+  });
+
+  it('suggestion rows grow with the screen height', () => {
+    expect(stackSuggestionRows({ r2: false, r3: false, r4: false })).toBe(1);
+    expect(stackSuggestionRows({ r2: true, r3: false, r4: false })).toBe(2);
+    expect(stackSuggestionRows({ r2: true, r3: true, r4: true })).toBe(4);
+    expect(splitSuggestionRows({ r3: false, r4: false })).toBe(2);
+    expect(splitSuggestionRows({ r3: true, r4: true })).toBe(4);
   });
 
   it('split matches only phones held sideways, and the CSS uses the same query', async () => {

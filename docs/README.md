@@ -23,6 +23,7 @@ Start here. Every page below is kept in the repo, so the knowledge base is versi
 - [ADR-000: Next.js web app, framework-agnostic decoder](decisions/ADR-000-nextjs.md)
 - [ADR-001: Anthropic API from the Vercel route, no AWS](decisions/ADR-001-anthropic-api-no-aws.md)
 - [ADR-002: MiniMax as a second model provider (interim)](decisions/ADR-002-minimax-provider.md)
+- [ADR-003: One screen on phones and tablets; phones portrait only](decisions/ADR-003-one-screen-portrait-phones.md)
 - [ADR-core-001: core contract clarifications](decisions/ADR-core-001-contract-clarifications.md)
 - [ADR-data-001: keep the 60k lexicon](decisions/ADR-data-001-lexicon-size.md)
 - [ADR-data-004: drop identity slurs from the lexicon, still typeable on purpose](decisions/ADR-data-004-slur-filter.md)
@@ -35,6 +36,7 @@ Start here. Every page below is kept in the repo, so the knowledge base is versi
 - [Phones and tablets: layout research](research/mobile-layout.md): viewports, platform pitfalls, AAC layout guidance
 - [Phone patterns from real apps (Mobbin)](research/mobile-patterns-mobbin.md): dial pads, primary actions, suggestions, the phone layout sketch
 - [Phone AAC evidence](research/mobile-aac-evidence.md): visible viewport heights measured in Safari, thumb reach, motor-impaired touch, AAC apps
+- [One screen on phones and tablets](research/one-screen-tablets.md): measured iPad viewports, phone vs tablet detection, orientation lock support, tablet layouts
 - [Competitive landscape refresh](research/competitive-landscape.md)
 - [Web Speech API: voices, bugs and privacy](research/web-speech.md): voices per browser and OS, offline voices, ro-RO and es-ES, known bugs, what `lib/speech.ts` does about them
 
