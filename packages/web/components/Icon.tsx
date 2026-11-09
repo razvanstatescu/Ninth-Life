@@ -13,6 +13,8 @@ const PATHS = {
   save: ['M6 4h12v16l-6-4-6 4z'],
   menu: ['M4 7h16M4 12h16M4 17h16'],
   show: ['M3 6h18v12H3z', 'M7 10h10M7 14h6'],
+  /** Two arrows turning: flip the show-mode text for the person opposite. */
+  flip: ['M5 10a7 7 0 0 1 12.5-3.5', 'M18 3v4h-4', 'M19 14a7 7 0 0 1-12.5 3.5', 'M6 21v-4h4'],
   /** A letter over a line: spell a word, my words. */
   spell: ['M4 17l5-12 5 12', 'M6 12.5h6', 'M15 20h6'],
   offline: ['M3 3l18 18', 'M8.5 16.5a5 5 0 0 1 7 0', 'M5 13a10 10 0 0 1 5-2.7M14 10.4A10 10 0 0 1 19 13', 'M2 9.5a15 15 0 0 1 4.6-2.8M11 5.6A15 15 0 0 1 22 9.5', 'M12 20h.01'],

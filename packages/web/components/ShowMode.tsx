@@ -1,8 +1,13 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from './Button';
 
-/** Big-text show mode: for when there is no voice, or a noisy room. */
+/**
+ * Big-text show mode: for when there is no voice, or a noisy room. Flip turns the message 180 degrees
+ * for the person across the table; Done and Flip stay upright for the person holding the phone. Every
+ * major text AAC app has this, and iOS cannot lock the screen's orientation from a web page, so it
+ * is a CSS rotation (docs/research/mobile-aac-evidence.md). It opens unflipped every time.
+ */
 export function ShowMode({
   text,
   reason,
@@ -20,10 +25,12 @@ export function ShowMode({
   const scanningRef = useRef(scanning);
   scanningRef.current = scanning;
   const opener = useRef<Element | null>(null);
+  const [flipped, setFlipped] = useState(false);
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
     if (text && !d.open) {
+      setFlipped(false);
       opener.current = document.activeElement;
       if (typeof d.showModal === 'function') d.showModal();
       else d.setAttribute('open', '');
@@ -49,15 +56,23 @@ export function ShowMode({
     >
       {text ? (
         <div className="show__inner" ref={innerRef} tabIndex={-1}>
-          <p className="show__label">{reason ?? 'Show this to the other person'}</p>
-          <p className="show__text" lang="en">
-            {text}
-          </p>
-          <div className="scan-cluster" data-scan-row="done">
+          <div className={flipped ? 'show__message is-flipped' : 'show__message'} data-flipped={flipped ? 'true' : undefined}>
+            <p className="show__label">{reason ?? 'Show this to the other person'}</p>
+            <p className="show__text" lang="en">
+              {text}
+            </p>
+          </div>
+          <div className="show__actions scan-cluster" data-scan-row="done">
             <Button variant="secondary" size="xl" onClick={onClose} data-autofocus="">
               Done
             </Button>
+            <Button variant="secondary" size="xl" icon="flip" onClick={() => setFlipped((f) => !f)} aria-pressed={flipped} data-action="flip">
+              Flip
+            </Button>
           </div>
+          <p className="nl-sr-only" aria-live="polite">
+            {flipped ? 'Text flipped for the person across from you.' : ''}
+          </p>
         </div>
       ) : null}
     </dialog>

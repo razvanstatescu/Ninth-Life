@@ -63,6 +63,9 @@ so that motor memory holds and I never tap a key three times.
 4.4 THE app SHALL split text longer than 160 characters into chunks at sentence, then word, boundaries.
 4.5 IF no voice is available or speech fails, THEN THE app SHALL show the sentence in a full-screen big-text show mode.
 4.6 THE settings SHALL offer voice, speed (0.5-2), pitch (0.5-2) and a Test voice button.
+4.7 Show mode SHALL offer Flip (a toggle with `aria-pressed`, beside Done in the same scan row): WHEN pressed, THE
+     message (label and sentence) SHALL turn 180 degrees for the person opposite while Done and Flip stay upright, with no
+     animation; show mode SHALL open unflipped every time (2026-11-09, docs/research/mobile-aac-evidence.md).
 
 ## Requirement 5: Offline
 5.1 THE service worker SHALL precache the app shell, fonts, icons and `/data/**` so ghost mode works offline after one visit.

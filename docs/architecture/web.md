@@ -120,7 +120,8 @@ DOM order (so focus order matches). Phone layout (2026-11-09, web-ui Req 24): bu
 fill the width; three suggestions as rows next to the input) and `docs/research/mobile-aac-evidence.md` (Safari gives a
 page 549px on an iPhone SE and 714px on an iPhone 17 with its toolbar showing). Components: `PhoneSuggestions.tsx`,
 `SpeakButton` and `SpeakBar` `hideSpeak` / `digitsApart` / `extra` (Clear, Undo), the Menu sheet's "This sentence"
-group, a "Sentences" sheet for More; Clear keeps an Undo until the next key (`composer` `restore`). Phones and tablets
+group, a "Sentences" sheet for More; Clear keeps an Undo until the next key (`composer` `restore`). Show mode
+has a Flip toggle that turns the message 180 degrees for the person opposite (web-ui Req 4.7). Phones and tablets
 (2026-11-09, docs/research/mobile-layout.md, web-ui Req
 15.8-15.11, checked on 20 viewports by `test/e2e/responsive.mjs`):
 - **Keys never move while typing.** In compact and split the SpeakBar text area has a fixed height (two sentence lines
