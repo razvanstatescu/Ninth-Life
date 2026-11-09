@@ -53,13 +53,35 @@ radios and checkboxes, re-read by a MutationObserver. The highlight is `data-sca
 on the DOM so a re-render of the sheet cannot wipe it. Choosing a cell calls `click()`. The scan mode is latched when
 the overlay opens (Req 16.4), so a switch user who picks Keyboard can still pick One switch again before closing.
 
-## Layout (Req 15)
+## Layout (Req 15, 24, 25; ADR-003)
 
-`lib/layout.ts` decides `wide` (>= 960px) or `compact` with `useSyncExternalStore` on `matchMedia`. The static HTML
-is the wide DOM; CSS `order` lays it out as compact on phones until hydration renders the compact DOM order, so
-focus order matches the visual order and nothing jumps. The header renders both variants and CSS shows one. On
-compact screens `--nl-key` is also capped by `(100dvh - 480px) / 4` (never below 72px), so at 390 x 844 the
-SpeakBar and keypad fit; it depends on the viewport only, so keys do not resize while typing.
+`lib/layout.ts` picks one of five layouts with `useSyncExternalStore` on `matchMedia` and `screen`
+(`chooseLayout`, pure and unit-tested):
+
+| Layout | When | Shape |
+|---|---|---|
+| `stack` | touch device in portrait (phones and tablets), or a fine-pointer window under 600px wide | header, sentence card, suggestion rows, keypad, action bar [Menu] [Speak] [Show]; no page scroll |
+| `split` | touch tablet in landscape, or a short landscape desktop window | left: header, card, suggestions, action bar; right: keypad, level with the action bar |
+| `rotate` | touch device whose shorter screen side is under 600px, held sideways | only `RotateNotice` ("Turn your phone upright"); the sentence is kept |
+| `wide` | fine pointer, >= 960px | the In-context-app artboard |
+| `compact` | fine pointer, 600-959px | one column, keypad first |
+
+`stack` and `split` are the one-screen shells (`isShell`): the app is `100svh` tall, everything that does not fit
+(proof, They said, sentences, Save phrase, Spell, About) opens in a sheet, and the header holds the summary pill, the
+Scanning pill and the They said bubble. Keys are sized from the measured keypad box: a ResizeObserver on `#keypad`
+sets `--pad-w` / `--pad-h`, and `--nl-key` is clamped between `key-min` and `key-size` (container query units
+resolved to 0 in Chrome here). Suggestion rows and sentence lines step with the screen height
+(`STACK_ROWS_QUERIES`, `SPLIT_ROWS_QUERIES`); below 620px the header hides. Phones are portrait only by decision
+(ADR-003): the page also asks for `screen.orientation.lock('portrait')` where the browser allows it.
+
+The static HTML is the wide DOM; CSS lays it out for narrow screens until hydration renders the chosen layout's DOM
+order, so focus order matches the visual order. `test/e2e/responsive.mjs` checks 22 measured phone and tablet sizes.
+
+## They said and Listen (Req 25.3, 26; ADR-004)
+
+`PartnerTurn` is the field (inline on desktop, a sheet on phones and tablets). Listen wraps the browser's
+`SpeechRecognition` in `lib/dictation.ts`: one phrase, interim text into the field, `processLocally` when Chrome has
+the English pack, a one-time notice before the first use (the `dictation` setting), shown only on secure pages.
 
 ## Keyboard routing (Req 6)
 

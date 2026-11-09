@@ -2,7 +2,8 @@
 
 Owner: decoder (`packages/decoder`, route `packages/web/app/api/decode`).
 Sources: `docs/plan/00-source-plan.md` §4.3, §4.5, §4.7, §10; `docs/architecture/contracts.md` §3;
-`docs/decisions/ADR-000-nextjs.md`, `docs/decisions/ADR-001-anthropic-api-no-aws.md`. Last updated 2026-11-06.
+`docs/decisions/ADR-000-nextjs.md`, `docs/decisions/ADR-001-anthropic-api-no-aws.md`,
+`docs/decisions/ADR-002-minimax-provider.md`. Last updated 2026-11-09 (DS-7.7-7.10: MiniMax).
 
 ## Introduction
 
@@ -11,14 +12,15 @@ is not intended to diagnose, treat or replace a clinical AAC assessment.
 
 The decoder service is the optional cloud step. The browser always decodes offline first ("ghost
 mode"). When the person turns on cloud ranking, the browser sends the key codes, the offline
-lattice and its best ghost sentences to `/api/decode` (Vercel); the service asks a Claude Haiku
-model through the Anthropic API to rank sentences, and a deterministic validator removes every word that does not encode to the
+lattice and its best ghost sentences to `/api/decode` (Vercel); the service asks a model through the
+Anthropic Messages API, or MiniMax's Anthropic-compatible API (ADR-002), to rank sentences, and a deterministic validator removes every word that does not encode to the
 keys pressed. The model can rank; it can never put words in someone's mouth.
 
 Glossary: **code** = digit string for one word (2-9); **lattice** = per-slot list of dictionary
 words for the codes; **ghost beams** = the client's offline sentence guesses; **validator** =
 `validate()` from `@ninth/core`; **kill switch** = environment variable `LLM_ENABLED`;
-**spend limit** = the Anthropic Console workspace monthly spend limit.
+**spend limit** = the Anthropic Console workspace monthly spend limit (MiniMax: a prepaid balance or its own limits;
+ADR-002 has no runbook yet); **provider** = `anthropic` or `minimax`, decided by the model (`src/models.ts`).
 
 ## Requirement DS-1: Validator soundness
 
@@ -67,7 +69,8 @@ public endpoint can never run up a bill.
 1. WHILE `LLM_ENABLED` is not exactly `"true"`, THE service SHALL respond 503
    `{"error":"llm_disabled","reason":"kill_switch"}` without calling the model and without counting
    quota. Unset SHALL mean off.
-2. IF `ANTHROPIC_API_KEY` is not set, THEN THE service SHALL treat the LLM as disabled.
+2. IF the key for the selected model's provider (`ANTHROPIC_API_KEY` or `MINIMAX_API_KEY`) is not set, THEN THE
+   service SHALL treat the LLM as disabled.
 3. THE deployment SHALL use an API key from a dedicated Anthropic Console workspace whose monthly
    spend limit is set (recommended $40); WHEN the limit is reached and calls fail, THE service SHALL
    fall back as in DS-2.2.
@@ -117,8 +120,8 @@ budget and the endpoint stays up through Jan 29, 2027.
 4. Quota records SHALL expire 24 hours after their last write.
 5. THE route SHALL run without payload capture (no body logging in Vercel logs or drains).
 6. THE app SHALL tell the person, before and while model ranking is on, that their keys, the
-   dictionary words and the partner's line are sent to Anthropic's Claude API, and what Anthropic
-   says about retention; it SHALL NOT claim EU-only processing or that nothing is kept.
+   dictionary words and the partner's line are sent to the configured provider (Anthropic or MiniMax, named from
+   `NEXT_PUBLIC_DECODE_PROVIDER`), and what that provider says about retention; it SHALL NOT claim EU-only processing or that nothing is kept.
 
 ## Requirement DS-7: Model API
 
@@ -132,6 +135,16 @@ budget and the endpoint stays up through Jan 29, 2027.
    the model's minimum cacheable prompt (Haiku 5.5: 512 tokens; Haiku 4.5: 4,096).
 6. IF the API answers with a non-2xx status or `stop_reason: "refusal"`, THEN THE service SHALL treat
    the call as failed (DS-2.2) and log only the status number.
+7. (ADR-002) WHEN only `MINIMAX_API_KEY` is set and `DECODE_MODEL` is unset, THE default model SHALL be `MiniMax-M3`;
+   `DECODE_MODEL` SHALL accept `MiniMax-M3` and `MiniMax-M3.1-Flash`, and the model's provider SHALL decide the key.
+8. (ADR-002) FOR MiniMax, THE service SHALL call `https://api.minimax.io/anthropic/v1/messages` (host overridable
+   by `MINIMAX_BASE_URL`) with `Authorization: Bearer`, `x-api-key` and `anthropic-version: 2023-06-01`, SHALL NOT
+   send `cache_control` or sampling parameters, SHALL send `thinking: {"type": "disabled"}` for `MiniMax-M3`, and for
+   `MiniMax-M3.1-Flash` (always thinks) `output_config.effort: "low"` with 1,024 extra `max_tokens`.
+9. (ADR-002) `DECODE_TIMEOUT_MS` SHALL set the model deadline, clamped to 300-9,000 ms (default 1,200); the client's
+   budget SHALL be derived from it at build time (`NEXT_PUBLIC_DECODE_TIMEOUT_MS`, +300 ms).
+10. (ADR-002) THE app's privacy copy SHALL name the provider the route really calls, derived from the route's env
+   with the same rule as the decoder (`packages/web/lib/publicEnv.mjs`).
 
 ## Requirement DS-8: Prompt
 

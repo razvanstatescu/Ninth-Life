@@ -26,11 +26,20 @@ Each task names the requirements it satisfies and the tests that cover them.
 - [x] 10. Remove AWS: Bedrock client, Lambda adapter, `build.mjs`, AWS SDK deps, `packages/infra` (ADR-001)
 - [ ] 11. Production setup (runbook in `docs/architecture/decoder.md`)
   - [ ] 11.1 Console: dedicated workspace `ninth-life-decode`, monthly spend limit $40, API key (DS-3.3)
-  - [ ] 11.2 Vercel env vars: `ANTHROPIC_API_KEY`, `LLM_ENABLED`, `DECODE_MODEL`, `IP_HASH_SALT`; redeploy (DS-3.1, 3.4)
+  - [ ] 11.2 Vercel env vars: the provider key (`ANTHROPIC_API_KEY` or `MINIMAX_API_KEY`, optional `MINIMAX_BASE_URL`),
+        `LLM_ENABLED`, `DECODE_MODEL`, `DECODE_TIMEOUT_MS`, `IP_HASH_SALT`; redeploy (DS-3.1, 3.4, 7.7-7.9)
   - [ ] 11.3 Vercel WAF rule: `POST /api/decode`, 10 / 60 s per IP, 429; check the 11th request gets 429 (DS-4.1)
   - [ ] 11.4 Kill-switch drill: set `LLM_ENABLED=false`, redeploy, confirm 503, turn back on
 - [ ] 12. Eval week (plan D5): Haiku 5.5 vs Haiku 4.5 on the held-out set; p50/p95 latency, top-1 accuracy, rejection rate, cost per decode; set `DECODE_MODEL`
+  - [x] 12.1 MiniMax-M3 vs MiniMax-M3.1-Flash, 200 items, letter mode, plus M3 in initials mode (`packages/eval/RESULTS.md`); M3 chosen, `DECODE_TIMEOUT_MS=2000` locally (`docs/research/minimax-models.md`)
+  - [ ] 12.2 The Haiku runs need an Anthropic key
 - [ ] 13. Live checks with a key: Haiku 5.5 accepts `thinking: disabled` on 2026-10-21; `cache_read_input_tokens > 0` on the second call; the spend-limit error falls back to ghost
+  - [x] 13.1 MiniMax live check passed on 2026-11-09 (`pnpm -F @ninth/decoder live-check -- --model MiniMax-M3`; thinking off, reply parses and validates)
 - [x] 14. Plan F7: `rejectedWords` in the response, zod `DecodeResponseSchema` / `RejectedWordSchema`, web client re-check and proof-panel strike-through (DS-1.7, ADR-decoder-001)
   - [x] 14.1 Property P5 and examples ("wafer" for 92837, cap 5, shape filter, length mismatch, degraded paths) (`test/handler.test.ts`)
   - [x] 14.2 DS-6 privacy property covers a rejected word that reaches the response but not the log
+- [x] 15. MiniMax as a second provider (ADR-002; DS-3.2, DS-6.6, DS-7.7-7.10)
+  - [x] 15.1 Provider profiles, `messagesUrl`, `requestHeaders`, `apiVersionFor`, `resolveModel`, `defaultModelFor`, `timeoutFromEnv` (`test/minimax.test.ts`, `test/fetch-adapter.test.ts`, `test/llm.test.ts`)
+  - [x] 15.2 Live check per provider (`test/live-check.test.ts`); web `lib/publicEnv.mjs` provider and timeout (`packages/web/test/publicEnv.test.ts`); provider-aware privacy copy (`lib/rankingProvider.ts`)
+  - [x] 15.3 Prompt v6: conversation first, guesses marked as fallible (`test/prompt.test.ts`, `docs/research/minimax-models.md`)
+  - [ ] 15.4 Spend cap for MiniMax (prepaid balance or MiniMax limits) written into the runbook before going public (ADR-002 trade-offs)

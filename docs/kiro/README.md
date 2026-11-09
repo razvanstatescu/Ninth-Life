@@ -7,28 +7,32 @@ The hackathon judges Kiro use under **Technological Implementation** ("How thoro
 ## First Kiro session (each teammate, once)
 
 1. Open the repo in Kiro IDE 1.x and trust the workspace (workspace agents only load in a trusted workspace [A-01]).
-2. **Agent Hooks panel:** 9 hooks from 6 files should be listed, none with a "legacy" badge. If one is missing, run `node scripts/validate-kiro-config.mjs`.
-3. **Steering panel:** 7 files. `product.md` and `trademarks.md` are always on; open a `.tsx` under `packages/web/` and check `accessibility.md` and `design-system.md` join the context.
-4. **MCP panel:** `context7`, `playwright`, `aws-knowledge`, `github`. For GitHub, create a fine-grained PAT, `export GITHUB_PAT=...` before starting Kiro, and add `GITHUB_PAT` under Settings, "Mcp Approved Env Vars" [M-02]. Never paste the token into `mcp.json`.
-5. **Powers panel:** Add Custom Power, "Import power from a folder", choose `.kiro/powers/ninth-life-eval/` [PW-02]. Catalog powers are optional; the CDK power is no longer needed (no AWS infrastructure since ADR-001) [PW-03].
-6. **Confirm the hook payload format** (closes open question H-03): quit Kiro, start it with `KIRO_HOOK_DEBUG=1` in the environment, ask the agent to edit one file, then read `ninth-life-hook-payloads.jsonl` in your OS temp folder (`/tmp` on Linux and macOS). Put the real field names into the register. Turn the variable off afterwards.
-7. **Check model IDs** with `/model` (or the model picker) and record the exact ID for Haiku 5.5 [A-05]; set it as the `KIRO_REVIEW_MODEL` repository variable.
-8. Request your hackathon credits (Kiro user ID or AWS account ID; deadline Dec 1, 2026, 12:00 pm PT; allow 48 business hours) [R-04].
-9. Log the session: `node scripts/kiro-log.mjs add --who "<you>" --surface "Kiro IDE" --feature "Setup" --prompt "first session checks" --outcome "<what loaded, what did not>"`.
+2. **Agent Hooks panel:** 10 hooks from 7 files should be listed, none with a "legacy" badge. If one is missing, run `node scripts/validate-kiro-config.mjs`.
+3. **Steering panel:** 9 files. `product.md`, `tech.md`, `structure.md` and `trademarks.md` are always on; open a `.tsx` under `packages/web/` and check `accessibility.md` and `design-system.md` join the context.
+4. **Agent Ignore Files:** in Settings, add `.kiroignore` to `kiroAgent.agentIgnoreFiles` so the IDE honours the root `.kiroignore` (secrets, eval downloads, `.next`, `.claude/`). Kiro CLI V3 reads it on its own. Then ask the agent to open `packages/web/.env.local`: it must refuse or fail.
+5. **Memory:** off by default. Turn on "Use and learn" (Memory view, gear) if you want Kiro to keep corrections between sessions; rules that must always hold stay in steering.
+6. **MCP panel:** `context7`, `playwright`, `aws-knowledge`, `github`. For GitHub, create a fine-grained PAT, `export GITHUB_PAT=...` before starting Kiro, and add `GITHUB_PAT` under Settings, "Mcp Approved Env Vars" [M-02]. Never paste the token into `mcp.json`.
+7. **Powers panel:** Add Custom Power, "Import power from a folder", choose `.kiro/powers/ninth-life-eval/` [PW-02]. Catalog powers are optional; the CDK power is no longer needed (no AWS infrastructure since ADR-001) [PW-03].
+8. **Confirm the hook payload format** (closes open question H-03): quit Kiro, start it with `KIRO_HOOK_DEBUG=1` in the environment, ask the agent to edit one file, then read `ninth-life-hook-payloads.jsonl` in your OS temp folder (`/tmp` on Linux and macOS). Put the real field names into the register. Turn the variable off afterwards.
+9. **Check model IDs** with `/model` (or the model picker) and record the exact ID for Haiku 5.5 [A-05]; set it as the `KIRO_REVIEW_MODEL` repository variable.
+10. Request your hackathon credits (Kiro user ID or AWS account ID; deadline Dec 1, 2026, 12:00 pm PT; allow 48 business hours) [R-04].
+11. Log the session: `node scripts/kiro-log.mjs add --who "<you>" --surface "Kiro IDE" --feature "Setup" --prompt "first session checks" --outcome "<what loaded, what did not>"`.
 
 ## File map
 
 | Path | What it is | Used by | Owner |
 |---|---|---|---|
 | `.kiro/specs/<name>/` | `requirements.md` (EARS), `design.md`, `tasks.md` per feature: core-encoder, decoder-service, access-modes, web-ui, eval-harness | IDE (spec panel, task runner, PBT), CLI V3 (`/spec new`, `/spec run`), Web. PBT extraction and the property hover are IDE-only [P-02, P-03] | package owners |
-| `.kiro/steering/product.md` | Users, non-goals, the intended-purpose sentence, banned claims. `inclusion: always` | IDE, CLI (all engines), Web | lead |
+| `.kiro/steering/product.md` | Users, devices (phones first, portrait-only phones), non-goals, the intended-purpose sentence, banned claims, the honest tool history. `inclusion: always` | IDE, CLI (all engines), Web | lead |
+| `.kiro/steering/tech.md` | Stack, versions, commands, and rules from real incidents (no build next to a running dev server, no formatter, no secrets, no push without a yes). `inclusion: always` | IDE, CLI, Web | lead |
+| `.kiro/steering/structure.md` | Where things live, package by package. `inclusion: always` | IDE, CLI, Web | lead |
 | `.kiro/steering/trademarks.md` | Banned trademark words and other third-party material. `inclusion: always` | IDE, CLI, Web | lead |
 | `.kiro/steering/accessibility.md` | WCAG 2.2 AA plus design-system rules (56px targets, 16px text, one ember thing, never color alone, no pulsing). `fileMatch` on `packages/web/**/*.tsx`, `*.css` | IDE, CLI V3, Web [S-04] | web owner |
 | `.kiro/steering/design-system.md` | Pointer to `design/system/`, token and component rules, font loading. `fileMatch` on web `.tsx/.ts/.css` | IDE, CLI V3, Web | web owner |
 | `.kiro/steering/privacy.md` | No bodies in logs, model calls only from `/api/decode` to the Anthropic API, no cookies, salted IP hashes. `fileMatch` on `packages/decoder/**`, `packages/web/app/api/**` | IDE, CLI V3, Web | lead |
 | `.kiro/steering/voice.md` | Web Speech API rules. `inclusion: auto` (also `/voice`) | IDE, CLI V3, Web | web owner |
 | `.kiro/steering/data-licenses.md` | Dataset, font and asset licenses; NOTICE rules. `inclusion: auto` (also `/data-licenses`) | IDE, CLI V3, Web | data owner |
-| `.kiro/hooks/*.json` | 9 hooks in the v1 schema (table below) | IDE and CLI V3, including headless V3 runs; **not** Kiro Web; file triggers fire only on agent edits [H-01, H-07, C-04] | lead |
+| `.kiro/hooks/*.json` | 10 hooks in the v1 schema (table below) | IDE and CLI V3, including headless V3 runs; **not** Kiro Web; file triggers fire only on agent edits [H-01, H-07, C-04] | lead |
 | `.kiro/agents/a11y-auditor.json` | Audits a route with the Playwright MCP against WCAG 2.2 AA and the design system; writes only `docs/a11y/` | IDE, CLI (select with `/agent` or `--agent`); Web only as a sub-agent [A-04] | web owner |
 | `.kiro/agents/license-checker.json` | Read-only license and NOTICE audit of `data/`, fixtures, dependencies and assets; may run `git ls-files` and `pnpm licenses list` | IDE, CLI | data owner |
 | `.kiro/agents/pr-reviewer.json` | Read-only reviewer: no writes, no shell, no MCP | CLI headless in CI, plus IDE and CLI by hand | lead |
@@ -37,6 +41,8 @@ The hackathon judges Kiro use under **Technological Implementation** ("How thoro
 | `.kiro/prompts/pr-review.md` | The review instructions. A CLI workspace prompt (`/pr-review` in V3, `@pr-review` on older engines) and the text CI feeds to `pr-reviewer` | CLI, CI | lead |
 | `scripts/tm-lint.mjs` | Banned-trademark scan (whole words, any case). Hook and CI | hooks, CI | lead |
 | `scripts/block-env-writes.mjs` | PreToolUse guard: exit 2 blocks writes to `.env*` (not `.env.example`) | hooks | lead |
+| `scripts/block-build-during-dev.mjs` | PreToolUse guard: exit 2 blocks `next build` / `pnpm build` while `next dev` runs | hooks | lead |
+| `.kiroignore` (repo root) | Files the agent must not read: `.env*`, eval downloads, `.next`, `node_modules`, `.claude/` | IDE (after the setting above), CLI V3; not Web yet | lead |
 | `scripts/kiro-log.mjs` | Appends rows to `docs/KIRO_LOG.md` (`task` from the hook, `add` by hand) | hooks, people | everyone |
 | `scripts/check-kiro-not-ignored.mjs` | Fails if `/.kiro` is missing, untracked (with `--require-tracked`) or git-ignored | CI | lead |
 | `scripts/validate-kiro-config.mjs` | Static checks of hooks, agents, MCP, steering and powers against the documented schema | CI | lead |
@@ -58,6 +64,7 @@ The hackathon judges Kiro use under **Technological Implementation** ("How thoro
 | `secrets-guard` (`secrets-guard.json`) | PreToolUse | `write\|Write\|replace\|Replace\|append\|Append` | `node scripts/block-env-writes.mjs` (exit 2 blocks) | none |
 | `secrets-guard-shell` (same file) | PreToolUse | `shell\|bash\|Bash\|pwsh\|execute_cmd` | same script, parses the shell command | none |
 | `typecheck-on-stop` (`typecheck-on-stop.json`) | Stop | — | `pnpm -r typecheck 1>&2` | none |
+| `build-guard` (`build-guard.json`) | PreToolUse | `shell\|bash\|Bash\|pwsh\|execute_cmd` | `node scripts/block-build-during-dev.mjs` (exit 2 blocks a production build while the dev server runs) | none |
 
 Why the `1>&2`: on exit 0 Kiro adds the command's STDOUT to the agent's context, and on failure it sends STDERR to the agent [H-06]. Sending tool output to STDERR keeps passing runs quiet and failing runs informative.
 
@@ -105,9 +112,9 @@ The rules ask for a write-up on how Kiro was used, with these prompts [R-09]. Ke
 |---|---|---|---|
 | Kiro IDE, CLI, Web, Crew: how did they differ? | IDE for specs and PBT; CLI V3 headless in CI; one Web session; Crew for Phrase Keeper | Dated log rows per surface; CI run link with a posted review; a Web session screenshot; Crew app running in the dashboard | [ ] |
 | Custom agents: which, in which Kiro app, impact? | `a11y-auditor`, `license-checker`, `pr-reviewer` | Agent JSON; one real finding from each (an `docs/a11y/` report, a NOTICE gap, a PR comment) and the fix commit | [ ] |
-| Agent hooks: which workflows, what improved? | 9 hooks above | `log-task` rows; a screenshot of `secrets-guard` blocking a `.env` write (exit 2 message); a `core-pbt-on-save` failure the agent then fixed; a `trademark-guard` catch | [ ] |
+| Agent hooks: which workflows, what improved? | 10 hooks above | `log-task` rows; a screenshot of `secrets-guard` blocking a `.env` write (exit 2 message); a `core-pbt-on-save` failure the agent then fixed; a `trademark-guard` catch | [ ] |
 | Spec-driven development: structure, effect, vs vibe coding | 5 specs with EARS IDs; scanning v0 vibe vs spec rebuild | Spec files; task list with requirement IDs; bug count and time for both scanning versions | [ ] |
-| Steering: how, which strategy mattered most | 7 files: always (product, trademarks), fileMatch (accessibility, design-system, privacy), auto (voice, data-licenses) | One component generated with and without `accessibility.md` (diff of target sizes, focus, labels); a prompt where `claims-guard` changed copy | [ ] |
+| Steering: how, which strategy mattered most | 9 files: always (product, tech, structure, trademarks), fileMatch (accessibility, design-system, privacy), auto (voice, data-licenses) | One component generated with and without `accessibility.md` (diff of target sizes, focus, labels); a prompt where `claims-guard` changed copy | [ ] |
 | MCP: what it enabled | Context7, Playwright, AWS Knowledge, GitHub | Transcript excerpts: a doc lookup that changed code, a Playwright walkthrough with screenshots, a model or API lookup, a Phrase Keeper PR opened through GitHub MCP | [ ] |
 | Property-based testing: what it caught, which requirements | Encoder, validator soundness and completeness, scanning reachability bound, eval determinism | Every shrunk counterexample with the requirement ID, test file and fix commit; IDE screenshot of a property linked to its requirement | [ ] |
 | Kiro powers: which, what third-party tooling | custom `ninth-life-eval` (and its conversion to the Agent Plugins format) | Install screenshot; a session where the power ran the eval and reported deltas; `POWER.md` | [ ] |

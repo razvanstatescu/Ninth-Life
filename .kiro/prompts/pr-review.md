@@ -9,8 +9,8 @@ Do this:
 1. Read the changed files in full where the diff is not enough. Check them against `docs/architecture/contracts.md` and the steering you have loaded.
 2. Look hardest at:
    - the proof guarantee: no path lets a candidate be spoken unless every word encodes to the typed keys (`validate()` in `@ninth/core`, used on both server and client);
-   - privacy: no request bodies, codes, candidates or partner text in logs, traces, errors or metrics; model calls only from `/api/decode` to the Anthropic Messages API, with the key server-side only;
-   - accessibility and design-system rules for anything under `packages/web/`;
+   - privacy: no request bodies, codes, candidates or partner text in logs, traces, errors or metrics; model calls only from `/api/decode` to the configured provider's Messages API (Anthropic or MiniMax, ADR-002), with the key server-side only; Listen only after its notice, and no audio handled by the app (ADR-004);
+   - accessibility and design-system rules for anything under `packages/web/`, including no page scroll on phones and tablets and keys that never move (web-ui Req 24, 25; ADR-003);
    - user-facing words: banned claims, the intended-purpose sentence, the banned trademark words;
    - tests: new core logic has fast-check properties linked to requirement IDs in `.kiro/specs/*/requirements.md`;
    - data, fonts and assets: license and NOTICE entries.

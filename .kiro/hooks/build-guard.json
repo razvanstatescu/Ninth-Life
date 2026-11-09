@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "build-guard",
+      "description": "Block a Next.js production build (next build, pnpm build, pnpm -F @ninth/web build) while `next dev` is running: both write packages/web/.next and the build breaks the open app (tech.md rule 1). Exit code 2 blocks; the message tells the agent what to run instead.",
+      "trigger": "PreToolUse",
+      "matcher": "shell|bash|Bash|pwsh|execute_cmd",
+      "action": {
+        "type": "command",
+        "command": "node scripts/block-build-during-dev.mjs"
+      },
+      "timeout": 10
+    }
+  ]
+}

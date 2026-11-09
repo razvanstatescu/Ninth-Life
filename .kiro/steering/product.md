@@ -25,9 +25,15 @@ Write for adults. No cartoons, no baby talk. Describe the tool ("type on 9 keys,
 ## What it does (v1)
 
 - Letter mode (default): one key press per letter, offline dictionary decoding ("ghost mode") that always works.
-- Optional language-model ranking ("LLM mode", opt-in, sends text to Anthropic's Claude API) with the proof panel: every word shows whether it matches the keys.
+- Optional language-model ranking ("model ranking", opt-in) through the configured provider: Anthropic's Claude API or MiniMax's Anthropic-compatible API (ADR-001, ADR-002). The proof check shows whether every word matches the keys ("Check the words").
+- Spell a word letter by letter, "My words" and word packs (web-ui Req 19-22).
 - Access: keyboard, touch, 1-switch and 2-switch scanning with adjustable speed.
-- Web Speech voices, voice picker, saved phrases on the device only.
+- Web Speech voices, voice picker, saved phrases on the device only; Show mode (big text, Flip for the person opposite).
+- "They said": the other person's last line, typed or heard with Listen (the browser's speech recognition, off until allowed, ADR-004).
+
+## Devices (web-ui Req 24, 25; ADR-003)
+
+**Phones are the first target, tablets the second, laptops third.** On phones and tablets the main screen fits the visible screen and never scrolls: sentence card, suggestions, keypad and the action bar [Menu] [Speak] [Show]; everything else opens in a sheet. Tablets work in both orientations (landscape puts the keypad on the right). **Phones are portrait only**: held sideways they show "Turn your phone upright" and keep the sentence. That is a decision by the product owner and a known WCAG 1.3.4 exception; do not "fix" it without a new decision. Check layout changes with `test/e2e/responsive.mjs` (22 measured sizes).
 
 ## Non-goals
 
@@ -52,8 +58,10 @@ Allowed: "free", "works offline", "runs in your browser", "every spoken word mat
 
 ## Honest limits to keep visible
 
-Needs literacy and spelling. Voices depend on the device. LLM mode sends the typed digits, candidate words and the partner's last line to Anthropic's Claude API (processed in Anthropic's infrastructure, not only in the EU; Anthropic says it deletes API inputs and outputs within 30 days unless it must keep them for policy or legal reasons). Not tested with AAC users unless the user-validation log says so.
+Needs literacy and spelling. Voices depend on the device. Model ranking sends the typed digits, candidate words and the partner's last line to the configured provider (`lib/rankingProvider.ts` holds the exact copy): Anthropic (not only in the EU; deletes API inputs and outputs within 30 days unless it must keep them for policy or legal reasons) or MiniMax (no published deletion period or no-training promise; data stored in the US). Listen may send the other person's voice to the browser maker (Google in Chrome, Apple in Safari). Not tested with AAC users unless the user-validation log says so. Not yet tried on real phones and tablets, only in simulators.
 
 ## How we work
 
-Spec first for anything non-trivial: `.kiro/specs/<name>/` with EARS requirements, design and tasks, and fast-check properties for the core logic. Each task names the requirement IDs it satisfies. Log Kiro usage in `docs/KIRO_LOG.md`. Contracts between packages live in `docs/architecture/contracts.md`; decisions in `docs/decisions/`.
+Spec first for anything non-trivial: `.kiro/specs/<name>/` with EARS requirements, design and tasks, and fast-check properties for the core logic. Each task names the requirement IDs it satisfies. Bugs worth a record get a Bugfix spec. Log Kiro usage in `docs/KIRO_LOG.md` (the `log-task` hook adds spec tasks; add other sessions by hand). Contracts between packages live in `docs/architecture/contracts.md`; decisions in `docs/decisions/`.
+
+History, stated plainly for the write-up: Nov 6-9, 2026 the code and this `.kiro/` folder were written with Claude Code (Anthropic), outside Kiro (`docs/KIRO_LOG.md` row 1). From Nov 10 the work happens in Kiro. Never describe earlier work as Kiro work.

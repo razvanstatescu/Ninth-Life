@@ -1,0 +1,25 @@
+# Files Kiro's agent must not read (gitignore syntax; https://kiro.dev/docs/kiroignore/).
+# Kiro IDE: add ".kiroignore" to Settings > Agent Ignore Files (kiroAgent.agentIgnoreFiles).
+# Kiro CLI V3 reads it on its own. Not enforced on Kiro Web yet.
+
+# Secrets: the provider key lives in packages/web/.env.local and is added by a person.
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+*.pem
+*.key
+
+# Eval-only downloads (some are NC-licensed and must never be read into a commit) and the reply cache.
+packages/eval/.cache/
+
+# Build output and installs: large, generated, and stale next to the source.
+node_modules/
+**/node_modules/
+packages/web/.next/
+**/__pycache__/
+
+# Another tool's local files and git worktrees (full copies of this repo that would double every search hit).
+.claude/

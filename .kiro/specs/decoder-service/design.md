@@ -1,8 +1,11 @@
 # Design: decoder-service
 
 Requirements: `.kiro/specs/decoder-service/requirements.md` (DS-1 to DS-8).
-Knowledge base: `docs/architecture/decoder.md`. Decision: `docs/decisions/ADR-001-anthropic-api-no-aws.md`.
-Model research: `docs/research/anthropic-models.md`.
+Knowledge base: `docs/architecture/decoder.md`. Decisions: `docs/decisions/ADR-001-anthropic-api-no-aws.md`,
+`ADR-002-minimax-provider.md` (a second provider through the same client: provider profiles in `src/models.ts`,
+`messagesUrl` / `requestHeaders` per provider, `defaultModelFor(env)`, `timeoutFromEnv`).
+Model research: `docs/research/anthropic-models.md`, `docs/research/minimax-models.md` (MiniMax-M3 chosen over
+M3.1-Flash for the route; prompt v6 puts the conversation first).
 
 ## Overview
 

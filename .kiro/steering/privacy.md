@@ -1,11 +1,11 @@
 ---
 inclusion: fileMatch
-fileMatchPattern: ["packages/decoder/**", "packages/web/app/api/**"]
+fileMatchPattern: ["packages/decoder/**", "packages/web/app/api/**", "packages/web/lib/dictation.ts", "packages/web/lib/speech.ts", "packages/web/lib/rankingProvider.ts", "packages/web/lib/storage.ts", "packages/web/components/PartnerTurn.tsx", "packages/web/app/about/**"]
 ---
 
-# Privacy rules for the decoder and its route
+# Privacy rules for the decoder, its route and the browser speech features
 
-What people type here is their voice. Treat every request body as private conversation, even though it only holds digits, candidate words and a partner's line. These rules apply to `packages/decoder` and the Next.js route in `packages/web/app/api/`, which runs on Vercel and calls the Anthropic Messages API, or MiniMax's Anthropic-compatible API when configured (see `docs/decisions/ADR-001-anthropic-api-no-aws.md` and `docs/decisions/ADR-002-minimax-provider.md`).
+What people type here is their voice. Treat every request body as private conversation, even though it only holds digits, candidate words and a partner's line. These rules apply to `packages/decoder` and the Next.js route in `packages/web/app/api/`, which runs on Vercel and calls the Anthropic Messages API, or MiniMax's Anthropic-compatible API when configured (see `docs/decisions/ADR-001-anthropic-api-no-aws.md` and `docs/decisions/ADR-002-minimax-provider.md`), and to the browser speech features in `packages/web` (voices and Listen, ADR-004).
 
 ## Never
 
@@ -26,5 +26,11 @@ What people type here is their voice. Treat every request body as private conver
 - Least privilege: one provider API key (Anthropic from a dedicated workspace, or MiniMax), stored only as a Vercel env var, used only by `/api/decode`. Never in the client bundle, never `NEXT_PUBLIC_*` (`lib/publicEnv.mjs` only exposes which provider, never a key).
 - LLM mode is opt-in in the UI and explains what is sent and to whom (the configured provider, from `lib/rankingProvider.ts`), and what that provider says about retention (Anthropic: deletes API inputs and outputs within 30 days unless kept for policy or legal reasons, no training by default; MiniMax: no fixed deletion period or no-training promise published, data stored in the US). Do not say "nothing is kept".
 - Ghost mode never depends on the network.
+
+## Browser speech (voices and Listen)
+
+- Speech output uses the browser's voices; voices marked "on this device" keep the words on the device, online voices send the text to the browser maker. Say so (About page, voice picker).
+- Listen (voice to text for They said, ADR-004, web-ui Req 26) uses the browser's own `SpeechRecognition`. It is off until the person allows it after the notice (`DICTATION_NOTICE` in `PartnerTurn.tsx`), the choice is the `dictation` setting, and it is offered only on secure pages. Prefer on-device recognition when `SpeechRecognition.available({processLocally: true})` says so.
+- Ninth Life never touches audio itself: no `getUserMedia`, no `MediaRecorder`, no upload, no storage of audio or of the heard text beyond the They said line (which is never stored). Never start listening without a press.
 
 If a feature needs any of the "never" items, write it up in `docs/decisions/` first and ask the team.

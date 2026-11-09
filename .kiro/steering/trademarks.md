@@ -25,6 +25,7 @@ Exceptions, because they must name the words to state the rule: this file, `scri
 
 ## Fine to name
 
-- Kiro and AWS (the sponsor), Anthropic and the Claude model we call, in the Kiro write-up, README credits and the video's Kiro section.
+- Kiro and AWS (the sponsor), Anthropic and the Claude model we call, MiniMax and its model (ADR-002), in the Kiro write-up, README credits, privacy copy and the video's Kiro section.
+- Google, Apple, Chrome and Safari only as plain words in privacy and help copy that says where browser speech goes (ADR-004); never their logos.
 - Open-source and data sources in credits and NOTICE files, with their licenses (for example wordfreq, AACText, Atkinson Hyperlegible from the Braille Institute).
 - Research papers by citation.

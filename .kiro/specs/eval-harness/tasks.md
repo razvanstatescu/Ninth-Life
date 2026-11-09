@@ -11,7 +11,7 @@
   - [x] 3.1 Build, measure raw/gzip/brotli size and collision stats (`build-stats/lexicon.json`)
   - [x] 3.2 Property: every entry encodes to its code, sorted, ≥ 40k words (P4)
   - [ ] 3.3 Team decision on the size cut (60k vs 40k; see data-and-eval.md "Size"), needs a contract note if changed
-  - [ ] 3.4 Team decision on filtering slurs from the lexicon (wordfreq includes some as low-rank readings)
+  - [x] 3.4 Team decision on filtering slurs from the lexicon (wordfreq includes some as low-rank readings): D7 decided, drop at build (ADR-data-004; task 16.1)
 - [x] 4. Bigrams `data/lexicon/en.bigram.v1.json` (Req 1.5, 5.3, 5.6)
   - [x] 4.1 Modified-KN interpolation over the deployed unigram; prune and renormalize backoff
   - [x] 4.2 Held-out perplexity on AACText dev (unigram vs bigram) in `build-stats/bigram.json`
@@ -40,11 +40,13 @@
   - [x] 11.2 No few-shot answer occurs in the test set (checked 2026-11-06 against all 866 items; "i am good" is gone from `prompt.ts`)
   - [x] 11.4 Response cache, retries, concurrency, cost estimate and `--yes`, `--plan`, `--dry-run`, RESULTS.md sections, RESULTS.llm.json, per-item JSONL (P17–P19)
   - [ ] 11.3 With the key: `pnpm -F @ninth/decoder live-check`, then `pnpm -F @ninth/eval llm --model claude-haiku-5-5` and `--model claude-haiku-4-5 --yes`; commit RESULTS.md and RESULTS.llm.json; decide D5
+  - [x] 11.5 MiniMax provider in the harness (ADR-002): `--model MiniMax-M3 | MiniMax-M3.1-Flash`, key per provider; 200-item runs of both in letter mode committed to RESULTS.md (2026-11-09); transport retry fix (`sleep` default)
 - [x] 17. Live check `packages/decoder/scripts/live-check.ts` (Req 8.9): thinking disabled, cache read on the second call, response time; skip without a key; tested with a fake fetch
 - [ ] 18. Initials mode (Req 9)
   - [x] 18.1 Simulated user and offline B0/B1 baseline in `eval`/`quick`, lattice coverage (P20)
   - [x] 18.2 `pnpm -F @ninth/eval llm --mode initials` (B4; `--only B3,B4` adds the unconstrained run)
   - [ ] 18.3 With the key: run B3 and B4 in initials mode; decide whether to build "Phantom mode"
+    - [x] MiniMax-M3, initials mode, 200 items, in RESULTS.md (2026-11-09); the build-or-cut decision is still open (plan Cut 1, Nov 23)
 - [ ] 12. CI: `.github/workflows/eval.yml` runs `test`, `data:check` and `quick` on PRs touching core, eval or data (Req 2.1, 6.1)
   - [x] 12.1 Manual-dispatch model run (model, mode, limit, cost confirmation), off by default, `secrets.ANTHROPIC_API_KEY` in two steps only; dry run of B2–B4 in the `eval` job (Req 8.8, 8.10)
 - [ ] 13. Confirm Turk dialogues license with the author (web page CC BY 4.0 vs readme CC BY-ND 3.0); if ND, rebuild bigrams with `--no-turk` (Req 1.7, 5.7)
@@ -53,7 +55,7 @@
   - [x] 14.2 SCOWL fetch (pinned) and word classes; `--acronyms`, `--junk`, `--down-zipf`, `--scowl-level` build flags (Req 5.8) — P15
   - [x] 14.3 Measured (a) letter penalty, (b) acronyms drop/down (SCOWL and no-vowel), (c) non-dictionary drop/down on B0/B1, full set and Turk subset; shipped (a) + (b) + (c) down 1.0; data rebuilt, `eval.lock` refreshed (fixture unchanged), `RESULTS.md` regenerated
 - [x] 15. Offensive-readings report for D7, LDNOOBW list (CC BY 4.0) in the cache only (Req 7.1–7.4) — P16
-- [ ] 16. Review the slur marks in `src/offensive.ts` with the team before deciding D7 (marks re-checked by one reviewer on 2026-11-09 and kept as they were; team review still open, and LDNOOBW misses about 20 candidate slurs, ADR-data-004 "Known gap")
+- [ ] 16. Team review of the slur marks in `src/offensive.ts` (D7 is decided and shipped, task 16.1; this review is the follow-up) (marks re-checked by one reviewer on 2026-11-09 and kept as they were; team review still open, and LDNOOBW misses about 20 candidate slurs, ADR-data-004 "Known gap")
 - [x] 16.1 D7: drop the listed slurs at lexicon build, `--slurs keep|down|drop` (default drop), hash list `scripts/slurs.sha256.json` shared with the report (Req 5.10, 7.3; ADR-data-004)
   - [x] Measured keep / down / drop with the report and B0/B1: slur items in top 5 8 → 6 (down) → 0 (drop), B0/B1 unchanged; data rebuilt, `eval.lock` refreshed (fixture unchanged), `RESULTS.md` regenerated
   - [x] Python `SlurFilterTest`; TS `test/data.test.ts` (no listed word in v1/v2, profanity kept); web `test/words.test.ts` (every listed word can be spelled and added to my words on the shipped `en.v2.json`)

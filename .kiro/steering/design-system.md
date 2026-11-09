@@ -27,18 +27,18 @@ Read the component README before building or changing that component. If somethi
 
 - Families: **Atkinson Hyperlegible Next** for everything, **Atkinson Hyperlegible Mono** for key sequences.
 - They are self-hosted: woff2 files and their OFL texts in `packages/web/public/fonts/`, `@font-face` rules in `packages/web/styles/globals.css`. Keep it that way so the app works offline. Do not hotlink Google Fonts from the browser (no `@import` of fonts.googleapis.com in app CSS; `bundle.css` does that for design previews only), because a runtime request sends every visitor's IP address to a third party.
-- Do not switch to `next/font/google` on the current Next version: it knows "Atkinson Hyperlegible Next" and "Atkinson Hyperlegible Mono" only from **Next.js 15.4.0** (checked 2026-11-06); the repo pins 15.1.3, which only has the older "Atkinson Hyperlegible".
+- Do not switch to `next/font/google` on the current Next version: it knows "Atkinson Hyperlegible Next" and "Atkinson Hyperlegible Mono" only from **Next.js 15.4.0** (checked 2026-11-06); the repo pins 15.1.12, which only has the older "Atkinson Hyperlegible".
 - Styles: `utterance` 40px/600 is the largest text in the app; `candidate` 26px/600; `key-letters` 30px/700 with `key-digit` 15px mono; `body-lg` 20px is default app body; `label` 16px/600 is the smallest app text; `caption` 14px website and video only.
 
 ## Components and rules that are easy to break
 
 - **Key:** letters lead (30px bold), the digit is small in the corner. `aria-label` is "4 GHI, G H I" (visible text first for WCAG 2.5.3, then spaced letters). Lit state = ember fill + plum inner ring + `glow-ember`; only one key lit at a time. Pressed = inner ember ring, never color alone.
 - **Keypad:** fixed layout (1 punctuation, 2 to 9 letters, `*` Back, `0` Space, `#` Next). Never reorder keys, hide digits or add keys. Scanning: active row gets `is-scanning`, active key `is-lit`; highlight jumps, never slides.
-- **Button:** primary (ember) is one per screen and is almost always Speak (`nl-btn--xl`, 80px). Secondary, quiet and danger variants as in the README. Danger asks to confirm.
+- **Button:** primary (ember) is one per screen and is almost always Speak (`nl-btn--xl`, 80px). Secondary, quiet and danger variants as in the README. Danger asks to confirm. A disabled Speak uses the outlined secondary look (it is not ember while nothing can be spoken). On phones and tablets Speak sits in the action bar under the keypad, between Menu and Show.
 - **Candidate:** up to 5, ranked; selecting does not speak, Speak does; `aria-pressed` for selection; every listed candidate already passed the proof check.
 - **ProofChip:** match (check icon, solid border), new (plus icon, dashed border), reject (x icon, struck through, never spoken). Announce the state as a word.
-- **SpeakBar:** the sentence in `utterance`, the key sequence under it in mono `ink-muted`, then Speak. Empty state says "Press a key to start". Never truncate.
-- **Icons:** inline SVG, 24px grid, 2.5px round stroke, `currentColor`. No emoji, no filled glyph sets, no pictures of people, no mascot, no cartoon cat.
+- **SpeakBar:** the sentence in `utterance`, the key sequence under it in mono `ink-muted`, then Speak. Empty state says "Press a key to start". Never truncate. In the phone and tablet shell the sentence card has a fixed height in whole lines (1 to 3 by screen height) and scrolls inside itself, with Clear (then Undo) on the right.
+- **Icons:** inline SVG, 24px grid, 2.5px round stroke, `currentColor`, all in `components/Icon.tsx` (speaker, voice, check, plus, x, back, space, gear, switch, save, menu, show, flip, spell, said, mic, stop, offline). Add new ones there in the same style. No emoji, no filled glyph sets, no pictures of people, no mascot, no cartoon cat.
 - **Copy:** plain verbs, sentence case, no exclamation marks, numbers as digits. See the Write / Not table in the README.
 
 ## Spooky, but calm

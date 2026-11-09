@@ -60,7 +60,7 @@ that contain hooks (register A-03, H-09). `scripts/validate-kiro-config.mjs` che
 
 ## 3. Agent hooks: which workflows did they automate, and what improved?
 
-**In the repo now** (9 hooks in 6 files, v1 schema; table in [`docs/kiro/README.md`](../kiro/README.md#hooks))
+**In the repo now** (10 hooks in 7 files, v1 schema; table in [`docs/kiro/README.md`](../kiro/README.md#hooks))
 
 | Hook | Trigger | Action |
 |---|---|---|

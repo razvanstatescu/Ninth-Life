@@ -110,3 +110,43 @@
 - [x] 44. `scripts/perf-check.mjs`: v2 timing with a v1 comparison row, real service-worker install bytes and re-fetched
       data files; before/after medians in `docs/testing/performance.md` (Req 23.5)
 - [ ] 45. Re-measure on a real low-end Android phone and a school Chromebook before quoting the numbers (Req 23.5)
+
+## Phones and tablets: phone-first screen, one screen, portrait-only phones (Req 4.7, 15.8-15.11, 24, 25; ADR-003)
+Built 2026-11-09 outside Kiro (Claude Code); see `docs/KIRO_LOG.md`. Research: `docs/research/mobile-layout.md`,
+`mobile-patterns-mobbin.md`, `mobile-aac-evidence.md`, `one-screen-tablets.md`.
+- [x] 46. Mobile basics: svh key sizing, safe areas (`viewport-fit=cover`), no pull-to-refresh or double-tap zoom, pinch
+      zoom kept, fixed-height sentence box so the keypad never moves (Req 15.8, 15.10, 15.11)
+  - [x] 46.1 Tests: `test/mobile.test.tsx` (svh not dvh, safe areas, zoom, touch-action); `test/e2e/responsive.mjs`
+- [x] 47. Phone-first screen: `stack` layout, sentence card with Clear then Undo (`composer` `restore`), one-line
+      suggestion rows (`components/PhoneSuggestions.tsx`), keypad filling the width, action bar [Menu] [Speak] [Show],
+      disabled Speak outlined, scan rows following the screen (Req 24.1-24.8)
+  - [x] 47.1 Tests: `test/phone.test.tsx` (24.1-24.8), `test/layout.test.ts` (section order, rows by height),
+        `test/e2e/keyboard.mjs` (phone selection)
+- [x] 48. Show mode Flip: toggle with `aria-pressed` after Done in the same scan row, CSS rotation, opens unflipped (Req 4.7)
+  - [x] 48.1 Tests: `test/showmode.test.tsx`
+- [x] 49. One screen on touch devices: `chooseLayout` by `pointer: coarse`, orientation and the screen's shorter side;
+      `split` for tablets in landscape, `rotate` for phones held sideways (`components/RotateNotice.tsx`,
+      `usePortraitLock`); keys sized from the measured keypad box (ResizeObserver `--pad-w`/`--pad-h`); proof,
+      They said and sentences in sheets; Menu "This sentence" and About groups; Scanning pill (Req 25.1-25.7)
+  - [x] 49.1 Tests: `test/layout.test.ts` (chooseLayout, split order, row counts), `test/mobile.test.tsx` (split shell,
+        rotate), `test/phone.test.tsx` (Menu groups), `test/footer.test.tsx`
+  - [x] 49.2 `test/e2e/responsive.mjs`: 22 measured phone and tablet sizes, both orientations; no page scroll, every
+        control on screen, 72px keys, 56px targets, 16px text, keypad does not move; Chromium and WebKit
+- [x] 50. Header They said as a speech-bubble button, the same square as Clear; with a line it widens to show it; status
+      pill keeps one line; header never wraps (Req 25.3)
+  - [x] 50.1 Tests: `test/mobile.test.tsx` (25.3)
+- [ ] 51. Bugfix: iPhone SE in Safari with the bottom tab bar (495px visible) needs a short scroll (Req 25.1) — a good
+      first Kiro Bugfix spec (current, expected and unchanged behaviour)
+- [ ] 52. Before release: state the WCAG 1.3.4 exception (portrait-only phones) in the accessibility statement on
+      `/about` (ADR-003; plan F19)
+- [ ] 53. Try the shell on real phones and tablets (iPhone in Safari and as a Home Screen app, an Android phone in Chrome,
+      an iPad in both orientations); log results in `docs/research/one-screen-tablets.md` (Req 24, 25)
+
+## Voice to text for They said (Req 26; ADR-004)
+- [x] 54. `lib/dictation.ts` (recognizer wrapper, `processLocally` when available, error mapping, `joinHeard`,
+      secure-context check, `useDictationSupported`), Listen / Stop in `components/PartnerTurn.tsx`, one-time notice,
+      `dictation` setting and the Settings switch "Listen in They said", About privacy line (Req 26.1-26.6)
+  - [x] 54.1 Tests: `test/dictation.test.tsx` (fake recognizer: notice, allow, interim text, stop, abort on Cancel and
+        unmount, typing wins, errors in words, on-device choice, plain-HTTP page)
+- [ ] 55. Try Listen on real devices over HTTPS: Chrome on Android (online and on-device), Safari on iPhone and iPad, a
+      Home Screen web app on iOS (expected to fail with a clear message); log in `docs/research/web-speech.md` (Req 26)
