@@ -102,8 +102,68 @@ Reading it:
 **Decision for now: `MiniMax-M3`, `DECODE_TIMEOUT_MS=2000`** (same top-1 as 3,000 ms in this
 sample, and late reorders end a second sooner). Revisit Flash if MiniMax speeds it up.
 
+## Prompt experiments (2026-11-09, MiniMax-M3, B4, letter mode)
+
+Question: does a prompt tuned for M3 close the gap to Flash? Each variant is a full 200-item B4 run
+(seed 9, 198 items with a model call, concurrency 4) with `--out` and `--cache-dir` in a temp dir,
+so `packages/eval/RESULTS.md` was not touched. Another agent was calling MiniMax at the same time,
+so compare latencies within this table only. One sentence is 0.5 point; the same prompt run twice
+moved by 1 item (v0 vs v0 rerun, v6 vs v6 rerun), so a gain under ~1.5 points is noise.
+
+Reading the baseline misses first: in 10 of its 11 wrong top-1s M3 had returned the first ghost
+guess unchanged ("e mail of", "thank you for informing of", "make it fight" after "around six?").
+It anchors on `<guesses>` and on the most frequent lattice word.
+
+| Variant | What changed (from v0) | Top-1 | Top-5 | At 2 s | p50 / p95 ms | Out tok/call | Cost |
+|---|---|---|---|---|---|---|---|
+| v0 | shipping prompt (cached replies from the model eval) | 94.4% | 99.0% | 93.4% | 900 / 2,619 | 49 | $0 (cached) |
+| v0 rerun | same prompt, fresh calls (noise check) | 93.9% | 99.5% | 93.9% | 918 / 2,094 | 48 | $0.065 |
+| v1 | system note: guesses come from a word-pair counter and are often wrong in one word, check every slot, listed first = most common, not best fit; rule 5 "rank by meaning, follow the partner's line" | 95.5% | 99.5% | 94.9% | 832 / 2,289 | 28 | $0.072 |
+| v2 | v1 + two few-shots where the first guess is wrong ("tell of more", new "how about dive/five" with a partner line) | 94.4% | 99.5% | 93.4% | 811 / 2,278 | 27 | $0.073 |
+| v5 | v1 without `<guesses>` at all (lattice and partner only) | 88.4% | 99.5% | 89.4% | 852 / 3,388 | 27 | $0.069 |
+| v7 | user turn reordered only: `<partner>`, `<recent>`, `<guesses>`, then `<slots>` (v0 rules) | 94.9% | 99.5% | 94.9% | 875 / 2,838 | 46 | $0.068 |
+| **v6** | **v1 note and rule 5 + v7 order** | **97.5%** | **99.5%** | **97.5%** | 833 / 2,403 | 29 | $0.067 |
+| v6 rerun | same prompt, fresh calls | 96.5% | 99.5% | 95.5% | 864 / 2,493 | 33 | $0.029 (more MiniMax cache reads) |
+
+Confirmation on a disjoint sample (seed 2, `--limit 260`, minus the 61 items shared with seed 9:
+195 items with a model call; offline B1 85.1%), both prompts run back to back:
+
+| Variant | Top-1 | Top-5 | At 2 s | p50 / p95 ms | Out tok/call | Cost |
+|---|---|---|---|---|---|---|
+| v0 | 90.8% (177) | 98.5% | 90.3% | 921 / 2,348 | 54 | $0.062 |
+| v6 | 93.8% (183) | 98.5% | 93.3% | 861 / 3,552 | 32 | $0.063 |
+
+v6 fixed 6 items and broke none on that sample ("this meal is fine", "work out fine",
+"run an errand soon", "we'll have some rice"). Initials mode (seed 9, 200 items, B4): word accuracy
+22.4% with both prompts, sentence top-1 0.0% vs 0.5%, so no regression; v6 proposes more
+unlisted words there (18.7% of raw candidates fail the validator vs 5.6%), which the validator drops.
+
+Reading it:
+- **Adopted: v6** (`packages/decoder/src/prompt.ts`). +2.8 points top-1 on seed 9 (mean of two runs each:
+  186.5 vs 192 of 198, 94.2% vs 97.0%) and +3.1 on the disjoint seed-2 sample, where it fixed 6 and broke 0. That
+  puts M3 at the level of M3.1-Flash (97.0%) at M3's speed: top-1 at the 2 s deadline 95.5-97.5%.
+- **Neither half works alone** (v1 +1 point, v7 +0.5, both noise); together they are well past noise
+  on two samples. The note tells the model the guesses are fallible; context first lets it judge
+  the slots against the partner's line.
+- **Guesses are essential** (v5: -6 points). Without them M3 mostly takes the most frequent word per
+  slot ("call of tomorrow"), so it is a weak judge on its own; the ghost beams carry most of the
+  language model and the LLM corrects one word.
+- **More few-shots did not help** (v2), and cost ~120 input tokens.
+- **Shorter answers**: with the note M3 gives fewer alternatives (median 1-2 instead of 5; the ghost
+  beams still fill top-5, which did not drop), so output falls from ~49 to ~29 tokens and p50 from
+  ~900 to ~840 ms. p95 is dominated by MiniMax's tail and moved both ways between runs.
+- **Input**: system prompt ~930 tokens (chars/4) instead of ~840; ~1,450 input tokens per call.
+- **Provider-neutral**: plain text and tag order only, no sampling parameters or provider fields, so
+  it is valid for Claude Haiku too; Haiku itself was not re-measured (no Anthropic key here).
+- Remaining v6 misses on seed 9 are mostly not fixable by ranking: two "lets" targets typed without
+  the apostrophe, "tonite" (not in the lexicon), "all gone" vs "all good" with no context,
+  "pain" vs "rain kept me inside".
+- **Spend**: $0.68 of MiniMax calls in total for these 11 runs (from each reply's `usage` at list
+  prices; v0 cost nothing, its replies were cached).
+
 ## Open questions
 
 1. Latency from the Vercel region (production), which may differ from a laptop in the EU.
 2. Ranking quality versus Haiku 5.5 on the same 200 items (needs an Anthropic key).
-3. Whether a prompt tuned for M3 (few-shots, shorter system prompt) closes the gap to Flash.
+3. Answered by "Prompt experiments": the v6 prompt brings M3 to Flash-level top-1. The model eval
+   table above was measured with the earlier prompt; rerun it (and Haiku 5.5) on v6.
