@@ -118,6 +118,18 @@ describe('They said: Listen (web-ui Req 26)', () => {
     expect(field().placeholder).toBe('Type what the other person said');
   });
 
+  it('26.1 no Listen button on a plain-HTTP page (browsers keep the microphone for secure pages)', () => {
+    const was = Object.getOwnPropertyDescriptor(window, 'isSecureContext');
+    Object.defineProperty(window, 'isSecureContext', { value: false, configurable: true });
+    try {
+      open(true);
+      expect(screen.queryByRole('button', { name: 'Listen' })).toBeNull();
+    } finally {
+      if (was) Object.defineProperty(window, 'isSecureContext', was);
+      else delete (window as { isSecureContext?: boolean }).isSecureContext;
+    }
+  });
+
   it('26.2 the first Listen explains where the audio goes; Not now starts nothing', () => {
     const { onAllow } = open(false);
     press('Listen');

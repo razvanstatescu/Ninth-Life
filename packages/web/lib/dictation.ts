@@ -50,8 +50,13 @@ export function recognitionCtor(w: unknown = typeof window === 'undefined' ? und
   return g.SpeechRecognition ?? g.webkitSpeechRecognition ?? null;
 }
 
-/** The browser has speech recognition (Firefox does not). */
-export function dictationSupported(w?: unknown): boolean {
+/**
+ * The browser has speech recognition (Firefox does not) and the page may use the microphone: only
+ * HTTPS pages and localhost (secure contexts) can, so a plain-HTTP address shows no Listen button.
+ */
+export function dictationSupported(w: unknown = typeof window === 'undefined' ? undefined : window): boolean {
+  if (!w) return false;
+  if ((w as { isSecureContext?: boolean }).isSecureContext === false) return false;
   return recognitionCtor(w) !== null;
 }
 

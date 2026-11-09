@@ -381,7 +381,8 @@ scrolls, so that nothing I need is ever out of reach.
 **User story:** As the other person in the conversation, I want to say my line instead of typing it, so the app can use
 it without either of us typing.
 
-26.1 WHERE the browser has speech recognition, THE They said field SHALL show a Listen button; elsewhere it SHALL NOT.
+26.1 WHERE the browser has speech recognition and the page is secure (HTTPS or localhost), THE They said field SHALL
+     show a Listen button; elsewhere it SHALL NOT.
 26.2 THE first Listen SHALL say where the audio goes (the browser maker's speech service; Ninth Life never receives or
      keeps it) with "Allow and listen" and "Not now"; nothing SHALL be recorded before Allow.
 26.3 Allow SHALL be remembered (the `dictation` setting, off by default, in Settings as "Listen in They said"); Listen
