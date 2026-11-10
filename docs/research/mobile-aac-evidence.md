@@ -195,6 +195,7 @@ Prioritized. Each item says what it rests on.
    measured visible sizes: 375x549, 375x495, 390x699, 402x714, 402x654, 440x796, plus standalone 375x647 and 402x778.
    Add Android estimates 360x668 and 412x783 until a device confirms them (E5 Unverified). Keys from `100svh` stay
    right in a tab.
+   Status: 375x495 and 402x654 are in `responsive.mjs`; under 548px the suggestion rows move to Menu (ADR-005).
 2. **Cap the keypad's share of the height and shrink keys before anything else breaks.** At 96 px keys, only
    87-141 px remain on an SE in Safari (§1 arithmetic). Let keys drop to 72 px at these heights, and keep the
    sentence's reserved height fixed so keys never move (`mobile-layout.md` §AAC).

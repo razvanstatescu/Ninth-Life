@@ -37,7 +37,9 @@ must be stated in the accessibility statement on the About page before release.
 
 ## Consequences
 - `web-ui` Req 24 (phones) and Req 25 (one screen, tablets, portrait-only phones);
-  `test/e2e/responsive.mjs` checks 22 measured phone and tablet sizes, both orientations, for no page
+  `test/e2e/responsive.mjs` checks 24 measured phone and tablet sizes, both orientations, for no page
   scroll and every control on screen.
+- Amended by ADR-005: under 548px visible height (an iPhone SE in Safari with the Bottom tab bar) the
+  stack shell drops its suggestion rows and Menu offers Sentences.
 - Keys are sized from the measured keypad area (a ResizeObserver), not container query units, which
   Chrome resolved to 0 in this layout.

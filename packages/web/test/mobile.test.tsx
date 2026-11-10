@@ -53,6 +53,13 @@ describe('phones and tablets', () => {
     expect(app).toMatch(/--nl-key:[^;]*100svh/);
   });
 
+  it('25.1 the stack shell keeps its fit rules: its height comes from svh (never dvh) and the safe areas', () => {
+    const rule = /\.app--stack \.shell-screen \{([^}]*)\}/.exec(css('app.css'))?.[1] ?? '';
+    expect(rule).toContain('min-height: calc(100svh - max(var(--space-2), env(safe-area-inset-top)) - var(--shell-head));');
+    expect(rule).toContain('env(safe-area-inset-bottom)');
+    expect(rule).not.toContain('dvh');
+  });
+
   it('the page opts into safe areas and keeps zoom on', () => {
     const layout = read('app/layout.tsx');
     expect(layout).toContain("viewportFit: 'cover'");

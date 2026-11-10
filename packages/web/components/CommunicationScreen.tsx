@@ -21,6 +21,7 @@ import {
   SPLIT_ROWS_QUERIES,
   splitSuggestionRows,
   STACK_ROWS_QUERIES,
+  STACK_SHORT_QUERY,
   stackSuggestionRows,
   useLayout,
   useMediaQuery,
@@ -506,19 +507,24 @@ export function CommunicationScreen({
     r2: useMediaQuery(STACK_ROWS_QUERIES.r2),
     r3: useMediaQuery(STACK_ROWS_QUERIES.r3),
     r4: useMediaQuery(STACK_ROWS_QUERIES.r4),
+    short: useMediaQuery(STACK_SHORT_QUERY),
   });
   const splitRows = splitSuggestionRows({ r3: useMediaQuery(SPLIT_ROWS_QUERIES.r3), r4: useMediaQuery(SPLIT_ROWS_QUERIES.r4) });
   const sugRows = layout === 'split' ? splitRows : stackRows;
   const unspelledWord = sentence.words.find((w) => w.state === 'unspelled');
   // One contextual row, in this order: spell a word the dictionary lacks, or add a word to my words.
-  const spellOffer: { label: string; icon: 'spell' | 'plus'; onClick: () => void } | null = !phone
+  // A short phone has no suggestion row (Req 24.9): Sentences and Spell this word are in Menu.
+  const noSugRow = phone && sugRows === 0;
+  const spellOffer: { label: string; icon: 'spell' | 'plus'; onClick: () => void } | null = !phone || noSugRow
     ? null
     : canSpell && unspelledWord && sentence.candidates.length === 0
       ? { label: `Spell ${unspelledWord.code}`, icon: 'spell', onClick: openSpell }
       : offers[0]
         ? { label: `Add ${offers[0].label} to my words`, icon: 'plus', onClick: () => addOffer(offers[0]!.word) }
         : null;
-  const sug = phoneSuggestions(sentence.candidates, sentence.selectedIndex, spellOffer ? sugRows - 1 : sugRows, composer.punct, display);
+  const sug: ReturnType<typeof phoneSuggestions> = noSugRow
+    ? { items: [], more: false }
+    : phoneSuggestions(sentence.candidates, sentence.selectedIndex, spellOffer ? sugRows - 1 : sugRows, composer.punct, display);
   const openSentences = useCallback(() => setSheet('sentences'), []);
   // The shells size the keys from the room the keypad area gets (styles/app.css --pad-w / --pad-h).
   // Measured here rather than with container query units, which Chrome resolved to 0 in this layout.
@@ -900,7 +906,7 @@ export function CommunicationScreen({
 
         {phone ? (
           <main className={`app-main app-main--${layout}`}>
-            <div className="shell-screen">{order.flat().map((k) => sections[k])}</div>
+            <div className="shell-screen">{order.flat().filter((k) => !(noSugRow && k === 'cands')).map((k) => sections[k])}</div>
           </main>
         ) : isTwoColumn(layout) ? (
           <main className="app-main">
@@ -940,6 +946,7 @@ export function CommunicationScreen({
                 },
                 canSpell,
                 onSpell: openSpell,
+                onSentences: noSugRow ? openSentences : undefined,
                 onProof: () => setSheet('proof'),
                 onPartner: () => setSheet('partner'),
               }

@@ -1,0 +1,93 @@
+{
+  "name": "ship-feature",
+  "description": "Ship one spec task: plan, implement and verify (up to 3 passes), parallel reviews, aggregate, fix blocking items, re-verify and tick the task in tasks.md.",
+  "inputs": {
+    "task": "Spec task ID as <spec>/<task number>, e.g. web-ui/23"
+  },
+  "steps": [
+    {
+      "type": "step",
+      "id": "plan",
+      "agent": "wf-planner",
+      "modelId": "claude-sonnet-5.5",
+      "prompt": "Plan spec task {{task}} in the repo /Users/razvanstatescu/Documents/Work/Ninth-Life.\n\n1. Find the task: the spec folder is /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/specs/<spec>/ and the task is the numbered line in its tasks.md. If the spec or task does not exist, or the ID matches more than one line, call send_message with severity warning naming what you found and end your turn; continue when the answer arrives.\n2. Read that spec's requirements.md, design.md and tasks.md, every file in /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/steering/, and /Users/razvanstatescu/Documents/Work/Ninth-Life/docs/architecture/contracts.md.\n3. Write the plan to /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/plan.md with: the exact task line; every requirement ID the task satisfies (the ones it names plus any it depends on); the tests to add or change, each with its file path and the requirement ID it names; the files to change; any ADR the work needs; and the output of `git -C /Users/razvanstatescu/Documents/Work/Ninth-Life status --porcelain` as the baseline, so later steps can tell this task's changes from changes that were already there.\n4. Write /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/status.json with exactly {\"complete\": false} so an old result cannot end the next loop.\n\nFinal message: the plan path, the spec name, the task line and the requirement IDs.",
+      "artifacts": {
+        "plan": "/Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/plan.md"
+      }
+    },
+    {
+      "type": "repeat",
+      "id": "build-loop",
+      "maxIterations": 3,
+      "onMaxIterations": "pause",
+      "stopCondition": {
+        "fileCheck": {
+          "path": "/Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/status.json",
+          "jsonPath": "complete",
+          "value": true
+        }
+      },
+      "steps": [
+        {
+          "type": "step",
+          "id": "implement",
+          "agent": "wf-coder",
+          "modelId": "auto",
+          "prompt": "Implement spec task {{task}} in /Users/razvanstatescu/Documents/Work/Ninth-Life following the plan at {{artifacts.plan}}.\n\nOn the first pass, implement the plan, including the tests it lists; each test names its requirement ID. On later passes, read /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/status.json and fix every failing check it records, then continue any part of the plan that is not done.\n\nRules (from .kiro/steering/tech.md and product.md): do not commit, push or rewrite history; do not run a formatter over files; never open, print or copy .env* files other than .env.example; never run next build, pnpm build or pnpm -F @ninth/web build, because the dev server may be running; never hand-edit data/ lexicon JSON; user-facing words follow the banned claims in .kiro/steering/product.md and the word list in .kiro/steering/trademarks.md. Do not tick the task in tasks.md; a later step does that.\n\nFinal message: the files you changed or created and what each change does."
+        },
+        {
+          "type": "step",
+          "id": "verify",
+          "agent": "wf-coder",
+          "modelId": "auto",
+          "prompt": "Verify spec task {{task}} in /Users/razvanstatescu/Documents/Work/Ninth-Life. Do not change product code or tests in this step; the implement step fixes failures on the next pass.\n\n1. Check the dev server: `curl -s -o /dev/null -w '%{http_code}' --max-time 10 http://localhost:3000/`. If it does not answer 200, call send_message with severity warning saying the dev server at http://localhost:3000 is not reachable and asking me to start it (from the repo root: `pnpm dev`), then end your turn. When I answer, check again before going on. Never start the server or run a build yourself.\n2. Run each command on its own and record its exit code:\n   - from /Users/razvanstatescu/Documents/Work/Ninth-Life: `pnpm -r typecheck`\n   - from /Users/razvanstatescu/Documents/Work/Ninth-Life: `pnpm -F @ninth/web test --run`\n   - from /Users/razvanstatescu/Documents/Work/Ninth-Life/packages/web: `BASE_URL=http://localhost:3000 node test/e2e/responsive.mjs`\n   - from /Users/razvanstatescu/Documents/Work/Ninth-Life/packages/web: `BASE_URL=http://localhost:3000 node test/e2e/axe.mjs`\n   - from /Users/razvanstatescu/Documents/Work/Ninth-Life/packages/web: `BASE_URL=http://localhost:3000 node test/e2e/keyboard.mjs`\n   - from /Users/razvanstatescu/Documents/Work/Ninth-Life/packages/web: `BASE_URL=http://localhost:3000 node test/e2e/switch.mjs`\n3. Write the working-tree diff for the reviewers: `git -C /Users/razvanstatescu/Documents/Work/Ninth-Life diff HEAD > /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/changes.diff`, and list untracked files with `git -C /Users/razvanstatescu/Documents/Work/Ninth-Life ls-files --others --exclude-standard`.\n4. Write /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/status.json as {\"complete\": <bool>, \"task\": \"{{task}}\", \"checks\": [{\"command\": \"...\", \"cwd\": \"...\", \"exitCode\": 0, \"passed\": true, \"summary\": \"...\"}], \"failures\": [\"<check and the failing test or error, with file:line where known>\"], \"changedFiles\": [\"...\"], \"untrackedFiles\": [\"...\"], \"diff\": \"/Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/changes.diff\"}. Set complete to true only when all six commands exit 0; otherwise false.\n\nConvey the result only by writing that status.json. When you finish, always call send_message with severity success, whatever the result (error would end the loop). Final message: each command with pass or fail, and the failures."
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "id": "reviews",
+      "joinPolicy": "allSettled",
+      "branches": [
+        {
+          "type": "step",
+          "id": "a11y",
+          "agent": "a11y-auditor",
+          "modelId": "claude-sonnet-5.5",
+          "prompt": "Audit the Ninth Life app at http://localhost:3000/ for spec task {{task}}. Focus on the screens and components this task changed: read /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/status.json (changedFiles, untrackedFiles) and the plan at {{artifacts.plan}}. Write your report under /Users/razvanstatescu/Documents/Work/Ninth-Life/docs/a11y/ as your instructions say.\n\nFinal message: the report path, then every finding with its severity (blocker, serious, moderate, minor), WCAG criterion or design rule, where, and the smallest fix. Say which checks you could not run."
+        },
+        {
+          "type": "step",
+          "id": "pr-review",
+          "agent": "pr-reviewer",
+          "modelId": "claude-sonnet-5.5",
+          "prompt": "Review the uncommitted changes for spec task {{task}} in /Users/razvanstatescu/Documents/Work/Ninth-Life. The diff against HEAD is at /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/changes.diff; new files are listed under untrackedFiles in /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/status.json, so read them directly. The plan with the requirement IDs is at {{artifacts.plan}}; its baseline git status shows changes that were there before this task, which are out of scope. status.json also records the checks that were run and their results: read it and do not claim to have run anything.\n\nFinal message: your review in your usual format (verdict line, Blocking, Non-blocking)."
+        },
+        {
+          "type": "step",
+          "id": "semantic",
+          "agent": "semantic_reviewer",
+          "modelId": "claude-sonnet-5.5",
+          "prompt": "Review the uncommitted working-tree changes against HEAD in /Users/razvanstatescu/Documents/Work/Ninth-Life for spec task {{task}}. The diff is at /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/changes.diff and new files are listed under untrackedFiles in /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/status.json. The plan with the requirement IDs is at {{artifacts.plan}}; changes in its baseline git status are out of scope. status.json records the checks that were run and their results; read it and do not re-run the suites.\n\nWrite the review document to /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/semantic-review.md. Final message: the verdict and every finding, each marked blocking or non-blocking, with file:line."
+        }
+      ]
+    },
+    {
+      "type": "step",
+      "id": "aggregate",
+      "agent": "wf-review-aggregator",
+      "modelId": "claude-sonnet-5.5",
+      "prompt": "Merge the three reviews of spec task {{task}} in /Users/razvanstatescu/Documents/Work/Ninth-Life into one verdict.\n\nAccessibility audit (a11y-auditor):\n{{a11y.output}}\n\nPull-request review (pr-reviewer):\n{{pr-review.output}}\n\nSemantic review (semantic_reviewer; document at /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/semantic-review.md):\n{{semantic.output}}\n\nThe reviews ran with joinPolicy allSettled, so one may have failed or be empty: record it as not completed and do not invent findings for it. Treat a11y blocker and serious findings, pr-reviewer Blocking items and semantic blocking findings as blocking; merge duplicates and keep the source of each item.\n\nWrite /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/review.json as {\"verdict\": \"APPROVED\" | \"CHANGES_REQUESTED\", \"blocking\": [{\"id\": \"B1\", \"source\": \"...\", \"where\": \"file:line or selector\", \"rule\": \"...\", \"fix\": \"...\"}], \"nonBlocking\": [...], \"notCompleted\": [\"<reviewer>\"], \"reviewDoc\": \"/Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/review.md\"} and the readable version to /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/review.md. verdict is APPROVED only when blocking is empty.\n\nConvey your verdict only by writing review.json. When you finish, always call send_message with severity success, whatever the verdict. Final message: the verdict and the blocking items.",
+      "artifacts": {
+        "review": "/Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/review.json"
+      }
+    },
+    {
+      "type": "step",
+      "id": "fix",
+      "agent": "wf-coder",
+      "modelId": "auto",
+      "prompt": "Finish spec task {{task}} in /Users/razvanstatescu/Documents/Work/Ninth-Life. The plan is at {{artifacts.plan}} and the merged review is at {{artifacts.review}}.\n\n1. Fix every item in the review's blocking list. Leave non-blocking items alone. If a blocking item cannot be fixed, or the fix would need a product decision, call send_message with severity warning naming the item and the choices, and end your turn.\n2. Re-verify. Check the dev server with `curl -s -o /dev/null -w '%{http_code}' --max-time 10 http://localhost:3000/`; if it does not answer 200, call send_message with severity warning asking me to start it (`pnpm dev` from the repo root) and end your turn, then check again when I answer. Run each command on its own: from the repo root `pnpm -r typecheck` and `pnpm -F @ninth/web test --run`; from /Users/razvanstatescu/Documents/Work/Ninth-Life/packages/web `BASE_URL=http://localhost:3000 node test/e2e/responsive.mjs`, `BASE_URL=http://localhost:3000 node test/e2e/axe.mjs`, `BASE_URL=http://localhost:3000 node test/e2e/keyboard.mjs` and `BASE_URL=http://localhost:3000 node test/e2e/switch.mjs`. Rewrite /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/status.json in the same shape as before ({\"complete\", \"task\", \"checks\", \"failures\", \"changedFiles\", \"untrackedFiles\", \"diff\"}), with complete true only when all six pass.\n3. Only when all six pass and no blocking item is left: tick the task in /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/specs/<spec>/tasks.md by changing its `- [ ]` to `- [x]`, and tick its sub-tasks that this work completed. Change nothing else in tasks.md. If a check still fails, do not tick; call send_message with severity warning listing the failures and end your turn.\n\nRules: do not commit, push or rewrite history; do not run a formatter; never open .env* files other than .env.example; never run next build or pnpm build; user-facing words follow .kiro/steering/product.md and .kiro/steering/trademarks.md.\n\nFinal message: each blocking item and how it was fixed, the six commands with pass or fail, and whether the task line was ticked."
+    }
+  ]
+}

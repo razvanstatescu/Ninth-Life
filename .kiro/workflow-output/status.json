@@ -1,0 +1,86 @@
+{
+  "complete": true,
+  "task": "web-ui/51",
+  "checks": [
+    {
+      "command": "pnpm -r typecheck",
+      "cwd": "/Users/razvanstatescu/Documents/Work/Ninth-Life",
+      "exitCode": 0,
+      "passed": true,
+      "summary": "tsc --noEmit clean in core, decoder, web and eval (4 of 5 workspace projects)"
+    },
+    {
+      "command": "pnpm -F @ninth/web test --run",
+      "cwd": "/Users/razvanstatescu/Documents/Work/Ninth-Life",
+      "exitCode": 0,
+      "passed": true,
+      "summary": "Vitest 2.1.8: 23 test files, 212 tests passed"
+    },
+    {
+      "command": "BASE_URL=http://localhost:3000 node test/e2e/responsive.mjs",
+      "cwd": "/Users/razvanstatescu/Documents/Work/Ninth-Life/packages/web",
+      "exitCode": 0,
+      "passed": true,
+      "summary": "responsive (Chromium): all checks passed, 24 phone and tablet sizes including 375x495 (no suggestion row, 0px over)"
+    },
+    {
+      "command": "BASE_URL=http://localhost:3000 node test/e2e/axe.mjs",
+      "cwd": "/Users/razvanstatescu/Documents/Work/Ninth-Life/packages/web",
+      "exitCode": 0,
+      "passed": true,
+      "summary": "axe wcag2a/2aa/21a/21aa/22aa: 0 violations on every page and sheet checked, night and day, 1280 and 390 wide"
+    },
+    {
+      "command": "BASE_URL=http://localhost:3000 node test/e2e/keyboard.mjs",
+      "cwd": "/Users/razvanstatescu/Documents/Work/Ninth-Life/packages/web",
+      "exitCode": 0,
+      "passed": true,
+      "summary": "keyboard: all checks passed"
+    },
+    {
+      "command": "BASE_URL=http://localhost:3000 node test/e2e/switch.mjs",
+      "cwd": "/Users/razvanstatescu/Documents/Work/Ninth-Life/packages/web",
+      "exitCode": 0,
+      "passed": true,
+      "summary": "switch: all checks passed (typed \"Hi\" with 5 switch presses in 2.7 s)"
+    },
+    {
+      "command": "ENGINE=webkit BASE_URL=http://localhost:3000 node test/e2e/responsive.mjs",
+      "cwd": "/Users/razvanstatescu/Documents/Work/Ninth-Life/packages/web",
+      "exitCode": 0,
+      "passed": true,
+      "summary": "responsive (WebKit, review item B1): all checks passed, 24 sizes; 375x495 drops the suggestion row, 0px over, keys 75px"
+    }
+  ],
+  "failures": [],
+  "changedFiles": [
+    ".kiro/specs/web-ui/design.md",
+    ".kiro/specs/web-ui/requirements.md",
+    ".kiro/specs/web-ui/tasks.md",
+    ".kiro/steering/product.md",
+    ".kiro/steering/structure.md",
+    "docs/KIRO_LOG.md",
+    "docs/README.md",
+    "docs/decisions/ADR-003-one-screen-portrait-phones.md",
+    "docs/plan/01-implementation-plan.md",
+    "docs/research/mobile-aac-evidence.md",
+    "packages/web/components/CommunicationScreen.tsx",
+    "packages/web/components/MenuSheet.tsx",
+    "packages/web/lib/layout.ts",
+    "packages/web/test/e2e/responsive.mjs",
+    "packages/web/test/layout.test.ts",
+    "packages/web/test/mobile.test.tsx",
+    "packages/web/test/phone.test.tsx"
+  ],
+  "untrackedFiles": [
+    ".kiro/specs/iphone-se-bottom-bar-fit/bugfix.md",
+    ".kiro/specs/iphone-se-bottom-bar-fit/design.md",
+    ".kiro/specs/iphone-se-bottom-bar-fit/tasks.md",
+    ".kiro/workflow-output/changes.diff",
+    ".kiro/workflow-output/plan.md",
+    ".kiro/workflow-output/status.json",
+    ".kiro/workflows/ship-feature.workflow.json",
+    "docs/decisions/ADR-005-short-phones-drop-suggestions.md"
+  ],
+  "diff": "/Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/changes.diff"
+}

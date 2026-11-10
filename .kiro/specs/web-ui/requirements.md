@@ -349,19 +349,25 @@ viewport heights measured in the iOS Simulator, thumb reach, motor-impaired touc
      word is not in the person's words, a "Spell <keys>" row SHALL be offered.
 24.5 THE Menu sheet SHALL also hold the sentence's Save phrase and Spell this word.
 24.6 THE keypad SHALL fill the width (keys wider than tall) and the height left over, keys 72 to 96px tall (128 with XL);
-     the screen SHALL fit, with no scrolling, at 549px (iPhone SE in Safari) and up, dropping first the second suggestion
-     row (under 760px), then the second sentence line (under 680px), then the header and the key line (under 620px).
+     the screen SHALL fit, with no scrolling, at 495px (iPhone SE in Safari with the Bottom tab bar) and up, dropping
+     first the second suggestion row (under 760px), then the second sentence line (under 680px), then the header and
+     the key line (under 620px), then the suggestion rows (under 548px, Req 24.9).
 24.7 THE keypad SHALL NOT move while typing; the sentence box SHALL keep its height and scroll in whole lines, kept on
      the newest word, AND the key line SHALL keep its place before the first key.
 24.8 IN switch scanning the rows SHALL follow the screen: keypad rows, suggestions (then More or Spell), offers, the action
      bar (Menu, Speak, Show), then the card's Clear (or Undo).
+24.9 WHILE the visible height is under 548px (2026-11-10, ADR-005), THE stack shell SHALL drop the suggestion rows so
+     the main screen does not scroll with 72px keys; Sentences for the keys SHALL be one tap away in Menu > This
+     sentence > Sentences, AND Spell this word SHALL stay in the same Menu group; switch scanning SHALL skip the
+     missing row.
 
 ## Requirement 25: One screen on phones and tablets; phones portrait only (2026-11-09, ADR-003)
 **User story:** As a person who talks with a phone or a tablet, I want everything I need on one screen that never
 scrolls, so that nothing I need is ever out of reach.
 
 25.1 ON a touch device THE main screen SHALL NOT scroll: header, sentence card, suggestions, keypad and action bar SHALL
-     fit the visible height (from 549px, an iPhone SE in Safari, and 1133 x 616, an iPad mini in landscape with two tabs);
+     fit the visible height (from 495px, an iPhone SE in Safari with the bottom tab bar, and 1133 x 616, an iPad mini in
+     landscape with two tabs; under 548px the suggestions move to Menu, Req 24.9);
      sheets MAY scroll.
 25.2 Check the words (the proof panel), They said, Save phrase, Spell this word, Phrases, My words, Voice, Settings and
      About (with the intended-purpose sentence) SHALL be reachable from the main screen in one tap (Menu, the header's They

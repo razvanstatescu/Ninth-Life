@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { chunk } from '@/components/PhrasesSheet';
-import { chooseLayout, COMPACT_SENTENCES, isShell, isTwoColumn, sectionOrder, SPLIT_QUERY, stackSuggestionRows, splitSuggestionRows, visibleSentences } from '@/lib/layout';
+import { chooseLayout, COMPACT_SENTENCES, isShell, isTwoColumn, sectionOrder, SPLIT_QUERY, STACK_SHORT_QUERY, stackSuggestionRows, splitSuggestionRows, visibleSentences } from '@/lib/layout';
 import { statusLines, statusSummary } from '@/lib/status';
 
 describe('layout (web-ui Req 15)', () => {
@@ -56,6 +56,14 @@ describe('layout (web-ui Req 15)', () => {
     expect(chooseLayout({ ...base, touch: false, landscape: false, shortSide: 900 })).toBe('compact');
     expect(chooseLayout({ ...base, touch: false, landscape: false, shortSide: 900, narrow: true })).toBe('stack');
     expect(chooseLayout({ ...base, touch: false, landscape: true, shortSide: 900, split: true })).toBe('split');
+  });
+
+  it('24.9 stackSuggestionRows returns 0 when the screen is short, whatever the taller rungs say', () => {
+    expect(stackSuggestionRows({ r2: false, r3: false, r4: false, short: true })).toBe(0);
+    expect(stackSuggestionRows({ r2: true, r3: true, r4: true, short: true })).toBe(0);
+    expect(stackSuggestionRows({ r2: false, r3: false, r4: false, short: false })).toBe(1);
+    // An exception query (max-height), so the server and jsdom keep the suggestion row.
+    expect(STACK_SHORT_QUERY).toBe('(max-height: 547px)');
   });
 
   it('suggestion rows grow with the screen height', () => {

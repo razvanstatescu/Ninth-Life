@@ -130,12 +130,12 @@ Built 2026-11-09 outside Kiro (Claude Code); see `docs/KIRO_LOG.md`. Research: `
       They said and sentences in sheets; Menu "This sentence" and About groups; Scanning pill (Req 25.1-25.7)
   - [x] 49.1 Tests: `test/layout.test.ts` (chooseLayout, split order, row counts), `test/mobile.test.tsx` (split shell,
         rotate), `test/phone.test.tsx` (Menu groups), `test/footer.test.tsx`
-  - [x] 49.2 `test/e2e/responsive.mjs`: 22 measured phone and tablet sizes, both orientations; no page scroll, every
+  - [x] 49.2 `test/e2e/responsive.mjs`: 24 measured phone and tablet sizes, both orientations; no page scroll, every
         control on screen, 72px keys, 56px targets, 16px text, keypad does not move; Chromium and WebKit
 - [x] 50. Header They said as a speech-bubble button, the same square as Clear; with a line it widens to show it; status
       pill keeps one line; header never wraps (Req 25.3)
   - [x] 50.1 Tests: `test/mobile.test.tsx` (25.3)
-- [ ] 51. Bugfix: iPhone SE in Safari with the bottom tab bar (495px visible) needs a short scroll (Req 25.1) — a good
+- [x] 51. Bugfix: iPhone SE in Safari with the bottom tab bar (495px visible) needs a short scroll (Req 25.1) — a good
       first Kiro Bugfix spec (current, expected and unchanged behaviour)
 - [ ] 52. Before release: state the WCAG 1.3.4 exception (portrait-only phones) in the accessibility statement on
       `/about` (ADR-003; plan F19)

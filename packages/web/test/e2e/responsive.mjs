@@ -3,7 +3,8 @@
 // really gets (docs/research/mobile-aac-evidence.md, one-screen-tablets.md). For every view:
 //   - phones held sideways show only the turn-upright screen;
 //   - otherwise the main screen does not scroll at all, and the keypad, Speak, Menu, Show, Clear and
-//     the suggestions are all on screen; nothing scrolls sideways; keys are at least 72px, other
+//     the suggestions are all on screen (under 548px tall a phone has no suggestion row, Req 24.9);
+//     nothing scrolls sideways; keys are at least 72px, other
 //     targets at least 56px and app text at least 16px; the keypad does not move while a long
 //     sentence is typed (keyguards, motor memory).
 // Keys are tapped at a person's pace (the accept delay ignores same-key repeats < 150 ms).
@@ -16,6 +17,9 @@ const DEVICES = [
   // Phones, portrait: Safari with its toolbar showing (iOS 26 Compact tab bar), Chrome, installed app.
   ['iPhone SE, Safari', 375, 549, 375, 667],
   ['iPhone SE, installed app', 375, 647, 375, 667],
+  // Safari with the Bottom tab bar (measured, docs/research/mobile-aac-evidence.md §1): the floor.
+  ['iPhone SE, Safari Bottom tab bar', 375, 495, 375, 667],
+  ['iPhone 17 Pro, Safari Bottom tab bar', 402, 654, 402, 874],
   ['iPhone 16e, Safari', 390, 699, 390, 844],
   ['iPhone 17 Pro, Safari', 402, 714, 402, 874],
   ['iPhone 17 Pro Max, Safari', 440, 796, 440, 956],
@@ -124,16 +128,23 @@ try {
           Clear: onScreen('.phone-card__clear, .phone-card__undo'),
           suggestions: onScreen('.phone-sugg'),
         },
+        hasSugg: document.querySelector('.phone-sugg') !== null,
         minKey: Math.round(Math.min(...keys.map((k) => Math.min(k.width, k.height)))),
         small,
         tiny,
       };
     });
+    // A short phone has no suggestion row (web-ui Req 24.9): STACK_SHORT_QUERY is '(max-height: 547px)'.
+    const short = vh < 548 && /app--stack/.test(m.layout);
+    if (short) {
+      check(!m.hasSugg, 'a short phone drops the suggestion row (Sentences is in Menu)');
+      delete m.shown.suggestions;
+    }
     const missing = Object.entries(m.shown).filter(([, ok]) => !ok).map(([k]) => k);
     check(/app--shell/.test(m.layout), `the one-screen shell is used (${m.layout.replace('app ', '')})`);
     check(m.pageScroll <= 1, `the main screen does not scroll (${m.pageScroll}px over)`);
     check(!m.hScroll, 'no sideways scrolling');
-    check(missing.length === 0, `keypad, Speak, Menu, Show, sentence, Clear and suggestions all on screen${missing.length ? `; missing: ${missing.join(', ')}` : ''}`);
+    check(missing.length === 0, `keypad, Speak, Menu, Show, sentence${short ? ' and Clear' : ', Clear and suggestions'} all on screen${missing.length ? `; missing: ${missing.join(', ')}` : ''}`);
     check(m.minKey >= 72, `keys are at least 72px (${m.minKey})`);
     check(m.small.length === 0, `every target is at least 56px${m.small.length ? `: ${m.small.join(', ')}` : ''}`);
     check(m.tiny.length === 0, `no app text under 16px${m.tiny.length ? `: ${m.tiny.slice(0, 3).join(', ')}` : ''}`);

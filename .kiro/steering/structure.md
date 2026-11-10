@@ -11,7 +11,7 @@ inclusion: always
   - `components/` — `CommunicationScreen.tsx` (the screen and its sheets), `Keypad`, `SpeakBar`, `PhoneSuggestions`, `AppHeader`, `PartnerTurn` (They said, Listen), `ShowMode`, `MenuSheet`, `SettingsSheet`, `SpellSheet`, `MyWordsSheet`, `PhrasesSheet`, `RotateNotice`, `Icon`.
   - `lib/` — `layout.ts` (wide, compact, stack, split, rotate), `composer.ts`, `sentence.ts`, `keyboard.ts`, `useScanner.ts`, `useOverlayScan.ts`, `speech.ts`, `dictation.ts`, `settings.ts`, `storage.ts`, `data.ts`, `rankingProvider.ts`, `publicEnv.mjs`.
   - `styles/` — `tokens.css` (generated from the design system), `globals.css`, `components.css`, `app.css` (layouts and the one-screen shell).
-  - `test/` Vitest + Testing Library; `test/e2e/` Playwright scripts (`responsive.mjs` checks 22 phone and tablet sizes).
+  - `test/` Vitest + Testing Library; `test/e2e/` Playwright scripts (`responsive.mjs` checks 24 phone and tablet sizes).
 - `packages/eval/` — harness, `RESULTS.md` (the only numbers we may quote), fixtures with NOTICE, `.cache/` (git-ignored, never commit).
 - `data/` — lexicons and bigrams (CC BY-SA 4.0, `data/NOTICE.md`).
 - `design/system/` — tokens, components, logos: the visual source of truth.

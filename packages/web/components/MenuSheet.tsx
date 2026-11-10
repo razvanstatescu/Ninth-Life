@@ -8,7 +8,7 @@ import { Sheet } from './Sheet';
  * The compact header's Menu (web-ui Req 15.3): the full status, then Phrases, My words, Voice and Settings.
  * Each choice opens its own sheet in place of this one. In the phone layout (web-ui Req 24) the Menu
  * button sits in the action bar and the sheet also holds the sentence's less used actions: Save
- * phrase and Spell this word.
+ * phrase and Spell this word, and Sentences on a short phone that has no suggestion row (Req 24.9).
  */
 export function MenuSheet({
   open,
@@ -36,6 +36,8 @@ export function MenuSheet({
     onSave: () => void;
     canSpell: boolean;
     onSpell: () => void;
+    /** Short phones with no suggestion row (web-ui Req 24.9): every sentence for the keys. */
+    onSentences?: () => void;
     onProof?: () => void;
     onPartner?: () => void;
   } | null;
@@ -50,6 +52,11 @@ export function MenuSheet({
             This sentence
           </h3>
           <div className="menu scan-cluster" data-scan-row="sentence">
+            {sentence.onSentences ? (
+              <Button variant="secondary" icon="menu" onClick={sentence.onSentences}>
+                Sentences
+              </Button>
+            ) : null}
             <Button variant="secondary" icon="save" onClick={sentence.onSave} disabled={!sentence.canSave}>
               Save phrase
             </Button>

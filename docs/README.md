@@ -25,6 +25,7 @@ Start here. Every page below is kept in the repo, so the knowledge base is versi
 - [ADR-002: MiniMax as a second model provider (interim)](decisions/ADR-002-minimax-provider.md)
 - [ADR-003: One screen on phones and tablets; phones portrait only](decisions/ADR-003-one-screen-portrait-phones.md)
 - [ADR-004: Voice to text for "They said" uses the browser's speech service](decisions/ADR-004-voice-to-text-they-said.md)
+- [ADR-005: Short phones drop the suggestion rows](decisions/ADR-005-short-phones-drop-suggestions.md)
 - [ADR-core-001: core contract clarifications](decisions/ADR-core-001-contract-clarifications.md)
 - [ADR-data-001: keep the 60k lexicon](decisions/ADR-data-001-lexicon-size.md)
 - [ADR-data-004: drop identity slurs from the lexicon, still typeable on purpose](decisions/ADR-data-004-slur-filter.md)

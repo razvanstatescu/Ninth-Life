@@ -1,10 +1,10 @@
 // Phone layout (web-ui Req 24; docs/research/mobile-patterns-mobbin.md, mobile-aac-evidence.md).
 // Fit, key size and key stability per device are checked in a browser by test/e2e/responsive.mjs.
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CommunicationScreen } from '@/components/CommunicationScreen';
 import { phoneSuggestions } from '@/components/PhoneSuggestions';
-import { sectionOrder } from '@/lib/layout';
+import { sectionOrder, STACK_SHORT_QUERY } from '@/lib/layout';
 import { miniDict } from './fixtures';
 
 const KEY = { 3: '3 DEF, D E F', 4: '4 GHI, G H I', 6: '6 MNO, M N O', 9: '9 WXYZ, W X Y Z', 0: '0 Space' } as Record<string, string>;
@@ -107,5 +107,76 @@ describe('phone layout (web-ui Req 24)', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('short phones (web-ui Req 24.9, 25.1)', () => {
+  /** A short screen: only the short-stack query matches, as on a 495px iPhone SE with the Bottom tab bar. */
+  const stubShort = () =>
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query === STACK_SHORT_QUERY,
+      media: query,
+      onchange: null,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      dispatchEvent: () => false,
+    }));
+  const menuSentenceButtons = () => within(document.querySelector<HTMLElement>('[data-scan-row="sentence"]')!).getAllByRole('button').map((b) => b.textContent);
+  function sw(key: ' ' | 'Enter') {
+    act(() => {
+      fireEvent.keyDown(window, { key, code: key === ' ' ? 'Space' : 'Enter' });
+      fireEvent.keyUp(window, { key, code: key === ' ' ? 'Space' : 'Enter' });
+    });
+  }
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('24.9 no suggestion row, still section order speak, pad, actions', () => {
+    stubShort();
+    const { container } = render(<CommunicationScreen initialDict={miniDict()} layout="stack" />);
+    typeDigits('4');
+    expect([...container.querySelectorAll('.shell-screen > [data-section]')].map((el) => el.getAttribute('data-section'))).toEqual(['speak', 'pad', 'actions']);
+    expect(container.querySelector('.phone-sugg')).toBeNull();
+  });
+
+  it('24.9 Menu > This sentence has Sentences and it opens "Sentences for your keys"', () => {
+    stubShort();
+    render(<CommunicationScreen initialDict={miniDict()} layout="stack" />);
+    typeDigits('4');
+    press('Menu');
+    expect(menuSentenceButtons()[0]).toBe('Sentences');
+    press('Sentences');
+    const sheet = document.querySelector('dialog[data-overlay="sentences"][open]');
+    expect(sheet?.textContent).toContain('Sentences for your keys');
+    expect(sheet!.querySelectorAll('.nl-candidate').length).toBeGreaterThan(0);
+  });
+
+  it('24.9 Sentences is absent from Menu when the row is shown', () => {
+    render(<CommunicationScreen initialDict={miniDict()} layout="stack" />);
+    typeDigits('4');
+    press('Menu');
+    expect(menuSentenceButtons()).not.toContain('Sentences');
+    expect(document.querySelector('.phone-sugg')).toBeTruthy();
+  });
+
+  it('24.9 24.8 switch scanning skips the empty suggestion row: keypad rows, then the action bar', () => {
+    stubShort();
+    const { container } = render(<CommunicationScreen initialDict={miniDict()} layout="stack" initialSettings={{ access: 'scan2', acceptDelayMs: 0 }} />);
+    fireEvent.keyDown(window, { key: '4', code: 'Digit4' });
+    expect(utterance()).not.toBe('Press a key to start');
+    // Keypad rows 0-3, then the action bar: no stop at a suggestion row.
+    for (let i = 0; i < 5; i++) sw(' ');
+    expect(container.querySelector('[data-section="actions"]')!.className).toContain('is-scanning');
+  });
+
+  it('24.9 Spell this word stays in Menu', () => {
+    stubShort();
+    render(<CommunicationScreen initialDict={miniDict()} layout="stack" />);
+    typeDigits('4');
+    press('Menu');
+    expect(menuSentenceButtons()).toContain('Spell this word');
   });
 });

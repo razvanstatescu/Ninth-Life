@@ -1,0 +1,114 @@
+{
+  "verdict": "CHANGES_REQUESTED",
+  "blocking": [
+    {
+      "id": "B1",
+      "source": "semantic_reviewer (#1, confirmed)",
+      "where": ".kiro/specs/iphone-se-bottom-bar-fit/tasks.md:11",
+      "rule": "Records must match evidence. The task ticks the re-measure \"on Chromium and WebKit\", but status.json has no WebKit run, and the bug is a Safari one.",
+      "fix": "Either run `ENGINE=webkit BASE_URL=http://localhost:3000 node test/e2e/responsive.mjs` from packages/web and record the result, or reword the line to say Chromium only."
+    }
+  ],
+  "nonBlocking": [
+    {
+      "id": "N1",
+      "source": "a11y-auditor (#3), pr-reviewer, semantic_reviewer (#5)",
+      "where": "packages/web/lib/layout.ts:121 (STACK_SHORT_QUERY = '(max-height: 547px)'); also layout.test.ts, test/e2e/responsive.mjs, ADR-005",
+      "rule": "Req 24.9 says \"under 548px\" and rule 1 (72px keys). At a fractional height such as 547.5px the query is false but the requirement says short, which can leave a sub-pixel scroll. a11y calculated this case and did not measure it; iOS usually reports integers.",
+      "fix": "Use `(max-height: 547.98px)` or `(height < 548px)`, then update the string asserted in layout.test.ts, responsive.mjs and ADR-005."
+    },
+    {
+      "id": "N2",
+      "source": "pr-reviewer",
+      "where": "packages/web/components/CommunicationScreen.tsx:795 and :909",
+      "rule": "Status messages (accessibility.md). The \"Dictionary not loaded. Reload to try again.\" text is passed to PhoneSuggestions, and the new filter removes that section on short phones, so the error is not visible there.",
+      "fix": "Show the text in the sentence card when dict.status is 'missing' or 'error', or add a test and an ADR note showing where it appears (for example the speak bar announcement)."
+    },
+    {
+      "id": "N3",
+      "source": "a11y-auditor (#2), semantic_reviewer (#2), pr-reviewer",
+      "where": ".kiro/specs/iphone-se-bottom-bar-fit/bugfix.md:43; ADR-005 consequences; packages/web/components/CommunicationScreen.tsx:518-519",
+      "rule": "Req 24.9 trade-off and WCAG 3.3.2. Under 548px both the \"Spell <keys>\" offer and the \"Add <word> to my words\" offer are removed. The texts name only the second. Nothing on the main screen says other sentences exist (live region says only \"Sentence: He\").",
+      "fix": "Name both lost offers in bugfix.md and ADR-005 and point to Menu > Spell this word and Menu > My words. Optionally show the sentence count on the Menu \"Sentences\" button and in the live region (wording needs owner sign-off)."
+    },
+    {
+      "id": "N4",
+      "source": "semantic_reviewer (#3), pr-reviewer",
+      "where": ".kiro/specs/iphone-se-bottom-bar-fit/bugfix.md:43-45; packages/web/test/phone.test.tsx",
+      "rule": "Claims need evidence. bugfix.md says Check the words in Menu \"still lists the offer\", but no diff line or test shows it. No test pins that Menu > My words still offers the word.",
+      "fix": "Add a test under 24.9 that Menu > My words and Check the words still offer the word, or drop the clause."
+    },
+    {
+      "id": "N5",
+      "source": "semantic_reviewer (#4)",
+      "where": "packages/web/test/phone.test.tsx:165-173",
+      "rule": "Tests should fail without the fix. The scan-skip test was not shown to fail with the row rendered, and does not assert that Clear is the last row, which the plan asked for.",
+      "fix": "Confirm the test fails with the row rendered, or assert the row order directly."
+    },
+    {
+      "id": "N6",
+      "source": "pr-reviewer",
+      "where": "packages/web/components/MenuSheet.tsx:55; packages/web/test/phone.test.tsx",
+      "rule": "Untested path. The test asserts only that Sentences is first in the group, not that focus returns to the Menu button when the sheet closes. Axe and keyboard e2e cover the open sheet only on the settings sheet. (a11y checked by hand that Escape returns focus.)",
+      "fix": "Add a unit test for focus return, and consider an axe pass on the open Menu > Sentences sheet."
+    },
+    {
+      "id": "N7",
+      "source": "semantic_reviewer (#6)",
+      "where": ".kiro/steering/product.md:36",
+      "rule": "Docs must match behavior. It still says suggestions are always on the phone main screen.",
+      "fix": "Add \"except under 548px\"."
+    },
+    {
+      "id": "N8",
+      "source": "pr-reviewer, semantic_reviewer (#7)",
+      "where": "docs/KIRO_LOG.md:19",
+      "rule": "Log accuracy. The new row has an empty credits cell, and claims Steering and Hook usage with no evidence.",
+      "fix": "Fill the credits cell (earlier rows use 0 or a number) and trim claims that have no evidence."
+    },
+    {
+      "id": "N9",
+      "source": "pr-reviewer",
+      "where": ".kiro/specs/web-ui/tasks.md",
+      "rule": "Task 51 is not ticked and has no `51.1 Tests:` sub-line; the diff only changes the 22 to 24 count on 49.2. The final fix step is expected to do this (semantic_reviewer did not count it).",
+      "fix": "In the final step, add the `- [x] 51.` line and a `51.1 Tests:` sub-line."
+    },
+    {
+      "id": "N10",
+      "source": "pr-reviewer",
+      "where": "ADR-005 (Decided by line)",
+      "rule": "It says \"Decided by: Kiro workflow, to be confirmed by the product owner\". The change alters what people see on small phones.",
+      "fix": "Put it in front of the product owner before release."
+    },
+    {
+      "id": "N11",
+      "source": "a11y-auditor (#1), pre-existing, not caused by task 51",
+      "where": ".app--stack .shell-screen (all phone heights)",
+      "rule": "WCAG 1.4.12 Text Spacing and rule 11. With the text-spacing overrides the page scrolls 60 to 71px (for example 61px at 375x495, with the action bar ending at 556px on a 495px screen).",
+      "fix": "Let .shell-screen scroll inside itself with the action bar `position: sticky; bottom: 0`, or list 1.4.12 next to 1.3.4 as a known exception in the About accessibility statement. Product decision."
+    },
+    {
+      "id": "N12",
+      "source": "a11y-auditor (#4)",
+      "where": "packages/web/components/MenuSheet.tsx:56",
+      "rule": "Design-system icon rule. \"Sentences\" uses icon=\"menu\", the same icon as the Menu button.",
+      "fix": "Use the `check` icon, or add a list icon in Icon.tsx."
+    },
+    {
+      "id": "N13",
+      "source": "a11y-auditor (#5)",
+      "where": "Touch screens shorter than 495px (360x400 scrolls 84px)",
+      "rule": "Rule 11. Task 51 sets the floor at 495px.",
+      "fix": "None for this task. Measure a real device height first and add it to responsive.mjs."
+    },
+    {
+      "id": "N14",
+      "source": "a11y-auditor (#6), unchanged by task 51",
+      "where": "Sentence card at 495px",
+      "rule": "Rule 2 and Req 24.6. The card shows one line, so only the last line of a long sentence is visible.",
+      "fix": "None; Show mode has the full sentence."
+    }
+  ],
+  "notCompleted": [],
+  "reviewDoc": "/Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/review.md"
+}

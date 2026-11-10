@@ -71,11 +71,13 @@ the overlay opens (Req 16.4), so a switch user who picks Keyboard can still pick
 Scanning pill and the They said bubble. Keys are sized from the measured keypad box: a ResizeObserver on `#keypad`
 sets `--pad-w` / `--pad-h`, and `--nl-key` is clamped between `key-min` and `key-size` (container query units
 resolved to 0 in Chrome here). Suggestion rows and sentence lines step with the screen height
-(`STACK_ROWS_QUERIES`, `SPLIT_ROWS_QUERIES`); below 620px the header hides. Phones are portrait only by decision
+(`STACK_ROWS_QUERIES`, `SPLIT_ROWS_QUERIES`); below 620px the header hides; below 548px (`STACK_SHORT_QUERY`,
+an iPhone SE in Safari with the Bottom tab bar) the stack drops its suggestion rows and Menu > This sentence gains
+Sentences (Req 24.9, ADR-005; spec `iphone-se-bottom-bar-fit`). Phones are portrait only by decision
 (ADR-003): the page also asks for `screen.orientation.lock('portrait')` where the browser allows it.
 
 The static HTML is the wide DOM; CSS lays it out for narrow screens until hydration renders the chosen layout's DOM
-order, so focus order matches the visual order. `test/e2e/responsive.mjs` checks 22 measured phone and tablet sizes.
+order, so focus order matches the visual order. `test/e2e/responsive.mjs` checks 24 measured phone and tablet sizes.
 
 ## They said and Listen (Req 25.3, 26; ADR-004)
 

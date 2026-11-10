@@ -105,10 +105,20 @@ function snapshot(): Layout {
   });
 }
 
-/** Suggestion rows in the stack shell, by screen height (taller tablets get more). */
-export function stackSuggestionRows(h: { r2: boolean; r3: boolean; r4: boolean }): 1 | 2 | 3 | 4 {
+/**
+ * Suggestion rows in the stack shell, by screen height (taller tablets get more). A short screen
+ * (an iPhone SE in Safari with the Bottom tab bar, 495px) gets none, so 72px keys fit without a
+ * scroll; Sentences moves to Menu (web-ui Req 24.9, ADR-005).
+ */
+export function stackSuggestionRows(h: { r2: boolean; r3: boolean; r4: boolean; short?: boolean }): 0 | 1 | 2 | 3 | 4 {
+  if (h.short) return 0;
   return h.r4 ? 4 : h.r3 ? 3 : h.r2 ? 2 : 1;
 }
+/**
+ * The stack shell is short below 548px, the smallest visible height measured to fit one suggestion
+ * row with 72px keys (test/e2e/responsive.mjs). An exception query, so it is false on the server and in jsdom.
+ */
+export const STACK_SHORT_QUERY = '(max-height: 547px)';
 /** Breakpoints for stackSuggestionRows; styles/app.css uses the same heights for the sentence lines. */
 export const STACK_ROWS_QUERIES = { r2: '(min-height: 760px)', r3: '(min-height: 900px)', r4: '(min-height: 1050px)' } as const;
 /** Suggestion rows in the split shell (left column), by screen height. */

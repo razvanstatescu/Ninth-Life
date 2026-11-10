@@ -1,0 +1,462 @@
+diff --git a/.kiro/specs/web-ui/design.md b/.kiro/specs/web-ui/design.md
+index f5eec55..664b669 100644
+--- a/.kiro/specs/web-ui/design.md
++++ b/.kiro/specs/web-ui/design.md
+@@ -71,11 +71,13 @@ the overlay opens (Req 16.4), so a switch user who picks Keyboard can still pick
+ Scanning pill and the They said bubble. Keys are sized from the measured keypad box: a ResizeObserver on `#keypad`
+ sets `--pad-w` / `--pad-h`, and `--nl-key` is clamped between `key-min` and `key-size` (container query units
+ resolved to 0 in Chrome here). Suggestion rows and sentence lines step with the screen height
+-(`STACK_ROWS_QUERIES`, `SPLIT_ROWS_QUERIES`); below 620px the header hides. Phones are portrait only by decision
++(`STACK_ROWS_QUERIES`, `SPLIT_ROWS_QUERIES`); below 620px the header hides; below 548px (`STACK_SHORT_QUERY`,
++an iPhone SE in Safari with the Bottom tab bar) the stack drops its suggestion rows and Menu > This sentence gains
++Sentences (Req 24.9, ADR-005; spec `iphone-se-bottom-bar-fit`). Phones are portrait only by decision
+ (ADR-003): the page also asks for `screen.orientation.lock('portrait')` where the browser allows it.
+ 
+ The static HTML is the wide DOM; CSS lays it out for narrow screens until hydration renders the chosen layout's DOM
+-order, so focus order matches the visual order. `test/e2e/responsive.mjs` checks 22 measured phone and tablet sizes.
++order, so focus order matches the visual order. `test/e2e/responsive.mjs` checks 24 measured phone and tablet sizes.
+ 
+ ## They said and Listen (Req 25.3, 26; ADR-004)
+ 
+diff --git a/.kiro/specs/web-ui/requirements.md b/.kiro/specs/web-ui/requirements.md
+index 98ea0ea..d8f0674 100644
+--- a/.kiro/specs/web-ui/requirements.md
++++ b/.kiro/specs/web-ui/requirements.md
+@@ -349,19 +349,25 @@ viewport heights measured in the iOS Simulator, thumb reach, motor-impaired touc
+      word is not in the person's words, a "Spell <keys>" row SHALL be offered.
+ 24.5 THE Menu sheet SHALL also hold the sentence's Save phrase and Spell this word.
+ 24.6 THE keypad SHALL fill the width (keys wider than tall) and the height left over, keys 72 to 96px tall (128 with XL);
+-     the screen SHALL fit, with no scrolling, at 549px (iPhone SE in Safari) and up, dropping first the second suggestion
+-     row (under 760px), then the second sentence line (under 680px), then the header and the key line (under 620px).
++     the screen SHALL fit, with no scrolling, at 495px (iPhone SE in Safari with the Bottom tab bar) and up, dropping
++     first the second suggestion row (under 760px), then the second sentence line (under 680px), then the header and
++     the key line (under 620px), then the suggestion rows (under 548px, Req 24.9).
+ 24.7 THE keypad SHALL NOT move while typing; the sentence box SHALL keep its height and scroll in whole lines, kept on
+      the newest word, AND the key line SHALL keep its place before the first key.
+ 24.8 IN switch scanning the rows SHALL follow the screen: keypad rows, suggestions (then More or Spell), offers, the action
+      bar (Menu, Speak, Show), then the card's Clear (or Undo).
++24.9 WHILE the visible height is under 548px (2026-11-10, ADR-005), THE stack shell SHALL drop the suggestion rows so
++     the main screen does not scroll with 72px keys; Sentences for the keys SHALL be one tap away in Menu > This
++     sentence > Sentences, AND Spell this word SHALL stay in the same Menu group; switch scanning SHALL skip the
++     missing row.
+ 
+ ## Requirement 25: One screen on phones and tablets; phones portrait only (2026-11-09, ADR-003)
+ **User story:** As a person who talks with a phone or a tablet, I want everything I need on one screen that never
+ scrolls, so that nothing I need is ever out of reach.
+ 
+ 25.1 ON a touch device THE main screen SHALL NOT scroll: header, sentence card, suggestions, keypad and action bar SHALL
+-     fit the visible height (from 549px, an iPhone SE in Safari, and 1133 x 616, an iPad mini in landscape with two tabs);
++     fit the visible height (from 495px, an iPhone SE in Safari with the bottom tab bar, and 1133 x 616, an iPad mini in
++     landscape with two tabs; under 548px the suggestions move to Menu, Req 24.9);
+      sheets MAY scroll.
+ 25.2 Check the words (the proof panel), They said, Save phrase, Spell this word, Phrases, My words, Voice, Settings and
+      About (with the intended-purpose sentence) SHALL be reachable from the main screen in one tap (Menu, the header's They
+diff --git a/.kiro/specs/web-ui/tasks.md b/.kiro/specs/web-ui/tasks.md
+index 3ac6099..d77794c 100644
+--- a/.kiro/specs/web-ui/tasks.md
++++ b/.kiro/specs/web-ui/tasks.md
+@@ -130,12 +130,12 @@ Built 2026-11-09 outside Kiro (Claude Code); see `docs/KIRO_LOG.md`. Research: `
+       They said and sentences in sheets; Menu "This sentence" and About groups; Scanning pill (Req 25.1-25.7)
+   - [x] 49.1 Tests: `test/layout.test.ts` (chooseLayout, split order, row counts), `test/mobile.test.tsx` (split shell,
+         rotate), `test/phone.test.tsx` (Menu groups), `test/footer.test.tsx`
+-  - [x] 49.2 `test/e2e/responsive.mjs`: 22 measured phone and tablet sizes, both orientations; no page scroll, every
++  - [x] 49.2 `test/e2e/responsive.mjs`: 24 measured phone and tablet sizes, both orientations; no page scroll, every
+         control on screen, 72px keys, 56px targets, 16px text, keypad does not move; Chromium and WebKit
+ - [x] 50. Header They said as a speech-bubble button, the same square as Clear; with a line it widens to show it; status
+       pill keeps one line; header never wraps (Req 25.3)
+   - [x] 50.1 Tests: `test/mobile.test.tsx` (25.3)
+-- [ ] 51. Bugfix: iPhone SE in Safari with the bottom tab bar (495px visible) needs a short scroll (Req 25.1) — a good
++- [x] 51. Bugfix: iPhone SE in Safari with the bottom tab bar (495px visible) needs a short scroll (Req 25.1) — a good
+       first Kiro Bugfix spec (current, expected and unchanged behaviour)
+ - [ ] 52. Before release: state the WCAG 1.3.4 exception (portrait-only phones) in the accessibility statement on
+       `/about` (ADR-003; plan F19)
+diff --git a/.kiro/steering/product.md b/.kiro/steering/product.md
+index 163b294..bddbf09 100644
+--- a/.kiro/steering/product.md
++++ b/.kiro/steering/product.md
+@@ -33,7 +33,7 @@ Write for adults. No cartoons, no baby talk. Describe the tool ("type on 9 keys,
+ 
+ ## Devices (web-ui Req 24, 25; ADR-003)
+ 
+-**Phones are the first target, tablets the second, laptops third.** On phones and tablets the main screen fits the visible screen and never scrolls: sentence card, suggestions, keypad and the action bar [Menu] [Speak] [Show]; everything else opens in a sheet. Tablets work in both orientations (landscape puts the keypad on the right). **Phones are portrait only**: held sideways they show "Turn your phone upright" and keep the sentence. That is a decision by the product owner and a known WCAG 1.3.4 exception; do not "fix" it without a new decision. Check layout changes with `test/e2e/responsive.mjs` (22 measured sizes).
++**Phones are the first target, tablets the second, laptops third.** On phones and tablets the main screen fits the visible screen and never scrolls: sentence card, suggestions, keypad and the action bar [Menu] [Speak] [Show]; everything else opens in a sheet. Tablets work in both orientations (landscape puts the keypad on the right). **Phones are portrait only**: held sideways they show "Turn your phone upright" and keep the sentence. That is a decision by the product owner and a known WCAG 1.3.4 exception; do not "fix" it without a new decision. Check layout changes with `test/e2e/responsive.mjs` (24 measured sizes).
+ 
+ ## Non-goals
+ 
+diff --git a/.kiro/steering/structure.md b/.kiro/steering/structure.md
+index 14abaf7..68ec2b2 100644
+--- a/.kiro/steering/structure.md
++++ b/.kiro/steering/structure.md
+@@ -11,7 +11,7 @@ inclusion: always
+   - `components/` — `CommunicationScreen.tsx` (the screen and its sheets), `Keypad`, `SpeakBar`, `PhoneSuggestions`, `AppHeader`, `PartnerTurn` (They said, Listen), `ShowMode`, `MenuSheet`, `SettingsSheet`, `SpellSheet`, `MyWordsSheet`, `PhrasesSheet`, `RotateNotice`, `Icon`.
+   - `lib/` — `layout.ts` (wide, compact, stack, split, rotate), `composer.ts`, `sentence.ts`, `keyboard.ts`, `useScanner.ts`, `useOverlayScan.ts`, `speech.ts`, `dictation.ts`, `settings.ts`, `storage.ts`, `data.ts`, `rankingProvider.ts`, `publicEnv.mjs`.
+   - `styles/` — `tokens.css` (generated from the design system), `globals.css`, `components.css`, `app.css` (layouts and the one-screen shell).
+-  - `test/` Vitest + Testing Library; `test/e2e/` Playwright scripts (`responsive.mjs` checks 22 phone and tablet sizes).
++  - `test/` Vitest + Testing Library; `test/e2e/` Playwright scripts (`responsive.mjs` checks 24 phone and tablet sizes).
+ - `packages/eval/` — harness, `RESULTS.md` (the only numbers we may quote), fixtures with NOTICE, `.cache/` (git-ignored, never commit).
+ - `data/` — lexicons and bigrams (CC BY-SA 4.0, `data/NOTICE.md`).
+ - `design/system/` — tokens, components, logos: the visual source of truth.
+diff --git a/docs/KIRO_LOG.md b/docs/KIRO_LOG.md
+index 51e9eb4..abd00bc 100644
+--- a/docs/KIRO_LOG.md
++++ b/docs/KIRO_LOG.md
+@@ -16,3 +16,4 @@ The table must stay the last block in this file; the script appends to it.
+ |---|---|---|---|---|---|---|---|
+ | 2026-11-06 | Claude (lead session) | Claude Code, preparing Kiro config | Steering, Hook, Custom agent, MCP, Power, CLI headless (config only) | Verified the plan's Kiro assumptions against kiro.dev docs and wrote the first `.kiro/` steering, hooks, agents, MCP config, eval power, prompts, CI workflows and helper scripts | Scaffold prepared outside Kiro, so it is not Kiro usage and earns no Kiro credit. Kiro sessions start next: open the repo in the Kiro IDE, confirm hooks, agents and MCP servers load, then run the first spec | 0 (not Kiro) | docs/research/assumptions-register.md |
+ | 2026-11-09 | Claude (Claude Code session) | Claude Code, preparing Kiro config | Steering, Hook, Spec, Custom agent, Power (config only) | Bring .kiro up to date before moving the work into Kiro: MiniMax (ADR-002), phone-first one-screen shell and portrait-only phones (ADR-003), Listen (ADR-004) | New steering tech.md and structure.md; product, accessibility, design-system, privacy, voice, trademarks updated; build-guard hook and .kiroignore; reviewer, auditor, review prompt and eval power updated; web-ui tasks 46-55, decoder DS-7.7-7.10 and task 15, eval Req 8 for MiniMax. Done outside Kiro, | 0 | docs/kiro/README.md |
++| 2026-11-10 | Kiro (ship-feature workflow, coder step) | Kiro, workflow | Spec (Bugfix), Steering, Hook | web-ui task 51: iPhone SE in Safari with the Bottom tab bar (495px) scrolled 53px | Bugfix spec `iphone-se-bottom-bar-fit`, web-ui Req 24.9 (suggestion rows drop under 548px, Sentences in Menu), Req 24.6 and 25.1 edited, ADR-005 (to be confirmed by the product owner); tests in layout, phone, mobile and `responsive.mjs` (24 sizes) |  | .kiro/specs/iphone-se-bottom-bar-fit/bugfix.md |
+diff --git a/docs/README.md b/docs/README.md
+index d5ae58f..97f2939 100644
+--- a/docs/README.md
++++ b/docs/README.md
+@@ -25,6 +25,7 @@ Start here. Every page below is kept in the repo, so the knowledge base is versi
+ - [ADR-002: MiniMax as a second model provider (interim)](decisions/ADR-002-minimax-provider.md)
+ - [ADR-003: One screen on phones and tablets; phones portrait only](decisions/ADR-003-one-screen-portrait-phones.md)
+ - [ADR-004: Voice to text for "They said" uses the browser's speech service](decisions/ADR-004-voice-to-text-they-said.md)
++- [ADR-005: Short phones drop the suggestion rows](decisions/ADR-005-short-phones-drop-suggestions.md)
+ - [ADR-core-001: core contract clarifications](decisions/ADR-core-001-contract-clarifications.md)
+ - [ADR-data-001: keep the 60k lexicon](decisions/ADR-data-001-lexicon-size.md)
+ - [ADR-data-004: drop identity slurs from the lexicon, still typeable on purpose](decisions/ADR-data-004-slur-filter.md)
+diff --git a/docs/decisions/ADR-003-one-screen-portrait-phones.md b/docs/decisions/ADR-003-one-screen-portrait-phones.md
+index d99186b..309fd14 100644
+--- a/docs/decisions/ADR-003-one-screen-portrait-phones.md
++++ b/docs/decisions/ADR-003-one-screen-portrait-phones.md
+@@ -37,7 +37,9 @@ must be stated in the accessibility statement on the About page before release.
+ 
+ ## Consequences
+ - `web-ui` Req 24 (phones) and Req 25 (one screen, tablets, portrait-only phones);
+-  `test/e2e/responsive.mjs` checks 22 measured phone and tablet sizes, both orientations, for no page
++  `test/e2e/responsive.mjs` checks 24 measured phone and tablet sizes, both orientations, for no page
+   scroll and every control on screen.
++- Amended by ADR-005: under 548px visible height (an iPhone SE in Safari with the Bottom tab bar) the
++  stack shell drops its suggestion rows and Menu offers Sentences.
+ - Keys are sized from the measured keypad area (a ResizeObserver), not container query units, which
+   Chrome resolved to 0 in this layout.
+diff --git a/docs/plan/01-implementation-plan.md b/docs/plan/01-implementation-plan.md
+index a39dc56..bcbef30 100644
+--- a/docs/plan/01-implementation-plan.md
++++ b/docs/plan/01-implementation-plan.md
+@@ -121,7 +121,7 @@ so AACText numbers are optimistic. Report Turk (79.3% top-1) alongside.
+ | F15 | Phones and tablets: keypad below the fold on small phones and on every phone held sideways; keys moved down as the sentence wrapped; 33px voice select on iOS | B | **done Nov 9**: split layout for phones in landscape, fixed-height SpeakBar text, svh key sizing, safe areas, no pull-to-refresh or double-tap zoom; 20 viewports checked by `test/e2e/responsive.mjs` (web-ui Req 15.8-15.11, `docs/research/mobile-layout.md`) |
+ | F16 | On phones in portrait, keypad at the bottom with Speak under it, as dial and PIN pads do; suggestions between the sentence and the keypad | design, B | **done Nov 9** (product owner asked for a phone-first screen): phone layout, web-ui Req 24, `docs/research/mobile-patterns-mobbin.md`, `mobile-aac-evidence.md` |
+ | F17 | Keys wider than tall on phones (fill 3 columns); a CHI 2017 study recommends >= 18 mm targets for people with upper-body motor impairments (96px is about 16 mm) | design | **done Nov 9** in the phone layout (e.g. 117 x 80px on an iPhone 17 in Safari) |
+-| F19 | One screen with no page scroll on phones and tablets; phones portrait only | B | **done Nov 9**: ADR-003, web-ui Req 25; 22 measured sizes in `test/e2e/responsive.mjs`. Before release: state the WCAG 1.3.4 exception on the About page |
++| F19 | One screen with no page scroll on phones and tablets; phones portrait only | B | **done Nov 9**: ADR-003, web-ui Req 25; 24 measured sizes in `test/e2e/responsive.mjs`. Before release: state the WCAG 1.3.4 exception on the About page |
+ | F20 | Voice to text for They said (Listen) | B | **done Nov 9**: ADR-004, web-ui Req 26; browser speech service, on the device where Chrome can; one-time notice; `test/dictation.test.tsx`. Before release: try on real iPhone, iPad and Android phones |
+ | F18 | Proposal (research): "keypad on the left / right" setting for landscape and tablets (one hand, wheelchair mounts); keyguard spacing option | design, B | Open |
+ 
+diff --git a/docs/research/mobile-aac-evidence.md b/docs/research/mobile-aac-evidence.md
+index a93d4dd..50907c9 100644
+--- a/docs/research/mobile-aac-evidence.md
++++ b/docs/research/mobile-aac-evidence.md
+@@ -195,6 +195,7 @@ Prioritized. Each item says what it rests on.
+    measured visible sizes: 375x549, 375x495, 390x699, 402x714, 402x654, 440x796, plus standalone 375x647 and 402x778.
+    Add Android estimates 360x668 and 412x783 until a device confirms them (E5 Unverified). Keys from `100svh` stay
+    right in a tab.
++   Status: 375x495 and 402x654 are in `responsive.mjs`; under 548px the suggestion rows move to Menu (ADR-005).
+ 2. **Cap the keypad's share of the height and shrink keys before anything else breaks.** At 96 px keys, only
+    87-141 px remain on an SE in Safari (§1 arithmetic). Let keys drop to 72 px at these heights, and keep the
+    sentence's reserved height fixed so keys never move (`mobile-layout.md` §AAC).
+diff --git a/packages/web/components/CommunicationScreen.tsx b/packages/web/components/CommunicationScreen.tsx
+index a67bbef..5d569e1 100644
+--- a/packages/web/components/CommunicationScreen.tsx
++++ b/packages/web/components/CommunicationScreen.tsx
+@@ -21,6 +21,7 @@ import {
+   SPLIT_ROWS_QUERIES,
+   splitSuggestionRows,
+   STACK_ROWS_QUERIES,
++  STACK_SHORT_QUERY,
+   stackSuggestionRows,
+   useLayout,
+   useMediaQuery,
+@@ -506,19 +507,24 @@ export function CommunicationScreen({
+     r2: useMediaQuery(STACK_ROWS_QUERIES.r2),
+     r3: useMediaQuery(STACK_ROWS_QUERIES.r3),
+     r4: useMediaQuery(STACK_ROWS_QUERIES.r4),
++    short: useMediaQuery(STACK_SHORT_QUERY),
+   });
+   const splitRows = splitSuggestionRows({ r3: useMediaQuery(SPLIT_ROWS_QUERIES.r3), r4: useMediaQuery(SPLIT_ROWS_QUERIES.r4) });
+   const sugRows = layout === 'split' ? splitRows : stackRows;
+   const unspelledWord = sentence.words.find((w) => w.state === 'unspelled');
+   // One contextual row, in this order: spell a word the dictionary lacks, or add a word to my words.
+-  const spellOffer: { label: string; icon: 'spell' | 'plus'; onClick: () => void } | null = !phone
++  // A short phone has no suggestion row (Req 24.9): Sentences and Spell this word are in Menu.
++  const noSugRow = phone && sugRows === 0;
++  const spellOffer: { label: string; icon: 'spell' | 'plus'; onClick: () => void } | null = !phone || noSugRow
+     ? null
+     : canSpell && unspelledWord && sentence.candidates.length === 0
+       ? { label: `Spell ${unspelledWord.code}`, icon: 'spell', onClick: openSpell }
+       : offers[0]
+         ? { label: `Add ${offers[0].label} to my words`, icon: 'plus', onClick: () => addOffer(offers[0]!.word) }
+         : null;
+-  const sug = phoneSuggestions(sentence.candidates, sentence.selectedIndex, spellOffer ? sugRows - 1 : sugRows, composer.punct, display);
++  const sug: ReturnType<typeof phoneSuggestions> = noSugRow
++    ? { items: [], more: false }
++    : phoneSuggestions(sentence.candidates, sentence.selectedIndex, spellOffer ? sugRows - 1 : sugRows, composer.punct, display);
+   const openSentences = useCallback(() => setSheet('sentences'), []);
+   // The shells size the keys from the room the keypad area gets (styles/app.css --pad-w / --pad-h).
+   // Measured here rather than with container query units, which Chrome resolved to 0 in this layout.
+@@ -900,7 +906,7 @@ export function CommunicationScreen({
+ 
+         {phone ? (
+           <main className={`app-main app-main--${layout}`}>
+-            <div className="shell-screen">{order.flat().map((k) => sections[k])}</div>
++            <div className="shell-screen">{order.flat().filter((k) => !(noSugRow && k === 'cands')).map((k) => sections[k])}</div>
+           </main>
+         ) : isTwoColumn(layout) ? (
+           <main className="app-main">
+@@ -940,6 +946,7 @@ export function CommunicationScreen({
+                 },
+                 canSpell,
+                 onSpell: openSpell,
++                onSentences: noSugRow ? openSentences : undefined,
+                 onProof: () => setSheet('proof'),
+                 onPartner: () => setSheet('partner'),
+               }
+diff --git a/packages/web/components/MenuSheet.tsx b/packages/web/components/MenuSheet.tsx
+index d05b667..e6cd571 100644
+--- a/packages/web/components/MenuSheet.tsx
++++ b/packages/web/components/MenuSheet.tsx
+@@ -8,7 +8,7 @@ import { Sheet } from './Sheet';
+  * The compact header's Menu (web-ui Req 15.3): the full status, then Phrases, My words, Voice and Settings.
+  * Each choice opens its own sheet in place of this one. In the phone layout (web-ui Req 24) the Menu
+  * button sits in the action bar and the sheet also holds the sentence's less used actions: Save
+- * phrase and Spell this word.
++ * phrase and Spell this word, and Sentences on a short phone that has no suggestion row (Req 24.9).
+  */
+ export function MenuSheet({
+   open,
+@@ -36,6 +36,8 @@ export function MenuSheet({
+     onSave: () => void;
+     canSpell: boolean;
+     onSpell: () => void;
++    /** Short phones with no suggestion row (web-ui Req 24.9): every sentence for the keys. */
++    onSentences?: () => void;
+     onProof?: () => void;
+     onPartner?: () => void;
+   } | null;
+@@ -50,6 +52,11 @@ export function MenuSheet({
+             This sentence
+           </h3>
+           <div className="menu scan-cluster" data-scan-row="sentence">
++            {sentence.onSentences ? (
++              <Button variant="secondary" icon="menu" onClick={sentence.onSentences}>
++                Sentences
++              </Button>
++            ) : null}
+             <Button variant="secondary" icon="save" onClick={sentence.onSave} disabled={!sentence.canSave}>
+               Save phrase
+             </Button>
+diff --git a/packages/web/lib/layout.ts b/packages/web/lib/layout.ts
+index 2950b57..ec7cc4e 100644
+--- a/packages/web/lib/layout.ts
++++ b/packages/web/lib/layout.ts
+@@ -105,10 +105,20 @@ function snapshot(): Layout {
+   });
+ }
+ 
+-/** Suggestion rows in the stack shell, by screen height (taller tablets get more). */
+-export function stackSuggestionRows(h: { r2: boolean; r3: boolean; r4: boolean }): 1 | 2 | 3 | 4 {
++/**
++ * Suggestion rows in the stack shell, by screen height (taller tablets get more). A short screen
++ * (an iPhone SE in Safari with the Bottom tab bar, 495px) gets none, so 72px keys fit without a
++ * scroll; Sentences moves to Menu (web-ui Req 24.9, ADR-005).
++ */
++export function stackSuggestionRows(h: { r2: boolean; r3: boolean; r4: boolean; short?: boolean }): 0 | 1 | 2 | 3 | 4 {
++  if (h.short) return 0;
+   return h.r4 ? 4 : h.r3 ? 3 : h.r2 ? 2 : 1;
+ }
++/**
++ * The stack shell is short below 548px, the smallest visible height measured to fit one suggestion
++ * row with 72px keys (test/e2e/responsive.mjs). An exception query, so it is false on the server and in jsdom.
++ */
++export const STACK_SHORT_QUERY = '(max-height: 547px)';
+ /** Breakpoints for stackSuggestionRows; styles/app.css uses the same heights for the sentence lines. */
+ export const STACK_ROWS_QUERIES = { r2: '(min-height: 760px)', r3: '(min-height: 900px)', r4: '(min-height: 1050px)' } as const;
+ /** Suggestion rows in the split shell (left column), by screen height. */
+diff --git a/packages/web/test/e2e/responsive.mjs b/packages/web/test/e2e/responsive.mjs
+index afcb03f..7004524 100644
+--- a/packages/web/test/e2e/responsive.mjs
++++ b/packages/web/test/e2e/responsive.mjs
+@@ -3,7 +3,8 @@
+ // really gets (docs/research/mobile-aac-evidence.md, one-screen-tablets.md). For every view:
+ //   - phones held sideways show only the turn-upright screen;
+ //   - otherwise the main screen does not scroll at all, and the keypad, Speak, Menu, Show, Clear and
+-//     the suggestions are all on screen; nothing scrolls sideways; keys are at least 72px, other
++//     the suggestions are all on screen (under 548px tall a phone has no suggestion row, Req 24.9);
++//     nothing scrolls sideways; keys are at least 72px, other
+ //     targets at least 56px and app text at least 16px; the keypad does not move while a long
+ //     sentence is typed (keyguards, motor memory).
+ // Keys are tapped at a person's pace (the accept delay ignores same-key repeats < 150 ms).
+@@ -16,6 +17,9 @@ const DEVICES = [
+   // Phones, portrait: Safari with its toolbar showing (iOS 26 Compact tab bar), Chrome, installed app.
+   ['iPhone SE, Safari', 375, 549, 375, 667],
+   ['iPhone SE, installed app', 375, 647, 375, 667],
++  // Safari with the Bottom tab bar (measured, docs/research/mobile-aac-evidence.md §1): the floor.
++  ['iPhone SE, Safari Bottom tab bar', 375, 495, 375, 667],
++  ['iPhone 17 Pro, Safari Bottom tab bar', 402, 654, 402, 874],
+   ['iPhone 16e, Safari', 390, 699, 390, 844],
+   ['iPhone 17 Pro, Safari', 402, 714, 402, 874],
+   ['iPhone 17 Pro Max, Safari', 440, 796, 440, 956],
+@@ -124,16 +128,23 @@ try {
+           Clear: onScreen('.phone-card__clear, .phone-card__undo'),
+           suggestions: onScreen('.phone-sugg'),
+         },
++        hasSugg: document.querySelector('.phone-sugg') !== null,
+         minKey: Math.round(Math.min(...keys.map((k) => Math.min(k.width, k.height)))),
+         small,
+         tiny,
+       };
+     });
++    // A short phone has no suggestion row (web-ui Req 24.9): STACK_SHORT_QUERY is '(max-height: 547px)'.
++    const short = vh < 548 && /app--stack/.test(m.layout);
++    if (short) {
++      check(!m.hasSugg, 'a short phone drops the suggestion row (Sentences is in Menu)');
++      delete m.shown.suggestions;
++    }
+     const missing = Object.entries(m.shown).filter(([, ok]) => !ok).map(([k]) => k);
+     check(/app--shell/.test(m.layout), `the one-screen shell is used (${m.layout.replace('app ', '')})`);
+     check(m.pageScroll <= 1, `the main screen does not scroll (${m.pageScroll}px over)`);
+     check(!m.hScroll, 'no sideways scrolling');
+-    check(missing.length === 0, `keypad, Speak, Menu, Show, sentence, Clear and suggestions all on screen${missing.length ? `; missing: ${missing.join(', ')}` : ''}`);
++    check(missing.length === 0, `keypad, Speak, Menu, Show, sentence${short ? ' and Clear' : ', Clear and suggestions'} all on screen${missing.length ? `; missing: ${missing.join(', ')}` : ''}`);
+     check(m.minKey >= 72, `keys are at least 72px (${m.minKey})`);
+     check(m.small.length === 0, `every target is at least 56px${m.small.length ? `: ${m.small.join(', ')}` : ''}`);
+     check(m.tiny.length === 0, `no app text under 16px${m.tiny.length ? `: ${m.tiny.slice(0, 3).join(', ')}` : ''}`);
+diff --git a/packages/web/test/layout.test.ts b/packages/web/test/layout.test.ts
+index 3ab5bc5..fdbcd10 100644
+--- a/packages/web/test/layout.test.ts
++++ b/packages/web/test/layout.test.ts
+@@ -1,6 +1,6 @@
+ import { describe, expect, it } from 'vitest';
+ import { chunk } from '@/components/PhrasesSheet';
+-import { chooseLayout, COMPACT_SENTENCES, isShell, isTwoColumn, sectionOrder, SPLIT_QUERY, stackSuggestionRows, splitSuggestionRows, visibleSentences } from '@/lib/layout';
++import { chooseLayout, COMPACT_SENTENCES, isShell, isTwoColumn, sectionOrder, SPLIT_QUERY, STACK_SHORT_QUERY, stackSuggestionRows, splitSuggestionRows, visibleSentences } from '@/lib/layout';
+ import { statusLines, statusSummary } from '@/lib/status';
+ 
+ describe('layout (web-ui Req 15)', () => {
+@@ -58,6 +58,14 @@ describe('layout (web-ui Req 15)', () => {
+     expect(chooseLayout({ ...base, touch: false, landscape: true, shortSide: 900, split: true })).toBe('split');
+   });
+ 
++  it('24.9 stackSuggestionRows returns 0 when the screen is short, whatever the taller rungs say', () => {
++    expect(stackSuggestionRows({ r2: false, r3: false, r4: false, short: true })).toBe(0);
++    expect(stackSuggestionRows({ r2: true, r3: true, r4: true, short: true })).toBe(0);
++    expect(stackSuggestionRows({ r2: false, r3: false, r4: false, short: false })).toBe(1);
++    // An exception query (max-height), so the server and jsdom keep the suggestion row.
++    expect(STACK_SHORT_QUERY).toBe('(max-height: 547px)');
++  });
++
+   it('suggestion rows grow with the screen height', () => {
+     expect(stackSuggestionRows({ r2: false, r3: false, r4: false })).toBe(1);
+     expect(stackSuggestionRows({ r2: true, r3: false, r4: false })).toBe(2);
+diff --git a/packages/web/test/mobile.test.tsx b/packages/web/test/mobile.test.tsx
+index 927c287..aeab608 100644
+--- a/packages/web/test/mobile.test.tsx
++++ b/packages/web/test/mobile.test.tsx
+@@ -53,6 +53,13 @@ describe('phones and tablets', () => {
+     expect(app).toMatch(/--nl-key:[^;]*100svh/);
+   });
+ 
++  it('25.1 the stack shell keeps its fit rules: its height comes from svh (never dvh) and the safe areas', () => {
++    const rule = /\.app--stack \.shell-screen \{([^}]*)\}/.exec(css('app.css'))?.[1] ?? '';
++    expect(rule).toContain('min-height: calc(100svh - max(var(--space-2), env(safe-area-inset-top)) - var(--shell-head));');
++    expect(rule).toContain('env(safe-area-inset-bottom)');
++    expect(rule).not.toContain('dvh');
++  });
++
+   it('the page opts into safe areas and keeps zoom on', () => {
+     const layout = read('app/layout.tsx');
+     expect(layout).toContain("viewportFit: 'cover'");
+diff --git a/packages/web/test/phone.test.tsx b/packages/web/test/phone.test.tsx
+index 185f331..292b02b 100644
+--- a/packages/web/test/phone.test.tsx
++++ b/packages/web/test/phone.test.tsx
+@@ -1,10 +1,10 @@
+ // Phone layout (web-ui Req 24; docs/research/mobile-patterns-mobbin.md, mobile-aac-evidence.md).
+ // Fit, key size and key stability per device are checked in a browser by test/e2e/responsive.mjs.
+-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
++import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+ import { CommunicationScreen } from '@/components/CommunicationScreen';
+ import { phoneSuggestions } from '@/components/PhoneSuggestions';
+-import { sectionOrder } from '@/lib/layout';
++import { sectionOrder, STACK_SHORT_QUERY } from '@/lib/layout';
+ import { miniDict } from './fixtures';
+ 
+ const KEY = { 3: '3 DEF, D E F', 4: '4 GHI, G H I', 6: '6 MNO, M N O', 9: '9 WXYZ, W X Y Z', 0: '0 Space' } as Record<string, string>;
+@@ -109,3 +109,74 @@ describe('phone layout (web-ui Req 24)', () => {
+     }
+   });
+ });
++
++describe('short phones (web-ui Req 24.9, 25.1)', () => {
++  /** A short screen: only the short-stack query matches, as on a 495px iPhone SE with the Bottom tab bar. */
++  const stubShort = () =>
++    vi.stubGlobal('matchMedia', (query: string) => ({
++      matches: query === STACK_SHORT_QUERY,
++      media: query,
++      onchange: null,
++      addEventListener: () => undefined,
++      removeEventListener: () => undefined,
++      addListener: () => undefined,
++      removeListener: () => undefined,
++      dispatchEvent: () => false,
++    }));
++  const menuSentenceButtons = () => within(document.querySelector<HTMLElement>('[data-scan-row="sentence"]')!).getAllByRole('button').map((b) => b.textContent);
++  function sw(key: ' ' | 'Enter') {
++    act(() => {
++      fireEvent.keyDown(window, { key, code: key === ' ' ? 'Space' : 'Enter' });
++      fireEvent.keyUp(window, { key, code: key === ' ' ? 'Space' : 'Enter' });
++    });
++  }
++  afterEach(() => {
++    vi.unstubAllGlobals();
++  });
++
++  it('24.9 no suggestion row, still section order speak, pad, actions', () => {
++    stubShort();
++    const { container } = render(<CommunicationScreen initialDict={miniDict()} layout="stack" />);
++    typeDigits('4');
++    expect([...container.querySelectorAll('.shell-screen > [data-section]')].map((el) => el.getAttribute('data-section'))).toEqual(['speak', 'pad', 'actions']);
++    expect(container.querySelector('.phone-sugg')).toBeNull();
++  });
++
++  it('24.9 Menu > This sentence has Sentences and it opens "Sentences for your keys"', () => {
++    stubShort();
++    render(<CommunicationScreen initialDict={miniDict()} layout="stack" />);
++    typeDigits('4');
++    press('Menu');
++    expect(menuSentenceButtons()[0]).toBe('Sentences');
++    press('Sentences');
++    const sheet = document.querySelector('dialog[data-overlay="sentences"][open]');
++    expect(sheet?.textContent).toContain('Sentences for your keys');
++    expect(sheet!.querySelectorAll('.nl-candidate').length).toBeGreaterThan(0);
++  });
++
++  it('24.9 Sentences is absent from Menu when the row is shown', () => {
++    render(<CommunicationScreen initialDict={miniDict()} layout="stack" />);
++    typeDigits('4');
++    press('Menu');
++    expect(menuSentenceButtons()).not.toContain('Sentences');
++    expect(document.querySelector('.phone-sugg')).toBeTruthy();
++  });
++
++  it('24.9 24.8 switch scanning skips the empty suggestion row: keypad rows, then the action bar', () => {
++    stubShort();
++    const { container } = render(<CommunicationScreen initialDict={miniDict()} layout="stack" initialSettings={{ access: 'scan2', acceptDelayMs: 0 }} />);
++    fireEvent.keyDown(window, { key: '4', code: 'Digit4' });
++    expect(utterance()).not.toBe('Press a key to start');
++    // Keypad rows 0-3, then the action bar: no stop at a suggestion row.
++    for (let i = 0; i < 5; i++) sw(' ');
++    expect(container.querySelector('[data-section="actions"]')!.className).toContain('is-scanning');
++  });
++
++  it('24.9 Spell this word stays in Menu', () => {
++    stubShort();
++    render(<CommunicationScreen initialDict={miniDict()} layout="stack" />);
++    typeDigits('4');
++    press('Menu');
++    expect(menuSentenceButtons()).toContain('Spell this word');
++  });
++});
