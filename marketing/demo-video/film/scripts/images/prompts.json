@@ -1,0 +1,59 @@
+{
+  "about": "Prompts for Act 1's still plates (04-asset-plan.md, section 1). Checked by scripts/tm-lint.mjs. The style text is repeated in every prompt; every picture after IMG-00 is made with /v1/images/edits and the approved style reference.",
+  "style": "Photograph, 100 mm lens, shallow depth of field, taken at night in a dark room. Dim cool moonlight from the upper left. Deep violet-black shadows. Matte graphite plastic and soft worn rubber, fine dust, light scratches. Muted and slightly desaturated, with subtle film grain. No text, no letters, no digits, no symbols, no logos, no brand marks, no people, no hands.",
+  "guideIntro": "The first image is a flat layout guide; the second image is the style reference. Turn the guide into the photograph described below, with the light, colour, materials and grain of the style reference. Keep every shape exactly where the guide has it, with the same size, shape and spacing. The guide itself must not show: no flat grey, no outlines.",
+  "blank": "Every key top is completely blank and unprinted: no numbers, no letters, no marks of any kind on any key.",
+  "ids": {
+    "img-00": {
+      "name": "img-00-style",
+      "endpoint": "generations",
+      "refs": [],
+      "prompt": "A still life on a dark table at night: a loose rubber keypad mat with twelve blank rounded keys and a small empty olive-green liquid-crystal display, side by side."
+    },
+    "img-01": {
+      "name": "img-01-keypad-lit",
+      "endpoint": "edits",
+      "refs": ["scripts/images/guides/keypad.png", "@img-00"],
+      "guide": true,
+      "prompt": "Extreme close-up of the keypad of a generic early-2000s mobile phone, seen almost straight from above, filling the frame. Twelve identical rounded-square soft-rubber keys in a grid of 3 columns and 4 rows, evenly spaced, every key blank. The keys are lit from underneath with a pale green glow, colour #c7f0d8, that leaks around their edges. Dark graphite plastic between the keys and below the last row. The frame is cropped inside the keypad: no screen, no outline of the device, no other buttons."
+    },
+    "img-02": {
+      "name": "img-02-keypad-dark",
+      "endpoint": "edits",
+      "refs": ["@img-01"],
+      "prompt": "The same picture, unchanged in framing and detail, but the light under the keys is switched off. Only the moonlight remains."
+    },
+    "img-03": {
+      "name": "img-03-worn-key",
+      "endpoint": "edits",
+      "refs": ["@img-01", "@img-00"],
+      "prompt": "A new photograph of the keypad in the first image: an extreme close-up of a single blank rounded-square rubber key on that keypad, filling the middle of the frame, worn smooth and shiny in the middle from years of use, its neighbours out of focus. Lit from underneath in pale green, colour #c7f0d8."
+    },
+    "img-04": {
+      "name": "img-04-screen-empty",
+      "endpoint": "edits",
+      "refs": ["scripts/images/guides/screen.png", "@img-00"],
+      "guide": true,
+      "prompt": "Extreme close-up, straight on, of a small monochrome liquid-crystal display behind a lightly scratched clear plastic window. The display is completely empty: no lit pixels, no icons, no text. Its ground is olive green, colour #c7f0d8, lit unevenly and a little brighter along the bottom edge. A dark graphite plastic bezel on all four sides fills the rest of the frame. The display area is a rectangle 7 wide by 4 high, centred, about 64% of the frame's width, exactly where the guide's light rectangle is."
+    },
+    "img-05": {
+      "name": "img-05-dust",
+      "endpoint": "generations",
+      "refs": [],
+      "prompt": "Fine dust and a few hair-thin scratches on a sheet of dark glass, lit from the side, on a pure black ground."
+    },
+    "img-06": {
+      "name": "img-06-phone-lit",
+      "endpoint": "edits",
+      "refs": ["scripts/images/guides/phone.png", "@img-00", "@img-01"],
+      "guide": true,
+      "prompt": "A small early-2000s mobile phone of a plain generic design, lying face up on a dark wooden table, seen from above at a slight angle, straight, its long side vertical in the frame, exactly where the guide's outline is. A simple rounded rectangular body in matte graphite plastic. A small rectangular display in the upper third, lit pale green, colour #c7f0d8, and completely empty. Below it, twelve identical rounded-square keys in a grid of 3 columns and 4 rows, evenly spaced, every key blank, lit from underneath in the same pale green that leaks around their edges. The third image is a close-up of this same phone's keypad: the keys must look exactly like those keys, only smaller. Nothing else on the front: no navigation key, no call or menu keys, no aerial, no patterned speaker grille, no maker's plate. An invented design that does not resemble any real phone model."
+    },
+    "img-07": {
+      "name": "img-07-phone-dusty",
+      "endpoint": "edits",
+      "refs": ["@img-06"],
+      "prompt": "The same picture, unchanged in framing and detail, years later. The phone is switched off: its display and keys are dark. A fine, even layer of dust lies over the phone and the table. Only the moonlight remains."
+    }
+  }
+}

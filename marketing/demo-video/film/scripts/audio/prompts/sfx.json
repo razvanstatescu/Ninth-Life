@@ -1,0 +1,209 @@
+{
+  "model_id": "eleven_text_to_sound_v3",
+  "output_format": "wav_48000",
+  "fallback_output_format": "pcm_48000",
+  "prompt_influence": 0.5,
+  "notes": "duration_seconds is the generated length (at least 0.5 s, the API minimum); target is the finished length after trimming. kind: how the take is cut. 'tail' = trim the start to the first sound and keep target seconds; 'end-peak' = the loudest point is placed at the very end; 'peak-near-end' = keep the loudest point near the end and record its time.",
+  "effects": [
+    {
+      "id": "tv-on",
+      "target": 2.0,
+      "duration_seconds": 2.3,
+      "takes": 2,
+      "kind": "tail",
+      "text": "An old tube television switching on: a soft relay thunk, then a rising electrical whine that settles. Close and dry.",
+      "v2": {
+        "text": "Close recording of an old tube television being switched on in a quiet room: a soft low relay thunk, then a thin electrical whine that rises quickly in pitch and settles into a faint steady hum. Dry, no music.",
+        "duration_seconds": 2.3,
+        "prompt_influence": 0.7,
+        "takes": 2,
+        "why": "round 1 failed objective checks (see scripts/audio/sfx_measure.py output in _takes/audio/sfx/measures.json)"
+      }
+    },
+    {
+      "id": "tv-off",
+      "target": 1.5,
+      "duration_seconds": 1.7,
+      "takes": 2,
+      "kind": "tail",
+      "text": "An old tube television switching off: a falling electrical whine, a soft click, then nothing.",
+      "v2": {
+        "text": "Close recording of an old tube television being switched off: a thin electrical whine that falls quickly in pitch and fades, one soft click, then complete silence. Dry, no music.",
+        "duration_seconds": 1.7,
+        "prompt_influence": 0.7,
+        "takes": 2,
+        "why": "round 1 failed objective checks (see scripts/audio/sfx_measure.py output in _takes/audio/sfx/measures.json)"
+      }
+    },
+    {
+      "id": "static-burst",
+      "target": 0.5,
+      "duration_seconds": 0.7,
+      "takes": 4,
+      "kind": "tail",
+      "also": "static-burst-2",
+      "text": "A very short, soft burst of television static, as when changing channel. Gentle start."
+    },
+    {
+      "id": "crackle",
+      "target": 0.5,
+      "duration_seconds": 0.6,
+      "takes": 2,
+      "kind": "tail",
+      "text": "One small, quiet static crackle from old electronics.",
+      "v2": {
+        "text": "One single short crackle of static electricity from an old electronic device: a few tiny pops within a quarter of a second, then silence. Quiet and close.",
+        "duration_seconds": 0.6,
+        "prompt_influence": 0.7,
+        "takes": 2,
+        "why": "round 1 failed objective checks (see scripts/audio/sfx_measure.py output in _takes/audio/sfx/measures.json)"
+      }
+    },
+    {
+      "id": "ember",
+      "target": 1.2,
+      "duration_seconds": 1.4,
+      "takes": 2,
+      "kind": "tail",
+      "text": "A small warm ignition, like a match or an ember catching. Soft and close. Not a whoosh."
+    },
+    {
+      "id": "sub-hit",
+      "target": 1.5,
+      "duration_seconds": 1.6,
+      "takes": 2,
+      "kind": "tail",
+      "text": "A deep, soft sub-bass hit with a short clean tail. No distortion."
+    },
+    {
+      "id": "riser",
+      "target": 2.0,
+      "duration_seconds": 2.2,
+      "takes": 2,
+      "kind": "end-peak",
+      "text": "A smooth rising synth sweep, two seconds long, ending abruptly at its highest point."
+    },
+    {
+      "id": "reverse-swell",
+      "target": 0.5,
+      "duration_seconds": 0.8,
+      "takes": 2,
+      "kind": "end-peak",
+      "text": "A short reverse cymbal swell that rises and peaks at the very end, then stops."
+    },
+    {
+      "id": "whoosh-1",
+      "target": 0.6,
+      "duration_seconds": 0.8,
+      "takes": 2,
+      "kind": "peak-near-end",
+      "text": "A short airy whoosh passing quickly, ending in a soft dull thud.",
+      "v2": {
+        "text": "A quick whoosh of air rushing past the microphone, breathy and bright, about half a second, ending in a soft muffled thud.",
+        "duration_seconds": 0.8,
+        "prompt_influence": 0.7,
+        "takes": 2,
+        "why": "round 1 failed objective checks (see scripts/audio/sfx_measure.py output in _takes/audio/sfx/measures.json)"
+      }
+    },
+    {
+      "id": "whoosh-2",
+      "target": 0.7,
+      "duration_seconds": 0.9,
+      "takes": 2,
+      "kind": "peak-near-end",
+      "text": "A short, slightly deeper airy whoosh passing quickly from left to right, ending in a soft dull thud.",
+      "v2": {
+        "text": "A smooth swoosh of moving air sweeping from left to right, breathy noise with no rumble, ending in a soft low thud.",
+        "duration_seconds": 0.9,
+        "prompt_influence": 0.7,
+        "takes": 2,
+        "why": "round 1 failed objective checks (see scripts/audio/sfx_measure.py output in _takes/audio/sfx/measures.json)"
+      }
+    },
+    {
+      "id": "whoosh-3",
+      "target": 0.5,
+      "duration_seconds": 0.7,
+      "takes": 2,
+      "kind": "peak-near-end",
+      "text": "A very short, light and breathy whoosh passing quickly, ending in a soft muffled thud.",
+      "v2": {
+        "text": "A very short breathy air swish passing quickly, light and airy, ending in a small dull thud.",
+        "duration_seconds": 0.7,
+        "prompt_influence": 0.7,
+        "takes": 2,
+        "why": "round 1 failed objective checks (see scripts/audio/sfx_measure.py output in _takes/audio/sfx/measures.json)"
+      }
+    },
+    {
+      "id": "whip",
+      "target": 0.35,
+      "duration_seconds": 0.5,
+      "takes": 2,
+      "kind": "tail",
+      "text": "A very fast airy swish, no thud at the end, for a small quick camera move.",
+      "v2": {
+        "text": "A very fast thin swish of a stick swung through the air, a short airy whip sound with no impact. Close.",
+        "duration_seconds": 0.6,
+        "prompt_influence": 0.7,
+        "takes": 2,
+        "why": "round 1 failed objective checks (see scripts/audio/sfx_measure.py output in _takes/audio/sfx/measures.json)"
+      }
+    },
+    {
+      "id": "tick",
+      "target": 0.15,
+      "duration_seconds": 0.5,
+      "takes": 2,
+      "kind": "tail",
+      "text": "A tiny soft tick, like a small wooden bead touching wood. Dry, one single tick.",
+      "v2": {
+        "text": "A single tiny click of a small wooden bead tapping a wooden table. Short, dry and close, one click only.",
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.7,
+        "takes": 2,
+        "why": "round 1 failed objective checks (see scripts/audio/sfx_measure.py output in _takes/audio/sfx/measures.json)"
+      }
+    },
+    {
+      "id": "thump",
+      "target": 0.4,
+      "duration_seconds": 0.5,
+      "takes": 2,
+      "kind": "tail",
+      "text": "A single soft low thump, felt on wood. Dry.",
+      "v2": {
+        "text": "One soft knock of a fist on a thick wooden table: a low, muffled wooden thump. Dry and close.",
+        "duration_seconds": 0.6,
+        "prompt_influence": 0.7,
+        "takes": 2,
+        "why": "round 1 failed objective checks (see scripts/audio/sfx_measure.py output in _takes/audio/sfx/measures.json)"
+      }
+    },
+    {
+      "id": "no",
+      "target": 0.5,
+      "duration_seconds": 0.6,
+      "takes": 2,
+      "kind": "tail",
+      "text": "A gentle low double tap that feels like no. Soft and muted. Not a buzzer, not an alarm."
+    },
+    {
+      "id": "button",
+      "target": 0.4,
+      "duration_seconds": 0.5,
+      "takes": 2,
+      "kind": "tail",
+      "text": "A large plastic push button pressed once: a soft thud and a click."
+    },
+    {
+      "id": "flip",
+      "target": 0.5,
+      "duration_seconds": 0.6,
+      "takes": 2,
+      "kind": "tail",
+      "text": "A quick, soft paper card flip, a short swish."
+    }
+  ]
+}

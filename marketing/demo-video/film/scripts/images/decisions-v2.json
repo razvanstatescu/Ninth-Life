@@ -1,0 +1,92 @@
+{
+ "v2-p1-master-03": {
+  "id": "v2-p1-master",
+  "status": "chosen",
+  "notes": "Master. Real keypad-phone anatomy from the line drawing; keys and body blank at 100%; dark scratched screen; worn corners. More contrast and wear than take 04."
+ },
+ "v2-p1-master-01": {
+  "id": "v2-p1-master",
+  "status": "rejected",
+  "notes": "Flare draft: good, but a lighter grey navigation ring than the keys."
+ },
+ "v2-p1-master-02": {
+  "id": "v2-p1-master",
+  "status": "rejected",
+  "notes": "Flare draft: good; superseded by the final-quality takes."
+ },
+ "v2-p1-master-04": {
+  "id": "v2-p1-master",
+  "status": "rejected",
+  "notes": "Good, but flatter light and less wear than take 03."
+ },
+ "v2-p5-drawer-02": {
+  "id": "v2-p5-drawer",
+  "status": "chosen",
+  "notes": "Drawer of forgotten things. Phone matches the master; blank cassette label, plain watch dial at midnight, unlabelled batteries, no text at 100%. The phone fills about 78% of the frame height (asked 55%): more detail, fine for the 4% pushes."
+ },
+ "v2-p5-drawer-01": {
+  "id": "v2-p5-drawer",
+  "status": "rejected",
+  "notes": "Web-like strands in the top-left corner and fibres across the floor read as cobwebs, which the creative direction bans (02, section 6)."
+ },
+ "v2-p5-lit-01": {
+  "id": "v2-p5-lit",
+  "status": "chosen",
+  "notes": "Light pass for the wake. Within 1 px of the plate (phase correlation: dx 0, dy -1). Screen glows evenly with no image; light leaks round every key and through the rubber, spills on the body and dust. No text."
+ },
+ "v2-p5-lit-02": {
+  "id": "v2-p5-lit",
+  "status": "rejected",
+  "notes": "Also aligned (dy -1), but the navigation key stays dark and the spill is weaker than take 01."
+ },
+ "v2-p2-macro-01": {
+  "id": "v2-p2-macro",
+  "status": "chosen",
+  "notes": "Angled macro: the screen large and sharp, scratches, dust and a cool window reflection along its top; the phone matches the master; no text at 100%. The soft keys and navigation key came out sharper than asked (soft blur can be added in code)."
+ },
+ "v2-p2-macro-02": {
+  "id": "v2-p2-macro",
+  "status": "rejected",
+  "notes": "Good, but the screen is smaller in frame than take 01, so typed text would read smaller."
+ },
+ "v2-p2-lit-01": {
+  "id": "v2-p2-lit",
+  "status": "chosen",
+  "notes": "Light pass for the typing shots. Within 1 px (dx 0, dy -1). Even screen glow with the window reflection kept; light through the soft keys and round the navigation key; no text."
+ },
+ "v2-p2-lit-02": {
+  "id": "v2-p2-lit",
+  "status": "rejected",
+  "notes": "Aligned (dy -1) and good; take 01 matches the drawer's light pass (light through the rubber)."
+ },
+ "v2-p3-keypad-01": {
+  "id": "v2-p3-keypad",
+  "status": "rejected",
+  "notes": "Only nine keys in three rows: fails the twelve-key check."
+ },
+ "v2-p3-keypad-02": {
+  "id": "v2-p3-keypad",
+  "status": "rejected",
+  "notes": "Twelve keys, straight on, but faint scratched marks on the left key of the third row read like the digits 43, and the phone is cleaner than the drawer plate. Used as image 1 of v2-p3-fix."
+ },
+ "v2-p3-fix-01": {
+  "id": "v2-p3-fix",
+  "status": "chosen",
+  "notes": "The keypad plate (saved as v2-p3-keypad.png). Keypad-02 with the digit-like marks removed and the drawer's dust added; framing identical to keypad-02 (shift 0, 0); twelve keys straight on; coins and watch dial plain; no text at 100%."
+ },
+ "v2-p3-fix-02": {
+  "id": "v2-p3-fix",
+  "status": "rejected",
+  "notes": "Also clean, but a lighter haze and less contrast than fix-01."
+ },
+ "v2-p3-lit-02": {
+  "id": "v2-p3-lit",
+  "status": "chosen",
+  "notes": "Light pass for the Act 2 'same keys' handover. Exactly aligned (shift 0, 0). Light leaks round every key and the navigation key; key faces stay dark, so legends drawn in code stand out. No text."
+ },
+ "v2-p3-lit-01": {
+  "id": "v2-p3-lit",
+  "status": "rejected",
+  "notes": "Good and brighter (light through the whole key faces), but 2 px lower than the plate (dy 2); kept as an alternative."
+ }
+}

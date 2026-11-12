@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12 -6 70 118" width="700" height="1180">
+  <!--
+    The film's own generic keypad phone, front view, in millimetres (1 unit = 1 mm).
+    Research drawing for 10-act1-old-world.md, section 2.6. Not film code.
+    Body 46 x 106 mm (19 mm thick). Clean line art on purpose: it doubles as the
+    guide drawing for a "turn this drawing into a photograph" edit (section 4.3).
+    Dashed: the LCD active area (96 x 64 pixels at 0.30 mm) inside the display window.
+  -->
+  <rect x="-12" y="-6" width="70" height="118" fill="#ffffff"/>
+  <g fill="none" stroke="#000000" stroke-width="0.3" stroke-linejoin="round">
+    <!-- body -->
+    <rect x="0" y="0" width="46" height="106" rx="8"/>
+    <!-- earpiece slot -->
+    <rect x="18" y="5.9" width="10" height="1.2" rx="0.6"/>
+    <!-- clear acrylic lens, and the display window inside its black printed border -->
+    <rect x="4" y="9.5" width="38" height="29" rx="3"/>
+    <rect x="6" y="11" width="34" height="26" rx="1.5"/>
+    <!-- LCD active area, 28.8 x 19.2 mm -->
+    <rect x="8.6" y="13.6" width="28.8" height="19.2" stroke-dasharray="0.8 0.6" stroke-width="0.2"/>
+    <!-- soft keys -->
+    <rect x="4" y="40.25" width="10" height="4.5" rx="2.25"/>
+    <rect x="32" y="40.25" width="10" height="4.5" rx="2.25"/>
+    <!-- four-way navigation key with a separate centre button -->
+    <circle cx="23" cy="46" r="7"/>
+    <circle cx="23" cy="46" r="3"/>
+    <!-- call keys -->
+    <rect x="4" y="47.5" width="10" height="5" rx="2.5"/>
+    <rect x="32" y="47.5" width="10" height="5" rx="2.5"/>
+    <!-- twelve keys, 12.5 x 6.5 mm, columns at x 9 / 23 / 37, rows at y 60.5 / 69 / 77.5 / 86 -->
+    <rect x="2.75" y="57.25" width="12.5" height="6.5" rx="2.5"/>
+    <rect x="16.75" y="57.25" width="12.5" height="6.5" rx="2.5"/>
+    <rect x="30.75" y="57.25" width="12.5" height="6.5" rx="2.5"/>
+    <rect x="2.75" y="65.75" width="12.5" height="6.5" rx="2.5"/>
+    <rect x="16.75" y="65.75" width="12.5" height="6.5" rx="2.5"/>
+    <rect x="30.75" y="65.75" width="12.5" height="6.5" rx="2.5"/>
+    <rect x="2.75" y="74.25" width="12.5" height="6.5" rx="2.5"/>
+    <rect x="16.75" y="74.25" width="12.5" height="6.5" rx="2.5"/>
+    <rect x="30.75" y="74.25" width="12.5" height="6.5" rx="2.5"/>
+    <rect x="2.75" y="82.75" width="12.5" height="6.5" rx="2.5"/>
+    <rect x="16.75" y="82.75" width="12.5" height="6.5" rx="2.5"/>
+    <rect x="30.75" y="82.75" width="12.5" height="6.5" rx="2.5"/>
+    <!-- microphone hole -->
+    <circle cx="23" cy="99" r="0.45"/>
+  </g>
+</svg>

@@ -1,0 +1,15 @@
+node_modules/
+out/
+_takes/
+.bundles/
+.venv/
+*.log
+
+# Music the final film does not play (kept locally, regenerable; see manifest/audio.json):
+# the first cut's track and stems (only the BeatCheck tool uses act2.wav), and the plain v2
+# variant (the film uses the "drive" stems, src/audio/mix.ts).
+public/audio/music/act2.wav
+public/audio/music/act2-drums.wav
+public/audio/music/act2-other.wav
+public/audio/music/act2-v2.wav
+public/audio/music/act2-v2-drums.wav

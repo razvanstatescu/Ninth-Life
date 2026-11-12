@@ -1,0 +1,282 @@
+{
+  "id": "act2-v2-inpaint",
+  "doc": "Inpainting on take v2c (song FdfOzyCwamV3HSeXSYVT, music_v2_5, stored for inpainting). All three first takes put 8-10 s of silence where the rebirth build should be (bars 1-4: the plan's first chunk mentioned 'silence in the last bar'); v2c is the best base for bars 6-45 (A minor, the lift among the loudest bars, the end chord) but its drop and its access bars have no kick. Regenerate 0-10 s, 10-16 s and 64-68 s; keep 16-64 s and 68-90 s of v2c unchanged (audio reference chunks).",
+  "model_id": "music_v2_5",
+  "output_format": "pcm_48000",
+  "duration_ms": 90000,
+  "takes": [
+    {
+      "take": "i1",
+      "seed": 7777,
+      "plan": "chunks"
+    },
+    {
+      "take": "i2",
+      "seed": 4663,
+      "plan": "plan_i2"
+    }
+  ],
+  "chunks": [
+    {
+      "text": "[Rebirth]\n{a deep sub-bass hit and the first soft kick on the very first beat}\n{the bass enters on A; a sparse pulse slowly rises over four bars}\n{a short riser at the end that stops dead}",
+      "duration_ms": 10000,
+      "positive_styles": [
+        "warm modern electronic",
+        "minimal",
+        "cinematic",
+        "clean mix",
+        "warm analog synths",
+        "soft kick",
+        "deep sub bass",
+        "restrained",
+        "120 BPM",
+        "A minor",
+        "instrumental",
+        "4/4 time",
+        "starts immediately on the first beat",
+        "a deep sub-bass hit on the first beat",
+        "just a soft kick and a warm sub bass on A",
+        "a sparse pulse that slowly rises",
+        "the high register left empty",
+        "a short riser at the end that stops dead"
+      ],
+      "negative_styles": [
+        "vocals",
+        "lyrics",
+        "spoken word",
+        "choir",
+        "vocal chops",
+        "guitar",
+        "orchestra",
+        "horror stings",
+        "distortion",
+        "lo-fi",
+        "harsh cymbals",
+        "silence at the start",
+        "fade in",
+        "hi-hats",
+        "snare",
+        "claps",
+        "lead melody",
+        "noise sweep"
+      ],
+      "context_adherence": "high",
+      "conditioning_ref": {
+        "song_id": "FdfOzyCwamV3HSeXSYVT",
+        "range": {
+          "start_ms": 34000,
+          "end_ms": 42000
+        }
+      },
+      "condition_strength": "medium"
+    },
+    {
+      "text": "[Drop]\n{everything comes in on the first beat: a soft punchy kick on every beat, a warm bass line and warm pads}\n{a short plucked theme high up; a short lift on the last beat}",
+      "duration_ms": 6000,
+      "positive_styles": [
+        "warm modern electronic",
+        "120 BPM",
+        "A minor",
+        "instrumental",
+        "warm analog synths",
+        "clean mix",
+        "the drop",
+        "full groove from the first beat",
+        "a soft punchy kick on every beat",
+        "warm analog bass line",
+        "warm pads",
+        "a short plucked synth theme in a high register",
+        "hopeful and a little mysterious",
+        "a short lift on the last beat"
+      ],
+      "negative_styles": [
+        "vocals",
+        "lyrics",
+        "spoken word",
+        "choir",
+        "vocal chops",
+        "guitar",
+        "orchestra",
+        "distortion",
+        "lo-fi",
+        "harsh cymbals",
+        "busy lead melody",
+        "bright lead synth",
+        "arpeggios in the middle register",
+        "big cymbal crash",
+        "snare roll"
+      ],
+      "context_adherence": "high",
+      "conditioning_ref": {
+        "song_id": "FdfOzyCwamV3HSeXSYVT",
+        "range": {
+          "start_ms": 64000,
+          "end_ms": 72000
+        }
+      },
+      "condition_strength": "medium"
+    },
+    {
+      "song_id": "FdfOzyCwamV3HSeXSYVT",
+      "range": {
+        "start_ms": 16000,
+        "end_ms": 64000
+      }
+    },
+    {
+      "text": "[Access]\n{the groove with a clear soft kick on every beat, steady like a clock}",
+      "duration_ms": 4000,
+      "positive_styles": [
+        "warm modern electronic",
+        "120 BPM",
+        "A minor",
+        "instrumental",
+        "warm analog synths",
+        "clean mix",
+        "groove",
+        "a clear soft kick on every beat",
+        "steady like a clock",
+        "warm bass",
+        "soft plucks"
+      ],
+      "negative_styles": [
+        "vocals",
+        "lyrics",
+        "spoken word",
+        "choir",
+        "vocal chops",
+        "guitar",
+        "orchestra",
+        "distortion",
+        "lo-fi",
+        "harsh cymbals",
+        "busy lead melody",
+        "bright lead synth",
+        "arpeggios in the middle register",
+        "drum fills",
+        "melody"
+      ],
+      "context_adherence": "high",
+      "conditioning_ref": {
+        "song_id": "FdfOzyCwamV3HSeXSYVT",
+        "range": {
+          "start_ms": 34000,
+          "end_ms": 42000
+        }
+      },
+      "condition_strength": "medium"
+    },
+    {
+      "song_id": "FdfOzyCwamV3HSeXSYVT",
+      "range": {
+        "start_ms": 68000,
+        "end_ms": 90000
+      }
+    }
+  ],
+  "plan_i2": {
+    "doc": "i2: keep i1's rebirth (0-10 s, song UjIuYV4SPgJKaYqOye1J) and v2c's body; regenerate the drop and the access bars WITHOUT conditioning (i1's conditioned versions inherited v2c's kick-less style) and name the kick.",
+    "chunks": [
+      {
+        "song_id": "UjIuYV4SPgJKaYqOye1J",
+        "range": {
+          "start_ms": 0,
+          "end_ms": 10000
+        }
+      },
+      {
+        "text": "[Drop]\n{everything comes in on the first beat: a soft four-on-the-floor kick drum, a warm bass line and warm pads}\n{a short plucked theme high up; a short lift on the last beat}",
+        "duration_ms": 6000,
+        "positive_styles": [
+          "warm modern electronic",
+          "120 BPM",
+          "A minor",
+          "instrumental",
+          "warm analog synths",
+          "clean mix",
+          "the drop",
+          "a soft four-on-the-floor kick drum on every beat",
+          "full groove from the first beat",
+          "warm analog bass line",
+          "warm pads",
+          "a short plucked synth theme in a high register",
+          "hopeful and a little mysterious",
+          "a short lift on the last beat"
+        ],
+        "negative_styles": [
+          "vocals",
+          "lyrics",
+          "spoken word",
+          "choir",
+          "vocal chops",
+          "guitar",
+          "orchestra",
+          "distortion",
+          "lo-fi",
+          "harsh cymbals",
+          "busy lead melody",
+          "bright lead synth",
+          "arpeggios in the middle register",
+          "big cymbal crash",
+          "snare roll",
+          "beatless",
+          "ambient",
+          "no drums"
+        ],
+        "context_adherence": "medium"
+      },
+      {
+        "song_id": "FdfOzyCwamV3HSeXSYVT",
+        "range": {
+          "start_ms": 16000,
+          "end_ms": 64000
+        }
+      },
+      {
+        "text": "[Access]\n{a soft four-on-the-floor kick drum on every beat, steady like a clock, with the warm bass and soft plucks}",
+        "duration_ms": 4000,
+        "positive_styles": [
+          "warm modern electronic",
+          "120 BPM",
+          "A minor",
+          "instrumental",
+          "warm analog synths",
+          "clean mix",
+          "groove",
+          "a soft four-on-the-floor kick drum on every beat",
+          "steady like a clock",
+          "warm bass",
+          "soft plucks"
+        ],
+        "negative_styles": [
+          "vocals",
+          "lyrics",
+          "spoken word",
+          "choir",
+          "vocal chops",
+          "guitar",
+          "orchestra",
+          "distortion",
+          "lo-fi",
+          "harsh cymbals",
+          "busy lead melody",
+          "bright lead synth",
+          "arpeggios in the middle register",
+          "drum fills",
+          "melody",
+          "beatless",
+          "ambient",
+          "no drums"
+        ],
+        "context_adherence": "medium"
+      },
+      {
+        "song_id": "FdfOzyCwamV3HSeXSYVT",
+        "range": {
+          "start_ms": 68000,
+          "end_ms": 90000
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,730 @@
+{
+ "about": "Act 1's still plates: where every picture came from (04-asset-plan.md, section 1). Rejected takes stay in _takes/images (ignored by git). Prompts: scripts/images/prompts.json. Second cut (v2): every generation is listed with a status; takes are in out/act1-v2/takes (ignored by git); prompts in scripts/images/prompts-v2.json; finals in public/img/v2.",
+ "images": [
+  {
+   "id": "img-00",
+   "path": "scripts/images/ref/img-00-style.png",
+   "width": 2560,
+   "height": 1440,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/generations",
+   "date": "2026-11-10T17:23:12.204Z",
+   "prompt": "Photograph, 100 mm lens, shallow depth of field, taken at night in a dark room. Dim cool moonlight from the upper left. Deep violet-black shadows. Matte graphite plastic and soft worn rubber, fine dust, light scratches. Muted and slightly desaturated, with subtle film grain. No text, no letters, no digits, no symbols, no logos, no brand marks, no people, no hands.\n\nA still life on a dark table at night: a loose rubber keypad mat with twelve blank rounded keys and a small empty olive-green liquid-crystal display, side by side.\n\nEvery key top is completely blank and unprinted: no numbers, no letters, no marks of any kind on any key.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "2560x1440",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png"
+   },
+   "refs": [],
+   "take": "img-00-04",
+   "sha256": "0a1961fdfe5044b17fc18ef63bad659689750ae0e860073fca91e4c3856f8e4a",
+   "notes": "Style reference, not shown in the film. Clean at full size: no text, marks or logos."
+  },
+  {
+   "id": "img-01",
+   "path": "public/img/img-01-keypad-lit.png",
+   "width": 2560,
+   "height": 1440,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T17:24:24.002Z",
+   "prompt": "The first image is a flat layout guide; the second image is the style reference. Turn the guide into the photograph described below, with the light, colour, materials and grain of the style reference. Keep every shape exactly where the guide has it, with the same size, shape and spacing. The guide itself must not show: no flat grey, no outlines.\n\nPhotograph, 100 mm lens, shallow depth of field, taken at night in a dark room. Dim cool moonlight from the upper left. Deep violet-black shadows. Matte graphite plastic and soft worn rubber, fine dust, light scratches. Muted and slightly desaturated, with subtle film grain. No text, no letters, no digits, no symbols, no logos, no brand marks, no people, no hands.\n\nExtreme close-up of the keypad of a generic early-2000s mobile phone, seen almost straight from above, filling the frame. Twelve identical rounded-square soft-rubber keys in a grid of 3 columns and 4 rows, evenly spaced, every key blank. The keys are lit from underneath with a pale green glow, colour #c7f0d8, that leaks around their edges. Dark graphite plastic between the keys and below the last row. The frame is cropped inside the keypad: no screen, no outline of the device, no other buttons.\n\nEvery key top is completely blank and unprinted: no numbers, no letters, no marks of any kind on any key.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "2560x1440",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png"
+   },
+   "refs": [
+    {
+     "path": "scripts/images/guides/keypad.png",
+     "sha256": "846cdd36d679bf9f40819124799040d05f5b5cc3a8ccbe3b088ec4267018e640"
+    },
+    {
+     "path": "scripts/images/ref/img-00-style.png",
+     "sha256": "0a1961fdfe5044b17fc18ef63bad659689750ae0e860073fca91e4c3856f8e4a"
+    }
+   ],
+   "take": "img-01-02",
+   "sha256": "c8ff89ad3ce71bb5e68ce8ba19c15cba4e578e696f902930cadfa72bd9bd2315",
+   "notes": "Follows the guide: 12 blank rounded-square keys, 3 x 4, green glow around every key. No marks at full size."
+  },
+  {
+   "id": "img-02",
+   "path": "public/img/img-02-keypad-dark.png",
+   "width": 2560,
+   "height": 1440,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T17:27:26.300Z",
+   "prompt": "The same picture, unchanged in framing and detail, but the light under the keys is switched off. Only the moonlight remains.\n\nPhotograph, 100 mm lens, shallow depth of field, taken at night in a dark room. Dim cool moonlight from the upper left. Deep violet-black shadows. Matte graphite plastic and soft worn rubber, fine dust, light scratches. Muted and slightly desaturated, with subtle film grain. No text, no letters, no digits, no symbols, no logos, no brand marks, no people, no hands.\n\nEvery key top is completely blank and unprinted: no numbers, no letters, no marks of any kind on any key.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "2560x1440",
+    "quality": "high",
+    "n": 1,
+    "output_format": "png"
+   },
+   "refs": [
+    {
+     "path": "public/img/img-01-keypad-lit.png",
+     "sha256": "c8ff89ad3ce71bb5e68ce8ba19c15cba4e578e696f902930cadfa72bd9bd2315"
+    }
+   ],
+   "take": "img-02-01",
+   "sha256": "14df903ad296d44761b19e12ba59a1b58a0d668316247a9c5ace025fc4c1a661",
+   "notes": "Edit of IMG-01 with the light off. Checked against IMG-01 with an interleaved-stripe composite: key outlines line up within about 1-2 px; key-top texture differs slightly."
+  },
+  {
+   "id": "img-03",
+   "path": "public/img/img-03-worn-key.png",
+   "width": 2560,
+   "height": 1440,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T17:27:30.524Z",
+   "prompt": "A new photograph of the keypad in the first image: an extreme close-up of a single blank rounded-square rubber key on that keypad, filling the middle of the frame, worn smooth and shiny in the middle from years of use, its neighbours out of focus. Lit from underneath in pale green, colour #c7f0d8.\n\nPhotograph, 100 mm lens, shallow depth of field, taken at night in a dark room. Dim cool moonlight from the upper left. Deep violet-black shadows. Matte graphite plastic and soft worn rubber, fine dust, light scratches. Muted and slightly desaturated, with subtle film grain. No text, no letters, no digits, no symbols, no logos, no brand marks, no people, no hands.\n\nEvery key top is completely blank and unprinted: no numbers, no letters, no marks of any kind on any key.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "2560x1440",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png"
+   },
+   "refs": [
+    {
+     "path": "public/img/img-01-keypad-lit.png",
+     "sha256": "c8ff89ad3ce71bb5e68ce8ba19c15cba4e578e696f902930cadfa72bd9bd2315"
+    },
+    {
+     "path": "scripts/images/ref/img-00-style.png",
+     "sha256": "0a1961fdfe5044b17fc18ef63bad659689750ae0e860073fca91e4c3856f8e4a"
+    }
+   ],
+   "take": "img-03-01",
+   "sha256": "8a775b0b4ce5946ea922938b5534382cb608bff8f05fbc48ef9ceb5c561cb9f0",
+   "notes": "Straight-on worn key, neighbours out of focus, glow at the edges. The film draws a half-worn legend on it."
+  },
+  {
+   "id": "img-04",
+   "path": "public/img/img-04-screen-empty.png",
+   "width": 2560,
+   "height": 1440,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T17:33:12.199Z",
+   "prompt": "The first image is a flat layout guide; the second image is the style reference. Turn the guide into the photograph described below, with the light, colour, materials and grain of the style reference. Keep every shape exactly where the guide has it, with the same size, shape and spacing. The guide itself must not show: no flat grey, no outlines.\n\nPhotograph, 100 mm lens, shallow depth of field, taken at night in a dark room. Dim cool moonlight from the upper left. Deep violet-black shadows. Matte graphite plastic and soft worn rubber, fine dust, light scratches. Muted and slightly desaturated, with subtle film grain. No text, no letters, no digits, no symbols, no logos, no brand marks, no people, no hands.\n\nExtreme close-up, straight on, of a small monochrome liquid-crystal display behind a lightly scratched clear plastic window. The display is completely empty: no lit pixels, no icons, no text. Its ground is olive green, colour #c7f0d8, lit unevenly and a little brighter along the bottom edge. A dark graphite plastic bezel on all four sides fills the rest of the frame. The display area is a rectangle 7 wide by 4 high, centred, about 64% of the frame's width, exactly where the guide's light rectangle is.\n\nImportant: the display window is tall, not a strip. Its width to height ratio is 7 to 4 (1.75 to 1), exactly the light rectangle of the guide: about 64% of the frame wide and 64% of the frame high. The bezel around it is narrow at the top and bottom.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "2560x1440",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png"
+   },
+   "refs": [
+    {
+     "path": "scripts/images/guides/screen.png",
+     "sha256": "33b14977c327ee514cf156acc5291f1ae7821e9143c3b9e5832364b1fe042ea1"
+    },
+    {
+     "path": "scripts/images/ref/img-00-style.png",
+     "sha256": "0a1961fdfe5044b17fc18ef63bad659689750ae0e860073fca91e4c3856f8e4a"
+    }
+   ],
+   "take": "img-04-03",
+   "sha256": "dec66c16d9226e8fb7a6af552002d534a8474929c57c9b93c8b27df47a1ce8d9",
+   "notes": "Round 2 (round 1 take 01 had a 2.5:1 strip). The window is still wider than 7:4 (about 2.4:1): the film centres the 84 x 48 dot matrix in it as the active area. Scratched window, dusty bezel, no marks. The LCD ground is dark olive: PixelScreen lifts it with a backlight layer."
+  },
+  {
+   "id": "img-06",
+   "path": "public/img/img-06-phone-lit.png",
+   "width": 2560,
+   "height": 1440,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T17:27:36.010Z",
+   "prompt": "The first image is a flat layout guide; the second image is the style reference. Turn the guide into the photograph described below, with the light, colour, materials and grain of the style reference. Keep every shape exactly where the guide has it, with the same size, shape and spacing. The guide itself must not show: no flat grey, no outlines.\n\nPhotograph, 100 mm lens, shallow depth of field, taken at night in a dark room. Dim cool moonlight from the upper left. Deep violet-black shadows. Matte graphite plastic and soft worn rubber, fine dust, light scratches. Muted and slightly desaturated, with subtle film grain. No text, no letters, no digits, no symbols, no logos, no brand marks, no people, no hands.\n\nA small early-2000s mobile phone of a plain generic design, lying face up on a dark wooden table, seen from above at a slight angle, straight, its long side vertical in the frame, exactly where the guide's outline is. A simple rounded rectangular body in matte graphite plastic. A small rectangular display in the upper third, lit pale green, colour #c7f0d8, and completely empty. Below it, twelve identical rounded-square keys in a grid of 3 columns and 4 rows, evenly spaced, every key blank, lit from underneath in the same pale green that leaks around their edges. The third image is a close-up of this same phone's keypad: the keys must look exactly like those keys, only smaller. Nothing else on the front: no navigation key, no call or menu keys, no aerial, no patterned speaker grille, no maker's plate. An invented design that does not resemble any real phone model.\n\nEvery key top is completely blank and unprinted: no numbers, no letters, no marks of any kind on any key.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "2560x1440",
+    "quality": "high",
+    "n": 3,
+    "output_format": "png"
+   },
+   "refs": [
+    {
+     "path": "scripts/images/guides/phone.png",
+     "sha256": "575ef14486e4017ef224abb7bebf5612881c9b6d8f486686e1c24e568f584038"
+    },
+    {
+     "path": "scripts/images/ref/img-00-style.png",
+     "sha256": "0a1961fdfe5044b17fc18ef63bad659689750ae0e860073fca91e4c3856f8e4a"
+    },
+    {
+     "path": "public/img/img-01-keypad-lit.png",
+     "sha256": "c8ff89ad3ce71bb5e68ce8ba19c15cba4e578e696f902930cadfa72bd9bd2315"
+    }
+   ],
+   "take": "img-06-06",
+   "sha256": "38b2a47a806025cc1058d6d940a8c9e5d5a1216302587ddeb2dc76cad88f4bd5",
+   "notes": "Our own plain design: rounded graphite slab, one empty display, twelve identical blank rounded-square keys (3 x 4), nothing else on the front. Compared by eye with the well-known candybar, flip and slider handsets of 1998-2005: no navigation key, call keys, aerial, grille, plate or signature shape, so not mistakable for any of them."
+  },
+  {
+   "id": "img-07",
+   "path": "public/img/img-07-phone-dusty.png",
+   "width": 2560,
+   "height": 1440,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T17:31:40.834Z",
+   "prompt": "The same picture, unchanged in framing and detail, years later. The phone is switched off: its display and keys are dark. A fine, even layer of dust lies over the phone and the table. Only the moonlight remains.\n\nPhotograph, 100 mm lens, shallow depth of field, taken at night in a dark room. Dim cool moonlight from the upper left. Deep violet-black shadows. Matte graphite plastic and soft worn rubber, fine dust, light scratches. Muted and slightly desaturated, with subtle film grain. No text, no letters, no digits, no symbols, no logos, no brand marks, no people, no hands.\n\nEvery key top is completely blank and unprinted: no numbers, no letters, no marks of any kind on any key.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "2560x1440",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png"
+   },
+   "refs": [
+    {
+     "path": "public/img/img-06-phone-lit.png",
+     "sha256": "38b2a47a806025cc1058d6d940a8c9e5d5a1216302587ddeb2dc76cad88f4bd5"
+    }
+   ],
+   "take": "img-07-01",
+   "sha256": "033bfd90e3bf4d2d6923975b8964740a570332e5cb2875d070b07161eb76ebe9",
+   "notes": "Edit of IMG-06: the same phone in the same place (edge registration shift 0 px), switched off, under an even layer of dust. No marks."
+  },
+  {
+   "id": "v2-p1-master",
+   "path": "public/img/v2/v2-p1-master.png",
+   "width": 1440,
+   "height": 2560,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T20:33:34.123Z",
+   "prompt": "Image 1 is a line drawing of a product. Turn it into a photorealistic photograph of that product. Preserve the exact layout, proportions and perspective of the drawing; do not add new elements or text. The phone: an ordinary keypad mobile phone from about 2004, an invented design that copies no real model and carries no brand. A slim bar 106 mm tall, 46 mm wide and 19 mm thick: a softly rounded rectangle with 8 mm corner radii, gently rounded side edges and a smooth top edge with no aerial. Front cover in satin pewter-grey painted plastic with a faint metallic fleck; a thin seam runs around the sides where it meets the darker charcoal back cover. On the front, from top to bottom: a short horizontal earpiece slot; a clear acrylic lens with a thin black printed border around a small monochrome display, 34 mm wide and 26 mm tall, switched off, dark olive-grey glass showing no image; a row with a small pill-shaped key at each side and, between them, a round four-way navigation key with a separate round centre button; a second pill-shaped key at each side below the first; then twelve identical keys in three columns and four rows, each a wide rounded rectangle about 12.5 by 6.5 mm, in dark charcoal translucent rubber with a satin coating, evenly spaced in a straight grid; a tiny microphone hole near the bottom edge. Used for years: hairline scratches and fine swirl marks on the acrylic lens, a few deeper scratches, paint worn through to darker plastic on the corners, the most-used keys polished smooth and slightly glossy in the middle, a little grime in the seams. Scene: the phone lies face up on a dark matte surface, photographed from directly above with the lens axis exactly perpendicular to its face, from far away with a long lens so its edges stay parallel; centred, long side vertical, filling 90% of the frame height. Soft moonlight from the upper left grazes the keys and the lens; its reflection falls outside the display window. A real photograph, not a render or an illustration. Night in a dark room; the only light is cool, soft moonlight from a window at the upper left, with deep blue-violet shadows and natural falloff. Full-frame camera, 100 mm macro lens, ISO 3200, fine natural grain, subtle lens vignette. Muted, slightly desaturated colour. No studio lighting, no rim lights, no lens flare. Every key and the whole body are completely unprinted: no digits, no letters, no symbols, no icons, no logo, no brand name, no sticker, no text anywhere in the picture. No hands, no people. No curved or tilted key rows, no oval or teardrop keys, no joystick, no aerial, no patterned or coloured cover.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "1440x2560",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png",
+    "complexity": "high"
+   },
+   "refs": [
+    {
+     "path": "scripts/images/guides/phone-v2.png",
+     "sha256": "36c5987b4b2c52dc3a42e51faa2da84a8c2d3a49a19c0e93596b46c2081c6063"
+    }
+   ],
+   "take": "v2-p1-master-03",
+   "sha256": "fd966015b1fe2e27a1497b62c787ca67a9df0f6b7b0306dcc9ee4fd89a7e4aae",
+   "status": "chosen",
+   "notes": "Master. Real keypad-phone anatomy from the line drawing; keys and body blank at 100%; dark scratched screen; worn corners. More contrast and wear than take 04."
+  },
+  {
+   "id": "v2-p1-master-01",
+   "path": "out/act1-v2/takes/v2-p1-master/v2-p1-master-01.png",
+   "width": 1440,
+   "height": 2560,
+   "model": "gpt-image-2.6-flare",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T20:32:24.971Z",
+   "prompt": "Image 1 is a line drawing of a product. Turn it into a photorealistic photograph of that product. Preserve the exact layout, proportions and perspective of the drawing; do not add new elements or text. The phone: an ordinary keypad mobile phone from about 2004, an invented design that copies no real model and carries no brand. A slim bar 106 mm tall, 46 mm wide and 19 mm thick: a softly rounded rectangle with 8 mm corner radii, gently rounded side edges and a smooth top edge with no aerial. Front cover in satin pewter-grey painted plastic with a faint metallic fleck; a thin seam runs around the sides where it meets the darker charcoal back cover. On the front, from top to bottom: a short horizontal earpiece slot; a clear acrylic lens with a thin black printed border around a small monochrome display, 34 mm wide and 26 mm tall, switched off, dark olive-grey glass showing no image; a row with a small pill-shaped key at each side and, between them, a round four-way navigation key with a separate round centre button; a second pill-shaped key at each side below the first; then twelve identical keys in three columns and four rows, each a wide rounded rectangle about 12.5 by 6.5 mm, in dark charcoal translucent rubber with a satin coating, evenly spaced in a straight grid; a tiny microphone hole near the bottom edge. Used for years: hairline scratches and fine swirl marks on the acrylic lens, a few deeper scratches, paint worn through to darker plastic on the corners, the most-used keys polished smooth and slightly glossy in the middle, a little grime in the seams. Scene: the phone lies face up on a dark matte surface, photographed from directly above with the lens axis exactly perpendicular to its face, from far away with a long lens so its edges stay parallel; centred, long side vertical, filling 90% of the frame height. Soft moonlight from the upper left grazes the keys and the lens; its reflection falls outside the display window. A real photograph, not a render or an illustration. Night in a dark room; the only light is cool, soft moonlight from a window at the upper left, with deep blue-violet shadows and natural falloff. Full-frame camera, 100 mm macro lens, ISO 3200, fine natural grain, subtle lens vignette. Muted, slightly desaturated colour. No studio lighting, no rim lights, no lens flare. Every key and the whole body are completely unprinted: no digits, no letters, no symbols, no icons, no logo, no brand name, no sticker, no text anywhere in the picture. No hands, no people. No curved or tilted key rows, no oval or teardrop keys, no joystick, no aerial, no patterned or coloured cover.",
+   "params": {
+    "model": "gpt-image-2.6-flare",
+    "size": "1440x2560",
+    "quality": "medium",
+    "n": 2,
+    "output_format": "png",
+    "complexity": "high"
+   },
+   "refs": [
+    {
+     "path": "scripts/images/guides/phone-v2.png",
+     "sha256": "36c5987b4b2c52dc3a42e51faa2da84a8c2d3a49a19c0e93596b46c2081c6063"
+    }
+   ],
+   "take": "v2-p1-master-01",
+   "sha256": "8bbefb15950fae69dffaad1f94ec04dc5d1901a162be02fa204fc698767003b0",
+   "status": "rejected",
+   "notes": "Flare draft: good, but a lighter grey navigation ring than the keys."
+  },
+  {
+   "id": "v2-p1-master-02",
+   "path": "out/act1-v2/takes/v2-p1-master/v2-p1-master-02.png",
+   "width": 1440,
+   "height": 2560,
+   "model": "gpt-image-2.6-flare",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T20:32:24.971Z",
+   "prompt": "Image 1 is a line drawing of a product. Turn it into a photorealistic photograph of that product. Preserve the exact layout, proportions and perspective of the drawing; do not add new elements or text. The phone: an ordinary keypad mobile phone from about 2004, an invented design that copies no real model and carries no brand. A slim bar 106 mm tall, 46 mm wide and 19 mm thick: a softly rounded rectangle with 8 mm corner radii, gently rounded side edges and a smooth top edge with no aerial. Front cover in satin pewter-grey painted plastic with a faint metallic fleck; a thin seam runs around the sides where it meets the darker charcoal back cover. On the front, from top to bottom: a short horizontal earpiece slot; a clear acrylic lens with a thin black printed border around a small monochrome display, 34 mm wide and 26 mm tall, switched off, dark olive-grey glass showing no image; a row with a small pill-shaped key at each side and, between them, a round four-way navigation key with a separate round centre button; a second pill-shaped key at each side below the first; then twelve identical keys in three columns and four rows, each a wide rounded rectangle about 12.5 by 6.5 mm, in dark charcoal translucent rubber with a satin coating, evenly spaced in a straight grid; a tiny microphone hole near the bottom edge. Used for years: hairline scratches and fine swirl marks on the acrylic lens, a few deeper scratches, paint worn through to darker plastic on the corners, the most-used keys polished smooth and slightly glossy in the middle, a little grime in the seams. Scene: the phone lies face up on a dark matte surface, photographed from directly above with the lens axis exactly perpendicular to its face, from far away with a long lens so its edges stay parallel; centred, long side vertical, filling 90% of the frame height. Soft moonlight from the upper left grazes the keys and the lens; its reflection falls outside the display window. A real photograph, not a render or an illustration. Night in a dark room; the only light is cool, soft moonlight from a window at the upper left, with deep blue-violet shadows and natural falloff. Full-frame camera, 100 mm macro lens, ISO 3200, fine natural grain, subtle lens vignette. Muted, slightly desaturated colour. No studio lighting, no rim lights, no lens flare. Every key and the whole body are completely unprinted: no digits, no letters, no symbols, no icons, no logo, no brand name, no sticker, no text anywhere in the picture. No hands, no people. No curved or tilted key rows, no oval or teardrop keys, no joystick, no aerial, no patterned or coloured cover.",
+   "params": {
+    "model": "gpt-image-2.6-flare",
+    "size": "1440x2560",
+    "quality": "medium",
+    "n": 2,
+    "output_format": "png",
+    "complexity": "high"
+   },
+   "refs": [
+    {
+     "path": "scripts/images/guides/phone-v2.png",
+     "sha256": "36c5987b4b2c52dc3a42e51faa2da84a8c2d3a49a19c0e93596b46c2081c6063"
+    }
+   ],
+   "take": "v2-p1-master-02",
+   "sha256": "601f069cb8780b6db17c442e741bdd7f706faa5a539917ad4a736c801111450b",
+   "status": "rejected",
+   "notes": "Flare draft: good; superseded by the final-quality takes."
+  },
+  {
+   "id": "v2-p1-master-04",
+   "path": "out/act1-v2/takes/v2-p1-master/v2-p1-master-04.png",
+   "width": 1440,
+   "height": 2560,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T20:33:34.123Z",
+   "prompt": "Image 1 is a line drawing of a product. Turn it into a photorealistic photograph of that product. Preserve the exact layout, proportions and perspective of the drawing; do not add new elements or text. The phone: an ordinary keypad mobile phone from about 2004, an invented design that copies no real model and carries no brand. A slim bar 106 mm tall, 46 mm wide and 19 mm thick: a softly rounded rectangle with 8 mm corner radii, gently rounded side edges and a smooth top edge with no aerial. Front cover in satin pewter-grey painted plastic with a faint metallic fleck; a thin seam runs around the sides where it meets the darker charcoal back cover. On the front, from top to bottom: a short horizontal earpiece slot; a clear acrylic lens with a thin black printed border around a small monochrome display, 34 mm wide and 26 mm tall, switched off, dark olive-grey glass showing no image; a row with a small pill-shaped key at each side and, between them, a round four-way navigation key with a separate round centre button; a second pill-shaped key at each side below the first; then twelve identical keys in three columns and four rows, each a wide rounded rectangle about 12.5 by 6.5 mm, in dark charcoal translucent rubber with a satin coating, evenly spaced in a straight grid; a tiny microphone hole near the bottom edge. Used for years: hairline scratches and fine swirl marks on the acrylic lens, a few deeper scratches, paint worn through to darker plastic on the corners, the most-used keys polished smooth and slightly glossy in the middle, a little grime in the seams. Scene: the phone lies face up on a dark matte surface, photographed from directly above with the lens axis exactly perpendicular to its face, from far away with a long lens so its edges stay parallel; centred, long side vertical, filling 90% of the frame height. Soft moonlight from the upper left grazes the keys and the lens; its reflection falls outside the display window. A real photograph, not a render or an illustration. Night in a dark room; the only light is cool, soft moonlight from a window at the upper left, with deep blue-violet shadows and natural falloff. Full-frame camera, 100 mm macro lens, ISO 3200, fine natural grain, subtle lens vignette. Muted, slightly desaturated colour. No studio lighting, no rim lights, no lens flare. Every key and the whole body are completely unprinted: no digits, no letters, no symbols, no icons, no logo, no brand name, no sticker, no text anywhere in the picture. No hands, no people. No curved or tilted key rows, no oval or teardrop keys, no joystick, no aerial, no patterned or coloured cover.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "1440x2560",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png",
+    "complexity": "high"
+   },
+   "refs": [
+    {
+     "path": "scripts/images/guides/phone-v2.png",
+     "sha256": "36c5987b4b2c52dc3a42e51faa2da84a8c2d3a49a19c0e93596b46c2081c6063"
+    }
+   ],
+   "take": "v2-p1-master-04",
+   "sha256": "0b75b2c2b4439a4083f237b9bee872a85f445cf48ac2da540498ea600f9c8843",
+   "status": "rejected",
+   "notes": "Good, but flatter light and less wear than take 03."
+  },
+  {
+   "id": "v2-p2-lit",
+   "path": "public/img/v2/v2-p2-lit.png",
+   "width": 2560,
+   "height": 1440,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T20:40:05.707Z",
+   "prompt": "Image 1 is the approved photograph. Change only the light: switch on the phone's backlights. The display glows evenly in soft pale yellow-green, a little brighter along its lower edge, and shows no image, text or pixels. All keys are lit from beneath with the same light, which leaks softly around each key's edge and glows faintly through the rubber; the glow spills a little onto the surfaces around the phone and catches the dust. Keep everything else exactly as it is: framing, phone geometry and position, every key, scratches, dust, moonlight and shadows. Every key and the whole body are completely unprinted: no digits, no letters, no symbols, no icons, no logo, no brand name, no sticker, no text anywhere in the picture. No hands, no people. No curved or tilted key rows, no oval or teardrop keys, no joystick, no aerial, no patterned or coloured cover.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "2560x1440",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png",
+    "complexity": "low"
+   },
+   "refs": [
+    {
+     "path": "public/img/v2/v2-p2-macro.png",
+     "sha256": "cbb107d15fdca91c60281b62f54f47af70f70d70b7478a618941851304265074"
+    }
+   ],
+   "take": "v2-p2-lit-01",
+   "sha256": "7f58d52a60c1dc03fdc73326baa228381fb92b09ea82bfc6dfd7a6c405f52789",
+   "status": "chosen",
+   "notes": "Light pass for the typing shots. Within 1 px (dx 0, dy -1). Even screen glow with the window reflection kept; light through the soft keys and round the navigation key; no text."
+  },
+  {
+   "id": "v2-p2-lit-02",
+   "path": "out/act1-v2/takes/v2-p2-lit/v2-p2-lit-02.png",
+   "width": 2560,
+   "height": 1440,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T20:40:05.707Z",
+   "prompt": "Image 1 is the approved photograph. Change only the light: switch on the phone's backlights. The display glows evenly in soft pale yellow-green, a little brighter along its lower edge, and shows no image, text or pixels. All keys are lit from beneath with the same light, which leaks softly around each key's edge and glows faintly through the rubber; the glow spills a little onto the surfaces around the phone and catches the dust. Keep everything else exactly as it is: framing, phone geometry and position, every key, scratches, dust, moonlight and shadows. Every key and the whole body are completely unprinted: no digits, no letters, no symbols, no icons, no logo, no brand name, no sticker, no text anywhere in the picture. No hands, no people. No curved or tilted key rows, no oval or teardrop keys, no joystick, no aerial, no patterned or coloured cover.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "2560x1440",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png",
+    "complexity": "low"
+   },
+   "refs": [
+    {
+     "path": "public/img/v2/v2-p2-macro.png",
+     "sha256": "cbb107d15fdca91c60281b62f54f47af70f70d70b7478a618941851304265074"
+    }
+   ],
+   "take": "v2-p2-lit-02",
+   "sha256": "53552294d970d3b027b42b2bda2bc5c7af2c241ae9ad0b5775d0650e1e5787a2",
+   "status": "rejected",
+   "notes": "Aligned (dy -1) and good; take 01 matches the drawer's light pass (light through the rubber)."
+  },
+  {
+   "id": "v2-p2-macro",
+   "path": "public/img/v2/v2-p2-macro.png",
+   "width": 2560,
+   "height": 1440,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T20:38:55.950Z",
+   "prompt": "Image 1 is the phone: keep its exact design. The phone: an ordinary keypad mobile phone from about 2004, an invented design that copies no real model and carries no brand. A slim bar 106 mm tall, 46 mm wide and 19 mm thick: a softly rounded rectangle with 8 mm corner radii, gently rounded side edges and a smooth top edge with no aerial. Front cover in satin pewter-grey painted plastic with a faint metallic fleck; a thin seam runs around the sides where it meets the darker charcoal back cover. On the front, from top to bottom: a short horizontal earpiece slot; a clear acrylic lens with a thin black printed border around a small monochrome display, 34 mm wide and 26 mm tall, switched off, dark olive-grey glass showing no image; a row with a small pill-shaped key at each side and, between them, a round four-way navigation key with a separate round centre button; a second pill-shaped key at each side below the first; then twelve identical keys in three columns and four rows, each a wide rounded rectangle about 12.5 by 6.5 mm, in dark charcoal translucent rubber with a satin coating, evenly spaced in a straight grid; a tiny microphone hole near the bottom edge. Image 2 is the scene: keep its light, dust and drawer. New photograph: an extreme macro of the same dusty phone lying in the drawer, taken from the keypad end with the camera tilted 35 degrees off the phone's face. The display window is sharp in the upper middle of the frame and fills about 60% of the frame width; the navigation key and the top row of keys are large and softly out of focus across the bottom of the frame. 100 mm macro lens at f/8. The display is switched off: dark olive-grey glass behind the acrylic lens, fine dust and hairline scratches on the lens, a faint cool reflection of the window along its upper edge. A real photograph, not a render or an illustration. Night in a dark room; the only light is cool, soft moonlight from a window at the upper left, with deep blue-violet shadows and natural falloff. Full-frame camera, 100 mm macro lens, ISO 3200, fine natural grain, subtle lens vignette. Muted, slightly desaturated colour. No studio lighting, no rim lights, no lens flare. Every key and the whole body are completely unprinted: no digits, no letters, no symbols, no icons, no logo, no brand name, no sticker, no text anywhere in the picture. No hands, no people. No curved or tilted key rows, no oval or teardrop keys, no joystick, no aerial, no patterned or coloured cover.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "2560x1440",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png",
+    "complexity": "high"
+   },
+   "refs": [
+    {
+     "path": "public/img/v2/v2-p1-master.png",
+     "sha256": "fd966015b1fe2e27a1497b62c787ca67a9df0f6b7b0306dcc9ee4fd89a7e4aae"
+    },
+    {
+     "path": "public/img/v2/v2-p5-drawer.png",
+     "sha256": "29859fb051b0df2c42c1ba313f412217733e276717a908bec6c48664e056990c"
+    }
+   ],
+   "take": "v2-p2-macro-01",
+   "sha256": "cbb107d15fdca91c60281b62f54f47af70f70d70b7478a618941851304265074",
+   "status": "chosen",
+   "notes": "Angled macro: the screen large and sharp, scratches, dust and a cool window reflection along its top; the phone matches the master; no text at 100%. The soft keys and navigation key came out sharper than asked (soft blur can be added in code)."
+  },
+  {
+   "id": "v2-p2-macro-02",
+   "path": "out/act1-v2/takes/v2-p2-macro/v2-p2-macro-02.png",
+   "width": 2560,
+   "height": 1440,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T20:38:55.950Z",
+   "prompt": "Image 1 is the phone: keep its exact design. The phone: an ordinary keypad mobile phone from about 2004, an invented design that copies no real model and carries no brand. A slim bar 106 mm tall, 46 mm wide and 19 mm thick: a softly rounded rectangle with 8 mm corner radii, gently rounded side edges and a smooth top edge with no aerial. Front cover in satin pewter-grey painted plastic with a faint metallic fleck; a thin seam runs around the sides where it meets the darker charcoal back cover. On the front, from top to bottom: a short horizontal earpiece slot; a clear acrylic lens with a thin black printed border around a small monochrome display, 34 mm wide and 26 mm tall, switched off, dark olive-grey glass showing no image; a row with a small pill-shaped key at each side and, between them, a round four-way navigation key with a separate round centre button; a second pill-shaped key at each side below the first; then twelve identical keys in three columns and four rows, each a wide rounded rectangle about 12.5 by 6.5 mm, in dark charcoal translucent rubber with a satin coating, evenly spaced in a straight grid; a tiny microphone hole near the bottom edge. Image 2 is the scene: keep its light, dust and drawer. New photograph: an extreme macro of the same dusty phone lying in the drawer, taken from the keypad end with the camera tilted 35 degrees off the phone's face. The display window is sharp in the upper middle of the frame and fills about 60% of the frame width; the navigation key and the top row of keys are large and softly out of focus across the bottom of the frame. 100 mm macro lens at f/8. The display is switched off: dark olive-grey glass behind the acrylic lens, fine dust and hairline scratches on the lens, a faint cool reflection of the window along its upper edge. A real photograph, not a render or an illustration. Night in a dark room; the only light is cool, soft moonlight from a window at the upper left, with deep blue-violet shadows and natural falloff. Full-frame camera, 100 mm macro lens, ISO 3200, fine natural grain, subtle lens vignette. Muted, slightly desaturated colour. No studio lighting, no rim lights, no lens flare. Every key and the whole body are completely unprinted: no digits, no letters, no symbols, no icons, no logo, no brand name, no sticker, no text anywhere in the picture. No hands, no people. No curved or tilted key rows, no oval or teardrop keys, no joystick, no aerial, no patterned or coloured cover.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "2560x1440",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png",
+    "complexity": "high"
+   },
+   "refs": [
+    {
+     "path": "public/img/v2/v2-p1-master.png",
+     "sha256": "fd966015b1fe2e27a1497b62c787ca67a9df0f6b7b0306dcc9ee4fd89a7e4aae"
+    },
+    {
+     "path": "public/img/v2/v2-p5-drawer.png",
+     "sha256": "29859fb051b0df2c42c1ba313f412217733e276717a908bec6c48664e056990c"
+    }
+   ],
+   "take": "v2-p2-macro-02",
+   "sha256": "652e2fea6daf58c19036f5a9745ee7ce7f4c50989cb45e2fb8ecc0263417647a",
+   "status": "rejected",
+   "notes": "Good, but the screen is smaller in frame than take 01, so typed text would read smaller."
+  },
+  {
+   "id": "v2-p3-fix",
+   "path": "public/img/v2/v2-p3-keypad.png",
+   "width": 3840,
+   "height": 2160,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T20:43:18.995Z",
+   "prompt": "Image 1 is the approved photograph. Change only two things. First, remove the small scratched marks in the lower middle of the left key in the third row, so that key is as plain as the others. Second, give the phone and its keys the same fine, even layer of grey dust as the phone in image 2, settled in the seams and around the keys, with the polished centres of the keys still faintly visible. Keep everything else exactly as it is: framing, the phone's geometry and position, every key's shape and place, the scratches, the light and the shadows. Every key and the whole body are completely unprinted: no digits, no letters, no symbols, no icons, no logo, no brand name, no sticker, no text anywhere in the picture. No hands, no people. No curved or tilted key rows, no oval or teardrop keys, no joystick, no aerial, no patterned or coloured cover.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "3840x2160",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png",
+    "complexity": "low"
+   },
+   "refs": [
+    {
+     "path": "out/act1-v2/takes/v2-p3-keypad/v2-p3-keypad-02.png",
+     "sha256": "f1a260ae0cb33647ac994be983bc2f433fd9b026c279ac938a1cb41b0983edb7"
+    },
+    {
+     "path": "public/img/v2/v2-p5-drawer.png",
+     "sha256": "29859fb051b0df2c42c1ba313f412217733e276717a908bec6c48664e056990c"
+    }
+   ],
+   "take": "v2-p3-fix-01",
+   "sha256": "752530c68d9e1cea3934ae4e3c0f1f9193284efd01d8a3b72987390b696cd2c7",
+   "status": "chosen",
+   "notes": "The keypad plate (saved as v2-p3-keypad.png). Keypad-02 with the digit-like marks removed and the drawer's dust added; framing identical to keypad-02 (shift 0, 0); twelve keys straight on; coins and watch dial plain; no text at 100%."
+  },
+  {
+   "id": "v2-p3-fix-02",
+   "path": "out/act1-v2/takes/v2-p3-fix/v2-p3-fix-02.png",
+   "width": 3840,
+   "height": 2160,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T20:43:18.995Z",
+   "prompt": "Image 1 is the approved photograph. Change only two things. First, remove the small scratched marks in the lower middle of the left key in the third row, so that key is as plain as the others. Second, give the phone and its keys the same fine, even layer of grey dust as the phone in image 2, settled in the seams and around the keys, with the polished centres of the keys still faintly visible. Keep everything else exactly as it is: framing, the phone's geometry and position, every key's shape and place, the scratches, the light and the shadows. Every key and the whole body are completely unprinted: no digits, no letters, no symbols, no icons, no logo, no brand name, no sticker, no text anywhere in the picture. No hands, no people. No curved or tilted key rows, no oval or teardrop keys, no joystick, no aerial, no patterned or coloured cover.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "3840x2160",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png",
+    "complexity": "low"
+   },
+   "refs": [
+    {
+     "path": "out/act1-v2/takes/v2-p3-keypad/v2-p3-keypad-02.png",
+     "sha256": "f1a260ae0cb33647ac994be983bc2f433fd9b026c279ac938a1cb41b0983edb7"
+    },
+    {
+     "path": "public/img/v2/v2-p5-drawer.png",
+     "sha256": "29859fb051b0df2c42c1ba313f412217733e276717a908bec6c48664e056990c"
+    }
+   ],
+   "take": "v2-p3-fix-02",
+   "sha256": "e31d523cc15fd572fe0d56e510a70b034ad334ccf6d2153ae9c2fa06df46ba65",
+   "status": "rejected",
+   "notes": "Also clean, but a lighter haze and less contrast than fix-01."
+  },
+  {
+   "id": "v2-p3-keypad-01",
+   "path": "out/act1-v2/takes/v2-p3-keypad/v2-p3-keypad-01.png",
+   "width": 3840,
+   "height": 2160,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T20:41:36.679Z",
+   "prompt": "Image 1 is the phone, image 2 the scene. The phone: an ordinary keypad mobile phone from about 2004, an invented design that copies no real model and carries no brand. A slim bar 106 mm tall, 46 mm wide and 19 mm thick: a softly rounded rectangle with 8 mm corner radii, gently rounded side edges and a smooth top edge with no aerial. Front cover in satin pewter-grey painted plastic with a faint metallic fleck; a thin seam runs around the sides where it meets the darker charcoal back cover. On the front, from top to bottom: a short horizontal earpiece slot; a clear acrylic lens with a thin black printed border around a small monochrome display, 34 mm wide and 26 mm tall, switched off, dark olive-grey glass showing no image; a row with a small pill-shaped key at each side and, between them, a round four-way navigation key with a separate round centre button; a second pill-shaped key at each side below the first; then twelve identical keys in three columns and four rows, each a wide rounded rectangle about 12.5 by 6.5 mm, in dark charcoal translucent rubber with a satin coating, evenly spaced in a straight grid; a tiny microphone hole near the bottom edge. New photograph: straight down onto the keypad of the same dusty phone in the drawer, the lens axis perpendicular to the keys; the twelve keys fill the frame height and are sharp; the navigation key is cut off at the top edge. 100 mm macro lens at f/11. Keys unlit. Used for years: hairline scratches and fine swirl marks on the acrylic lens, a few deeper scratches, paint worn through to darker plastic on the corners, the most-used keys polished smooth and slightly glossy in the middle, a little grime in the seams. A real photograph, not a render or an illustration. Night in a dark room; the only light is cool, soft moonlight from a window at the upper left, with deep blue-violet shadows and natural falloff. Full-frame camera, 100 mm macro lens, ISO 3200, fine natural grain, subtle lens vignette. Muted, slightly desaturated colour. No studio lighting, no rim lights, no lens flare. Every key and the whole body are completely unprinted: no digits, no letters, no symbols, no icons, no logo, no brand name, no sticker, no text anywhere in the picture. No hands, no people. No curved or tilted key rows, no oval or teardrop keys, no joystick, no aerial, no patterned or coloured cover.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "3840x2160",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png",
+    "complexity": "high"
+   },
+   "refs": [
+    {
+     "path": "public/img/v2/v2-p1-master.png",
+     "sha256": "fd966015b1fe2e27a1497b62c787ca67a9df0f6b7b0306dcc9ee4fd89a7e4aae"
+    },
+    {
+     "path": "public/img/v2/v2-p5-drawer.png",
+     "sha256": "29859fb051b0df2c42c1ba313f412217733e276717a908bec6c48664e056990c"
+    }
+   ],
+   "take": "v2-p3-keypad-01",
+   "sha256": "b370a0204e163490d9c7ffa8e89841f6b9592335152fb7f9e89b1b5a8cec9f3c",
+   "status": "rejected",
+   "notes": "Only nine keys in three rows: fails the twelve-key check."
+  },
+  {
+   "id": "v2-p3-keypad-02",
+   "path": "out/act1-v2/takes/v2-p3-keypad/v2-p3-keypad-02.png",
+   "width": 3840,
+   "height": 2160,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T20:41:36.679Z",
+   "prompt": "Image 1 is the phone, image 2 the scene. The phone: an ordinary keypad mobile phone from about 2004, an invented design that copies no real model and carries no brand. A slim bar 106 mm tall, 46 mm wide and 19 mm thick: a softly rounded rectangle with 8 mm corner radii, gently rounded side edges and a smooth top edge with no aerial. Front cover in satin pewter-grey painted plastic with a faint metallic fleck; a thin seam runs around the sides where it meets the darker charcoal back cover. On the front, from top to bottom: a short horizontal earpiece slot; a clear acrylic lens with a thin black printed border around a small monochrome display, 34 mm wide and 26 mm tall, switched off, dark olive-grey glass showing no image; a row with a small pill-shaped key at each side and, between them, a round four-way navigation key with a separate round centre button; a second pill-shaped key at each side below the first; then twelve identical keys in three columns and four rows, each a wide rounded rectangle about 12.5 by 6.5 mm, in dark charcoal translucent rubber with a satin coating, evenly spaced in a straight grid; a tiny microphone hole near the bottom edge. New photograph: straight down onto the keypad of the same dusty phone in the drawer, the lens axis perpendicular to the keys; the twelve keys fill the frame height and are sharp; the navigation key is cut off at the top edge. 100 mm macro lens at f/11. Keys unlit. Used for years: hairline scratches and fine swirl marks on the acrylic lens, a few deeper scratches, paint worn through to darker plastic on the corners, the most-used keys polished smooth and slightly glossy in the middle, a little grime in the seams. A real photograph, not a render or an illustration. Night in a dark room; the only light is cool, soft moonlight from a window at the upper left, with deep blue-violet shadows and natural falloff. Full-frame camera, 100 mm macro lens, ISO 3200, fine natural grain, subtle lens vignette. Muted, slightly desaturated colour. No studio lighting, no rim lights, no lens flare. Every key and the whole body are completely unprinted: no digits, no letters, no symbols, no icons, no logo, no brand name, no sticker, no text anywhere in the picture. No hands, no people. No curved or tilted key rows, no oval or teardrop keys, no joystick, no aerial, no patterned or coloured cover.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "3840x2160",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png",
+    "complexity": "high"
+   },
+   "refs": [
+    {
+     "path": "public/img/v2/v2-p1-master.png",
+     "sha256": "fd966015b1fe2e27a1497b62c787ca67a9df0f6b7b0306dcc9ee4fd89a7e4aae"
+    },
+    {
+     "path": "public/img/v2/v2-p5-drawer.png",
+     "sha256": "29859fb051b0df2c42c1ba313f412217733e276717a908bec6c48664e056990c"
+    }
+   ],
+   "take": "v2-p3-keypad-02",
+   "sha256": "f1a260ae0cb33647ac994be983bc2f433fd9b026c279ac938a1cb41b0983edb7",
+   "status": "rejected",
+   "notes": "Twelve keys, straight on, but faint scratched marks on the left key of the third row read like the digits 43, and the phone is cleaner than the drawer plate. Used as image 1 of v2-p3-fix."
+  },
+  {
+   "id": "v2-p3-lit",
+   "path": "public/img/v2/v2-p3-lit.png",
+   "width": 3840,
+   "height": 2160,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T20:44:54.092Z",
+   "prompt": "Image 1 is the approved photograph. Change only the light: switch on the phone's backlights. The display glows evenly in soft pale yellow-green, a little brighter along its lower edge, and shows no image, text or pixels. All keys are lit from beneath with the same light, which leaks softly around each key's edge and glows faintly through the rubber; the glow spills a little onto the surfaces around the phone and catches the dust. Keep everything else exactly as it is: framing, phone geometry and position, every key, scratches, dust, moonlight and shadows. Every key and the whole body are completely unprinted: no digits, no letters, no symbols, no icons, no logo, no brand name, no sticker, no text anywhere in the picture. No hands, no people. No curved or tilted key rows, no oval or teardrop keys, no joystick, no aerial, no patterned or coloured cover.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "3840x2160",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png",
+    "complexity": "low"
+   },
+   "refs": [
+    {
+     "path": "public/img/v2/v2-p3-keypad.png",
+     "sha256": "752530c68d9e1cea3934ae4e3c0f1f9193284efd01d8a3b72987390b696cd2c7"
+    }
+   ],
+   "take": "v2-p3-lit-02",
+   "sha256": "1d01ab1b318bc3241519f6d6b425c5cc72c5c03a3f59c6bef64c82675ece9a4b",
+   "status": "chosen",
+   "notes": "Light pass for the Act 2 'same keys' handover. Exactly aligned (shift 0, 0). Light leaks round every key and the navigation key; key faces stay dark, so legends drawn in code stand out. No text."
+  },
+  {
+   "id": "v2-p3-lit-01",
+   "path": "out/act1-v2/takes/v2-p3-lit/v2-p3-lit-01.png",
+   "width": 3840,
+   "height": 2160,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T20:44:54.092Z",
+   "prompt": "Image 1 is the approved photograph. Change only the light: switch on the phone's backlights. The display glows evenly in soft pale yellow-green, a little brighter along its lower edge, and shows no image, text or pixels. All keys are lit from beneath with the same light, which leaks softly around each key's edge and glows faintly through the rubber; the glow spills a little onto the surfaces around the phone and catches the dust. Keep everything else exactly as it is: framing, phone geometry and position, every key, scratches, dust, moonlight and shadows. Every key and the whole body are completely unprinted: no digits, no letters, no symbols, no icons, no logo, no brand name, no sticker, no text anywhere in the picture. No hands, no people. No curved or tilted key rows, no oval or teardrop keys, no joystick, no aerial, no patterned or coloured cover.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "3840x2160",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png",
+    "complexity": "low"
+   },
+   "refs": [
+    {
+     "path": "public/img/v2/v2-p3-keypad.png",
+     "sha256": "752530c68d9e1cea3934ae4e3c0f1f9193284efd01d8a3b72987390b696cd2c7"
+    }
+   ],
+   "take": "v2-p3-lit-01",
+   "sha256": "16420fb253110a1cfa5a243f9c1932da57629fc8c44a8a3d1ca2242116152461",
+   "status": "rejected",
+   "notes": "Good and brighter (light through the whole key faces), but 2 px lower than the plate (dy 2); kept as an alternative."
+  },
+  {
+   "id": "v2-p5-drawer",
+   "path": "public/img/v2/v2-p5-drawer.png",
+   "width": 2560,
+   "height": 1440,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T20:34:49.549Z",
+   "prompt": "Image 1 shows a phone: keep its exact design, proportions, materials and colours. The phone: an ordinary keypad mobile phone from about 2004, an invented design that copies no real model and carries no brand. A slim bar 106 mm tall, 46 mm wide and 19 mm thick: a softly rounded rectangle with 8 mm corner radii, gently rounded side edges and a smooth top edge with no aerial. Front cover in satin pewter-grey painted plastic with a faint metallic fleck; a thin seam runs around the sides where it meets the darker charcoal back cover. On the front, from top to bottom: a short horizontal earpiece slot; a clear acrylic lens with a thin black printed border around a small monochrome display, 34 mm wide and 26 mm tall, switched off, dark olive-grey glass showing no image; a row with a small pill-shaped key at each side and, between them, a round four-way navigation key with a separate round centre button; a second pill-shaped key at each side below the first; then twelve identical keys in three columns and four rows, each a wide rounded rectangle about 12.5 by 6.5 mm, in dark charcoal translucent rubber with a satin coating, evenly spaced in a straight grid; a tiny microphone hole near the bottom edge. New photograph. A real photograph, not a render or an illustration. Night in a dark room; the only light is cool, soft moonlight from a window at the upper left, with deep blue-violet shadows and natural falloff. Full-frame camera, 100 mm macro lens, ISO 3200, fine natural grain, subtle lens vignette. Muted, slightly desaturated colour. No studio lighting, no rim lights, no lens flare. Looking straight down into an open wooden drawer of forgotten things; a soft band of moonlight from the upper left falls across it. Inside, the phone from image 1 lies face up, switched off, near the centre, long side vertical, filling about 55% of the frame height, its face parallel to the picture, among a loose tangle of old charger cables, a cassette tape with a blank label, a wristwatch with a plain dial and no numerals whose hands stand at midnight, a few coins, rubber bands, a small key on a ring and two unlabelled batteries. Everything lies under a fine, even layer of grey dust; the phone's lens and keys are dusty too. Used for years: hairline scratches and fine swirl marks on the acrylic lens, a few deeper scratches, paint worn through to darker plastic on the corners, the most-used keys polished smooth and slightly glossy in the middle, a little grime in the seams. Every key and the whole body are completely unprinted: no digits, no letters, no symbols, no icons, no logo, no brand name, no sticker, no text anywhere in the picture. No hands, no people. No curved or tilted key rows, no oval or teardrop keys, no joystick, no aerial, no patterned or coloured cover. No labels, logos or printing on any object.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "2560x1440",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png",
+    "complexity": "high"
+   },
+   "refs": [
+    {
+     "path": "public/img/v2/v2-p1-master.png",
+     "sha256": "fd966015b1fe2e27a1497b62c787ca67a9df0f6b7b0306dcc9ee4fd89a7e4aae"
+    }
+   ],
+   "take": "v2-p5-drawer-02",
+   "sha256": "29859fb051b0df2c42c1ba313f412217733e276717a908bec6c48664e056990c",
+   "status": "chosen",
+   "notes": "Drawer of forgotten things. Phone matches the master; blank cassette label, plain watch dial at midnight, unlabelled batteries, no text at 100%. The phone fills about 78% of the frame height (asked 55%): more detail, fine for the 4% pushes."
+  },
+  {
+   "id": "v2-p5-drawer-01",
+   "path": "out/act1-v2/takes/v2-p5-drawer/v2-p5-drawer-01.png",
+   "width": 2560,
+   "height": 1440,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T20:34:49.549Z",
+   "prompt": "Image 1 shows a phone: keep its exact design, proportions, materials and colours. The phone: an ordinary keypad mobile phone from about 2004, an invented design that copies no real model and carries no brand. A slim bar 106 mm tall, 46 mm wide and 19 mm thick: a softly rounded rectangle with 8 mm corner radii, gently rounded side edges and a smooth top edge with no aerial. Front cover in satin pewter-grey painted plastic with a faint metallic fleck; a thin seam runs around the sides where it meets the darker charcoal back cover. On the front, from top to bottom: a short horizontal earpiece slot; a clear acrylic lens with a thin black printed border around a small monochrome display, 34 mm wide and 26 mm tall, switched off, dark olive-grey glass showing no image; a row with a small pill-shaped key at each side and, between them, a round four-way navigation key with a separate round centre button; a second pill-shaped key at each side below the first; then twelve identical keys in three columns and four rows, each a wide rounded rectangle about 12.5 by 6.5 mm, in dark charcoal translucent rubber with a satin coating, evenly spaced in a straight grid; a tiny microphone hole near the bottom edge. New photograph. A real photograph, not a render or an illustration. Night in a dark room; the only light is cool, soft moonlight from a window at the upper left, with deep blue-violet shadows and natural falloff. Full-frame camera, 100 mm macro lens, ISO 3200, fine natural grain, subtle lens vignette. Muted, slightly desaturated colour. No studio lighting, no rim lights, no lens flare. Looking straight down into an open wooden drawer of forgotten things; a soft band of moonlight from the upper left falls across it. Inside, the phone from image 1 lies face up, switched off, near the centre, long side vertical, filling about 55% of the frame height, its face parallel to the picture, among a loose tangle of old charger cables, a cassette tape with a blank label, a wristwatch with a plain dial and no numerals whose hands stand at midnight, a few coins, rubber bands, a small key on a ring and two unlabelled batteries. Everything lies under a fine, even layer of grey dust; the phone's lens and keys are dusty too. Used for years: hairline scratches and fine swirl marks on the acrylic lens, a few deeper scratches, paint worn through to darker plastic on the corners, the most-used keys polished smooth and slightly glossy in the middle, a little grime in the seams. Every key and the whole body are completely unprinted: no digits, no letters, no symbols, no icons, no logo, no brand name, no sticker, no text anywhere in the picture. No hands, no people. No curved or tilted key rows, no oval or teardrop keys, no joystick, no aerial, no patterned or coloured cover. No labels, logos or printing on any object.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "2560x1440",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png",
+    "complexity": "high"
+   },
+   "refs": [
+    {
+     "path": "public/img/v2/v2-p1-master.png",
+     "sha256": "fd966015b1fe2e27a1497b62c787ca67a9df0f6b7b0306dcc9ee4fd89a7e4aae"
+    }
+   ],
+   "take": "v2-p5-drawer-01",
+   "sha256": "bed946343feb0067671e8d3440e0387450cbedaedcff50558c01b25529f52778",
+   "status": "rejected",
+   "notes": "Web-like strands in the top-left corner and fibres across the floor read as cobwebs, which the creative direction bans (02, section 6)."
+  },
+  {
+   "id": "v2-p5-lit",
+   "path": "public/img/v2/v2-p5-lit.png",
+   "width": 2560,
+   "height": 1440,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T20:36:07.528Z",
+   "prompt": "Image 1 is the approved photograph. Change only the light: switch on the phone's backlights. The display glows evenly in soft pale yellow-green, a little brighter along its lower edge, and shows no image, text or pixels. All keys are lit from beneath with the same light, which leaks softly around each key's edge and glows faintly through the rubber; the glow spills a little onto the surfaces around the phone and catches the dust. Keep everything else exactly as it is: framing, phone geometry and position, every key, scratches, dust, moonlight and shadows. The moonlight is unchanged. Every key and the whole body are completely unprinted: no digits, no letters, no symbols, no icons, no logo, no brand name, no sticker, no text anywhere in the picture. No hands, no people. No curved or tilted key rows, no oval or teardrop keys, no joystick, no aerial, no patterned or coloured cover.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "2560x1440",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png",
+    "complexity": "low"
+   },
+   "refs": [
+    {
+     "path": "public/img/v2/v2-p5-drawer.png",
+     "sha256": "29859fb051b0df2c42c1ba313f412217733e276717a908bec6c48664e056990c"
+    }
+   ],
+   "take": "v2-p5-lit-01",
+   "sha256": "f4f070c82344845c61a99701007761a0f5d83d5270a9b2208b878934399b6342",
+   "status": "chosen",
+   "notes": "Light pass for the wake. Within 1 px of the plate (phase correlation: dx 0, dy -1). Screen glows evenly with no image; light leaks round every key and through the rubber, spills on the body and dust. No text."
+  },
+  {
+   "id": "v2-p5-lit-02",
+   "path": "out/act1-v2/takes/v2-p5-lit/v2-p5-lit-02.png",
+   "width": 2560,
+   "height": 1440,
+   "model": "gpt-image-2.6-sunburst",
+   "endpoint": "/v1/images/edits",
+   "date": "2026-11-10T20:36:07.528Z",
+   "prompt": "Image 1 is the approved photograph. Change only the light: switch on the phone's backlights. The display glows evenly in soft pale yellow-green, a little brighter along its lower edge, and shows no image, text or pixels. All keys are lit from beneath with the same light, which leaks softly around each key's edge and glows faintly through the rubber; the glow spills a little onto the surfaces around the phone and catches the dust. Keep everything else exactly as it is: framing, phone geometry and position, every key, scratches, dust, moonlight and shadows. The moonlight is unchanged. Every key and the whole body are completely unprinted: no digits, no letters, no symbols, no icons, no logo, no brand name, no sticker, no text anywhere in the picture. No hands, no people. No curved or tilted key rows, no oval or teardrop keys, no joystick, no aerial, no patterned or coloured cover.",
+   "params": {
+    "model": "gpt-image-2.6-sunburst",
+    "size": "2560x1440",
+    "quality": "high",
+    "n": 2,
+    "output_format": "png",
+    "complexity": "low"
+   },
+   "refs": [
+    {
+     "path": "public/img/v2/v2-p5-drawer.png",
+     "sha256": "29859fb051b0df2c42c1ba313f412217733e276717a908bec6c48664e056990c"
+    }
+   ],
+   "take": "v2-p5-lit-02",
+   "sha256": "8aedc521291b7ec746d1e4a6c963b5dd2d728d8b3f824871aff711712327a2a4",
+   "status": "rejected",
+   "notes": "Also aligned (dy -1), but the navigation key stays dark and the spill is weaker than take 01."
+  }
+ ]
+}

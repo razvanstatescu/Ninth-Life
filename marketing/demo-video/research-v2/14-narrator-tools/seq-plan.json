@@ -1,0 +1,20 @@
+{
+  "doc": "Timbre drift across separate lines, stitched or not (research-v2/14). TEST MATERIAL ONLY, not the film's narration script.",
+  "model_id": "eleven_v4",
+  "voice_settings": { "stability": 0.6, "similarity_boost": 0.8 },
+  "output_format": "wav_48000",
+  "tags": { "1": "[quiet, measured narration] ", "2": "" },
+  "lines": [
+    { "id": "s01", "act": 1, "text": "We used to write with nine keys." },
+    { "id": "s02", "act": 1, "text": "One thumb. One press per letter." },
+    { "id": "s03", "act": 1, "text": "Then glass replaced the keys, and the keypad went quiet." },
+    { "id": "s04", "act": 1, "text": "But old is not the same as bad." },
+    { "id": "s05", "act": 2, "text": "Now the same nine keys can speak." },
+    { "id": "s06", "act": 2, "text": "Every spoken word matches the keys you pressed." },
+    { "id": "s07", "act": 2, "text": "It works offline, in your browser, for free." }
+  ],
+  "modes": {
+    "independent": "each line its own request, same seed",
+    "stitched": "previous_request_ids = up to the last 3 request ids of the same act (Act 2 starts fresh, so the hushed Act 1 delivery does not carry over)"
+  }
+}

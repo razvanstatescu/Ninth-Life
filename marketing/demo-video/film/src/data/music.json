@@ -1,0 +1,292 @@
+{
+  "file": "audio/music/act2-v2.wav",
+  "stems": {
+    "drums": "audio/music/act2-v2-drums.wav",
+    "other": "audio/music/act2-v2-other.wav"
+  },
+  "bpm": 120,
+  "durationSec": 90,
+  "take": "i2: v2c's body (bars 9-32 and 35-45, re-rendered by inpainting), i1's rebirth (bars 1-5), the drop (6-8) and access (33-34) regenerated; plus our soft kick, the bars 1-4 rise and the bars 31-33 rebuild",
+  "model": "music_v2_5",
+  "songIds": {
+    "v2a": "yJ9atFq5QPvH0KSJuR1J",
+    "v2b": "W3dECi1X9p2OZwoPh2se",
+    "v2c": "FdfOzyCwamV3HSeXSYVT",
+    "i1": "UjIuYV4SPgJKaYqOye1J",
+    "i2": "0gcEFt2iceNhCH99pd5m"
+  },
+  "sections": [
+    {
+      "bars": "1-4",
+      "startSec": 0,
+      "durationSec": 8,
+      "name": "rebirth"
+    },
+    {
+      "bars": "5",
+      "startSec": 8,
+      "durationSec": 2,
+      "name": "silence (Hello again)"
+    },
+    {
+      "bars": "6-8",
+      "startSec": 10,
+      "durationSec": 6,
+      "name": "drop"
+    },
+    {
+      "bars": "9-17",
+      "startSec": 16,
+      "durationSec": 18,
+      "name": "the problem"
+    },
+    {
+      "bars": "18-21",
+      "startSec": 34,
+      "durationSec": 8,
+      "name": "solution groove"
+    },
+    {
+      "bars": "22",
+      "startSec": 42,
+      "durationSec": 2,
+      "name": "pad (I need water, ducked)"
+    },
+    {
+      "bars": "23",
+      "startSec": 44,
+      "durationSec": 2,
+      "name": "breath, lift"
+    },
+    {
+      "bars": "24-29",
+      "startSec": 46,
+      "durationSec": 12,
+      "name": "the proof (two beats out 53.5-54.5)"
+    },
+    {
+      "bars": "30-32",
+      "startSec": 58,
+      "durationSec": 6,
+      "name": "ghost mode"
+    },
+    {
+      "bars": "33-34",
+      "startSec": 64,
+      "durationSec": 4,
+      "name": "access (scan clock)"
+    },
+    {
+      "bars": "35-36",
+      "startSec": 68,
+      "durationSec": 4,
+      "name": "the lift (Kiro)"
+    },
+    {
+      "bars": "37-38",
+      "startSec": 72,
+      "durationSec": 4,
+      "name": "strip-back"
+    },
+    {
+      "bars": "39-40",
+      "startSec": 76,
+      "durationSec": 4,
+      "name": "silence (I have something to say)"
+    },
+    {
+      "bars": "41-45",
+      "startSec": 80,
+      "durationSec": 10,
+      "name": "the end chord"
+    }
+  ],
+  "mutes": [
+    [
+      7.6,
+      10.0
+    ],
+    [
+      33.5,
+      34.0
+    ],
+    [
+      53.5,
+      54.5
+    ],
+    [
+      76.0,
+      80.0
+    ]
+  ],
+  "kick": {
+    "bars": "6-8 (not 8.4), 18-22, 33-36",
+    "count": 47,
+    "offsetsMs": {
+      "drop": 26.2,
+      "solution": -9.8,
+      "access": 26.6,
+      "lift": 30.4
+    },
+    "note": "synthesised soft kick tuned to A1; each section's kicks sit on the take's own pulse (unchanged by the fixes: the drums stem is bit-identical)"
+  },
+  "beatDeviationMs": {
+    "mean": 20.0,
+    "max": 30.4,
+    "method": "our kicks against the film's 0.500 s grid (they follow the take's pulse); the take's own pulse per section is in pulsePhaseMs"
+  },
+  "pulsePhaseMs": {
+    "0.0-8.0": 32.0,
+    "10.0-16.0": 32.0,
+    "16.0-34.0": -13.0,
+    "34.0-42.0": -8.0,
+    "42.0-46.0": -11.0,
+    "46.0-53.5": -8.0,
+    "54.5-58.0": -11.0,
+    "58.0-60.0": -11.0,
+    "60.0-64.0": 32.0,
+    "64.0-68.0": 32.0,
+    "68.0-72.0": 32.0,
+    "72.0-76.0": 32.0,
+    "80.0-90.0": 14.0
+  },
+  "pulseNote": "Bars 31-32 (60-64 s) now carry the access groove's pulse (+32 ms, the rebuild layer); bar 30 keeps the take's (-11 ms). Kept from before the fixes, because the riser masks the onsets now: 0.0-8.0 s (contrast now 1.74, before the riser 3.54).",
+  "rebirth": {
+    "bars": "1-4",
+    "riseDb": 7.7,
+    "bar1Beat2Lufs": -27.1,
+    "endBar4Lufs": -19.4,
+    "barsLufs": [
+      -25.7,
+      -25.0,
+      -22.7,
+      -21.2
+    ],
+    "before": {
+      "bar1_beat2": -20.1,
+      "end_bar4": -21.3
+    },
+    "method": "the bass eased 7.5 dB down after the bar-1 hit (0.15-0.45 s) and back to 0 dB at 7.5 s; a soft noise riser made here (band centre 250 Hz to 3 kHz, +30 dB over 0.3-7.6 s, ending 3.0 dB under the music); everything stops dead at 7.6 s, 24 f before bar 5",
+    "measure": "K-weighted, ungated: bar 1 beat 2 (0.5-1.0 s) against the end of bar 4 (7.1-7.5 s)"
+  },
+  "rebuild": {
+    "bars": "31-33 (to beat 3)",
+    "bars29to34Lufs": [
+      -32.4,
+      -25.7,
+      -23.8,
+      -20.6,
+      -16.5,
+      -16.8
+    ],
+    "method": "the take's own access groove (bar 34, the other stem) tiled on the bar lines from bar 31 beat 1 (20 ms crossfades), rising from -10 dB to -1 dB at bar 33 beat 1 and 0 dB at bar 33 beat 3, where the take's own groove takes over (60 ms)"
+  },
+  "variants": {
+    "drive": {
+      "file": "audio/music/act2-v2-drive.wav",
+      "stems": {
+        "drums": "audio/music/act2-v2-drive-drums.wav",
+        "other": "audio/music/act2-v2-other.wav"
+      },
+      "inMusicFiles": false,
+      "shaker": {
+        "bars": {
+          "drop": [
+            6,
+            7,
+            8
+          ],
+          "solution": [
+            18,
+            19,
+            20,
+            21
+          ],
+          "access": [
+            33,
+            34
+          ],
+          "lift": [
+            35,
+            36
+          ]
+        },
+        "hits": 88,
+        "tunedHz": [
+          5274,
+          7040
+        ],
+        "underMusicDb": 14,
+        "note": "a soft shaker synthesised here on every eighth, the off-beats 4 dB louder, on the kick's pulse; in the drums stem"
+      },
+      "note": "for the owner to compare; the same music as act2-v2.wav plus the shaker"
+    }
+  },
+  "bar1AttackSec": 0.0,
+  "fitBpm": 119.9993,
+  "key": {
+    "best": [
+      [
+        0.784,
+        "A minor"
+      ],
+      [
+        0.44,
+        "A major"
+      ],
+      [
+        0.372,
+        "C major"
+      ]
+    ],
+    "tuning_cents": 1.0
+  },
+  "loudnessPerBar": [
+    -25.7,
+    -25.0,
+    -22.7,
+    -21.2,
+    -120.7,
+    -18.7,
+    -19.5,
+    -20.2,
+    -20.6,
+    -20.4,
+    -20.8,
+    -21.2,
+    -18.2,
+    -19.2,
+    -20.3,
+    -21.2,
+    -20.0,
+    -16.3,
+    -16.7,
+    -16.8,
+    -17.7,
+    -16.4,
+    -17.1,
+    -18.9,
+    -20.3,
+    -20.1,
+    -20.9,
+    -22.0,
+    -32.5,
+    -25.7,
+    -23.8,
+    -20.6,
+    -16.5,
+    -16.8,
+    -15.8,
+    -14.6,
+    -20.9,
+    -29.8,
+    -89.8,
+    -120.7,
+    -29.6,
+    -31.6,
+    -33.1,
+    -37.6,
+    -55.0
+  ],
+  "notes": "Built 2026-11-10 to the lead's bar map. Three full takes (v2a, v2b, v2c) all put 8-10 s of silence where the rebirth should be (the first chunk's text mentioned a silent last bar) and v2a/v2b were off key (C minor, G major) and off the map; v2c (A minor, map rho 0.56) became the base. Inpainting (music_v2_5 composition plan with audio-reference chunks) regenerated the rebirth (i1) and then the drop and the access bars (i2, without conditioning); the model kept them kick-less, and stem separation found no drums at all (drums stem -128 dB): the take is bass plus synths. So a soft kick synthesised here (55 Hz, A1) was added in the drop, the solution groove with bar 22, access and the lift, on the take's own pulse. Conform: bar 1's hit moved to 0.000 s (-21.2 ms), hard mutes at 7.6-10.0, 33.5-34.0, 53.5-54.5 and 76.0-80.0 s, a fade to silence 87-90 s; no time-stretch (tempo fit 119.98 BPM, 0.016% from 120). Entries land on the grid: drop 10.003 s, groove 33.991 s, resolve 54.502 s, end chord 80.004 s. The take's pulse sits -13 to +32 ms from the grid depending on the section (the model starts regenerated chunks on their own phase); visual hits on the grid may lead the music by up to about 30 ms in the drop, access, lift and strip-back. Stems: drums = our kick (the separated drums are silent); other = bass + other + piano (+ silent guitar and vocals); full - (drums + other) = -65 dB. Speech: no vocals stem content. Fixes (the lead, 2026-11-10, second round): bars 1-4 now climb 7.7 dB into bar 4 (see rebirth), and bars 31-32 rebuild into bar 33's kick instead of thinning to -45 LUFS (bars 30-33 now -25.7, -23.8, -20.6, -16.5 LUFS). Mutes, bar lines and kicks unchanged. A drive variant (variants.drive) adds a soft tuned shaker for the owner to compare; it is not in MUSIC_FILES."
+}
