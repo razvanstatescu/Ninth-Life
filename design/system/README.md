@@ -61,7 +61,8 @@ Ember on the Day ground is only 1.7:1, so in Day it appears as a fill with a plu
 
 - Corners come from the key: `radius-key` is a quarter of the 96px key. Chips 14px, cards 28px, the keypad bubble 44px.
 - Spacing runs on 4px: 4, 8, 12, 16, 24, 32, 48, 64, 96.
-- Targets are large on purpose: `target-min` 56px for every button and chip, keys from `key-min` 72px to `key-xl` 128px.
+- Targets are large on purpose: `target-min` 56px for every button and chip, keys from `key-min` 72px to `key-xl` 128px. The website hero's buttons are `target-cta` 64px.
+- Lines: `line-width` 2px for borders and rules, `ring-width` 3px for the pressed key's inner ring and the plum ring outside the scan highlight.
 - The keypad sits on the `panel` bubble with `lift`. It is the only floating element in the app.
 
 ## Iconography
@@ -71,6 +72,8 @@ Inline SVG, 24px grid, 2.5px round stroke in `currentColor`: speaker, check, plu
 ## Motion
 
 Scan highlights jump from row to row with a 120ms linear color change. No slides, bounces, pulses or blinking: switch users watch the screen for long stretches, and pulsing light is tiring and can be unsafe. Respect `prefers-reduced-motion`. The video may use slow fades between cards.
+
+**Website.** The website at `/` has its own motion tier (ADR-006, `.kiro/specs/marketing-site` MS-8), and only while `prefers-reduced-motion` is `no-preference`: A1 the moon glow behind the hero fades in once; A2 the ninth key's ember ring fades in once, after a short delay; A3 the hero demo's key presses, one pressed ring at a time with a linear opacity change; A4 one-time reveals of blocks, a fade that rises at most 16px; A6 a cross-fade between `/`, `/app` and `/about`; A7 played sequences: each box drawing, the proof figure and each How it works step stage plays its short sequence once when it reaches the play line (30% above the bottom of the viewport), each change a fade with at most an 8px rise or, for rings and marks, a 120ms jump, then stays on its finished state; A8 How step sync: from 1024px the sticky How it works picture shows the step whose card has crossed the middle of the viewport and plays each step the first time it becomes active. The page uses no scroll timelines (A5, the scroll-linked frames of round 1, is gone). Animations change only `opacity` and `transform`. Never: an animated logo, pulsing, blinking, bouncing, flicker, fog, parallax, marquees, typed-out text, counted-up numbers, loops, flashes, an animation library, SMIL or a third-party file. Every duration, delay, distance and easing comes from the `motion` tokens in `tokens.json`: `motion-jump` 120ms, `motion-crossfade` 250ms, `motion-fade` 600ms, `motion-fade-slow` 900ms, `motion-delay-arrival` 300ms, `motion-stagger` 80ms, `motion-autoplay-delay` 1200ms, `motion-demo-step` 520ms, `motion-reveal-distance` 16px, `motion-state` 200ms, `motion-nudge` 8px, `motion-play-lead` 300ms, `motion-frame` 600ms, `motion-frame-quick` 400ms, `motion-sweep` 240ms, `motion-ease-out` and `motion-ease-linear`. The app keeps the rule above.
 
 ## Accessibility
 
@@ -90,3 +93,9 @@ The icon is the logo: the cat-eared bubble with 3 x 3 keys and the ember ninth k
 ## Components
 
 Button, Key, Keypad, ProofChip, Candidate and SpeakBar. Styles live in `components/bundle.css` with an `nl-` prefix and read only tokens; the bundle imports the two Google Fonts.
+
+## Website drawings
+
+The website's feature drawings are pictures of the app, built from the components above and tokens; they are `aria-hidden`, hold nothing focusable and use `caption` (14px) only for labels under a drawn thing. One element exists only in them:
+
+- **The drawn computer key** (the Keyboard drawing on the website): `surface-sunken` fill, a 2px `line-strong` edge, `radius-chip` corners, its label in mono 16px, 40px tall and at least 40px wide. Its pressed state is the Key's pressed ring, the 3px inner `ember` ring (`ring-width`), drawn on an overlay so the key never changes size. It is never filled with ember.

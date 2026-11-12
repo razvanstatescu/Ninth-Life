@@ -64,3 +64,5 @@ Requires Node 22 and pnpm 10. Ghost mode needs no key. For model ranking, copy
 
 Code: MIT ([LICENSE](LICENSE)). Data under `data/`: CC BY-SA 4.0 ([data/LICENSE](data/LICENSE),
 [data/NOTICE.md](data/NOTICE.md)). Fonts: Atkinson Hyperlegible Next and Mono, SIL Open Font License.
+
+Development only: Lighthouse 13.6.0 (Apache-2.0), with Sentry CLI 0.49.0 (FSL-1.1-Apache-2.0) and oxc-parser 0.152.0 (MIT) pulled in through it, not shipped.

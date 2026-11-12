@@ -1,5 +1,6 @@
 // axe-core (WCAG 2.0/2.1/2.2 A and AA rules) on every page and on the Settings sheet, in the Night
-// and Day themes, at a desktop and a phone width.
+// and Day themes, at a desktop and a phone width; the landing page also with motion on, after
+// scrolling to the end (marketing-site MS-13.1).
 //   node packages/web/test/e2e/axe.mjs     (needs `next start`; BASE_URL, default http://localhost:3202)
 // Fails on any serious or critical violation (.kiro/steering/accessibility.md); moderate and minor
 // ones are printed. AXE_STRICT=1 fails on every violation. The full JSON goes to
@@ -25,11 +26,39 @@ async function openSettings(page) {
   await page.locator('dialog[open]').first().waitFor({ state: 'visible', timeout: 5000 });
 }
 
+/** With motion on: wait for the page to start its motion, scroll to the end in steps so every block
+ *  is revealed, then wait 1 s and for every running animation to end: a drawing's played sequence
+ *  runs up to 4 s (MS-8.11), and axe would measure a part mid-fade. */
+async function scrollToEnd(page) {
+  await page
+    .waitForFunction(() => document.documentElement.dataset.siteMotion === 'on', null, { timeout: 20000, polling: 50 })
+    .catch(() => {
+      throw new Error('data-site-motion="on" was not set within 20 s');
+    });
+  await page.evaluate(async () => {
+    const step = Math.max(1, Math.floor(innerHeight / 2));
+    for (let y = 0; y < document.documentElement.scrollHeight; y += step) {
+      window.scrollTo(0, y);
+      await new Promise((r) => setTimeout(r, 60));
+    }
+    window.scrollTo(0, document.documentElement.scrollHeight);
+  });
+  await page.waitForTimeout(1000);
+  await page.evaluate(() =>
+    Promise.race([
+      Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))),
+      new Promise((r) => setTimeout(r, 6000)),
+    ]),
+  );
+}
+
 const TARGETS = [
-  { name: 'app /', path: '/', app: true },
-  { name: 'welcome /welcome', path: '/welcome' },
+  { name: 'landing /', path: '/' },
+  // Motion on, after every block has been revealed (MS-13.1).
+  { name: 'landing / (motion)', path: '/', motion: true },
+  { name: 'app /app', path: '/app', app: true },
   { name: 'about /about', path: '/about' },
-  { name: 'settings sheet on /', path: '/', app: true, settings: true },
+  { name: 'settings sheet on /app', path: '/app', app: true, settings: true },
 ];
 const VIEWPORTS = [
   { label: '1280', width: 1280, height: 900 },
@@ -44,11 +73,12 @@ try {
   for (const theme of ['night', 'day']) {
     for (const vp of VIEWPORTS) {
       for (const t of TARGETS) {
-        const ctx = await newContext(browser, { theme, width: vp.width, height: vp.height });
+        const ctx = await newContext(browser, { theme, width: vp.width, height: vp.height, reducedMotion: t.motion ? 'no-preference' : 'reduce' });
         const page = await ctx.newPage();
         if (t.app) await openApp(page, t.path);
         else await page.goto(BASE_URL + t.path, { waitUntil: 'load' });
         if (t.settings) await openSettings(page);
+        if (t.motion) await scrollToEnd(page);
         const actual = await page.evaluate(() => document.documentElement.dataset.theme);
         const res = await new AxeBuilder({ page }).withTags(TAGS).analyze();
         const label = `${t.name} [${theme}, ${vp.label}]`;

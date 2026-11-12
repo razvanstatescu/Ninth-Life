@@ -5,7 +5,7 @@ Knowledge-base page with the route map, keyboard map and how to run: `docs/archi
 ## Architecture
 
 ```
- app/page.tsx ── <CommunicationScreen/> (client)
+ app/app/page.tsx ── <CommunicationScreen/> (client)
                     │
    keys / keyboard / switch ──► composerReducer (lib/composer.ts)   slots[{code, pin?}], punct, selected
                     │                         │
@@ -102,8 +102,9 @@ the wait, or an utterance error opens `ShowMode`.
 
 `scripts/copy-data.mjs` copies `data/lexicon` and `data/packs` to `public/data` (missing files tolerated).
 `lib/data.ts` fetches them at runtime (never bundled): lexicon → `Lexicon.fromJSON`, pack → `addWords`, bigram →
-`bigramModel`, falling back to `unigramModel`. Serwist precaches the shell, `/`, `/about` and every public file
-(including `/data/**`, max 16 MB per file); decode requests are `NetworkOnly`.
+`bigramModel`, falling back to `unigramModel`. Serwist precaches the shell, `/app`, `/about`, `/` and every
+public file (including `/data/**`, max 16 MB per file); uncached documents fall back to `/app` (ADR-006); decode
+requests are `NetworkOnly`.
 
 ## Theme (Req 10)
 

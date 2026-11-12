@@ -85,3 +85,10 @@ a:hover { color: var(--ink); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
+
+/* A6: a short cross-fade between /, /app and /about where the browser supports cross-document view
+   transitions (marketing-site MS-8.6, web-ui Req 11.3). Never under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+  ::view-transition-group(root) { animation-duration: var(--motion-crossfade); }
+}

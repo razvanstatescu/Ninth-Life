@@ -150,3 +150,6 @@ Built 2026-11-09 outside Kiro (Claude Code); see `docs/KIRO_LOG.md`. Research: `
         unmount, typing wins, errors in words, on-device choice, plain-HTTP page)
 - [ ] 55. Try Listen on real devices over HTTPS: Chrome on Android (online and on-device), Safari on iPhone and iPad, a
       Home Screen web app on iOS (expected to fail with a clear message); log in `docs/research/web-speech.md` (Req 26)
+
+## Route move (ADR-006)
+- [x] 56. App moved to `/app` (marketing-site tasks 3-9; Req 5.1, 14.3, 23.4)

@@ -14,6 +14,7 @@ Checked against the repo on 2026-11-09. If a version or command here disagrees w
 - `packages/decoder`: the `/api/decode` handler. One provider-aware `AnthropicLlmClient` over plain `fetch` that speaks the Anthropic Messages protocol to Anthropic or to MiniMax's compatible endpoint (ADR-001, ADR-002). Default model `MiniMax-M3` when only `MINIMAX_API_KEY` is set, otherwise `claude-haiku-5-5`.
 - `packages/eval`: offline baselines B0/B1 and model runs B2-B4; Python 3 only for rebuilding `data/`.
 - End-to-end checks are plain Node scripts on Playwright 1.63, installed globally (Chromium and WebKit); `test/e2e/lib.mjs` finds it.
+- Lighthouse 13.6.0 is a root dev dependency, driven by `scripts/lighthouse.mjs` against a production server; not shipped, not in CI.
 - No Prettier and no ESLint config in the repo. Do not run a formatter over files: it rewrites the whole file (quotes, wrapping) and buries the real change.
 
 ## Commands
@@ -25,7 +26,8 @@ Checked against the repo on 2026-11-09. If a version or command here disagrees w
 | Unit tests, one package | `pnpm -F @ninth/core test --run` (also `@ninth/decoder`, `@ninth/web`, `@ninth/eval`) |
 | All unit tests | `pnpm -r test` (Vitest exits after one run in CI; add `--run` locally) |
 | Types | `pnpm -r typecheck` (also the `typecheck-on-stop` hook) |
-| E2E (needs a running server) | from `packages/web`: `BASE_URL=http://localhost:3000 node test/e2e/<axe\|keyboard\|switch\|spell\|responsive>.mjs`; add `ENGINE=webkit` for Safari's engine |
+| E2E (needs a running server) | from `packages/web`: `BASE_URL=http://localhost:3000 node test/e2e/<axe\|keyboard\|switch\|spell\|responsive\|site>.mjs`; add `ENGINE=webkit` for Safari's engine |
+| Lighthouse (production server on :3202 only) | `node scripts/lighthouse.mjs --write` |
 | Eval, quick | `pnpm -F @ninth/eval quick` (offline, seconds; see the `ninth-life-eval` power) |
 | Repo rules | `node scripts/tm-lint.mjs`, `node scripts/validate-kiro-config.mjs`, `node scripts/check-kiro-not-ignored.mjs` |
 

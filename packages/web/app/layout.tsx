@@ -4,7 +4,7 @@ import { THEME_BOOT_SCRIPT } from '@/lib/settings';
 import '../styles/tokens.css';
 import '../styles/globals.css';
 import '../styles/components.css';
-import '../styles/app.css';
+// styles/app.css is imported by the app pages (app/app/page.tsx, app/about/page.tsx), not here (ADR-006).
 
 export const metadata: Metadata = {
   title: 'Ninth Life',
@@ -26,8 +26,8 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   // Zoom stays available (WCAG 1.4.4): no maximumScale.
-  // The page may run under the notch, rounded corners and home indicator; styles/app.css pads by
-  // env(safe-area-inset-*) so nothing interactive sits there.
+  // The page may run under the notch, rounded corners and home indicator; styles/app.css (imported by the
+  // app pages) pads by env(safe-area-inset-*) so nothing interactive sits there.
   viewportFit: 'cover',
   themeColor: '#140a2e',
   colorScheme: 'dark light',

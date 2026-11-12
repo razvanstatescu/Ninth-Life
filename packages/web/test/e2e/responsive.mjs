@@ -67,7 +67,7 @@ try {
     const page = await ctx.newPage();
     console.log(label);
     if (vw > vh && Math.min(sw, sh) < 600) {
-      await page.goto(BASE_URL + '/', { waitUntil: 'load' });
+      await page.goto(BASE_URL + '/app', { waitUntil: 'load' });
       await page.locator('.rotate').waitFor({ state: 'visible', timeout: 15000 });
       const r = await page.evaluate(() => ({
         text: document.querySelector('.rotate')?.textContent ?? '',

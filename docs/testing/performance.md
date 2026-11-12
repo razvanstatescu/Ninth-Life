@@ -97,6 +97,10 @@ before). One run in three was at 51 ms, so treat 50 ms as met at the median, not
    Since F12 (2026-11-09) the worker also precaches `/welcome`: one more entry, its HTML, 40 KB raw
    and 8 KB gzip (27 to 28 entries, upper bound 537 to 545 KB gzip, measured from `public/sw.js` after
    `pnpm -F @ninth/web build`). Its JS chunk, CSS, fonts and icons were already precached.
+   Since ADR-006 (2026-11-10) the precached documents are `/` (the website), `/app` (the app) and
+   `/about`; `/welcome` is a redirect and is no longer precached, and an uncached document offline
+   falls back to `/app`. The entry count is unchanged; the byte figures above predate the move and are
+   measured again after the next production build.
 3. **The dictionary is ready about 2.4 s sooner on Slow 4G** (5.7 s): one round trip instead of
    three, and 173 KB less to download.
 4. **No key press waits for an index.** The slow 5th press of "kitchen" (578 ms) is now 27 ms. In
@@ -203,3 +207,89 @@ For the core owner (`packages/core`):
   `codes: { "4663": "good:61 home:58 ..." }` cuts both bytes and parse time. Contract change.
 
 Re-run `node scripts/perf-check.mjs` after any change to loading, the data files or the service worker, and update the before/after table.
+
+## Landing page (Lighthouse)
+
+Lighthouse 13.6.0 (a root dev dependency, not shipped, not in CI) on `/` of a production build,
+driven by `scripts/lighthouse.mjs` (marketing-site MS-11). Per preset it runs 3 times, each in a new
+Chromium from Playwright with a fresh profile (so every run is a first visit and the service worker
+installs as it would for a visitor), and reports the medians. Mobile is Lighthouse's default
+(simulated throttling: Slow 4G, 4x CPU) with the targets Performance 95 or more and Accessibility,
+Best Practices and SEO 100; desktop uses Lighthouse's desktop config and has no target. The run with
+the median Performance score supplies the metrics, the LCP element (must be text), CLS (at most
+0.02) and the byte budgets: the page's own requests (`network-requests` items with
+`sessionTargetType` `page`) at most 125 KB of script, 16 KB of CSS, 32 KB for the document, 60 KB of
+fonts, 16 KB of images and 250 KB in total; the service worker's requests on their own line with no
+budget; no request to another origin. Raw reports go to `packages/web/test-results/lighthouse/`
+(git-ignored).
+
+How to run it. The build overwrites the dev server's files (`.kiro/steering/tech.md` rule 1), so stop
+`pnpm dev` first:
+
+```sh
+# 1. stop the dev server on :3000
+pnpm -F @ninth/web build
+pnpm -F @ninth/web exec next start -p 3202     # leave running in another shell
+node scripts/lighthouse.mjs --write            # --runs 1-9, --preset mobile|desktop|both, --url
+# 2. stop next start, then start pnpm dev again
+```
+
+The script refuses a development server (exit 2) and never builds anything itself. It exits 1 when a
+mobile target or budget is missed. `--write` replaces the block between the markers below.
+
+<!-- lighthouse:start -->
+Measured 2026-11-12 on http://localhost:3202/, commit `e8e3331-dirty`, Lighthouse 13.6.0, Chromium 153.0.8010.12. Median of 3 runs per preset, a fresh browser profile for each run.
+
+### Mobile (simulated throttling: Slow 4G, 4x CPU)
+
+| | Performance | Accessibility | Best Practices | SEO |
+|---|---|---|---|---|
+| Run 1 | 100 | 100 | 100 | 100 |
+| Run 2 | 100 | 100 | 100 | 100 |
+| Run 3 | 100 | 100 | 100 | 100 |
+| **Median** | **100** | **100** | **100** | **100** |
+| Target | 95 or more | 100 | 100 | 100 |
+
+Run with the median Performance score: FCP 1,055 ms, LCP 1,055 ms (element: `p`), TBT 2 ms, CLS 0.000, Speed Index 1,055 ms.
+
+| Page requests, transferred | Bytes | Budget | Result |
+|---|---|---|---|
+| Script | 117.7 KB | 125.0 KB | pass |
+| Stylesheet | 10.8 KB | 16.0 KB | pass |
+| Document | 22.7 KB | 32.0 KB | pass |
+| Font | 51.1 KB | 60.0 KB | pass |
+| Image | 4.4 KB | 16.0 KB | pass |
+| Manifest | 1.1 KB | none |  |
+| Other | 0.5 KB | none |  |
+| Total | 208.3 KB | 250.0 KB | pass |
+
+Service worker: 2 requests, 0.7 KB (reported, no budget).
+Other origins: none.
+
+### Desktop (no target)
+
+| | Performance | Accessibility | Best Practices | SEO |
+|---|---|---|---|---|
+| Run 1 | 100 | 100 | 100 | 100 |
+| Run 2 | 100 | 100 | 100 | 100 |
+| Run 3 | 100 | 100 | 100 | 100 |
+| **Median** | **100** | **100** | **100** | **100** |
+
+Run with the median Performance score: FCP 283 ms, LCP 283 ms (element: `p`), TBT 0 ms, CLS 0.000, Speed Index 283 ms.
+
+| Page requests, transferred | Bytes | Budget | Result |
+|---|---|---|---|
+| Script | 117.7 KB | none |  |
+| Stylesheet | 10.8 KB | none |  |
+| Document | 22.7 KB | none |  |
+| Font | 51.1 KB | none |  |
+| Image | 4.4 KB | none |  |
+| Manifest | 1.1 KB | none |  |
+| Other | 0.5 KB | none |  |
+| Total | 208.3 KB | none |  |
+
+Service worker: 2 requests, 0.7 KB (reported, no budget).
+Other origins: none.
+
+Result: every mobile target and budget met.
+<!-- lighthouse:end -->

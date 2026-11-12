@@ -19,7 +19,7 @@ Read the component README before building or changing that component. If somethi
 - Use CSS custom properties named exactly like the tokens (`var(--ember)`, `var(--surface-sunken)`, `var(--space-4)`, `var(--target-min)`, `var(--radius-key)`). No raw hex, px sizes or shadows in components except where a token does not exist yet; then add the token.
 - Themes: **Night** is the default and the brand; **Day** follows `prefers-color-scheme: light` or the setting. Every token has both values. Keypad keys (`--key` plum, `--on-key`) are the same in both themes.
 - Spacing is a 4px scale: 4, 8, 12, 16, 24, 32, 48, 64, 96.
-- Sizes: `target-min` 56px, `key-min` 72px, `key-size` 96px, `key-xl` 128px, `focus-width` 4px, `scan-width` 6px.
+- Sizes: `target-min` 56px, `key-min` 72px, `key-size` 96px, `key-xl` 128px, `focus-width` 4px, `scan-width` 6px, `ring-width` 3px, `line-width` 2px, `target-cta` 64px (website hero buttons).
 - Radii: chip 14px, key 24px, card 28px, panel 44px, pill.
 - Shadows: `lift` only on the keypad panel (the one floating element); `glow-ember` only on the lit key.
 
@@ -43,4 +43,4 @@ Read the component README before building or changing that component. If somethi
 
 ## Spooky, but calm
 
-Kiroween wants atmosphere; our users need calm. Night theme, the cat-ear bubble and the one ember key carry the mood. No flicker, fog animation, jump scares, dripping text or low-contrast "ghost" text in the app. The website hero and the video may use slow fades.
+Kiroween wants atmosphere; our users need calm. Night theme, the cat-ear bubble and the one ember key carry the mood. No flicker, fog animation, jump scares, dripping text or low-contrast "ghost" text in the app. The website may use the motion tier of ADR-006 (slow fades, one-time reveals of at most 16px, drawings that play a short sequence once and stay finished (A7), the How it works picture following the active step (A8), a cross-fade into the app); the video may use slow fades.

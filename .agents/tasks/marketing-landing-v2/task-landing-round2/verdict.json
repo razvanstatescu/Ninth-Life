@@ -1,0 +1,89 @@
+{
+  "verdict": "APPROVED",
+  "findings": [
+    {
+      "id": "R4-N3",
+      "severity": "MEDIUM",
+      "file": "docs/testing/performance.md",
+      "summary": "Non-blocking, before submission. Production build and Lighthouse were not re-run on the iteration 3 tree; the 100 scores and 208 of 250 KB transfer are from iteration 2 (MS-11.1, MS-11.2). Re-run task 44 (build, next start -p 3202, node scripts/lighthouse.mjs --write) once the person agrees to stop the dev server."
+    },
+    {
+      "id": "R4-A1",
+      "severity": "MEDIUM",
+      "file": "packages/web/components/site/SiteMotion.tsx",
+      "summary": "Non-blocking. Leads coordinate ember rings only within a row; at 1024 x 1366 a slow scroll (about 400 px/s) showed rings in 2 or more drawings for 1,044 ms in total, up to 3 at once (250 ms at 1920 x 1080), against accessibility rule 3. Keep a page-wide 'ember busy until' time feeding --play-after, or have the product owner accept it and correct the V39 note."
+    },
+    {
+      "id": "R4-P1",
+      "severity": "MEDIUM",
+      "file": "packages/web/components/site/site.css",
+      "summary": "Product owner decision, non-blocking. The R3-P1 scale-up starts at 1024px, so at 768 the layouts drawing is 221 x 92 in a 672 x 216 stage, Your view 216 x 188 in 384px, and Listen fills only the top of its 288px stage. Ask whether to extend the scale-up to 648px or center these drawings."
+    },
+    {
+      "id": "R4-N1",
+      "severity": "LOW",
+      "file": "packages/web/styles/components.css",
+      "summary": "While the demo plays, Hear it is aria-disabled but .nl-btn--quiet:active (components.css:37) still draws the pressed ring, and site.css:90 copies the :disabled look. Add .nl-btn[aria-disabled=\"true\"] beside :disabled in components.css with box-shadow: none on :active, and drop the site.css copy. Also replace --target-cta on .site-listen > .site-drawn-btn with a spacing sum."
+    },
+    {
+      "id": "R4-N2",
+      "severity": "LOW",
+      "file": "packages/web/components/site/Pictures.tsx",
+      "summary": "The hidden code slot in ProofCheck's typing chip leaves an empty tail after each dashed chip for about 2.5 s of each play. Keep the icon slot (enough for alignment), drop the code slot, recheck with the MS-7.9 edge check and timed screenshots; or record the look in design.md 4.2."
+    },
+    {
+      "id": "R4-A2",
+      "severity": "LOW",
+      "file": "packages/web/components/site/site.css",
+      "summary": "Day theme: .site-press-ring on drawn buttons and computer keys is 1.49:1 to 1.81:1 (8.5-9.5:1 in Night), accessibility rule 8. Pair it with a 2px plum inner line as the scan ring has; record it in design/system/README.md 'Website drawings' first."
+    },
+    {
+      "id": "R4-A3",
+      "severity": "LOW",
+      "file": "packages/web/components/site/site.css",
+      "summary": "On 64px drawn keys the digit and letter boxes overlap by 10 x 9px ('2' touches 'A'). Add about 4px of top padding to .nl-key__letters inside .site .nl-keypad for 64px keys only; keys stay 64px (MS-10.8)."
+    },
+    {
+      "id": "R4-A4",
+      "severity": "LOW",
+      "file": "packages/web/components/site/motion.ts",
+      "summary": "At 874 x 330 How step 1 plays with its well at -28..54 and at 375 x 549 the proof caption starts 15px above the viewport. Play a drawing taller than the viewport only once its top is at or below 0, show How step 1 finished under about 420px tall, or accept it for the sideways phone."
+    },
+    {
+      "id": "R4-A5",
+      "severity": "LOW",
+      "file": "packages/web/components/site/site.css",
+      "summary": "Keys lose their shapes in forced-colors: active (the Touch drawing shows two bare '2 ABC' labels). Add @media (forced-colors: active) { .site .nl-key { border: var(--line-width) solid transparent; } }, or the unscoped rule after checking /app."
+    },
+    {
+      "id": "R4-N5",
+      "severity": "LOW",
+      "file": "docs/KIRO_LOG.md",
+      "summary": "The 2026-11-12 iteration 3 row's prompt cell says 'answers on P1, P2, N6'; write R3-P1, R3-P2, R3-N6 (plain N6 is the iteration 2 Privacy fix, and the log feeds the write-up)."
+    },
+    {
+      "id": "R4-H1",
+      "severity": "LOW",
+      "file": ".kiro/",
+      "summary": "4 untracked files under .kiro/ (check-kiro-not-ignored.mjs); .kiro/ must be committed before submission. Commit only when the person asks (tech rule 3)."
+    },
+    {
+      "id": "R4-N4",
+      "severity": "NIT",
+      "file": ".kiro/specs/marketing-site/design.md",
+      "summary": "Test table rows 992-993 still say 'MS-7.4 getHowData() sentences each encode to 44' and 'MS-6.7 Hear it disabled while playing'; change them to 'MS-7.8 getHowData for 4663 with home chosen' and 'aria-disabled while playing, stays focusable, ignores presses' (tech rule 7)."
+    },
+    {
+      "id": "R4-C1",
+      "severity": "NIT",
+      "file": "packages/web/components/site/pictures/Privacy.tsx",
+      "summary": "'Offline. Using your dictionary.' wraps at 320; at 768 and 390 'The dictionary words that match them' and 'Sends the text to the browser maker' break before the last word. Nothing is cut off. Leave it or wrap on purpose, and record which in design.md 4.4."
+    },
+    {
+      "id": "R4-N6",
+      "severity": "NIT",
+      "file": "packages/web/components/site/sections/Access.tsx",
+      "summary": "Inline 'Open an issue on GitHub' link is 187 x 22px, exempt under WCAG 2.5.8; the product owner declined to change it (R3-N5). No action."
+    }
+  ]
+}

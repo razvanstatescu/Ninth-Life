@@ -33,7 +33,7 @@ Write for adults. No cartoons, no baby talk. Describe the tool ("type on 9 keys,
 
 ## Devices (web-ui Req 24, 25; ADR-003)
 
-**Phones are the first target, tablets the second, laptops third.** On phones and tablets the main screen fits the visible screen and never scrolls: sentence card, suggestions, keypad and the action bar [Menu] [Speak] [Show]; everything else opens in a sheet. Tablets work in both orientations (landscape puts the keypad on the right). **Phones are portrait only**: held sideways they show "Turn your phone upright" and keep the sentence. That is a decision by the product owner and a known WCAG 1.3.4 exception; do not "fix" it without a new decision. Check layout changes with `test/e2e/responsive.mjs` (24 measured sizes).
+**Phones are the first target, tablets the second, laptops third.** On phones and tablets the main screen fits the visible screen and never scrolls: sentence card, suggestions, keypad and the action bar [Menu] [Speak] [Show]; everything else opens in a sheet. Tablets work in both orientations (landscape puts the keypad on the right). **Phones are portrait only**: held sideways they show "Turn your phone upright" and keep the sentence. That is a decision by the product owner and a known WCAG 1.3.4 exception; do not "fix" it without a new decision. Check layout changes with `test/e2e/responsive.mjs` (24 measured sizes). The website at `/` is a normal scrolling page and works in both orientations on phones (ADR-006).
 
 ## Non-goals
 

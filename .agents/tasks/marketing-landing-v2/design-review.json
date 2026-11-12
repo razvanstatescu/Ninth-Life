@@ -1,0 +1,70 @@
+{
+  "verdict": "CHANGES_REQUESTED",
+  "findings": [
+    {
+      "id": 1,
+      "severity": "MEDIUM",
+      "title": "A drawing entered from above plays with only its bottom edge on screen",
+      "where": "design.md 3.3 shouldPlay and handler note; R2.2; glossary Play line; MS-8.11; V25; ADR-006 A7; §8 invariant",
+      "problem": "shouldPlay's first branch (bottom <= 0.7*vh + 1) does not require the top on screen. Scrolling up after a header or footer anchor jump (#how, #proof, #access, #privacy, #faq), or after a fast scroll, a drawing plays when its bottom edge enters, almost entirely above the viewport. This contradicts the §8 invariant. site.mjs only scrolls down.",
+      "fix": "shouldPlay: return false if bottom <= 0 or top >= vh; if height <= 0.7*vh, require top >= -1 and bottom <= 0.7*vh + 1; otherwise require the whole box in view or (top <= 1 and bottom >= 0.7*vh - 1). Update the glossary, MS-8.11, V25, ADR-006 A7 and the 3.3 note. Add unit cases (216px at 667 with top -200 is false; 520px at 568 with top -300 is false and with top 20 is true). Add a site.mjs case 'MS-8.11 drawings entered from above play in view' at 375x667 and 1280x800: follow #faq, then scroll up."
+    },
+    {
+      "id": 2,
+      "severity": "MEDIUM",
+      "title": "MS-8.13 forbids what MS-8.12 requires for the deferred How picture",
+      "where": "requirements.md MS-8.13 vs MS-8.12; design.md 3.3 mount bullet; ADR-006 A7",
+      "problem": "MS-8.13 says any drawing on screen at mount never plays. It is not scoped to data-play roots, and the glossary's Drawing includes the How picture, which MS-8.12 and V26 play from step 1 when deferred. A test or reviewer holding the code to MS-8.13 would flag correct code.",
+      "fix": "Scope MS-8.13 to data-play drawings, adding '(the desktop How picture follows MS-8.12)', and make the same edit in the 3.3 mount bullet and the ADR-006 A7 bullet."
+    },
+    {
+      "id": 3,
+      "severity": "NIT",
+      "title": "Typed step tables do not type-check with noUncheckedIndexedAccess",
+      "where": "design.md 3.2, 4.2 (SWEEP[c], SWEEP[diffAt][0], DIGIT_LINE[row], CHIP[row])",
+      "problem": "tsconfig.base.json sets noUncheckedIndexedAccess, so indexing a readonly array with a number gives T | undefined, and the spread and role() calls fail typecheck.",
+      "fix": "Type the tables as fixed tuples (SWEEP as 5 Spans, DIGIT_LINE and CHIP as 3 KSteps) and index them with literal unions (Column 0-4, Row 0-2), or map over them. Make reject.diffAt a Column, narrowed in getProofExample."
+    },
+    {
+      "id": 4,
+      "severity": "NIT",
+      "title": "MS-8.12 'whole picture in view' is unconditional, but V22 accepts a cut picture below 632px; the deferred clause says step 1 only",
+      "where": "requirements.md MS-8.12",
+      "problem": "Below an inner height of 632px the picture sticks before step 1 is active and its bottom row is cut. In the deferred case, 3.3 plays step 2 or 3 when a fast scroll skips step 1.",
+      "fix": "Add 'from an inner height of 632px'. Write 'play the step that became active (step 1 unless a fast scroll skipped it)'."
+    },
+    {
+      "id": 5,
+      "severity": "NIT",
+      "title": "'The ring is off for motion-jump' overstates the gap between the two presses of 6",
+      "where": "design.md 3.2 Ring handovers, 4.1 The two presses of 6",
+      "problem": "The fade-out and fade-in are back to back, so opacity touches 0 only for an instant, a 240 ms dip, not 120 ms off. MS-7.3 is consistent with this; only the prose is off.",
+      "fix": "Reword: 'the first ring fades out, then the second fades in, so the key visibly dips between the two presses'."
+    },
+    {
+      "id": 6,
+      "severity": "NIT",
+      "title": "Stage table uses a 32px candidate line; the token is 34px",
+      "where": "design.md 4.1 stage height table, Step 3 row",
+      "problem": "The candidate line is 34px in tokens.json, so Step 3 sums to 152px, not 150px. That still fits in 160px.",
+      "fix": "Use 34 in the Step 3 row."
+    }
+  ],
+  "previousFindings": [
+    {"id": 1, "status": "Closed"},
+    {"id": 2, "status": "Closed for scrolling down; the upward case is new finding 1"},
+    {"id": 3, "status": "Closed"},
+    {"id": 4, "status": "Closed"},
+    {"id": 5, "status": "Closed"},
+    {"id": 6, "status": "Closed"},
+    {"id": 7, "status": "Unchanged (see NIT 3)"},
+    {"id": 8, "status": "Closed"},
+    {"id": 9, "status": "Closed"},
+    {"id": 10, "status": "Closed"},
+    {"id": 11, "status": "Closed"},
+    {"id": 12, "status": "Closed"},
+    {"id": 13, "status": "Closed (wording NIT 5)"},
+    {"id": 14, "status": "Unchanged (backlogged on purpose, V10; accepted)"}
+  ],
+  "reviewDoc": "/Users/razvanstatescu/Documents/Work/Ninth-Life/.agents/tasks/marketing-landing-v2/design-review.md"
+}

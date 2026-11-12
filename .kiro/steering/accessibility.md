@@ -13,7 +13,7 @@ WCAG 2.2 AA is the floor, not the goal. The people who use this may type with on
 2. **Text size.** Nothing in the app is smaller than **16px** (`label`). `caption` (14px) is for the website footer and video credits only, never inside the app. The sentence being spoken is the largest text (`utterance`, 40px).
 3. **One ember thing per screen.** Ember (`--ember`) marks exactly one thing at a time: the lit key, the scan highlight, or the Speak button. Ember is a fill, never text and never a hairline; text on ember is `--on-ember`.
 4. **Never color alone** (WCAG 1.4.1). Proof states (match, new, reject), selection, errors and the scan highlight each also carry an icon, a word, a border style or a shape change. Rejected words are also struck through.
-5. **No pulsing, blinking, sliding or bouncing.** The scan highlight jumps with at most a 120ms linear color change. Nothing flashes (2.3.1). Honor `prefers-reduced-motion` (2.3.3) by removing even that transition.
+5. **No pulsing, blinking, sliding or bouncing.** The scan highlight jumps with at most a 120ms linear color change. Nothing flashes (2.3.1). Honor `prefers-reduced-motion` (2.3.3) by removing even that transition. The website at `/` may also use the website motion tier of ADR-006 (marketing-site MS-8): slow fades, one-time reveals, drawings that play their sequence once when they reach the play line and then stay finished (A7, MS-8.11), and the How it works picture following the active step (A8, MS-8.12); no scroll timelines, and all of it off with reduced motion. The app may not.
 6. **Real controls.** Use `<button>`, `<a href>`, `<input>`, `<select>`. No clickable `<div>`. An icon-only control needs `aria-label`; icons normally sit beside a word. The icon-only controls we have (Clear ×, the They said bubble) are 56px squares with a plain name. When a control shows text, its accessible name must start with or contain that text (2.5.3).
 7. **Focus** is always visible (2.4.7) with `--focus-width` in `--focus` and a 3px offset, and never hidden behind the sticky SpeakBar or a sheet (2.4.11). Focus order follows the visual order: SpeakBar, candidates, keypad, actions.
 8. **Contrast.** Text 4.5:1, large text 3:1, UI borders, icons and focus rings 3:1 (1.4.3, 1.4.11) in both Night and Day themes. Use the tokens; they were checked. Do not invent colors.
@@ -35,5 +35,6 @@ WCAG 2.2 AA is the floor, not the goal. The people who use this may type with on
 
 - Unit tests name the requirement IDs (`packages/web/test/*.test.tsx`).
 - With the dev server running, from `packages/web`: `BASE_URL=http://localhost:3000 node test/e2e/axe.mjs` (zero serious or critical violations), `keyboard.mjs`, `switch.mjs`, `spell.mjs`, and `responsive.mjs` for any layout change (also with `ENGINE=webkit`).
+- `test/e2e/site.mjs` for changes to the landing page (layout at 14 sizes, motion on and off, no-JS, privacy, keyboard).
 - Run the `a11y-auditor` custom agent on any route you changed (it uses the Playwright MCP and writes findings to `docs/a11y/`).
 - Try it yourself with the keyboard only, then with one key as a switch at 400 ms and at 5 s, and on a real phone in portrait.

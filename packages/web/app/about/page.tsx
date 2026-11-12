@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Brand } from '@/components/AppHeader';
 import { Footer, NOT_A_MEDICAL_DEVICE } from '@/components/Footer';
 import { providerCopy } from '@/lib/rankingProvider';
+import '@/styles/app.css';
 
 export const metadata: Metadata = {
   title: 'About Ninth Life',
@@ -14,8 +15,8 @@ export default function AboutPage() {
     <div className="app">
       <div className="app__inner">
         <header className="app-header">
-          <Brand href="/" />
-          <a className="nl-btn nl-btn--secondary" href="/">
+          <Brand href="/app" />
+          <a className="nl-btn nl-btn--secondary" href="/app">
             Back to the keypad
           </a>
         </header>
@@ -30,7 +31,7 @@ export default function AboutPage() {
             </p>
             <p>It runs in your browser and works offline. You can type with a keyboard, by touch, or with one or two switches.</p>
             <p>
-              <a href="/welcome">See the demo, the measured results and the source code</a>
+              <a href="/">See the demo, the measured results and the source code</a>
             </p>
           </section>
 

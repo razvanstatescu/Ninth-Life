@@ -1,0 +1,60 @@
+{
+  "approved": true,
+  "findings": [
+    {
+      "id": "A11Y-V2-1",
+      "severity": "moderate",
+      "blocking": false,
+      "rule": "accessibility.md rule 3 (one ember thing per screen); MS-7.3 and MS-8.11 hold; design.md 3.2 V39 accepts row overlap only for a fast scroll",
+      "where": "packages/web/components/site/SiteMotion.tsx play leads; Access and Conversation grids",
+      "evidence": "At about 400 px/s, ember rings show in 2 or more drawings for 1,044 ms in total at 1024x1366 (up to 3 at once: Keyboard + Touch + switch) and for 250 ms at 1920x1080. 0 ms at 1280x800, 1133x658 and 390x699.",
+      "fix": "Keep a page-wide 'ember busy until' time in SiteMotion and add the remaining time to --play-after for a drawing that triggers during another drawing's rings. Otherwise, record it as an accepted exception and correct the V39 note (product owner)."
+    },
+    {
+      "id": "A11Y-V2-2",
+      "severity": "minor",
+      "blocking": false,
+      "rule": "accessibility.md rule 8 (UI graphics 3:1 in Night and Day); WCAG 1.4.11 does not apply (aria-hidden pictures)",
+      "where": ".site-press-ring on drawn buttons (.site-drawn-btn) and drawn computer keys (.site-kbd, .site-kbd-pair), Day theme",
+      "evidence": "Ember 3px ring measured 1.49:1 on rgb(236,230,250) and 1.81:1 on white in Day (Night 8.51 to 9.47:1); screenshot mlv2-conversation-ring-1280x800-day.png",
+      "fix": "In Day, pair the press ring with a 2px plum inner line, as the scan ring does; add it to design/system/README.md 'Website drawings' first."
+    },
+    {
+      "id": "A11Y-V2-3",
+      "severity": "minor",
+      "blocking": false,
+      "rule": "Design system Key (letters lead, digit small in the corner); legibility",
+      "where": "KeypadPicture at KEY_DRAWING_SIZE 64px: How picture, How step 1 stage, switch drawing",
+      "evidence": "The digit box and the letters box overlap by 10x9px and the glyphs touch ('2' on 'A'); 12x18px with text-spacing overrides at 67px; screenshot mlv2-how-keypad-64px-zoom.png",
+      "fix": "For 64px drawn keys only, add about 4px of top padding to .nl-key__letters (or lower them) inside .site .nl-keypad. Keys stay 64px."
+    },
+    {
+      "id": "A11Y-V2-4",
+      "severity": "minor",
+      "blocking": false,
+      "rule": "MS-8.11 intent (a drawing plays where it can be seen)",
+      "where": "lib/motion.ts shouldPlay for drawings taller than the play area: How step 1 stage, proof figure",
+      "evidence": "874x330: How step 1 plays at -28..362 with its well at -28..54; the proof plays at -24..630 with its last row (312-444) and closing lines (460-512) below the fold. 375x549: the proof caption is at -15..33 at play.",
+      "fix": "Play a drawing taller than the viewport only when its top is at or below 0, or show How step 1 finished on viewports under about 420px tall; or accept it for the sideways phone."
+    },
+    {
+      "id": "A11Y-V2-5",
+      "severity": "minor",
+      "blocking": false,
+      "rule": "Forced colors, good practice (carried over from docs/a11y/marketing-landing.md finding 2)",
+      "where": ".nl-key in KeypadPicture and KeypadDemo",
+      "evidence": "Keys lose their shapes in forced-colors: active; the Touch drawing shows two bare '2 ABC' labels with no visible size difference; screenshots mlv2-forced-how-1280x800.png, mlv2-forced-access-1280x800.png",
+      "fix": "@media (forced-colors: active) { .nl-key { border: var(--line-width) solid transparent; } } (check /app too), or scope it to .site .nl-key."
+    },
+    {
+      "id": "A11Y-V2-6",
+      "severity": "minor",
+      "blocking": false,
+      "rule": "accessibility.md rule 1; WCAG 2.5.8 inline exception (carried over; the product owner declined, R3-N5)",
+      "where": "packages/web/components/site/sections/Access.tsx, 'Open an issue on GitHub'",
+      "evidence": "187x22px at 1280x800, 1024x1366 and 390x699",
+      "fix": "None required; optionally move the link into a .site-links row."
+    }
+  ],
+  "reviewDoc": "/Users/razvanstatescu/Documents/Work/Ninth-Life/docs/a11y/marketing-landing-v2.md"
+}

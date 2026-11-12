@@ -1,0 +1,60 @@
+{
+  "approved": true,
+  "findings": [
+    {
+      "id": "R4-1",
+      "severity": "non-blocking",
+      "confidence": "confirmed",
+      "title": "Typing chip drawn too wide with blank slots",
+      "where": "packages/web/components/site/Pictures.tsx ProofCheck; site.css .site-proof__slot",
+      "detail": "The hidden check icon and code make the dashed typing chip as wide as the real chip, so each word sits behind an empty icon gap with an empty tail for about 2.5 s of every play (r4-proof3-1280x800-2560ms.png).",
+      "action": "Keep the icon slot (it alone aligns the words) and drop the code slot so the dashed chip ends after the word, or accept the look and record it in design.md 4.2. Recheck with the MS-7.9 edge check and timed screenshots."
+    },
+    {
+      "id": "R4-2",
+      "severity": "non-blocking",
+      "confidence": "confirmed",
+      "title": "Lighthouse not re-measured on the final tree",
+      "where": "docs/testing/performance.md",
+      "detail": "Iteration 3 changed about 30 CSS rules and added hidden markup; the recorded 100 scores are from the iteration 2 tree.",
+      "action": "Re-run task 44 (build, next start -p 3202, node scripts/lighthouse.mjs --write) after the person agrees to stop the dev server, before quoting the scores or committing."
+    },
+    {
+      "id": "R4-3",
+      "severity": "product-owner",
+      "confidence": "confirmed",
+      "title": "Small drawings under 1024px",
+      "where": "site.css (R3-P1 scale-up only in @media (min-width: 1024px))",
+      "detail": "At 390 and 768 Listen fills only the top half of its 288px stage; Your view is 216 x 188 in a 384px stage at 768; the layouts drawing is 221 x 92 in a 672 x 216 stage. Phones are the first target.",
+      "action": "Ask the product owner whether to extend the scale-up or center these drawings below 1024px."
+    },
+    {
+      "id": "R4-4",
+      "severity": "cosmetic",
+      "confidence": "confirmed",
+      "title": "Offline pill still wraps at 320",
+      "where": "site.css .site-boundary__pill",
+      "detail": "The fixer notes that 'Offline. Using your dictionary.' still wraps in the narrowest stages.",
+      "action": "Leave it or wrap it on purpose, and record which in design.md 4.4."
+    },
+    {
+      "id": "R4-5",
+      "severity": "non-blocking",
+      "confidence": "confirmed",
+      "title": "KIRO_LOG iteration 3 row mislabels the answers",
+      "where": "docs/KIRO_LOG.md, 2026-11-12 iteration 3 row",
+      "detail": "The prompt cell says 'answers on P1, P2, N6' but means R3-P1, R3-P2 and R3-N6; plain N6 is the Privacy alignment fix from iteration 2.",
+      "action": "Write the R3 prefixes; the log feeds the write-up."
+    },
+    {
+      "id": "R4-6",
+      "severity": "nit",
+      "confidence": "confirmed",
+      "title": "Design-system ownership of two new styles",
+      "where": "site.css .site-demo__bar .nl-btn--quiet[aria-disabled=\"true\"]; .site-listen > .site-drawn-btn",
+      "detail": "The aria-disabled look copies components.css :disabled values instead of being a Button state; the drawn Listen button uses --target-cta (the hero-button token) only for a 64px height.",
+      "action": "Add .nl-btn[aria-disabled=\"true\"] to components.css beside :disabled, and use a spacing sum for the drawn button's height."
+    }
+  ],
+  "reviewDoc": "/Users/razvanstatescu/Documents/Work/Ninth-Life/.agents/tasks/marketing-landing-v2/semantic-review.md"
+}

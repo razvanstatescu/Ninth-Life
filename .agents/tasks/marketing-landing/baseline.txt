@@ -1,0 +1,10 @@
+HEAD: e8e333181767cdd2d41dbf95125714ee667009b5
+branch: main
+
+git status --porcelain:
+  (did not finish: `git status --porcelain` and `git status --porcelain -uno` both hung past 60-120 s)
+  fallback `git diff --name-status HEAD`: empty, so no tracked file was modified, added or deleted before this workflow.
+  Untracked files before this workflow: not captured. The only paths this step created are
+  .agents/tasks/marketing-landing/ and docs/research/marketing-site/.
+
+dev server http://localhost:3000: did not answer (curl http_code 000, connection failed within 10 s)

@@ -76,7 +76,7 @@ export function buildTokensCss(tokens) {
   const shared = [];
   shared.push(`  --font-sans: ${tokens.type.families.sans};`);
   shared.push(`  --font-mono: ${tokens.type.families.mono};`);
-  for (const group of ['spacing', 'size', 'radius']) {
+  for (const group of ['spacing', 'size', 'radius', 'motion']) {
     for (const t of tokens[group]?.tokens ?? []) shared.push(`  --${t.name}: ${t.value};`);
   }
   const typeClasses = [];

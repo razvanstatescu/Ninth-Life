@@ -3,7 +3,7 @@
   "short_name": "Ninth Life",
   "description": "Press keys 2 to 9, one press per letter, and hear the sentence you meant. Works offline.",
   "id": "/",
-  "start_url": "/",
+  "start_url": "/app",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",

@@ -6,6 +6,7 @@ they press keys 2-9, one press per letter, pick or accept a sentence, and press 
 offline, with a keyboard, by touch, or with one or two switches, for people who may type for hours with
 low vision, tremor or fatigue. Milestone M1 is ghost mode in the browser: the offline dictionary and
 language model from `@ninth/core`, with optional model ranking from `@ninth/decoder`.
+The communication screen is served at `/app`; `/` is the website (spec `marketing-site`, ADR-006).
 
 Sources: `design/system/README.md` (brand book), `design/artboards/In-context-app.dc.html` (target
 screen), `docs/architecture/contracts.md` §1-§5, `docs/plan/00-source-plan.md` §4.5-§4.6, steering
@@ -68,7 +69,9 @@ so that motor memory holds and I never tap a key three times.
      animation; show mode SHALL open unflipped every time (2026-11-09, docs/research/mobile-aac-evidence.md).
 
 ## Requirement 5: Offline
-5.1 THE service worker SHALL precache the app shell, fonts, icons and `/data/**` so ghost mode works offline after one visit.
+5.1 THE service worker SHALL precache the app shell, the documents `/app`, `/about` and `/`, fonts, icons and `/data/**`
+    so ghost mode works offline after one visit to any of them, AND an uncached document requested offline SHALL fall
+    back to `/app` (ADR-006).
 5.2 WHILE the device is offline, THE app SHALL decode with the local dictionary AND SHALL show the indicator
     "Offline. Using your dictionary."
 5.3 IF the dictionary files are missing or fail to load, THEN THE app SHALL show "Dictionary not loaded", keep showing
@@ -117,9 +120,13 @@ so that motor memory holds and I never tap a key three times.
 10.4 THE theme SHALL be applied before first paint (no flash of the wrong theme).
 
 ## Requirement 11: Motion
+These rules cover the app (`/app`, `/about` and their sheets). The website at `/` follows marketing-site MS-8 (ADR-006).
+
 11.1 THE scan highlight SHALL jump between rows and keys with at most a 120ms linear color change, and nothing SHALL
      slide, pulse, bounce or blink.
 11.2 WHEN `prefers-reduced-motion: reduce` is set, THE app SHALL remove all transitions.
+11.3 WHEN `prefers-reduced-motion` is `no-preference`, a navigation between pages MAY cross-fade for `motion-crossfade`
+     (250 ms); nothing inside the app SHALL animate on arrival.
 
 ## Requirement 12: Model ranking
 12.1 Model ranking SHALL be off by default AND its setting SHALL say that it sends the keys and the other person's last
@@ -139,7 +146,7 @@ so that motor memory holds and I never tap a key three times.
 14.1 Copy SHALL use plain verbs, sentence case, digits for numbers and no exclamation marks, and follow the Write / Not table.
 14.2 THE app SHALL NOT name any third-party phone or keyboard brand (the list in `.kiro/steering/trademarks.md`;
      say "9-key predictive text"), and SHALL make no medical claim.
-14.3 THE footer and the About page SHALL carry: "Ninth Life is a general-purpose text entry and text-to-speech tool. It is
+14.3 THE app footer, the About page and the website footer SHALL carry: "Ninth Life is a general-purpose text entry and text-to-speech tool. It is
      not a medical device and is not intended to diagnose, treat or replace a clinical AAC assessment."
 
 ## Requirement 15: Phone layout (M1 review F1)
@@ -323,7 +330,8 @@ Measured with `scripts/perf-check.mjs`; numbers and method in `docs/testing/perf
      once.
 23.3 WHEN the dictionary is ready, THE app SHALL build the lexicon's completion index and warm decoding in idle time
      (`requestIdleCallback`, else a timeout), one short step per idle slice, so that no key press pays for it.
-23.4 THE service worker precache SHALL hold what the app needs offline and SHALL NOT hold the 192 and 512 px PNG icons,
+23.4 THE service worker precache SHALL hold what the app needs offline, including the documents `/`, `/app` and `/about`,
+     and SHALL NOT hold `/welcome`, the 192 and 512 px PNG icons,
      the Apple touch icon, latin-ext font subsets, the data licence and notice, `en.v1.json`, the polyfills chunk or the
      pages-router chunks; an offline reload after one visit SHALL still reach "Offline dictionary ready" with no network.
 23.5 ON the Moto G-class profile (4x CPU, Slow 4G), the first load SHALL stay under 700 KB compressed and no key press
@@ -381,7 +389,8 @@ scrolls, so that nothing I need is ever out of reach.
      on the right, level with the action bar; in portrait the stack of Req 24.
 25.6 A phone (shorter screen side under 600px) held sideways SHALL show only "Turn your phone upright", SHALL keep the
      sentence, AND SHALL ask for a portrait lock where the browser allows it; a tablet SHALL work in both orientations.
-     (Known exception to WCAG 1.3.4, ADR-003.)
+     (Known exception to WCAG 1.3.4, ADR-003.) The website at `/` scrolls and works in both orientations (ADR-006,
+     marketing-site MS-10.3).
 25.7 THE layout SHALL follow the window (an iPad window can be 375px wide) and the phone test SHALL use the screen.
 
 ## Requirement 26: Voice to text for They said (2026-11-09, ADR-004)

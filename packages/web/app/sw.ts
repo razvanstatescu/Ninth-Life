@@ -10,6 +10,8 @@
  *
  * Decode requests are network-only: model ranking never comes from a cache, and offline the app
  * stays in ghost mode.
+ *
+ * An uncached page requested offline falls back to /app, so it opens the keypad (ADR-006).
  */
 import { defaultCache } from '@serwist/next/worker';
 import { NetworkOnly, Serwist, type PrecacheEntry, type SerwistGlobalConfig } from 'serwist';
@@ -35,7 +37,7 @@ const serwist = new Serwist({
     ...defaultCache,
   ],
   fallbacks: {
-    entries: [{ url: '/', matcher: ({ request }) => request.destination === 'document' }],
+    entries: [{ url: '/app', matcher: ({ request }) => request.destination === 'document' }],
   },
 });
 

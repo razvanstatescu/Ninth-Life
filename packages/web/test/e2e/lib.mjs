@@ -20,8 +20,8 @@ export function loadPlaywright() {
 export const BASE_URL = (process.env.BASE_URL ?? 'http://localhost:3202').replace(/\/$/, '');
 
 /** A new context with the theme set before first paint (the app mirrors it in localStorage). */
-export async function newContext(browser, { theme = 'night', width = 1280, height = 900, reducedMotion = 'reduce' } = {}) {
-  const ctx = await browser.newContext({ viewport: { width, height }, reducedMotion, serviceWorkers: 'block' });
+export async function newContext(browser, { theme = 'night', width = 1280, height = 900, reducedMotion = 'reduce', serviceWorkers = 'block' } = {}) {
+  const ctx = await browser.newContext({ viewport: { width, height }, reducedMotion, serviceWorkers });
   await ctx.addInitScript((t) => {
     try {
       localStorage.setItem('nl-theme', t);
@@ -32,8 +32,8 @@ export async function newContext(browser, { theme = 'night', width = 1280, heigh
   return ctx;
 }
 
-/** Open the app and wait until the offline dictionary is ready. */
-export async function openApp(page, path = '/') {
+/** Open the app (at /app since ADR-006) and wait until the offline dictionary is ready. */
+export async function openApp(page, path = '/app') {
   await page.goto(BASE_URL + path, { waitUntil: 'load' });
   await page.locator('button[data-key="4"]').first().waitFor({ state: 'visible', timeout: 15000 });
   // The status text, visible or screen-reader only (the compact header shows a short pill).

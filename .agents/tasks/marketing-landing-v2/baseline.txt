@@ -1,0 +1,2 @@
+5434bed5cd1a1ff6ac867852a411afcccba502c3
+To diff since baseline: rm -f /tmp/ninth-life-v2-review.index && GIT_INDEX_FILE=/tmp/ninth-life-v2-review.index git --no-optional-locks -c core.fsmonitor=false add -A </dev/null && GIT_INDEX_FILE=/tmp/ninth-life-v2-review.index git --no-optional-locks -c core.fsmonitor=false write-tree </dev/null, then git --no-optional-locks diff 5434bed5cd1a1ff6ac867852a411afcccba502c3 <new sha> (-c core.fsmonitor=false avoids a hang seen in this repo).

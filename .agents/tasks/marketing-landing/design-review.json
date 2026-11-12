@@ -1,0 +1,55 @@
+{
+  "verdict": "CHANGES_REQUESTED",
+  "findings": [
+    {
+      "id": 1,
+      "severity": "MEDIUM",
+      "title": "The MS-4.1 copy check skips the FAQ answers and every sentence with a {value}",
+      "where": "design.md Copy check (MS-4.1); content.md §3, §6, §7, §9, §10",
+      "fix": "Also collect the plain-text answer after each bold FAQ question; for strings with {…}, split on /\\{[^}]+\\}/ and require every literal fragment of 8+ characters to appear in the rendered text; check the model line only when modelRuns is not null."
+    },
+    {
+      "id": 2,
+      "severity": "MEDIUM",
+      "title": "The tablet bar layout needs a visual reorder, which breaks MS-13.2 focus order",
+      "where": "design.md §0 (Tablet 720-1023px: row 1 brand and CTA, row 2 the nav); MS-13.2; site.mjs Tab-order check only at 1280",
+      "fix": "State that the bar never reorders its children (no order or grid placement that differs from DOM order brand, nav, CTA); they wrap in DOM order at 720-1023px (up to 208px); update the 744x1047 fold estimate; run the bar Tab-order check at 820x1094 too. Alternatively change the DOM order everywhere and write that down."
+    },
+    {
+      "id": 3,
+      "severity": "MEDIUM",
+      "title": "Short links are narrower than 56px, and the footer nav has no row gap (MS-10.4)",
+      "where": "design.md §0 nav links, §12 footer ('As today's /welcome footer', gap 0 20px); MS-10.4; site.mjs size check",
+      "fix": "Standalone links (bar nav, footer nav, .site-links a) get inline-flex, centred, min-height and min-width var(--target-min); link groups use gap var(--space-2) var(--space-6); write the footer rules out on tokens; site.mjs checks width and an 8px gap within each group."
+    },
+    {
+      "id": 4,
+      "severity": "NIT",
+      "title": "The MS-8.1 selector check would fail on globals.css",
+      "where": "design.md Test plan site-css.test.ts MS-8.1",
+      "fix": "Scope 'every animation selector starts with [data-site-motion' to site.css; in globals.css allow only the A6 view-transition rules inside no-preference and the existing reduce guard."
+    },
+    {
+      "id": 5,
+      "severity": "NIT",
+      "title": "The proof frame 3 label must be 16px, not 14px",
+      "where": "design.md Drawings (frame labels 14px or more); §3; MS-10.5; site.mjs text-size check",
+      "fix": "Frame labels use the label size (16px), or frame 3's label element is aria-hidden; say which."
+    },
+    {
+      "id": 6,
+      "severity": "NIT",
+      "title": "The tablet hero padding is not given",
+      "where": "design.md §1 Layout",
+      "fix": "Tablet (600-1023px) hero padding block var(--space-12) / var(--space-16); express desktop 112px with tokens or name it as an allowed raw value."
+    },
+    {
+      "id": 7,
+      "severity": "NIT",
+      "title": "site.mjs sizes carry screen and touch, but newContext cannot set them",
+      "where": "design.md Test plan site.mjs sizes; test/e2e/lib.mjs newContext",
+      "fix": "Size passes build contexts like responsive.mjs (viewport, screen, deviceScaleFactor 2, hasTouch, isMobile on Chromium touch sizes, reducedMotion, serviceWorkers) with the theme init script; other runs use newContext."
+    }
+  ],
+  "reviewDoc": "/Users/razvanstatescu/Documents/Work/Ninth-Life/.agents/tasks/marketing-landing/design-review.md"
+}

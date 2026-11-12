@@ -259,7 +259,7 @@ async function runMobile(browser) {
   const bytes = await byteCounter(cdp);
   await cdp.send('Network.emulateNetworkConditions', SLOW_4G);
 
-  await page.goto(BASE_URL + '/', { waitUntil: 'commit' });
+  await page.goto(BASE_URL + '/app', { waitUntil: 'commit' });
   await waitDictReady(page);
   const dictReadyMs = await page.evaluate(() => performance.now());
   await page.waitForLoadState('networkidle').catch(() => undefined);
@@ -302,7 +302,7 @@ async function runOffline(browser) {
   const page = await context.newPage();
   const cdp = await context.newCDPSession(page);
   const bytes = await byteCounter(cdp);
-  await page.goto(BASE_URL + '/', { waitUntil: 'load' });
+  await page.goto(BASE_URL + '/app', { waitUntil: 'load' });
   await waitDictReady(page);
   const swReady = await page
     .evaluate(async () => {
@@ -377,7 +377,7 @@ async function runDesktop(browser) {
   const page = await context.newPage();
   const cdp = await context.newCDPSession(page);
   const bytes = await byteCounter(cdp);
-  await page.goto(BASE_URL + '/', { waitUntil: 'commit' });
+  await page.goto(BASE_URL + '/app', { waitUntil: 'commit' });
   await waitDictReady(page);
   const dictReadyMs = await page.evaluate(() => performance.now());
   await page.waitForLoadState('networkidle').catch(() => undefined);
