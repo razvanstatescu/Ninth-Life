@@ -9,20 +9,38 @@
 //   - 14 phone, tablet and desktop sizes with reduced motion (contexts built like responsive.mjs, R7):
 //     no sideways scroll, no turn-upright notice, h1 and header CTA above the fold, targets (width,
 //     height, 8px gaps inside link groups and between question summaries, R3), text sizes, key drawings 64-84px
-//     (the Touch keys exactly 72 and 128px), no drawing larger than its stage, no overflow in the How picture or
-//     the proof figure, equal stage heights per section (Access: per row), one ember fill per viewport,
-//     finished drawings and a still page at the end; plus an XL key-size pass.
-//   - Layout: "Press a key to start" on one line, 2 cards per row in Conversation and Privacy, the switch
-//     card a normal card with a snug stage, no CSS order in the grids (MS-7.7, MS-10.9).
+//     (the Touch keys exactly 72 and 128px), no drawing larger than its stage, no overflow in the proof figure,
+//     equal stage heights per section (Access: per row; How: in its row, hugging below 1024px), one ember fill per
+//     viewport, finished drawings and a still page at the end; plus an XL key-size pass.
+//   - Layout: How's three steps in one row from 1024px and one column below, each stage before its step (round 4);
+//     the box grids: a lead card, then 3 cards a row (Conversation, Privacy) or 2 + 2 (Access), the switch card
+//     leading Access with a snug stage, no CSS order in the grids (round 4; MS-7.7, MS-10.9).
 //   - Motion on (1280x900 and 390x844): the once-only autoplay, Stop, reveals, focus inside a hidden
 //     block, nothing time-based left running, opacity/transform only, reduce at runtime, layout shift and LCP.
-//   - Round 2 motion (A7, A8): How step sync down and up, every step played from the top on tall viewports,
-//     step 1 with the whole picture in view, tall drawings, drawings entered from above and drawings a 150px
-//     flick passes on short phones play in view,
+//   - Round 2 motion (A7): tall drawings, drawings entered from above and drawings a 150px flick passes on short
+//     phones play in view; round 4: How's row plays in story order with one ember ring at a time (the A8 step
+//     sync is gone),
 //     a reload at #access shows finished drawings, every drawing finished 4.5 s after it played, no layout
 //     shift while they play (MS-8.11-8.13, MS-11.2).
 //   - No JavaScript, privacy (requests, storage, cookies, no dialog), routes, keyboard (skip link, bar
 //     Tab order at 1280x900 and 820x1094, R2; focus rings; questions; demo buttons) and the offline runs.
+//   - Round 3 (2026-11-12, Claude Code): the bar is one row at every size (W1); the demo's sentence and chips on the
+//     first phone screen at 390x844 and its sentence bar at least partly at 320x640; the try-it keypad (W4): nothing
+//     under /data/ and no new script before the first press, then the decoder chunk and the dictionary; 4663 shows
+//     good, home and gone; touch and keyboard (one Tab stop, arrows, digits, Backspace, Clear), a visible focus ring,
+//     the keypad does not move while typing, the polite announcement, reduced motion, Play goes back to the example.
+//   - R3-P1 (2026-11-13, Claude Code): at every size, key 1, Clear, 4663, #, Clear, "He need water" and an 8-word
+//     sentence never move the keypad, Clear or Play; the empty text, the sentence and the keys are one line each; at
+//     most 3 chips in one row; after # the line lists every match with the one on show marked.
+//   - Round 4 (2026-11-13, Claude Code), the hero demo: the card's chips are the sentence and the live region carries
+//     the result line; at 390x844 the card and the keypad's first three rows are on the first screen; the status line
+//     names the readings # gives next; Tab goes keypad, Play, Hear it, Clear; digits typed on Clear press the keys;
+//     the keypad and the toolbar never move, the card keeps one height, the status line is one line; with no
+//     JavaScript the status line is empty.
+//   - Round 4 (2026-11-13, Claude Code), the shared language: with motion on and off, the hover layer at --state-hover
+//     on a key and the ember button, a secondary button's edge turning ink, no layer on drawn buttons, hover and press
+//     never moving a key or a button, a .site-go arrow moving at most 4px only with motion on, and a question's answer
+//     rising in only with motion on (MS-8.14, MS-8.15).
 import { BASE_URL, check, done, loadPlaywright, newContext, openApp, waitFor } from './lib.mjs';
 
 const engine = process.env.ENGINE ?? 'chromium';
@@ -58,10 +76,13 @@ const SIZES = [
   ['desktop 1440x1000', 1440, 1000, 1440, 1000, false],
   ['desktop 1920x1080', 1920, 1080, 1920, 1080, false],
 ];
+// Round 4 (2026-11-13, Claude Code): the Play button is named "Play the example" before and after a play.
 const LABEL_FIRST = 'Play the example';
-const LABEL_AGAIN = 'Play the example again';
+const LABEL_AGAIN = LABEL_FIRST;
 const LABEL_STOP = 'Stop';
 const SENTENCE = 'I need water';
+/** The hero h1 since round 3 (2026-11-12): the promise, matching the <title>. */
+const H1 = 'Type on 9 keys. Hear your sentence.';
 
 const pw = loadPlaywright();
 const browser = await pw[engine].launch();
@@ -132,8 +153,23 @@ async function openSite(page, { motion = false } = {}) {
 }
 
 const demoLabel = (page) => page.evaluate(() => document.querySelector('.site-demo__label')?.textContent ?? '');
-const demoText = (page) => page.evaluate(() => document.querySelector('.site-demo__text')?.textContent ?? '');
-const demoButton = (page) => page.locator('.site-demo__foot button').first();
+// Round 4: the card's proof chips are the sentence (each word over its keys); the result line is in the live region.
+const demoText = (page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll('.site-demo__card .nl-chip')]
+      .filter((c) => !c.closest('.site-sizer__ghost'))
+      .map((c) => c.querySelector('.nl-chip__word')?.textContent ?? '')
+      .join(' '),
+  );
+const demoKeys = (page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll('.site-demo__card .nl-chip')]
+      .filter((c) => !c.closest('.site-sizer__ghost'))
+      .map((c) => (c.querySelector('.nl-chip__code') ?? c.querySelector('.nl-chip__digits'))?.textContent ?? '')
+      .join(' '),
+  );
+const demoLine = (page) => page.evaluate(() => document.querySelector('.site-demo [role="status"]')?.textContent ?? '');
+const demoButton = (page) => page.locator('.site-demo__play');
 const pause = (page, ms) => page.waitForTimeout(ms);
 
 /** Scroll the whole page in half-viewport steps, so every observer has seen every block. */
@@ -165,7 +201,7 @@ function keyChecks(label, k) {
   check(k.touch.length === 2 && Math.abs(a - 72) <= 0.5 && Math.abs(b - 128) <= 0.5, `${label}: the Touch keys are exactly 72 and 128px wide (${k.touch.map((x) => x.toFixed(1)).join(', ')}, MS-10.8)`);
 }
 
-/** No drawing larger than its stage, nothing outside the How picture or the proof figure, equal stages (MS-7.7). */
+/** No drawing larger than its stage, nothing outside the proof figure, equal stages (MS-7.7). */
 const stageFit = (page) =>
   page.evaluate(() => {
     const shown = (el) => el.getClientRects().length > 0;
@@ -184,7 +220,7 @@ const stageFit = (page) =>
         if (out(r, s)) over.push(`${name(d)} ${Math.round(r.width)}x${Math.round(r.height)} in ${Math.round(s.width)}x${Math.round(s.height)}`);
       }
     }
-    for (const frame of document.querySelectorAll('.site-how__picture, figure.site-proof')) {
+    for (const frame of document.querySelectorAll('figure.site-proof')) {
       if (!shown(frame)) continue;
       const f = box(frame);
       for (const el of frame.querySelectorAll('*')) {
@@ -198,50 +234,68 @@ const stageFit = (page) =>
       }
     }
     const unequal = [];
-    for (const id of ['conversation', 'privacy']) {
-      const hs = [...document.querySelectorAll(`#${id} .site-stage`)].filter(shown).map((s) => box(s).height);
-      if (hs.length && Math.max(...hs) - Math.min(...hs) > 0.5) unequal.push(`${id} ${hs.map(Math.round).join('/')}`);
+    // Round 4 (r4-boxes, MS-7.7): in the box sections the stages in one row are equal; each section's lead card has its
+    // own row (and its own, taller stage), and on phones every card is its own row.
+    for (const id of ['conversation', 'access', 'privacy']) {
+      const rows = new Map();
+      for (const s of [...document.querySelectorAll(`#${id} .site-bento > .site-card > .site-stage`)].filter(shown)) {
+        const top = Math.round(box(s).top);
+        rows.set(top, [...(rows.get(top) ?? []), box(s).height]);
+      }
+      for (const hs of rows.values()) if (Math.max(...hs) - Math.min(...hs) > 0.5) unequal.push(`${id} row ${hs.map(Math.round).join('/')}`);
     }
-    // Access: stages in one row are equal, the switch card's row included (review P2).
-    const accessRows = new Map();
-    for (const s of [...document.querySelectorAll('#access .site-stage')].filter(shown)) {
-      const top = Math.round(box(s).top);
-      accessRows.set(top, [...(accessRows.get(top) ?? []), box(s).height]);
+    // W1 (round 4: all three box sections): on phones a box stage is its drawing plus 12px above and below (space-3),
+    // never a shared height.
+    if (innerWidth < 600) {
+      for (const s of [...document.querySelectorAll('.site-bento .site-stage')].filter(shown)) {
+        const d = s.querySelector('[data-play]');
+        if (!d) continue;
+        const spare = box(s).height - box(d).height;
+        if (spare < 23 || spare > 25) unequal.push(`${name(s)} hugs its drawing: ${Math.round(spare)}px spare (want 24)`);
+      }
     }
-    for (const hs of accessRows.values()) if (Math.max(...hs) - Math.min(...hs) > 0.5) unequal.push(`access row ${hs.map(Math.round).join('/')}`);
+    // Round 4 (2026-11-13, Claude Code): How's three stages are equal in the row from 1024px (one play line for the
+    // row); below 1024px each hugs its scene, 12px above and below.
+    const how = [...document.querySelectorAll('#how .site-how__stage')].filter(shown);
+    if (innerWidth >= 1024) {
+      const hs = how.map((s) => box(s).height);
+      if (hs.length !== 3 || Math.max(...hs) - Math.min(...hs) > 0.5) unequal.push(`how row ${hs.map(Math.round).join('/')}`);
+    } else {
+      for (const s of how) {
+        const spare = box(s).height - box(s.querySelector('[data-play]')).height;
+        if (spare < 23 || spare > 25) unequal.push(`${name(s)} hugs its scene: ${Math.round(spare)}px spare (want 24)`);
+      }
+    }
     return { stages, over, unequal };
   });
 function fitChecks(label, f) {
-  check(f.stages > 0 && f.over.length === 0, `${label}: no drawing is larger than its stage (${f.stages} stages) and nothing overflows the How picture or the proof figure (MS-7.7)${f.over.length ? `: ${f.over.slice(0, 4).join('; ')}` : ''}`);
-  check(f.unequal.length === 0, `${label}: MS-7.7 stages in a section have equal heights (Access: in a row)${f.unequal.length ? `: ${f.unequal.join('; ')}` : ''}`);
+  check(f.stages > 0 && f.over.length === 0, `${label}: no drawing is larger than its stage (${f.stages} stages) and nothing overflows the proof figure (MS-7.7)${f.over.length ? `: ${f.over.slice(0, 4).join('; ')}` : ''}`);
+  check(f.unequal.length === 0, `${label}: MS-7.7 stages in one row have equal heights (box sections: per row, the lead card on its own; How: in its row, hugging below 1024px)${f.unequal.length ? `: ${f.unequal.join('; ')}` : ''}`);
 }
 
-/** The How it works state: the step the attributes show and the one the step tops give (MS-8.12). */
-const howState = (page) =>
+/**
+ * How it works (round 4): per step, the first and last change of its scene and its lit number, from the computed
+ * animation delays and durations (ms after the trigger), and how many ember rings in How are more than half shown.
+ */
+const howRow = (page) =>
   page.evaluate(() => {
-    const how = document.querySelector('.site-how');
-    const mid = innerHeight / 2;
-    const tops = [...how.querySelectorAll('.site-how__step')].map((s) => s.getBoundingClientRect().top);
-    const p = how.querySelector('.site-how__picture').getBoundingClientRect();
-    return {
-      step: how.dataset.howStep ?? null,
-      play: how.dataset.howPlay ?? null,
-      live: 'howLive' in how.dataset,
-      want: String(tops.filter((t) => t <= mid).length),
-      edge: tops.some((t) => Math.abs(t - mid) < 2),
-      picture: { top: p.top, bottom: p.bottom },
-      vh: innerHeight,
-      // The placeholder rows of the desktop picture (review P1): their opacities and the rows'.
-      ghosts: [...how.querySelectorAll('.site-how__picture .site-cand__ghost')].map((g) => Number(getComputedStyle(g).opacity)),
-      rows: [...how.querySelectorAll('.site-how__picture .site-cand')].map((g) => Number(getComputedStyle(g).opacity)),
-    };
-  });
-
-/** Page offsets of the How section (from where it enters to where it leaves). */
-const howRange = (page) =>
-  page.evaluate(() => {
-    const r = document.querySelector('.site-how').getBoundingClientRect();
-    return { from: Math.max(0, Math.floor(r.top + scrollY - innerHeight)), to: Math.ceil(r.bottom + scrollY), max: document.documentElement.scrollHeight - innerHeight };
+    const ms = (v) => v.split(',').map((s) => parseFloat(s) * (s.trim().endsWith('ms') ? 1 : 1000));
+    const steps = [...document.querySelectorAll('#how .site-how__step')].map((li) => {
+      let first = Infinity;
+      let last = 0;
+      for (const el of li.querySelectorAll('*')) {
+        const cs = getComputedStyle(el);
+        if (cs.animationName === 'none') continue;
+        const durations = ms(cs.animationDuration);
+        ms(cs.animationDelay).forEach((d, i) => {
+          first = Math.min(first, d);
+          last = Math.max(last, d + (durations[i] ?? 0));
+        });
+      }
+      return { first: Math.round(first), last: Math.round(last), played: li.querySelector('[data-play]').dataset.played ?? null };
+    });
+    const rings = [...document.querySelectorAll('#how .site-key-ring, #how .site-press-ring')].filter((r) => Number(getComputedStyle(r).opacity) > 0.5).length;
+    return { steps, rings };
   });
 
 /** The data-play roots: their played mark, box and any animation on them or inside (reveal fades excepted). */
@@ -340,7 +394,7 @@ try {
         return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden';
       };
       const name = (el) => (el.getAttribute('aria-label') ?? el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 24);
-      const targets = [...document.querySelectorAll('.site :is(a.nl-btn, button, .site-brand, .site-nav a, .site-footer__nav a, .site-links a, summary)')].filter(
+      const targets = [...document.querySelectorAll('.site :is(a.nl-btn, button, a.nl-brand, .site-nav a, .site-footer__nav a, .site-links a, summary)')].filter(
         (el) => !el.closest('.nl-skip') && !el.closest('[aria-hidden="true"]') && shown(el),
       );
       const small = targets
@@ -481,43 +535,87 @@ try {
     const page = await ctx.newPage();
     await openSite(page);
     const l = await page.evaluate(() => {
-      const shown = (el) => el.getClientRects().length > 0;
-      const hints = [...document.querySelectorAll('.site-well__hint')].filter((el) => shown(el) && el.textContent.trim() === 'Press a key to start');
-      const lines = hints.map((el) => {
-        const range = document.createRange();
-        range.selectNodeContents(el);
-        return new Set([...range.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.top))).size;
-      });
+      // Round 4 (r4-boxes): cards per row in each box grid, a lead card first.
       const perRow = (id) => {
-        const tops = [...document.querySelectorAll(`#${id} .site-grid--boxes > .site-card`)].map((c) => Math.round(c.getBoundingClientRect().top));
+        const tops = [...document.querySelectorAll(`#${id} .site-bento > .site-card`)].map((c) => Math.round(c.getBoundingClientRect().top));
         const rows = new Map();
         for (const t of tops) rows.set(t, (rows.get(t) ?? 0) + 1);
         return [...rows.values()];
       };
-      // The switch card is a normal card (review P2): its stage is at most 24px taller than its drawing.
-      const stage = document.querySelector('#access .site-stage--switch');
+      // The switch card leads Access (round 4): alone in its row, its stage at most its space-4 padding above and
+      // below (32px; space-3 on phones, 24px) taller than its drawing, so it is never a tall, empty tile (review P2).
+      const stage = document.querySelector('#access .site-card--lead > .site-stage');
       const scan = stage.querySelector('[data-play]').getBoundingClientRect();
       const spare = stage.getBoundingClientRect().height - scan.height;
-      const accessCards = [...document.querySelectorAll('#access .site-grid--access > .site-card')].map((c) => c.getBoundingClientRect());
-      const switchRow = accessCards.filter((r) => Math.abs(r.top - accessCards[2].top) < 1).length;
-      const grids = [...document.querySelectorAll('.site-grid, .site-how, .site-how__steps')];
+      const accessCards = [...document.querySelectorAll('#access .site-bento > .site-card')].map((c) => c.getBoundingClientRect());
+      const switchRow = accessCards.filter((r) => Math.abs(r.top - accessCards[0].top) < 1).length;
+      const grids = [...document.querySelectorAll('.site-grid, .site-how, .site-how__steps, .site-proof-layout')];
       const ordered = grids.flatMap((g) => [...g.children].filter((c) => getComputedStyle(c).order !== '0').map((c) => String(c.className).split(' ')[0]));
       const dense = grids.filter((g) => getComputedStyle(g).gridAutoFlow.includes('dense')).length;
-      const cards = [...document.querySelectorAll('#access .site-grid--access > .site-card')].map((c) => c.querySelector('h3')?.textContent ?? '');
-      return { lines, perRow: { conversation: perRow('conversation'), privacy: perRow('privacy') }, spare, switchRow, vw: innerWidth, ordered, dense, cards };
+      const cards = [...document.querySelectorAll('#access .site-bento > .site-card')].map((c) => c.querySelector('h3')?.textContent ?? '');
+      // Round 4 (2026-11-13, Claude Code): How's three steps sit in one row from 1024px and in one column below, each
+      // stage before its step (DOM order and on screen), nothing sticky. Proof: see the r4-proof lines below.
+      const howSteps = [...document.querySelectorAll('#how .site-how__step')];
+      const how = {
+        count: howSteps.length,
+        tops: howSteps.map((li) => Math.round(li.getBoundingClientRect().top)),
+        stageFirst: howSteps.every((li) => {
+          const [stage, step] = [li.querySelector('.site-how__stage'), li.querySelector('.site-step')];
+          const s = stage.getBoundingClientRect();
+          const t = step.getBoundingClientRect();
+          return li.firstElementChild === stage && (s.bottom <= t.top + 0.5 || s.right <= t.left + 0.5);
+        }),
+        sticky: [...document.querySelectorAll('#how *')].filter((el) => getComputedStyle(el).position === 'sticky').length,
+      };
+      const rect = (sel) => document.querySelector(sel).getBoundingClientRect();
+      // Round 4 (r4-proof): the head, then the layout (the one play root): figure, steps, note. From 1024px the steps and
+      // the note sit left of the figure, its top level with the steps'; below 1024px figure, steps and note stack.
+      const [head, fig, steps, more] = ['#proof .site-head', 'figure.site-proof', '#proof .site-proof-steps', '.site-proof__more'].map(rect);
+      const proof = {
+        underHead: [fig, steps, more].every((r) => r.top >= head.bottom - 0.5),
+        beside: fig.left >= steps.right && fig.left >= more.right && Math.abs(fig.top - steps.top) < 1 && more.top > steps.top,
+        stacked: steps.top >= fig.bottom && more.top >= steps.bottom,
+      };
+      const cta = document.querySelector('#proof .site-cta > a.nl-btn--secondary.nl-btn--xl');
+      // Round 3: Results, Access (R3-P10, 2026-11-13) and (verifier, 2026-11-13) Privacy end on a 64px secondary
+      // "Open the app" row.
+      const mids = ['results', 'access', 'privacy'].map((id) => {
+        const a = document.querySelector(`#${id} .site-stack > .site-cta:last-child > a.nl-btn--secondary.nl-btn--xl[href="/app"]`);
+        return a ? Math.round(a.getBoundingClientRect().height) : 0;
+      });
+      return { perRow: { conversation: perRow('conversation'), access: perRow('access'), privacy: perRow('privacy') }, spare, switchRow, vw: innerWidth, ordered, dense, cards, how, proof, cta: cta ? cta.getBoundingClientRect().height : 0, mids };
     });
-    if (width === 320 || width === 1024) {
-      check(l.lines.length > 0 && l.lines.every((n) => n === 1), `${label}: "Press a key to start" stays on one line (${l.lines.length} shown, lines ${l.lines.join(',')}, MS-7.7)`);
-    }
-    if (width >= 1280) {
-      for (const [id, rows] of Object.entries(l.perRow)) check(rows.length === 2 && rows.every((n) => n === 2), `${label}: ${id} shows 2 cards per row (${rows.join(' + ')}, MS-10.9)`);
+    {
+      const row = new Set(l.how.tops).size === 1;
+      const column = l.how.tops.every((t, i) => i === 0 || t > l.how.tops[i - 1]);
+      check(
+        l.how.count === 3 && (width >= 1024 ? row : column) && l.how.stageFirst && l.how.sticky === 0,
+        `${label}: How shows its 3 steps ${width >= 1024 ? 'in one row' : 'in one column'}, each stage before its step, nothing sticky (tops ${l.how.tops.join('/')}; round 4)`,
+      );
     }
     check(
-      l.spare >= -0.5 && l.spare <= 24.5 && l.switchRow === (l.vw >= 648 ? 2 : 1),
-      `${label}: the switch card is a normal card, its stage ${Math.round(l.spare)}px taller than its drawing (at most 24), ${l.switchRow} card(s) in its row (MS-10.9)`,
+      l.proof.underHead && (width >= 1024 ? l.proof.beside : l.proof.stacked) && l.cta === 64,
+      `${label}: Proof shows its head, then ${width >= 1024 ? 'the steps and the note beside the figure' : 'the figure, the steps and the note in one column'}, and its 64px button in a .site-cta row (round 4, MS-10.9)`,
     );
     check(
-      l.ordered.length === 0 && l.dense === 0 && l.cards.join('|') === 'Keyboard|Touch|One or two switches|Your view|Phones, tablets and laptops',
+      l.mids.length === 3 && l.mids.every((h) => h === 64),
+      `${label}: Results, Access and Privacy each end on a 64px secondary "Open the app" .site-cta row (${l.mids.join('/')}px; round 3, R3-P10, MS-1.6, MS-9.1)`,
+    );
+    {
+      // Round 4 (MS-10.9): the lead card alone, then 3 cards a row (Conversation, Privacy) from 1024px or 2 + 1 below,
+      // and Access 2 + 2; one card a row under 648px.
+      const want = l.vw >= 1024 ? { conversation: '1 3', access: '1 2 2', privacy: '1 3' } : l.vw >= 648 ? { conversation: '1 2 1', access: '1 2 2', privacy: '1 2 1' } : null;
+      for (const [id, rows] of Object.entries(l.perRow)) {
+        const ok = want ? rows.join(' ') === want[id] : rows.every((n) => n === 1);
+        check(ok, `${label}: ${id} shows its lead card, then ${want ? want[id].slice(2) : 'one card a row'} (${rows.join(' + ')}, MS-10.9)`);
+      }
+    }
+    check(
+      l.spare >= -0.5 && l.spare <= (l.vw < 600 ? 24.5 : 32.5) && l.switchRow === 1,
+      `${label}: the switch card leads Access alone in its row, its stage ${Math.round(l.spare)}px taller than its drawing (at most ${l.vw < 600 ? 24 : 32}; MS-10.9)`,
+    );
+    check(
+      l.ordered.length === 0 && l.dense === 0 && l.cards.join('|') === 'One or two switches|Keyboard|Touch|Your view|Phones, tablets and laptops',
       `${label}: the grids use no CSS order or dense packing, so the Access grid's Tab and reading order is the DOM order (${l.cards.length} Access cards, MS-10.9)${l.ordered.length ? `: ${l.ordered.join(', ')}` : ''}`,
     );
     await ctx.close();
@@ -537,7 +635,7 @@ try {
       const h = await page.evaluate(() => document.querySelector('.site-demo').getBoundingClientRect().height);
       return { h, fits: h <= height / 0.6 };
     };
-    /** Watch the label from now: it must read Stop within 2.5 s, stay Stop, then read "again" by the deadline. */
+    /** Watch the label from now: it must read Stop within 2.5 s, stay Stop, then read "Play the example" again by the deadline. */
     const watchAutoplay = async (page, deadlineMs) => {
       const start = Date.now();
       let sawStop = false;
@@ -581,7 +679,7 @@ try {
       else if (width === 1280) {
         const a = await watchAutoplay(page, 12000 - (Date.now() - t0));
         check(a.sawStop && a.stopAt <= 2500, `${label}: with no scrolling the demo plays on its own, button "Stop" (${a.stopAt} ms, MS-6.3)`);
-        check(a.ended && !a.brokeStop, `${label}: it reads Stop for the whole play and "Play the example again" within 12 s of load (MS-8.9)`);
+        check(a.ended && !a.brokeStop, `${label}: it reads Stop for the whole play and "Play the example" within 12 s of load (MS-8.9)`);
         // The last pressed key's ring fades out over motion-jump (120 ms, A3) as the play ends; let it finish.
         await pause(page, 200);
         const running = await page.evaluate(() =>
@@ -601,7 +699,7 @@ try {
         await page.evaluate(() => document.querySelector('.site-demo').scrollIntoView({ block: 'center' }));
         const a = await watchAutoplay(page, 10000);
         check(a.sawStop && a.stopAt <= 2500, `${label}: scrolled into view, the demo plays on its own (${a.stopAt} ms, MS-6.3)`);
-        check(a.ended && !a.brokeStop, `${label}: it reads Stop while it plays and "Play the example again" within 10 s (MS-6.3, MS-8.9)`);
+        check(a.ended && !a.brokeStop, `${label}: it reads Stop while it plays and "Play the example" within 10 s (MS-6.3, MS-8.9)`);
         await paintChecks(page, 'with motion on');
         check(await noRerun(page), `${label}: it does not play again after scrolling away and back (MS-6.3)`);
       }
@@ -613,7 +711,7 @@ try {
       await openSite(page, { motion: true });
       await page.evaluate(() => document.querySelector('.site-demo').scrollIntoView({ block: 'center' }));
       const a = await watchAutoplay(page, 10000);
-      check(a.sawStop && a.stopAt <= 2500 && a.ended, `${label}: scrolled into view, it plays once and ends on "Play the example again" (MS-6.3)`);
+      check(a.sawStop && a.stopAt <= 2500 && a.ended, `${label}: scrolled into view, it plays once and ends on "Play the example" (MS-6.3)`);
       check(await noRerun(page), `${label}: and does not play again after scrolling away and back (MS-6.3)`);
       await page.close();
     }
@@ -719,102 +817,52 @@ try {
   }
   if (!isChromium) console.log('note: layout shift and LCP are checked in Chromium only');
 
-  // ---- round 2: How step sync (A8, MS-8.12) ---------------------------------------------------------
-  for (const [width, height] of [
-    [1280, 800],
-    [1920, 1080],
-    [1024, 768],
+  // ---- round 4: How it works plays in story order along its row (MS-8.11; the A8 step sync is gone) ----------
+  // From 1024px the row's three scenes reach the play line together and play in order (step 2 waits step 1's four
+  // presses, step 3 also step 2's pick), the last change 3,780 ms after the trigger, one ember ring at a time. Below
+  // 1024px each scene plays on its own, from the lead. Nothing writes data-how-* and nothing is sticky.
+  for (const [width, height, row] of [
+    [1280, 800, true],
+    [1024, 768, true],
+    [768, 1024, false],
   ]) {
-    const label = `MS-8.12 step sync ${width}x${height}`;
+    const label = `MS-8.11 How ${row ? 'story row' : 'column'} ${width}x${height}`;
     console.log(label);
     const ctx = await newContext(browser, { width, height, reducedMotion: 'no-preference' });
     const page = await ctx.newPage();
     await openSite(page, { motion: true });
-    const { from, to } = await howRange(page);
-    for (const dir of ['down', 'up']) {
-      const wrong = [];
-      let seen = 0;
-      const visit = async (y) => {
-        const s = await howState(page);
-        if (s.edge) return;
-        seen++;
-        if (s.step !== s.want) wrong.push(`${y}px: ${s.step} for ${s.want}`);
-      };
-      await (dir === 'down' ? stepScroll(page, from, to, visit) : stepScroll(page, to, from, visit));
-      check(seen > 10 && wrong.length === 0, `${label}, scrolling ${dir}: data-how-step is the active step at each of ${seen} positions (MS-8.12)${wrong.length ? `: ${wrong.slice(0, 4).join(', ')}` : ''}`);
+    const target = await page.evaluate(() => {
+      const r = document.querySelector('#how .site-how__steps').getBoundingClientRect();
+      return Math.max(0, Math.round(r.top + scrollY - innerHeight * 0.15));
+    });
+    let most = 0;
+    await stepScroll(page, 0, target, async () => {});
+    const start = Date.now();
+    while (Date.now() - start < 4200) {
+      most = Math.max(most, (await howRow(page)).rings);
+      await pause(page, 60);
     }
-    // The active card shows the outline; the others do not.
-    await page.evaluate(() => {
-      const s = document.querySelectorAll('.site-how__step')[1].getBoundingClientRect();
-      window.scrollTo(0, scrollY + s.top - innerHeight / 2 + 40);
-    });
-    await frames(page);
-    await pause(page, 400);
-    const outline = await page.evaluate(() => [...document.querySelectorAll('.site-how__step')].map((s) => getComputedStyle(s, '::after').opacity).join(','));
-    check(outline === '0,1,0', `${label}: with step 2 active only its card shows the outline (${outline}, MS-8.12)`);
-    await ctx.close();
-  }
-
-  // Tall viewports: loaded at the top, every step plays, in order.
-  for (const [width, height] of [
-    [1024, 1366],
-    [1920, 1200],
-  ]) {
-    const label = `${width}x${height}`;
-    const ctx = await newContext(browser, { width, height, reducedMotion: 'no-preference' });
-    const page = await ctx.newPage();
-    await openSite(page, { motion: true });
-    const { to } = await howRange(page);
-    const plays = [];
-    let live = false;
-    await stepScroll(page, 0, to, async () => {
-      const s = await howState(page);
-      live ||= s.live;
-      if (s.play && plays[plays.length - 1] !== s.play) plays.push(s.play);
-    });
-    check(live && plays.join(',') === '1,2,3', `${label}: MS-8.12 How plays every step from the top on tall viewports (played ${plays.join(',') || 'none'}, live ${live})`);
-    await ctx.close();
-  }
-
-  // Step 1 plays only with the whole picture on screen.
-  for (const [width, height] of [
-    [1366, 650],
-    [1024, 768],
-    [1280, 800],
-  ]) {
-    const label = `${width}x${height}`;
-    const ctx = await newContext(browser, { width, height, reducedMotion: 'no-preference' });
-    const page = await ctx.newPage();
-    await openSite(page, { motion: true });
-    const { to } = await howRange(page);
-    let at = null;
-    let twoY = null;
-    await stepScroll(page, 0, to, async (y) => {
-      if (at && twoY !== null) return;
-      const s = await howState(page);
-      if (!at && s.play === '1') at = s;
-      if (twoY === null && s.play === '2') twoY = y;
-    });
-    check(
-      at !== null && at.picture.top >= -1 && at.picture.bottom <= at.vh + 1,
-      `${label}: MS-8.12 step 1 plays with the whole How picture in view (picture ${at ? `${Math.round(at.picture.top)} to ${Math.round(at.picture.bottom)} of ${at.vh}` : 'step 1 never played'})`,
-    );
-    // P1: during step 1 the placeholder rows fill the rows' place; once step 2 has played the rows replace them.
-    check(
-      at !== null && at.ghosts.length === 3 && at.ghosts.every((o) => o === 1) && at.rows.every((o) => o === 0),
-      `${label}: MS-8.12 at step 1 the placeholder rows show where the sentences will be (ghosts ${at?.ghosts.join(',')}, rows ${at?.rows.join(',')})`,
-    );
-    // Back at the scroll position where step 2 played: step 2 is active and finished.
-    if (twoY !== null) {
-      await page.evaluate((y) => window.scrollTo(0, y), twoY);
-      await frames(page);
-      await pause(page, 1500);
+    const r = await howRow(page);
+    const attrs = await page.evaluate(() => document.querySelectorAll('[data-how-step], [data-how-play], [data-how-live]').length);
+    const firsts = r.steps.map((s) => s.first);
+    const lasts = r.steps.map((s) => s.last);
+    const played = r.steps.map((s) => s.played).join(',');
+    if (row) {
+      check(
+        played === '1,1,1' && firsts.join(',') === '300,2140,3100' && lasts.join(',') === '2100,3300,3780' && attrs === 0,
+        `${label}: the three scenes play in story order (first changes ${firsts.join('/')}, last ${lasts.join('/')} ms; played ${played})`,
+      );
+    } else {
+      // No step waits for another: each one that played starts at its own lead (step 1 at 300, step 2's first row at
+      // 540, step 3 at 300). A step already in view at load is finished and never plays (MS-8.13).
+      const own = [300, 540, 300];
+      const ran = r.steps.map((s, i) => [s, i]).filter(([s]) => s.played === '1');
+      check(
+        ran.length > 0 && ran.every(([s, i]) => s.first === own[i]) && attrs === 0,
+        `${label}: below 1024px each scene plays on its own from the lead (first changes ${firsts.join('/')} ms; played ${played})`,
+      );
     }
-    const after = await howState(page);
-    check(
-      twoY !== null && after.step === '2' && after.ghosts.every((o) => o === 0) && after.rows.every((o) => o === 1),
-      `${label}: MS-8.12 with step 2 played the sentence rows replace the placeholders (step ${after.step}, ghosts ${after.ghosts.join(',')}, rows ${after.rows.join(',')})`,
-    );
+    check(most <= 1, `${label}: at most one ember ring at a time across How (saw ${most}, MS-7.3)`);
     await ctx.close();
   }
 
@@ -830,7 +878,8 @@ try {
     const page = await ctx.newPage();
     await openSite(page, { motion: true });
     await page.evaluate(() => {
-      for (const el of document.querySelectorAll('.site-how__stage [data-play], figure.site-proof[data-play]')) el.setAttribute('data-site-tall', '');
+      // Round 4 (r4-proof): the proof's play root is its whole layout (figure, steps, note).
+      for (const el of document.querySelectorAll('.site-how__stage [data-play], #proof [data-play]')) el.setAttribute('data-site-tall', '');
     });
     const to = await page.evaluate(() => {
       const r = document.querySelector('#proof').getBoundingClientRect();
@@ -849,6 +898,76 @@ try {
       return ok ? [] : [`${d.name} ${Math.round(d.top)} to ${Math.round(d.bottom)}`];
     });
     check(tall.length === 4 && bad.length === 0, `${label}: MS-8.11 tall drawings play in view (${tall.length} How stages and proof)${bad.length ? `: ${bad.join(', ')}` : ''}`);
+    await ctx.close();
+  }
+
+  // Round 4 (r4-proof, MS-8.11, lead ruling 1.2): the proof's step numbers light on the figure's clock. Scroll the proof
+  // root to the play line, then pause its animations and seek: at 640, 1120, 2080, 2320 and 3040 ms (mid-beat, after
+  // each 200 ms fade) exactly one number is lit (1, 2, 3, 3, then 4), at 2320 the differing letter's box is in (its mark
+  // jumps in at 1,980 to 2,100 ms), at 3700 nothing is lit and no play animation is left. With reduced motion no number
+  // is ever lit and nothing animates.
+  for (const [width, height, reducedMotion] of [
+    [1280, 800, 'no-preference'],
+    [390, 844, 'no-preference'],
+    [1280, 800, 'reduce'],
+  ]) {
+    const label = `${width}x${height} ${reducedMotion}`;
+    const ctx = await newContext(browser, { width, height, reducedMotion });
+    const page = await ctx.newPage();
+    await openSite(page, { motion: reducedMotion === 'no-preference' });
+    const to = await page.evaluate(() => Math.ceil(document.querySelector('#proof [data-play]').getBoundingClientRect().top + scrollY));
+    let played = null;
+    // To 40px past the root's top: on phones the root is taller than the viewport and plays as its top crosses the top.
+    await stepScroll(page, Math.max(0, to - height), to + 40, async () => {
+      played = await page.evaluate(() => document.querySelector('#proof [data-play]').dataset.played ?? null);
+    });
+    const lit = () => page.evaluate(() => [...document.querySelectorAll('#proof .site-step__lit')].map((el) => Number(getComputedStyle(el).opacity)));
+    if (reducedMotion === 'reduce') {
+      const now = await lit();
+      const anims = await page.evaluate(() => {
+        const sec = document.querySelector('#proof');
+        return document.getAnimations().filter((a) => a.effect?.target && sec.contains(a.effect.target)).length;
+      });
+      check(now.length === 4 && now.every((o) => o === 0) && anims === 0, `${label}: MS-8.7 the proof's step numbers are never lit and nothing animates (${now.join('/')}, ${anims} animations)`);
+      await ctx.close();
+      continue;
+    }
+    await page.evaluate(() => {
+      const sec = document.querySelector('#proof');
+      for (const a of document.getAnimations()) if (a.effect?.target && sec.contains(a.effect.target)) a.pause();
+    });
+    const seen = [];
+    let markIn = false;
+    for (const [t, want] of [
+      [640, 0],
+      [1120, 1],
+      [2080, 2],
+      [2320, 2],
+      [3040, 3],
+      [3700, -1],
+    ]) {
+      await page.evaluate((tt) => {
+        const sec = document.querySelector('#proof');
+        for (const a of document.getAnimations()) if (a.effect?.target && sec.contains(a.effect.target)) a.currentTime = tt;
+      }, t);
+      await frames(page);
+      const o = await lit();
+      seen.push(`${t}:${o.map((x) => Math.round(x * 100) / 100).join('/')}`);
+      const ok = o.every((x, i) => (i === want ? x > 0.95 : x < 0.05));
+      check(ok, `${label}: MS-8.11 at ${t} ms ${want < 0 ? 'no proof step number is lit' : `only step ${want + 1}'s number is lit`} (${o.map((x) => x.toFixed(2)).join('/')})`);
+      if (t === 2320) markIn = await page.evaluate(() => Number(getComputedStyle(document.querySelector('#proof .site-letter__box')).opacity) > 0.95);
+    }
+    check(played === '1' && markIn, `${label}: MS-7.9 the proof played once at the play line (${played}) and the differing letter is boxed by 2320 ms (${markIn})`);
+    await page.evaluate(() => {
+      const sec = document.querySelector('#proof');
+      for (const a of document.getAnimations()) if (a.effect?.target && sec.contains(a.effect.target)) a.play();
+    });
+    await pause(page, 1000);
+    const left = await page.evaluate(() => {
+      const root = document.querySelector('#proof [data-play]');
+      return document.getAnimations().filter((a) => a.effect?.target && root.contains(a.effect.target) && a.animationName !== 'site-reveal').length;
+    });
+    check(left === 0, `${label}: MS-8.11 no play animation is left on the proof after its last change (${left})`);
     await ctx.close();
   }
 
@@ -930,8 +1049,13 @@ try {
     const page = await ctx.newPage();
     await page.goto(BASE_URL + '/#access', { waitUntil: 'load' });
     await waitFor(page, () => document.documentElement.dataset.siteMotion === 'on', null, { timeout: 20000, what: 'data-site-motion="on"' });
-    await page.reload({ waitUntil: 'load' });
-    await waitFor(page, () => document.documentElement.dataset.siteMotion === 'on', null, { timeout: 20000, what: 'data-site-motion="on"' });
+    // WebKit (Playwright, 2026-11-13) comes back to the top of the page after a reload at any anchor (#how, #access,
+    // #privacy, #faq alike), so no drawing is in view to check there; it checks this first load at #access instead,
+    // the same case: drawings already in view when motion starts (MS-8.13). Chromium checks the reload.
+    if (isChromium) {
+      await page.reload({ waitUntil: 'load' });
+      await waitFor(page, () => document.documentElement.dataset.siteMotion === 'on', null, { timeout: 20000, what: 'data-site-motion="on"' });
+    }
     const inView = async () => (await drawingState(page)).filter((d) => d.box && d.top < d.vh && d.bottom > 0);
     const now = await inView();
     await pause(page, 1000);
@@ -954,8 +1078,6 @@ try {
     await openSite(page, { motion: true });
     const cls0 = isChromium ? (await page.evaluate(() => window.__site)).cls : 0;
     const playedAt = new Map();
-    let howLast = 0;
-    let howPlay = null;
     const max = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
     await stepScroll(
       page,
@@ -963,26 +1085,21 @@ try {
       max,
       async () => {
         for (const d of await drawingState(page)) if (d.played === '1' && !playedAt.has(d.i)) playedAt.set(d.i, Date.now());
-        const play = await page.evaluate(() => document.querySelector('.site-how').dataset.howPlay ?? null);
-        if (play && play !== howPlay) howLast = Date.now();
-        howPlay = play;
       },
       { stepMs: 0 },
     );
-    const last = Math.max(howLast, ...playedAt.values());
+    const last = Math.max(...playedAt.values());
     await pause(page, Math.max(0, last + 4500 - Date.now()));
     const ds = await drawingState(page);
     const shown = ds.filter((d) => d.box);
     const unplayed = shown.filter((d) => !d.played).map((d) => d.name);
     const running = shown.filter((d) => d.anims.length > 0).map((d) => `${d.name} ${d.anims.join('/')}`);
+    // Round 4: How's step numbers sit beside their scenes (.site-step, lit by :has()), so they are checked here too.
     const how = await page.evaluate(() =>
-      document
-        .querySelector('.site-how__picture')
-        .getAnimations({ subtree: true })
-        .filter((a) => !['site-reveal', 'site-fade-in'].includes(a.animationName)).length,
+      [...document.querySelectorAll('#how .site-step')].flatMap((s) => s.getAnimations({ subtree: true })).filter((a) => !['site-reveal', 'site-fade-in'].includes(a.animationName)).length,
     );
     check(playedAt.size > 0 && unplayed.length === 0, `${label}: every shown drawing played or was finished (${playedAt.size} played, ${shown.length} shown, MS-8.11)${unplayed.length ? `: ${unplayed.slice(0, 4).join(', ')}` : ''}`);
-    check(running.length === 0 && how === 0, `${label}: each drawing is finished with no animation 4.5 s after the play line (MS-8.11)${running.length ? `: ${running.slice(0, 4).join(', ')}` : ''}${how ? `; How picture ${how}` : ''}`);
+    check(running.length === 0 && how === 0, `${label}: each drawing is finished with no animation 4.5 s after the play line (MS-8.11)${running.length ? `: ${running.slice(0, 4).join(', ')}` : ''}${how ? `; How step numbers ${how}` : ''}`);
     if (isChromium) {
       const p = await page.evaluate(() => window.__site);
       check(p.cls - cls0 === 0, `${label}: no layout shift while the drawings play (${(p.cls - cls0).toFixed(4)}, MS-11.2)${p.cls - cls0 ? `: ${[...new Set(p.shifted)].slice(-6).join(', ')}` : ''}`);
@@ -1003,12 +1120,18 @@ try {
       attr: document.documentElement.hasAttribute('data-site-motion'),
       hidden: [...document.querySelectorAll('[data-reveal]')].filter((el) => getComputedStyle(el).opacity !== '1').length,
       blocks: document.querySelectorAll('[data-reveal]').length,
-      text: document.querySelector('.site-demo__text')?.textContent ?? '',
+      text: [...document.querySelectorAll('.site-demo__card .nl-chip')]
+        .filter((c) => !c.closest('.site-sizer__ghost'))
+        .map((c) => c.querySelector('.nl-chip__word')?.textContent ?? '')
+        .join(' '),
+      invite: document.querySelector('.site-demo__status')?.textContent ?? null,
       animations: document.getAnimations().length,
     }));
     check(!n.attr, 'no JavaScript: no data-site-motion (MS-8.7)');
     check(n.blocks > 0 && n.hidden === 0, `no JavaScript: all ${n.blocks} blocks visible (MS-8.7)`);
     check(n.text === SENTENCE, `no JavaScript: the demo shows "${n.text}" (MS-6.2, MS-8.7)`);
+    // Round 4: the invitation line shows only once the keys work, so a page without JavaScript promises nothing.
+    check(n.invite === '', `no JavaScript: the demo's status line is empty ("${n.invite}", MS-6.2)`);
     check(n.animations === 0, `no JavaScript: no animation after scrolling to the end (${n.animations}, MS-8.7)`);
     await ctx.close();
   }
@@ -1051,6 +1174,8 @@ try {
     check(await noDialog(page), 'no dialog or consent banner after 5 s (MS-12.3)');
     await scrollThrough(page);
     await page.evaluate(() => document.querySelector('.site-demo').scrollIntoView({ block: 'center' }));
+    // Round 4: the button reads "Play the example" before and after a play, so wait for Stop first, then for its end.
+    await waitFor(page, (stop) => document.querySelector('.site-demo__label')?.textContent === stop, LABEL_STOP, { timeout: 5000, what: 'the autoplay to start' }).catch((e) => console.log(`    note: ${e.message}`));
     await waitFor(page, (again) => document.querySelector('.site-demo__label')?.textContent === again, LABEL_AGAIN, { timeout: 15000, what: 'the autoplay to end' }).catch((e) => console.log(`    note: ${e.message}`));
     for (const s of await page.locator('.site-faq summary').all()) await s.click();
     await pause(page, 500);
@@ -1095,14 +1220,16 @@ try {
     await page.keyboard.press(TAB);
     const first = await focus();
     check(first.text === 'Skip to content', `${label}: the first Tab focuses "Skip to content" (${first.text}, MS-3.2)`);
+    // The nav shows from 960px only (W1, 2026-11-12): under that the bar is brand, then the header CTA, in one row.
+    const withNav = width >= 960;
+    const want = withNav ? ['Ninth Life', 'How it works', 'Proof check', 'Ways to type', 'Privacy', 'Questions', 'Open the app'] : ['Ninth Life', 'Open the app'];
     const bar = [];
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < want.length; i++) {
       await page.keyboard.press(TAB);
       bar.push(await focus());
     }
     const names = bar.map((f) => f.text);
-    const want = ['Ninth Life', 'How it works', 'Proof check', 'Ways to type', 'Privacy', 'Questions', 'Open the app'];
-    check(names.join('|') === want.join('|'), `${label}: Tab order over the bar is brand, the 5 nav links, then the header CTA (${names.join(', ')}, MS-13.2)`);
+    check(names.join('|') === want.join('|'), `${label}: Tab order over the bar is brand, ${withNav ? 'the 5 nav links, ' : ''}then the header CTA (${names.join(', ')}, MS-13.2)`);
     let visual = true;
     for (let i = 1; i < bar.length; i++) {
       const a = bar[i - 1];
@@ -1110,9 +1237,8 @@ try {
       const sameRow = b.top < a.bottom - 1 && a.top < b.bottom - 1;
       if (!(sameRow ? b.left >= a.right - 1 : b.top >= a.bottom - 1)) visual = false;
     }
-    const cta = bar[6];
-    const lastNav = bar[5];
-    check(visual && cta.bottom > lastNav.top, `${label}: the bar's Tab order follows its visual order and the CTA is not above the last nav link (R2, MS-13.2)`);
+    const oneRow = bar.every((f) => f.top < bar[0].bottom - 1 && bar[0].top < f.bottom - 1);
+    check(visual && oneRow, `${label}: the bar's Tab order follows its visual order, all on one row (R2, MS-13.2, W1)`);
 
     if (width === 1280) {
       // Skip link: Enter moves focus to main.
@@ -1169,7 +1295,7 @@ try {
       // Demo buttons: Enter plays (reduced motion still replays it), Space stops (MS-6.8, MS-13.2).
       await page.reload({ waitUntil: 'load' });
       await openSite(page);
-      await tabTo(page, () => !!document.activeElement?.closest('.site-demo__foot'), { max: 40, what: 'the demo button' });
+      await tabTo(page, () => !!document.activeElement?.closest('.site-demo__play'), { max: 40, what: 'the demo button' });
       await page.keyboard.press('Enter');
       await pause(page, 300);
       const playing = await demoLabel(page);
@@ -1178,6 +1304,455 @@ try {
       const [stopped, text] = [await demoLabel(page), await demoText(page)];
       check(playing === LABEL_STOP && stopped === LABEL_AGAIN && text === SENTENCE, `${label}: Enter plays the demo (${playing}) and Space stops it on "${text}" (MS-13.2)`);
     }
+    await ctx.close();
+  }
+
+  // ---- try it: the hero keypad (W4, MS-6.11 to MS-6.14) and the first phone screen (W1) ---------------
+  for (const [width, height, reducedMotion] of [
+    [390, 844, 'no-preference'],
+    [1280, 900, 'reduce'],
+    [320, 640, 'reduce'],
+  ]) {
+    const label = `try it ${width}x${height}${reducedMotion === 'reduce' ? ', reduced motion' : ''}`;
+    console.log(label);
+    const ctx = await browser.newContext({ viewport: { width, height }, reducedMotion, hasTouch: width < 600, isMobile: width < 600 && isChromium, serviceWorkers: 'block' });
+    await ctx.addInitScript(() => {
+      try {
+        localStorage.setItem('nl-theme', 'night');
+      } catch {
+        /* storage off */
+      }
+    });
+    const page = await ctx.newPage();
+    const urls = [];
+    page.on('request', (r) => urls.push(r.url()));
+    await openSite(page, { motion: reducedMotion !== 'reduce' });
+    await pause(page, 1500);
+
+    // The first phone screen shows the demo (W1): at 390x844 the sentence card with its chips and, since round 4, the
+    // keypad's first three rows; at 320x640 at least the top of the card. The bar is one row (W1).
+    const fold = await page.evaluate(() => {
+      const r = (s) => document.querySelector(s).getBoundingClientRect();
+      return { bar: r('.site-bar').height, card: r('.site-demo__card'), row3: r('[data-try-key="9"]'), pad: r('.site-demo__keypad'), vh: innerHeight };
+    });
+    check(fold.bar <= 80.5, `${label}: the bar is one row (${Math.round(fold.bar)}px, W1)`);
+    if (width === 390) {
+      check(fold.card.bottom <= fold.vh && fold.row3.bottom <= fold.vh, `${label}: the sentence card and the keypad's first three rows are on the first screen (bottoms ${Math.round(fold.card.bottom)}, ${Math.round(fold.row3.bottom)} of ${fold.vh}; keypad top ${Math.round(fold.pad.top)}, MS-6.2a)`);
+    }
+    if (width === 320) check(fold.card.top < fold.vh, `${label}: the sentence card starts on the first screen (top ${Math.round(fold.card.top)} of ${fold.vh}, MS-6.2a)`);
+    if (width === 320) {
+      await ctx.close();
+      continue;
+    }
+
+    // Before any press: the finished example, nothing under /data/ and no try-it script (MS-6.11, MS-2.5).
+    if (reducedMotion === 'reduce') check((await demoText(page)) === SENTENCE, `${label}: before any press the demo shows "${SENTENCE}" (MS-6.2)`);
+    const before = new Set(urls);
+    const dataBefore = urls.filter((u) => u.startsWith(ORIGIN) && new URL(u).pathname.startsWith('/data/'));
+    check(dataBefore.length === 0, `${label}: nothing under /data/ before the first press (${urls.length} requests, MS-6.11)`);
+    check(!urls.some((u) => /try-engine/.test(u)), `${label}: the try-it engine is not loaded before the first press (MS-6.11)`);
+
+    // Touch or mouse: 4 6 6 3.
+    const padTop0 = await page.evaluate(() => document.querySelector('.site-demo__keypad').getBoundingClientRect().top + scrollY);
+    for (const k of '4663') await page.locator(`[data-try-key="${k}"]`).click();
+    // Round 4: the result line is the polite live region's (MS-6.13); the card shows the chips, the status line "Next:".
+    const ok = await waitFor(page, () => /^Keys 4663 match: /.test(document.querySelector('.site-demo [role="status"]')?.textContent ?? ''), null, {
+      timeout: 20000,
+      what: 'the 4663 result',
+    }).catch((e) => (console.log(`    ${e.message}`), false));
+    const r = await page.evaluate(() => ({
+      text: [...document.querySelectorAll('.site-demo__card .nl-chip')].map((c) => c.querySelector('.nl-chip__word')?.textContent ?? '').join(' '),
+      caption: document.querySelector('.site-demo [role="status"]').textContent,
+      next: document.querySelector('.site-demo__status').textContent,
+      chips: [...document.querySelectorAll('.site-demo__chips:not(.site-sizer__ghost) .nl-chip')].map((c) => c.dataset.state),
+      padTop: document.querySelector('.site-demo__keypad').getBoundingClientRect().top + scrollY,
+      playing: document.querySelector('.site-demo').classList.contains('is-playing'),
+    }));
+    const listed = [...r.caption.matchAll(/“([^”]+)”/g)].map((m) => m[1]);
+    check(ok && ['Good', 'Home', 'Gone'].every((w) => listed.includes(w)) && r.text === listed[0], `${label}: 4663 shows the decoder's matches (${r.text}; ${r.caption}, MS-6.12)`);
+    check(r.chips.length === 1 && r.chips[0] === 'match' && !r.playing, `${label}: one match chip, the example stopped (${r.chips.join(',')}, MS-6.12, MS-6.14)`);
+    check(r.next === 'Next: Home, Gone', `${label}: the status line names the readings # gives next ("${r.next}", MS-6.12)`);
+    check(Math.abs(r.padTop - padTop0) < 0.5, `${label}: the keypad does not move while typing (${Math.round(padTop0)} -> ${Math.round(r.padTop)}, MS-6.10)`);
+    const after = urls.filter((u) => !before.has(u));
+    const newScripts = after.filter((u) => /\.js(\?|$)/.test(u));
+    const data = after.filter((u) => new URL(u).pathname.startsWith('/data/')).map((u) => new URL(u).pathname).sort();
+    check(newScripts.length >= 1 && data.join(',') === '/data/lexicon/en.bigram.v1.json,/data/lexicon/en.v2.json,/data/packs/core-en.json', `${label}: the first press loads the engine script and the app's dictionary, once (${newScripts.length} new script(s); ${data.join(', ')}, MS-6.11)`);
+    check(after.every((u) => u.startsWith('data:') || new URL(u).origin === ORIGIN), `${label}: every try-it request goes to ${ORIGIN} (MS-12.2)`);
+    const live = await page.evaluate(() => document.querySelector('.site-demo [role="status"]').getAttribute('aria-live'));
+    check(live === 'polite' && /^Keys 4663 match: /.test(r.caption), `${label}: the polite live region reads the result line ("${r.caption}", MS-6.13)`);
+    if (reducedMotion === 'reduce') {
+      await pause(page, 300);
+      check((await page.evaluate(() => document.getAnimations().length)) === 0, `${label}: reduced motion: no animation after typing (MS-8.7)`);
+    }
+
+    if (width === 1280) {
+      // Keyboard only: one Tab stop for the keypad, a focus ring, arrows, digits, Backspace (MS-6.13, MS-9.4).
+      await page.reload({ waitUntil: 'load' });
+      await openSite(page);
+      await tabTo(page, () => !!document.activeElement?.dataset?.tryKey, { max: 40, what: 'the keypad' });
+      const k = await page.evaluate(() => {
+        const el = document.activeElement;
+        const s = getComputedStyle(el);
+        return { key: el.dataset.tryKey, ring: parseFloat(s.outlineWidth) >= 3.5 && s.outlineStyle !== 'none', stops: document.querySelectorAll('[data-try-key][tabindex="0"]').length };
+      });
+      check(k.key === '1' && k.ring && k.stops === 1, `${label}: Tab reaches the keypad once, on key ${k.key}, with a 4px focus ring (${k.stops} Tab stop, MS-6.13, MS-9.4)`);
+      await page.keyboard.press('ArrowRight');
+      await page.keyboard.press('ArrowDown');
+      const moved = await page.evaluate(() => document.activeElement?.dataset?.tryKey);
+      await page.keyboard.type('4663');
+      await page.keyboard.press('Backspace');
+      await page.keyboard.press('Enter');
+      await waitFor(page, () => /^Keys 4665 match/.test(document.querySelector('.site-demo [role="status"]')?.textContent ?? ''), null, { timeout: 20000, what: 'the typed keys' }).catch(() => {});
+      const typed = await demoKeys(page);
+      check(moved === '5' && typed === '4665', `${label}: arrows move focus (to ${moved}), digits type, Backspace goes back, Enter presses the focused key (${typed}, MS-6.13)`);
+      // Round 4: the toolbar follows the keypad in the Tab order: Play the example, Hear it, Clear (MS-6.15).
+      await tabTo(page, () => !!document.activeElement?.closest('.site-demo__clear'), { max: 5, what: 'Clear' });
+      await page.keyboard.press('Enter');
+      await waitFor(page, () => document.querySelector('.site-demo [role="status"]')?.textContent === 'Press a key to start.', null, { timeout: 3000, what: 'the cleared line' }).catch(() => {});
+      const cleared = await page.evaluate(() => ({
+        chips: document.querySelectorAll('.site-demo__card .nl-chip').length,
+        hint: document.querySelector('.site-demo__hint')?.textContent ?? '',
+        line: document.querySelector('.site-demo [role="status"]').textContent,
+        off: document.querySelector('.site-demo__clear').getAttribute('aria-disabled'),
+      }));
+      check(cleared.chips === 0 && cleared.hint.startsWith('Press a key to start.') && cleared.line === 'Press a key to start.' && cleared.off === 'true', `${label}: Clear empties the keys (${cleared.chips} chips, "${cleared.hint}", Clear unavailable: ${cleared.off}, MS-6.12, MS-6.15)`);
+      // Digits typed while Clear has focus still press the keys (MS-6.16).
+      await page.keyboard.type('43');
+      await waitFor(page, () => /^Keys 43 match/.test(document.querySelector('.site-demo [role="status"]')?.textContent ?? ''), null, { timeout: 3000, what: 'keys typed on Clear' }).catch(() => {});
+      check((await demoKeys(page)) === '43', `${label}: digits typed while a toolbar button has focus press the keys (${await demoKeys(page)}, MS-6.16)`);
+      // Back to Play, which comes first in the toolbar.
+      for (let i = 0; i < 3 && !(await page.evaluate(() => !!document.activeElement?.closest('.site-demo__play'))); i++) await page.keyboard.press(`Shift+${TAB}`);
+      await page.keyboard.press('Enter');
+      await pause(page, 300);
+      const back = await page.evaluate(() => ({ trying: document.querySelector('.site-demo').classList.contains('is-trying'), label: document.querySelector('.site-demo__label').textContent }));
+      check(!back.trying && back.label === LABEL_STOP, `${label}: Play the example goes back to the example and plays it (${back.label}, MS-6.14)`);
+    }
+    await ctx.close();
+  }
+
+  // ---- try it: the keypad never moves (round 3, R3-P1, 2026-11-13; MS-6.10; round 4, 2026-11-13, Claude Code) -----------
+  // At every size: key 1 first, Clear, 4663, # (the line lists every match and marks the one on show), Clear again,
+  // "He need water" (43 0 6333 0 92837) and then a much longer sentence. Through all of it the keypad and the toolbar
+  // (Play, Hear it, Clear) stay where they were, the card keeps one height, the status line is one line and at most
+  // three chips show, all in one row. The result line is read in the polite live region (round 4: no caption).
+  const LIVE = '.site-demo [role="status"]';
+  for (const size of SIZES) {
+    const [name, width, height] = size;
+    const label = `try it steady ${name}`;
+    console.log(label);
+    const ctx = await sizeContext(size);
+    const page = await ctx.newPage();
+    await openSite(page);
+    const touch = size[5];
+    const geo = () =>
+      page.evaluate((live) => {
+        const top = (s) => document.querySelector(s).getBoundingClientRect().top + scrollY;
+        const status = document.querySelector('.site-demo__status');
+        const chips = [...document.querySelectorAll('.site-demo__chips:not(.site-sizer__ghost) > li')];
+        const rows = new Set(chips.map((c) => Math.round(c.getBoundingClientRect().top))).size;
+        const shown = [...document.querySelectorAll('.site-demo__card .nl-chip')].filter((c) => !c.closest('.site-sizer__ghost'));
+        return {
+          pad: top('.site-demo__keypad'),
+          foot: top('.site-demo__tools'),
+          end: document.querySelector('.site-demo').getBoundingClientRect().bottom + scrollY,
+          card: document.querySelector('.site-demo__card').getBoundingClientRect().height,
+          statusLines: Math.round((status.getBoundingClientRect().height - parseFloat(getComputedStyle(status).paddingTop) * 2) / parseFloat(getComputedStyle(status).lineHeight)),
+          chips: chips.length,
+          rows,
+          caption: document.querySelector(live).textContent,
+          hint: document.querySelector('.site-demo__hint')?.textContent ?? '',
+          sentence: shown.map((c) => c.querySelector('.nl-chip__word')?.textContent ?? '').join(' '),
+          keys: shown.map((c) => (c.querySelector('.nl-chip__code') ?? c.querySelector('.nl-chip__digits'))?.textContent ?? '').join(' '),
+          sideways: document.documentElement.scrollWidth - innerWidth,
+        };
+      }, LIVE);
+    const press = async (keys) => {
+      for (const k of keys) {
+        const key = page.locator(`[data-try-key="${k}"]`);
+        if (touch) await key.tap();
+        else await key.click();
+      }
+    };
+    const base = await geo();
+    const seen = [];
+    const step = async (what) => {
+      const g = await geo();
+      seen.push([what, g]);
+      return g;
+    };
+    const lineIs = (re, what, timeout = 5000) =>
+      waitFor(page, ([live, src]) => new RegExp(src).test(document.querySelector(live)?.textContent ?? ''), [LIVE, re.source], { timeout, what }).catch(() => {});
+    await press('1');
+    await lineIs(/^Key 1 adds punctuation/, 'the key 1 line', 20000);
+    const one = await step('1');
+    await page.locator('.site-demo__clear').click();
+    await lineIs(/^Press a key to start\.$/, 'the cleared line');
+    const cleared = await step('Clear');
+    await press('4663');
+    await lineIs(/^Keys 4663 match: /, 'the 4663 result', 20000);
+    await step('4663');
+    await press('#');
+    await lineIs(/\(shown\)/, 'the # line');
+    const hash = await step('#');
+    await page.locator('.site-demo__clear').click();
+    await lineIs(/^Press a key to start\.$/, 'the cleared line');
+    await step('Clear again');
+    await press('4306333092837');
+    await lineIs(/^Keys 43 6333 92837 match: /, 'He need water');
+    const water = await step('43 0 6333 0 92837');
+    await press('0843074460333084307446');
+    await lineIs(/^Keys .*7446 match/, 'the long sentence');
+    const long = await step('8 words');
+    const moved = seen.filter(([, g]) => Math.abs(g.pad - base.pad) >= 0.5 || Math.abs(g.foot - base.foot) >= 0.5 || Math.abs(g.end - base.end) >= 0.5);
+    check(
+      moved.length === 0,
+      `${label}: the keypad and the toolbar never move (keypad top ${Math.round(base.pad)}, toolbar ${Math.round(base.foot)}; ${moved.map(([w, g]) => `${w}: ${Math.round(g.pad)}/${Math.round(g.foot)}`).join(', ') || 'steady'} through ${seen.length} steps, MS-6.10, R3-P1)`,
+    );
+    check(
+      one.hint === 'Key 1 adds punctuation at the end of the sentence. Now type a word with keys 2 to 9.' && cleared.hint.startsWith('Press a key to start.') && cleared.caption === 'Press a key to start.',
+      `${label}: key 1 answers in the card and on the line, and after Clear the card says "Press a key to start." ("${cleared.hint}", R3-P8)`,
+    );
+    check(/^Keys 4663 match: “Good”, “Home” \(shown\), “Gone”/.test(hash.caption) && hash.sentence === 'Home', `${label}: after # the line lists every match and marks the one on show (${hash.caption}, R3-P4)`);
+    check(water.sentence === 'He need water' && water.chips === 3, `${label}: 43 0 6333 0 92837 shows "${water.sentence}" with ${water.chips} chips (MS-6.12)`);
+    check(
+      seen.every(([, g]) => Math.abs(g.card - base.card) < 0.5 && g.statusLines <= 1 && g.chips <= 3 && g.rows <= 1 && g.sideways <= 0),
+      `${label}: the card keeps its height (${Math.round(base.card)}px), the status line is one line, at most 3 chips in one row, no sideways scroll (8 words: "${long.sentence}", ${long.chips} chips, R3-P1)`,
+    );
+    await ctx.close();
+  }
+
+  // ---- round 4: the shared language's control feedback (A9, A10; MS-8.14, MS-8.15; r4-language) -------
+  // A pointer device at 1280x900. Hover lays the control's own colour over it at --state-hover; hover and press never
+  // move a key or a button; a .site-go arrow points at most --motion-hint further, only with motion on; drawn buttons
+  // get no layer; a question's answer rises in as it opens only with motion on.
+  for (const reducedMotion of ['no-preference', 'reduce']) {
+    const motion = reducedMotion === 'no-preference';
+    const label = `round 4 control feedback, motion ${motion ? 'on' : 'off'}`;
+    console.log(label);
+    const ctx = await newContext(browser, { width: 1280, height: 900, reducedMotion });
+    const page = await ctx.newPage();
+    await openSite(page, { motion });
+    const pseudo = (loc, which) => loc.evaluate((el, w) => getComputedStyle(el, w).opacity, which);
+    const box = async (loc) => {
+      const b = await loc.boundingBox();
+      return b ? [b.x, b.y, b.width, b.height].map((v) => Math.round(v * 2) / 2).join(',') : null;
+    };
+    const settle = () => pause(page, motion ? 300 : 50);
+
+    // A try-it key: the layer on hover, and neither hover nor press moves it.
+    const key = page.locator('.site-key--try').nth(4);
+    await key.scrollIntoViewIfNeeded();
+    const keyBefore = await box(key);
+    await key.hover();
+    await settle();
+    check(Number(await pseudo(key, '::before')) === 0.08, `${label}: a hovered key shows its own colour at --state-hover (MS-8.14)`);
+    check((await box(key)) === keyBefore, `${label}: hovering a key never moves it (MS-8.14, MS-6.10)`);
+    await page.mouse.down();
+    await pause(page, 60);
+    check((await box(key)) === keyBefore, `${label}: pressing a key never moves it (MS-8.14, MS-6.10)`);
+    await page.mouse.up();
+
+    // The hero's ember button: the layer, no movement.
+    const primary = page.locator('.site-hero .nl-btn--primary').first();
+    await primary.scrollIntoViewIfNeeded();
+    const primaryBefore = await box(primary);
+    await primary.hover();
+    await settle();
+    check(Number(await pseudo(primary, '::after')) === 0.08, `${label}: the hovered ember button takes the hover layer, not an ember background (MS-8.14, MS-9.1)`);
+    const [primaryLabel, onEmber] = await primary.evaluate((el) => {
+      const probe = document.createElement('span');
+      probe.style.color = 'var(--on-ember)';
+      el.parentElement.append(probe);
+      const out = [getComputedStyle(el).color, getComputedStyle(probe).color];
+      probe.remove();
+      return out;
+    });
+    check(primaryLabel === onEmber, `${label}: a hovered ember link keeps its on-ember label (${primaryLabel}; MS-9.2)`);
+    check((await box(primary)) === primaryBefore, `${label}: hovering a button never moves it (MS-8.14)`);
+
+    // A mid-page secondary button: the edge goes ink.
+    const secondary = page.locator('.site-cta .nl-btn--secondary').first();
+    if (await secondary.count()) {
+      await secondary.scrollIntoViewIfNeeded();
+      await secondary.hover();
+      await settle();
+      const [edge, ink] = await secondary.evaluate((el) => {
+        const probe = document.createElement('span');
+        probe.style.color = 'var(--ink)';
+        el.parentElement.append(probe);
+        const out = [getComputedStyle(el).borderTopColor, getComputedStyle(probe).color];
+        probe.remove();
+        return out;
+      });
+      check(edge === ink, `${label}: a hovered secondary button's edge turns ink (${edge}, MS-8.14)`);
+    }
+
+    // Drawn buttons are pictures: no layer at all.
+    const drawn = page.locator('.site-drawn-btn').first();
+    if (await drawn.count()) {
+      check((await drawn.evaluate((el) => getComputedStyle(el, '::after').content)) === 'none', `${label}: a drawn button gets no hover layer (MS-8.14)`);
+    }
+
+    // A link that goes somewhere: its icon moves at most 4px its way with motion on, not at all with motion off.
+    const go = page.locator('.site-go:has(> svg.nl-icon)').first();
+    if (await go.count()) {
+      await go.scrollIntoViewIfNeeded();
+      await go.hover();
+      await settle();
+      const [tx, ty] = await go.evaluate((el) => {
+        const m = new DOMMatrixReadOnly(getComputedStyle(el.querySelector(':scope > svg.nl-icon')).transform);
+        return [m.m41, m.m42];
+      });
+      const moved = Math.hypot(tx, ty);
+      if (motion) check(moved > 0 && Math.abs(tx) <= 4.01 && Math.abs(ty) <= 4.01, `${label}: a .site-go arrow points at most 4px its way on hover (${tx}, ${ty}; MS-8.14)`);
+      else check(moved === 0, `${label}: with motion off a .site-go arrow stays put (MS-8.14)`);
+    } else console.log(`    note: no .site-go link on the page yet, the arrow check skipped`);
+
+    // A question's answer: it rises in as it opens with motion on, appears at once with motion off (A10).
+    const summary = page.locator('.site-faq summary').first();
+    await summary.scrollIntoViewIfNeeded();
+    await summary.click();
+    const rising = await page.evaluate(() =>
+      document.getAnimations().some((a) => a.animationName === 'site-rise' && a.effect?.target?.closest?.('.site-faq[open]')),
+    );
+    if (motion) check(rising, `${label}: an opened answer rises in (site-rise, MS-8.15)`);
+    else check(!rising, `${label}: with motion off an opened answer appears at once (MS-8.15)`);
+    if (!motion) {
+      await pause(page, 100);
+      check((await page.evaluate(() => document.getAnimations().length)) === 0, `${label}: with motion off nothing animates after hover, press and an opened answer (MS-8.7)`);
+    }
+    await ctx.close();
+  }
+
+  // ---- round 4: the end of the page (r4-close; MS-4.4, MS-4.5, MS-4.7, MS-9.1, MS-14.2, MS-14.5) ---------------
+  // The footer on /, /about and the 404 (Day theme: it stays Night), Good to know's two cards and the close's facts
+  // row, at two phone and two desktop sizes.
+  for (const size of [SIZES[0], SIZES[3], SIZES[11], SIZES[12]]) {
+    const [label, width] = size;
+    const ctx = await sizeContext(size, { theme: 'day' });
+    const page = await ctx.newPage();
+    for (const path of ['/', '/about', '/no-such-page']) {
+      await page.goto(BASE_URL + path, { waitUntil: 'load' });
+      const f = await page.evaluate(() => {
+        const footer = document.querySelector('footer.site-footer');
+        const nav = footer.querySelector('nav[aria-label="Footer"]');
+        const links = [...nav.querySelectorAll('a')];
+        const top = footer.querySelector('.site-footer__end a');
+        // A link that leaves the site keeps its icon right after its last word, on that word's line.
+        const loose = [...footer.querySelectorAll('.site-footer__tail')].filter((t) => {
+          const range = document.createRange();
+          range.selectNodeContents(t.firstChild);
+          const word = [...range.getClientRects()].pop();
+          const icon = t.querySelector('svg').getBoundingClientRect();
+          return !word || icon.left < word.right - 1 || icon.left - word.right > 12 || Math.abs((icon.top + icon.bottom) / 2 - (word.top + word.bottom) / 2) > 8;
+        });
+        return {
+          groups: [...nav.querySelectorAll('.site-footer__group > h2')].map((h) => h.textContent).join(', '),
+          links: links.length,
+          small: links.filter((a) => a.getBoundingClientRect().width < 55.5 || a.getBoundingClientRect().height < 55.5).map((a) => a.textContent),
+          missing: links.map((a) => a.getAttribute('href')).filter((h) => h.startsWith('#') && !document.getElementById(h.slice(1))),
+          topHref: top?.getAttribute('href'),
+          topTarget: !!document.getElementById((top?.getAttribute('href') ?? '#').slice(1)),
+          ground: getComputedStyle(footer).backgroundColor,
+          history: footer.querySelector('.site-footer__history')?.textContent ?? '',
+          statement: !!footer.querySelector('.site-footer__statement'),
+          loose: loose.map((t) => t.textContent),
+          hScroll: document.documentElement.scrollWidth > innerWidth + 1,
+        };
+      });
+      const where = `${label} ${path}`;
+      check(f.groups === 'Product, Trust, Project' && f.links === 13, `${where}: the footer has the Product, Trust and Project groups, 13 links (${f.groups}; ${f.links}, MS-4.4)`);
+      check(f.small.length === 0, `${where}: every footer link is a 56px target (MS-10.4)${f.small.length ? `: ${f.small.join(', ')}` : ''}`);
+      check(f.missing.length === 0 && f.topHref === '#top' && f.topTarget, `${where}: every footer anchor and Back to top (#top) has its target (MS-4.4)${f.missing.length ? `: ${f.missing.join(', ')}` : ''}`);
+      check(f.ground === 'rgb(20, 10, 46)', `${where}: in the Day theme the footer is Night (${f.ground}, MS-14.2)`);
+      check(f.history.startsWith('Made for Kiroween 2026.') && f.statement === (path !== '/about'), `${where}: the history line is there, the statement everywhere but /about (MS-4.4, MS-4.7)`);
+      check(f.loose.length === 0, `${where}: each external icon sits right after its link's last word${f.loose.length ? `: ${f.loose.join(', ')}` : ''}`);
+      check(!f.hScroll, `${where}: no sideways scroll (MS-10.2)`);
+    }
+    // Back to top goes to the top (no smooth scrolling, MS-8.5).
+    await page.goto(BASE_URL + '/', { waitUntil: 'load' });
+    await page.locator('.site-footer__end a').scrollIntoViewIfNeeded();
+    await page.locator('.site-footer__end a').click();
+    await pause(page, 150);
+    check((await page.evaluate(() => scrollY)) < 2, `${label}: Back to top scrolls the page to its top`);
+    // Good to know: two cards, side by side from 1024px; each state stays right of its check, on its line.
+    const g = await page.evaluate(() => {
+      const r = (el) => el.getBoundingClientRect();
+      const cards = [...document.querySelectorAll('#limits .site-limits__card')].map(r);
+      const states = [...document.querySelectorAll('#limits .site-limits__status > li')].map((li) => {
+        const c = r(li.querySelector('.site-limits__check'));
+        const s = r(li.querySelector('.site-limits__state'));
+        return s.left >= c.right && s.top < c.bottom && s.bottom > c.top;
+      });
+      const tiles = [...document.querySelectorAll('#limits .site-tile')].map((t) => `${Math.round(r(t).width)}x${Math.round(r(t).height)}`);
+      const facts = [...document.querySelectorAll('#start .site-start__facts > li')].map(r);
+      return {
+        cards: cards.length,
+        beside: cards.length === 2 && Math.abs(cards[0].top - cards[1].top) < 1 && cards[1].left > cards[0].right,
+        states: states.every(Boolean) && states.length === 3,
+        tiles: [...new Set(tiles)].join(', '),
+        tops: new Set(facts.map((b) => Math.round(b.top))).size,
+        facts: facts.length,
+      };
+    });
+    check(g.cards === 2 && g.beside === width >= 1024, `${label}: Good to know shows two cards, ${width >= 1024 ? 'side by side' : 'one above the other'} (MS-4.5)`);
+    check(g.states, `${label}: each Testing so far state sits right of its check, on its line (MS-4.5)`);
+    check(g.tiles === '48x48', `${label}: every Before you start icon sits on a 48px tile (${g.tiles})`);
+    check(g.facts === 4 && g.tops === (width >= 768 ? 1 : 2), `${label}: the close's facts row is ${width >= 768 ? 'one row of four' : '2 x 2'} (${g.tops} rows)`);
+    await ctx.close();
+  }
+
+  // ---- round 4: Measured, not promised (r4-results; MS-5.1, MS-5.4, MS-5.5, MS-8.11 PO-1) ----------------------
+  // Still (reduced motion): every bar is as long as the value printed beside it, on its track; the caveat comes right
+  // after the title, before any number; at 390px the section keeps the round's phone budget. Motion on (1440px): each
+  // bar grows once from its start edge, ends full, and the numbers never move.
+  for (const size of [SIZES[0], SIZES[3], SIZES[11], SIZES[12]]) {
+    const [label] = size;
+    const ctx = await sizeContext(size);
+    const page = await ctx.newPage();
+    await openSite(page);
+    const r = await page.evaluate(() => {
+      const s = document.querySelector('#results');
+      const bars = [...s.querySelectorAll('.site-meter')].map((m) => {
+        const value = parseFloat(m.closest('dd, li').querySelector('.site-stats__value').textContent) / 100;
+        return Math.abs(m.querySelector('.site-meter__fill').getBoundingClientRect().width - value * m.getBoundingClientRect().width);
+      });
+      const kids = [...s.querySelector('.site-stack').children];
+      return {
+        bars,
+        caveatAt: kids.findIndex((k) => k.classList.contains('site-caveat')),
+        firstNumber: kids.findIndex((k) => /\d%/.test(k.textContent)),
+        height: s.getBoundingClientRect().height,
+        hScroll: document.documentElement.scrollWidth > innerWidth + 1,
+      };
+    });
+    check(r.bars.length === 8 && r.bars.every((d) => d <= 1), `${label}: every Results bar is as long as its printed value, within 1px (${r.bars.length} bars, MS-5.1)`);
+    check(r.caveatAt === 1 && r.firstNumber > r.caveatAt, `${label}: the simulated-typist caveat comes right after the title, before any number (MS-5.4)`);
+    check(!r.hScroll, `${label}: Results, no sideways scroll (MS-10.2)`);
+    if (size === SIZES[3]) check(r.height <= 1961 + 150, `${label}: the Results section is at most 150px taller than in round 3 (${Math.round(r.height)}px of 2,111)`);
+    await ctx.close();
+  }
+  {
+    const ctx = await sizeContext(SIZES[12], { reducedMotion: 'no-preference' });
+    const page = await ctx.newPage();
+    await openSite(page, { motion: true });
+    const state = () =>
+      page.evaluate(() => ({
+        full: [...document.querySelectorAll('.site-stats .site-meter__fill')].map((f) => new DOMMatrix(getComputedStyle(f).transform).a),
+        x: [...document.querySelectorAll('.site-stats .site-stats__value')].map((v) => Math.round(v.getBoundingClientRect().left)).join(','),
+        running: document.querySelector('#results .site-stats').getAnimations({ subtree: true }).filter((a) => a.animationName === 'site-grow').length,
+      }));
+    await page.evaluate(() => {
+      const chart = document.querySelector('.site-results__chart');
+      window.scrollTo(0, chart.getBoundingClientRect().top + scrollY - 200);
+    });
+    await pause(page, 150);
+    const early = await state();
+    await pause(page, 2000);
+    const late = await state();
+    check(early.full.some((a) => a < 1), `desktop 1440x1000: motion on, the Results bars start short and grow (scaleX ${early.full.map((a) => a.toFixed(2)).join(' ')}; PO-1, MS-8.11)`);
+    check(late.full.every((a) => a === 1) && late.running === 0, `desktop 1440x1000: each Results bar ends full with no animation left, within 1,600 ms of its play (MS-8.11)`);
+    check(early.x === late.x, `desktop 1440x1000: the Results numbers never move while their bars grow (${early.x} / ${late.x}; MS-5.5)`);
     await ctx.close();
   }
 
@@ -1222,7 +1797,7 @@ try {
     check(ok, 'offline, /app reaches "Offline dictionary ready" (MS-2.4)');
     await page.goto(BASE_URL + '/', { waitUntil: 'load' }).catch(() => {});
     const h1 = await page.locator('h1').first().textContent({ timeout: 10000 }).catch(() => null);
-    check(h1 === 'Ninth Life', `offline, / shows the landing page (h1 ${h1}, MS-2.6)`);
+    check(h1 === H1, `offline, / shows the landing page (h1 ${h1}, MS-2.6)`);
     await ctx.close();
   }
 } finally {

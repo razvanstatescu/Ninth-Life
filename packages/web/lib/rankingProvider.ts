@@ -50,6 +50,16 @@ export const RANKING_SENT = [
   "The other person's last line",
 ] as const;
 
+/**
+ * RANKING_SENT as one clause for running text: "your keys, the dictionary words that match them, Ninth Life's own
+ * best guesses and the other person's last line". Use it wherever a page says what ranking sends (/about, Limits,
+ * llms.txt), so every place lists the same four things.
+ */
+export function rankingSentText(items: readonly string[] = RANKING_SENT): string {
+  const lower = items.map((s) => (s.startsWith('Ninth Life') ? s : s.charAt(0).toLowerCase() + s.slice(1)));
+  return lower.length < 2 ? (lower[0] ?? '') : `${lower.slice(0, -1).join(', ')} and ${lower[lower.length - 1]}`;
+}
+
 export function providerCopy(p: RankingProvider = rankingProvider()): ProviderCopy {
   return PROVIDER_COPY[p];
 }

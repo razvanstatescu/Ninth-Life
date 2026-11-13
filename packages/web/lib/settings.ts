@@ -92,11 +92,19 @@ export function stepScanMs(ms: number, dir: 1 | -1): number {
 export const THEME_KEY = 'nl-theme';
 export const KEYSIZE_KEY = 'nl-keysize';
 
+/**
+ * Apply the look to <html> and mirror it to localStorage for the next first paint.
+ *
+ * The theme is mirrored only once the person has chosen one (ADR-006 amendment 2026-11-12, W2): a theme other than
+ * the default, or any theme once a choice is already stored (so switching back to Night is kept too). The untouched
+ * default, Night, is not written, so the website keeps following the device for someone who opened the app but never
+ * picked a theme. The app looks the same either way: /app paints Night when nothing is stored (the html default).
+ */
 export function applyLook(settings: Pick<Settings, 'theme' | 'targetSize'>, doc: Document = document): void {
   doc.documentElement.dataset.theme = settings.theme;
   doc.documentElement.dataset.keysize = settings.targetSize;
   try {
-    localStorage.setItem(THEME_KEY, settings.theme);
+    if (settings.theme !== DEFAULT_SETTINGS.theme || localStorage.getItem(THEME_KEY) !== null) localStorage.setItem(THEME_KEY, settings.theme);
     localStorage.setItem(KEYSIZE_KEY, settings.targetSize);
   } catch {
     /* private mode: the theme still applies for this visit */
@@ -117,5 +125,10 @@ export function readStoredLook(): Partial<Pick<Settings, 'theme' | 'targetSize'>
   }
 }
 
-/** Inline script for <head>: sets data-theme before the first paint. */
-export const THEME_BOOT_SCRIPT = `(function(){try{var d=document.documentElement;var t=localStorage.getItem('${THEME_KEY}');if(t==='night'||t==='day'||t==='system')d.dataset.theme=t;var k=localStorage.getItem('${KEYSIZE_KEY}');if(k==='l'||k==='xl')d.dataset.keysize=k;}catch(e){}})();`;
+/**
+ * Inline script for <head>: sets data-theme before the first paint. A stored choice always wins. With none
+ * stored, the website pages (everything outside /app: the landing page, /about) follow the device through
+ * data-theme="system" (tokens.css: Day under prefers-color-scheme: light, Night otherwise); the app keeps its
+ * default, Night, from the html element (ADR-006 amendment 2026-11-12, W2). The page reads storage only.
+ */
+export const THEME_BOOT_SCRIPT = `(function(){var d=document.documentElement;try{var t=localStorage.getItem('${THEME_KEY}');if(t==='night'||t==='day'||t==='system')d.dataset.theme=t;else if(!/^\\/app(\\/|$)/.test(location.pathname))d.dataset.theme='system';var k=localStorage.getItem('${KEYSIZE_KEY}');if(k==='l'||k==='xl')d.dataset.keysize=k;}catch(e){if(!/^\\/app(\\/|$)/.test(location.pathname))d.dataset.theme='system';}})();`;

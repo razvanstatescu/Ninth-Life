@@ -237,8 +237,30 @@ node scripts/lighthouse.mjs --write            # --runs 1-9, --preset mobile|des
 The script refuses a development server (exit 2) and never builds anything itself. It exits 1 when a
 mobile target or budget is missed. `--write` replaces the block between the markers below.
 
+Agentic Browsing (Round 3, 2026-11-12, Claude Code). Lighthouse 13.3+ has an "Agentic Browsing" category
+(accessibility tree, layout shift, and `/llms.txt` when it exists). The script reports it on its own line as
+a fraction, with no target; it would have caught the `/app` layout shift below.
+
+Site origin when measuring. Canonical links, `og:url`, the social card, JSON-LD, the `Sitemap:` line and
+`/sitemap.xml` exist only when the build knows the origin (`lib/site-url.ts`: `SITE_URL`, else
+`VERCEL_PROJECT_PRODUCTION_URL`, else none, and then `/sitemap.xml` is a 404). Build with
+`SITE_URL=http://localhost:3202 pnpm -F @ninth/web build` (the port you serve on) so Lighthouse's `canonical`
+audit runs and the document bytes include the JSON-LD. Never point `SITE_URL` at localhost in a deployed build.
+
+`/app` first paint (Round 3). The static HTML of `/app` is the wide layout (lib/layout.ts' server snapshot),
+and phones, tablets and narrow windows get a different layout after hydration. Painting the wide HTML first
+made the whole screen jump: Lighthouse mobile on `/app` measured CLS 0.903, Performance 61, LCP 4.3 s and
+Agentic Browsing 0.52 (commit `5354f0d`). Two changes, neither alters any layout's final result:
+`styles/app.css` keeps `.app--wide` invisible where the layout cannot be wide (`(pointer: coarse)` or
+narrower than 960px, on screen only, so a printout is never blank; `test/layout.test.ts` checks it hides exactly
+where `chooseLayout()` picks another layout), and `CommunicationScreen.tsx` measures the keypad box once before the first paint
+instead of waiting a frame for the ResizeObserver (the keys were painted at the 324px fallback, then grew:
+CLS 0.059). After: `/app` mobile Performance 100, CLS 0.000, LCP 0.9 s, Agentic Browsing 1.00. `/app` still
+misses the landing page's script and total byte budgets by design (the dictionary and the app's own code);
+those budgets are for `/`.
+
 <!-- lighthouse:start -->
-Measured 2026-11-12 on http://localhost:3202/, commit `e8e3331-dirty`, Lighthouse 13.6.0, Chromium 153.0.8010.12. Median of 3 runs per preset, a fresh browser profile for each run.
+Measured 2026-11-13 on http://localhost:3402/, commit `5354f0d-dirty`, Lighthouse 13.6.0, Chromium 153.0.8010.12. Median of 3 runs per preset, a fresh browser profile for each run.
 
 ### Mobile (simulated throttling: Slow 4G, 4x CPU)
 
@@ -250,18 +272,20 @@ Measured 2026-11-12 on http://localhost:3202/, commit `e8e3331-dirty`, Lighthous
 | **Median** | **100** | **100** | **100** | **100** |
 | Target | 95 or more | 100 | 100 | 100 |
 
-Run with the median Performance score: FCP 1,055 ms, LCP 1,055 ms (element: `p`), TBT 2 ms, CLS 0.000, Speed Index 1,055 ms.
+Agentic Browsing (reported, no target): median 1.00 (runs 1.00, 1.00, 1.00).
+
+Run with the median Performance score: FCP 1,053 ms, LCP 1,053 ms (element: `p`), TBT 0 ms, CLS 0.000, Speed Index 1,053 ms.
 
 | Page requests, transferred | Bytes | Budget | Result |
 |---|---|---|---|
-| Script | 117.7 KB | 125.0 KB | pass |
-| Stylesheet | 10.8 KB | 16.0 KB | pass |
-| Document | 22.7 KB | 32.0 KB | pass |
+| Script | 120.1 KB | 125.0 KB | pass |
+| Stylesheet | 14.7 KB | 16.0 KB | pass |
+| Document | 30.2 KB | 32.0 KB | pass |
 | Font | 51.1 KB | 60.0 KB | pass |
 | Image | 4.4 KB | 16.0 KB | pass |
-| Manifest | 1.1 KB | none |  |
+| Manifest | 1.2 KB | none |  |
 | Other | 0.5 KB | none |  |
-| Total | 208.3 KB | 250.0 KB | pass |
+| Total | 222.3 KB | 250.0 KB | pass |
 
 Service worker: 2 requests, 0.7 KB (reported, no budget).
 Other origins: none.
@@ -275,18 +299,20 @@ Other origins: none.
 | Run 3 | 100 | 100 | 100 | 100 |
 | **Median** | **100** | **100** | **100** | **100** |
 
-Run with the median Performance score: FCP 283 ms, LCP 283 ms (element: `p`), TBT 0 ms, CLS 0.000, Speed Index 283 ms.
+Agentic Browsing (reported, no target): median 1.00 (runs 1.00, 1.00, 1.00).
+
+Run with the median Performance score: FCP 283 ms, LCP 283 ms (element: `span`), TBT 0 ms, CLS 0.000, Speed Index 283 ms.
 
 | Page requests, transferred | Bytes | Budget | Result |
 |---|---|---|---|
-| Script | 117.7 KB | none |  |
-| Stylesheet | 10.8 KB | none |  |
-| Document | 22.7 KB | none |  |
+| Script | 120.1 KB | none |  |
+| Stylesheet | 14.7 KB | none |  |
+| Document | 30.2 KB | none |  |
 | Font | 51.1 KB | none |  |
 | Image | 4.4 KB | none |  |
-| Manifest | 1.1 KB | none |  |
+| Manifest | 1.2 KB | none |  |
 | Other | 0.5 KB | none |  |
-| Total | 208.3 KB | none |  |
+| Total | 222.3 KB | none |  |
 
 Service worker: 2 requests, 0.7 KB (reported, no budget).
 Other origins: none.

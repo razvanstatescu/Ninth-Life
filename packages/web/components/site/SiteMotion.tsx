@@ -7,23 +7,14 @@
  * data-site-arrived ends the hero's arrival fades (A1, A2) after they ran once, so they never replay
  * during the page view (MS-6.9).
  *
- * Round 2 (A7, A8; MS-8.11-8.13): each data-play drawing below the fold plays once, by setting
+ * Round 2 (A7; MS-8.11, MS-8.13): each data-play drawing below the fold plays once, by setting
  * data-played="1", when shouldPlay holds (four observers: the play area, the top line, the whole
- * viewport and the top band); drawings in view or above at mount get data-played="instant" before "on" is set. The How steps write
- * data-how-step, data-how-play and data-how-live on .site-how as the middle line moves.
+ * viewport and the top band); drawings in view or above at mount get data-played="instant" before "on" is set.
+ * Round 4 (2026-11-13, Claude Code): the How step sync (A8, MS-8.12) is gone with the sticky How picture. How's
+ * three scenes are data-play drawings like every other; their story order along the row is CSS only.
  */
 import { useEffect } from 'react';
-import {
-  ARRIVAL_FALLBACK_MS,
-  MOTION_QUERY,
-  PLAY_LINE,
-  activeStep,
-  howStart,
-  msToken,
-  shouldPlay,
-  splitInitialPlay,
-  splitInitialReveal,
-} from './motion';
+import { ARRIVAL_FALLBACK_MS, MOTION_QUERY, PLAY_LINE, msToken, shouldPlay, splitInitialPlay, splitInitialReveal } from './motion';
 
 export function SiteMotion(): null {
   useEffect(() => {
@@ -33,14 +24,7 @@ export function SiteMotion(): null {
     const drawings = () => [...document.querySelectorAll<HTMLElement>('[data-play]')];
     let observer: IntersectionObserver | null = null;
     let playObservers: IntersectionObserver[] = [];
-    let stepObserver: IntersectionObserver | null = null;
     let arrival: ReturnType<typeof setTimeout> | undefined;
-    // How it works: the highest step played in this page view, the step last written, whether the
-    // story waits for step 1 (deferred), and whether howStart was asked (only on the first move()).
-    let seen = 3;
-    let current = -1;
-    let deferred = false;
-    let howAsked = false;
 
     const arrive = () => {
       root.dataset.siteArrived = '';
@@ -51,8 +35,6 @@ export function SiteMotion(): null {
       observer = null;
       for (const io of playObservers) io.disconnect();
       playObservers = [];
-      stepObserver?.disconnect();
-      stepObserver = null;
     };
 
     const still = () => {
@@ -63,15 +45,6 @@ export function SiteMotion(): null {
       for (const el of blocks()) el.dataset.revealed = 'instant';
       // Also drawings playing now, so nothing replays if the preference changes back (MS-8.13).
       for (const el of drawings()) el.dataset.played = 'instant';
-      const how = document.querySelector<HTMLElement>('.site-how');
-      if (how) {
-        delete how.dataset.howStep;
-        delete how.dataset.howPlay;
-        delete how.dataset.howLive;
-      }
-      deferred = false;
-      seen = 3;
-      current = -1;
     };
 
     const move = () => {
@@ -87,28 +60,9 @@ export function SiteMotion(): null {
         window.innerHeight,
       );
       for (const el of plays.instant) el.dataset.played = 'instant';
-
-      const how = document.querySelector<HTMLElement>('.site-how');
-      const steps = how ? [...how.querySelectorAll<HTMLElement>('.site-how__step')] : [];
-      const stepNow = () => activeStep(steps.map((s) => s.getBoundingClientRect().top), window.innerHeight / 2);
-      if (how && !howAsked) {
-        howAsked = true;
-        const step = stepNow();
-        const picture = how.querySelector<HTMLElement>('.site-how__picture');
-        const start = picture ? howStart(picture, window.innerHeight, step) : 'finished';
-        if (start === 'live') {
-          how.dataset.howLive = '';
-          seen = 0;
-        } else if (start === 'deferred') {
-          seen = 0;
-          deferred = true;
-        } else seen = 3;
-        current = start === 'finished' ? step : 0;
-        how.dataset.howStep = String(current);
-      }
       root.dataset.siteMotion = 'on';
 
-      // The play observers and the step observer come before the reveal observer.
+      // The play observers come before the reveal observer.
       if (plays.later.length > 0) {
         const tryPlay = (el: HTMLElement, r: { top: number; bottom: number }) => {
           if (el.dataset.played || !shouldPlay(r, window.innerHeight)) return;
@@ -147,25 +101,6 @@ export function SiteMotion(): null {
           new IntersectionObserver(onPlay, { rootMargin: '0px 0px -70% 0px', threshold: 0 }),
         ];
         for (const io of playObservers) for (const el of plays.later) io.observe(el);
-      }
-      if (how && steps.length > 0) {
-        const onStep = () => {
-          const step = stepNow();
-          if (step === current) return;
-          current = step;
-          // All writes in one callback, so the browser paints them together.
-          if (deferred && step >= 1) {
-            how.dataset.howLive = '';
-            deferred = false;
-          }
-          how.dataset.howStep = String(step);
-          if (step > seen) {
-            how.dataset.howPlay = String(step);
-            seen = step;
-          } else delete how.dataset.howPlay;
-        };
-        stepObserver = new IntersectionObserver(onStep, { rootMargin: '-50% 0px -50% 0px', threshold: 0 });
-        for (const s of steps) stepObserver.observe(s);
       }
 
       const io = new IntersectionObserver(

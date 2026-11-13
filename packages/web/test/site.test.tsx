@@ -11,22 +11,34 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import HomePage, { metadata } from '@/app/page';
 import { NOT_A_MEDICAL_DEVICE } from '@/components/Footer';
 import { Icon, type IconName } from '@/components/Icon';
-import { HERO_KEY_SIZE, KEY_DRAWING_SIZE, KEY_DRAWING_XL_SIZE, TOUCH_MIN_SIZE, TOUCH_XL_SIZE } from '@/components/site/KeypadPicture';
+import { KEY_DRAWING_SIZE, KEY_DRAWING_XL_SIZE, TOUCH_MIN_SIZE, TOUCH_XL_SIZE } from '@/components/site/KeypadPicture';
 import { SITE_MOTION_BOOT } from '@/components/site/motion';
 import { lastChangeMs } from '@/components/site/pictures/roles';
+import { faqItems } from '@/components/site/sections/Faq';
+import { LIMITS_LEAD, LIMIT_ROWS, TESTING } from '@/components/site/sections/Limits';
+import { START_FACTS } from '@/components/site/sections/Start';
+import { footerGroups } from '@/components/site/SiteFooter';
 import {
+  HISTORY_LINE,
+  ISSUES_URL,
   METHOD_URL,
+  NOTICE_URL,
+  REPO_URL,
+  PRIVACY_RULES_URL,
+  RANKING_REQUEST_URL,
   RESULTS_URL,
+  barShare,
   finishedKeys,
   finishedSentence,
   getDemoData,
   getProofExample,
   getResults,
   getSpellExample,
-  proofSaidLine,
+  proofCanLine,
+  proofNeverLine,
 } from '@/components/site/site-data';
 import { mapKey } from '@/lib/keyboard';
-import { RANKING_SENT, providerCopy } from '@/lib/rankingProvider';
+import { RANKING_SENT, providerCopy, rankingSentText } from '@/lib/rankingProvider';
 
 const web = (rel: string) => resolve(__dirname, '..', rel);
 const repoRoot = resolve(__dirname, '../../..');
@@ -73,7 +85,9 @@ const $$ = (sel: string, root: ParentNode = document) => [...root.querySelectorA
 const follows = (a: Node, b: Node) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
 const FOCUSABLE = 'a[href], button, input, select, textarea, summary, [tabindex]';
 
-const SECTION_IDS = ['how', 'proof', 'conversation', 'access', 'privacy', 'results', 'limits', 'faq', 'source', 'start'];
+// Round 3 (2026-11-12, Claude Code): Results follows Proof (MS-3.1). Round 4 (2026-11-13): Free and open source
+// (source) dissolved into the close, the footer and /about.
+const SECTION_IDS = ['how', 'proof', 'results', 'conversation', 'access', 'privacy', 'limits', 'faq', 'start'];
 
 beforeEach(() => {
   render(<HomePage />);
@@ -81,10 +95,10 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('structure and landmarks (MS-3, MS-1.6)', () => {
-  it('MS-3.1 one h1 "Ninth Life" and the ten sections in order, each labelled by its h2', () => {
+  it('MS-3.1 one h1, the promise (round 3), and the nine sections in order (round 4), each labelled by its h2', () => {
     const h1s = $$('h1');
     expect(h1s).toHaveLength(1);
-    expect(h1s[0]!.textContent).toBe('Ninth Life');
+    expect(h1s[0]!.textContent).toBe('Type on 9 keys. Hear your sentence.');
     const sections = $$('main > section');
     expect(sections.map((s) => s.id)).toEqual(SECTION_IDS);
     for (const s of sections) {
@@ -121,7 +135,8 @@ describe('structure and landmarks (MS-3, MS-1.6)', () => {
 
   it('MS-3.4 every question is a closed native details with the question as its summary', () => {
     const items = $$('#faq details');
-    expect(items).toHaveLength(9);
+    expect(items).toHaveLength(faqItems().length);
+    expect(items).toHaveLength(11);
     for (const d of items) {
       expect(d.hasAttribute('open')).toBe(false);
       expect(d.firstElementChild!.tagName).toBe('SUMMARY');
@@ -135,8 +150,9 @@ describe('structure and landmarks (MS-3, MS-1.6)', () => {
     const og = metadata.openGraph as Record<string, unknown>;
     expect(og.title).toBe(cell('og:title'));
     expect(og.description).toBe(cell('og:description'));
-    expect(og).toMatchObject({ type: 'website', siteName: 'Ninth Life', locale: 'en' });
+    expect(og).toMatchObject({ type: 'website', siteName: 'Ninth Life', locale: 'en_US' });
     const tw = metadata.twitter as Record<string, unknown>;
+    // Tests run with no SITE_URL, so no social card and a summary card (seo.test.tsx covers the origin case).
     expect(tw).toMatchObject({ card: 'summary', title: cell('og:title'), description: cell('og:description') });
     expect('keywords' in metadata).toBe(false);
     expect('robots' in metadata).toBe(false);
@@ -144,7 +160,8 @@ describe('structure and landmarks (MS-3, MS-1.6)', () => {
 
   it('MS-1.6 every "Open the app" is a plain link to /app, and exactly two are primary', () => {
     const open = $$('a').filter((a) => collapse(a.textContent ?? '') === 'Open the app');
-    expect(open.length).toBe(5);
+    // Bar, hero, proof, the mid-page rows after Results, Access (R3-P10) and Privacy (round 3), the close and the footer.
+    expect(open.length).toBe(8);
     for (const a of open) {
       expect(a.tagName).toBe('A');
       expect(a.getAttribute('href')).toBe('/app');
@@ -153,6 +170,18 @@ describe('structure and landmarks (MS-3, MS-1.6)', () => {
     expect($$('.nl-btn--primary')).toHaveLength(2);
     expect($('header#top .site-bar .nl-btn')!.classList.contains('nl-btn--secondary')).toBe(true);
     expect($('#proof a.nl-btn')!.classList.contains('nl-btn--secondary')).toBe(true);
+    // Round 3: the Results section ends on a secondary xl "Open the app" in a .site-cta row (review P1-3).
+    // Privacy ends the same way (verifier, 2026-11-13: on a 390px phone the Results row and the close were ~14
+    // screens apart).
+    // R3-P10 (2026-11-13): Access too (Results to Privacy was still 9.4 screens at 390 and 13.7 at 320).
+    for (const id of ['results', 'access', 'privacy']) {
+      const mid = $$(`#${id} a.nl-btn`);
+      expect(mid, id).toHaveLength(1);
+      expect(mid[0]!.className).toBe('nl-btn nl-btn--secondary nl-btn--xl');
+      expect(mid[0]!.parentElement!.className).toBe('site-cta');
+      expect(mid[0]!.parentElement!.nextElementSibling, id).toBeNull();
+      expect(mid[0]!.parentElement!.parentElement!.className).toBe('site-wrap site-stack');
+    }
   });
 });
 
@@ -169,18 +198,32 @@ describe('copy and claims (MS-4, MS-5)', () => {
     // Not in the first render by design: later demo states, no speech engine in jsdom, the live region
     // (filled only after a play the person started) and the null-results line (results exist in the repo).
     const notInFirstRender = new Set([
-      'Play the example again',
       'Stop',
       'Hear it',
+      // Round 4 (2026-11-13, Claude Code): the hero's status line, shown once the keys work, and its try-it states.
+      'Press the keys to try it.',
+      'Next: {readings}',
+      'No sentence matches yet.',
+      'The dictionary did not load.',
       'The eval results are not available in this build.',
       'Typed {codes}. Ninth Life shows: {sentence}.',
+      // Try it (W4): only after the visitor's first key press.
+      'Keys {codes} match: {sentences}.',
+      'Press a key to start.',
+      'Loading the offline dictionary.',
+      'No sentence matches these keys yet. Keep typing, or press Back.',
+      'The dictionary did not load, so only the keys show. The app has the whole keypad.',
+      // R3-P8: after a 1, 0 or # before any letter.
+      'Key 1 adds punctuation at the end of the sentence. Now type a word with keys 2 to 9.',
+      'Keys 2 to 9 type the letters. Start with those.',
     ]);
     const text = pageText();
     let checked = 0;
     for (const raw of strings) {
       const s = collapse(raw);
       if (notInFirstRender.has(s)) continue;
-      if (s.startsWith('Model ranking has also been measured') && !results?.modelRuns) continue;
+      // Round 4: the model-ranking status rows replace the model line on the page; they show only with model runs.
+      if (/^(Measured with|Not measured yet:)/.test(s) && !results?.modelRuns) continue;
       if (s.includes('{')) {
         for (const fragment of s.split(/\{[^}]+\}/).map((f) => f.trim()).filter((f) => f.length >= 8)) {
           expect(text, `fragment of "${s}"`).toContain(fragment);
@@ -234,10 +277,11 @@ describe('copy and claims (MS-4, MS-5)', () => {
     for (const el of $$('.site [class]')) expect(el.getAttribute('class')).not.toMatch(/phone|handset|device/i);
   });
 
-  it('MS-4.4 the footer shows the intended-purpose sentence in caption, and the FAQ answer is "No. " + it', () => {
+  it('MS-4.4 the footer shows the intended-purpose sentence in body type (round 3, R3-P8), and the FAQ answer is "No. " + it', () => {
     const statement = $('.site-footer__statement')!;
     expect(statement.textContent).toBe(NOT_A_MEDICAL_DEVICE);
-    expect(statement.classList.contains('site-footer__caption')).toBe(true);
+    expect(statement.classList.contains('site-footer__caption')).toBe(false);
+    expect(read(web('components/site/site.css'))).toMatch(/\.site-footer__statement \{[^}]*font-size: var\(--type-body-size\)/);
     const item = $$('#faq details').find((d) => d.querySelector('summary')!.textContent === 'Is it a medical device?')!;
     expect(item.querySelector('p')!.textContent).toBe(`No. ${NOT_A_MEDICAL_DEVICE}`);
   });
@@ -246,25 +290,83 @@ describe('copy and claims (MS-4, MS-5)', () => {
     const limits = $('#limits')!;
     expect(follows(limits, $('#faq')!)).toBe(true);
     expect(follows(limits, $('#start')!)).toBe(true);
-    const expected = [...contentSections().get(8)!.matchAll(/^ {2}- \*\*(.+)\*\*$/gm)].map((m) => m[1]);
+    // Round 4 (2026-11-13, Claude Code): the not-a-replacement limit is the lead; then two cards. "Before you start":
+    // a key and the approved sentence per row; "Testing so far": each check and its state in words. content.md §8
+    // lists both as "  - **key**: **value**" lines, in page order.
+    const section8 = contentSections().get(8)!;
+    expect($('#limits .site-lead')!.textContent).toBe(LIMITS_LEAD);
+    expect(section8).toContain(`**${LIMITS_LEAD}**`);
+    const expected = [...section8.matchAll(/^ {2}- \*\*(.+?)\*\*: \*\*(.+)\*\*$/gm)].map((m) => [m[1], m[2]]);
     expect(expected).toHaveLength(7);
-    expect($$('li', limits).map((li) => li.textContent)).toEqual(expected);
+    const rows = $$('.site-limits__rows > li', limits).map((li) => [li.querySelector('.site-limits__key')!.textContent, li.querySelector('.site-limits__text')!.textContent]);
+    const checks = $$('.site-limits__status > li', limits).map((li) => [li.querySelector('.site-limits__check')!.textContent, li.querySelector('.site-limits__state')!.textContent]);
+    expect([...rows, ...checks]).toEqual(expected);
+    expect(rows).toEqual(LIMIT_ROWS.map((r) => [r.key, r.text]));
+    expect(checks).toEqual(TESTING.map((t) => [t.check, t.done ? 'Done' : 'Not yet']));
+    expect($$('.site-limits__card > h3', limits).map((h) => h.textContent)).toEqual(['Before you start', 'Testing so far']);
+    // The ranking row is rankingSentText() (MS-4.6).
+    expect(textOf(limits)).toContain(`With model ranking on, ${rankingSentText()} leave your device`);
+    // Never colour alone: Done has a check icon and a solid edge, Not yet a dashed edge (the --not class); each state
+    // follows a visually hidden colon, so a screen reader hears "Checked on real phones and tablets: Not yet".
+    for (const li of $$('.site-limits__status > li', limits)) {
+      const st = li.querySelector('.site-limits__state')!;
+      expect(li.querySelector('.nl-sr-only')!.textContent).toBe(': ');
+      expect(st.classList.contains('site-limits__state--not')).toBe(st.textContent === 'Not yet');
+      expect(st.querySelector('svg.nl-icon') !== null).toBe(st.textContent === 'Done');
+    }
+    // Every row's icon sits in a tile and is decorative.
+    for (const li of $$('.site-limits__rows > li', limits)) expect(li.querySelector('.site-tile > svg[aria-hidden="true"]')).not.toBeNull();
+    const help = $$('.site-limits__help a', limits);
+    expect(help.map((a) => [a.textContent, a.getAttribute('href')])).toEqual([['Open an issue on GitHub', ISSUES_URL]]);
+    expect(help[0]!.closest('.site-limits__card')!.querySelector('h3')!.textContent).toBe('Testing so far');
+  });
+
+  it('MS-4.5a each limit is also said beside the claim it qualifies, in a .site-caveat (info icon, ink)', () => {
+    const caveat = (id: string) => $$(`#${id} .site-caveat`);
+    for (const c of $$('.site-caveat')) expect(c.firstElementChild!.matches('svg.nl-icon[aria-hidden="true"]')).toBe(true);
+    // How: under its row, the spelling and language limits (approved sentences, content.md §8).
+    expect(caveat('how').map((c) => collapse(c.textContent ?? ''))).toEqual(['You need to be able to spell. Ninth Life types words, not symbols. English only for now.']);
+    // Results: in its caveat note, the limit on testing with people.
+    expect(caveat('results').some((c) => /not yet been tested with people who use AAC\./.test(c.textContent ?? ''))).toBe(true);
+    // Access: in the card that makes the device claim, the simulator limit word for word.
+    const devices = caveat('access').filter((c) => c.closest('.site-card')!.querySelector('h3')!.textContent === 'Phones, tablets and laptops');
+    expect(devices.map((c) => c.textContent)).toEqual(['It has been checked in phone and tablet simulators, not yet on real phones and tablets.']);
+    // Never fainter than its claim: ink, also inside a card whose own text is ink-muted.
+    expect(read(web('components/site/site.css'))).toMatch(/\.site \.site-caveat \{[^}]*color: var\(--ink\);/);
   });
 
   it('MS-4.6 provider names, region and retention come from providerCopy()', () => {
     const p = providerCopy();
     const privacy = textOf($('#privacy')!);
     expect(privacy).toContain(p.service);
-    expect(privacy).toContain(`${p.region} ${p.retention}`);
+    // Round 3: region, retention and the log line are a list under the grid, not in the Model ranking card. Round 4
+    // (r4-boxes): fact rows (.site-fact) in a note card.
+    const more = $$('#privacy .site-privacy-facts .site-fact').map((li) => li.textContent);
+    expect(more).toEqual([p.region, p.retention, 'Our server logs timings and counts, never your words.']);
+    const ranking = $$('#privacy h3').find((h) => h.textContent === 'Model ranking, if you turn it on')!.closest('.site-card')!;
+    // Round 4 (decisions §2 "Boxes"): what ranking sends is real text in the card, one sentence from rankingSentText()
+    // (MS-4.6), after the h3 in the DOM (MS-7.2 exception); the card's line no longer repeats the list.
+    const sent = ranking.querySelector(':scope > p.site-sent')!;
+    expect(sent.textContent).toBe(`Sent to rank: ${rankingSentText()}.`);
+    expect(follows(ranking.querySelector('h3')!, sent)).toBe(true);
+    expect(textOf(ranking.querySelector(':scope > p:last-child')!)).toBe(`It is off until you turn it on in Settings. Then Ninth Life sends these to ${p.service} to rank the sentences.`);
+    expect(textOf(ranking)).not.toContain(p.retention);
+    expect($$('#privacy .site-privacy-facts .site-links a').map((a) => a.getAttribute('href'))).toEqual([PRIVACY_RULES_URL, RANKING_REQUEST_URL]);
     expect(textOf($('#faq')!)).toContain(p.service);
-    expect(textOf($('#source')!)).toContain(`Model ranking: ${p.company}.`);
+    // Round 4: the credits ("Model ranking: {company}.") moved to /about#credits (about.test.tsx).
+    expect($('#source')).toBeNull();
   });
 
   it('MS-4.7 the history line is there; "Built with Kiro" and "not been measured yet" are not', () => {
     const text = pageText();
-    expect(text).toContain('Made for Kiroween 2026. The first version was written with Claude Code by Anthropic; the work continued in Kiro.');
+    expect(text).toContain('Made for Kiroween 2026. The first version was written with Claude Code by Anthropic; from Nov 10, 2026 the work continued in Kiro. The website was reviewed and revised with Claude Code on Nov 12-13, 2026.');
+    // Round 4: one constant, shown in the site footer (so on every page) and in /llms.txt (seo.test.tsx).
+    expect($('footer .site-footer__history')!.textContent).toBe(HISTORY_LINE);
+    expect(text.split(HISTORY_LINE)).toHaveLength(2);
     expect(text).not.toMatch(/built with kiro/i);
-    expect(text).not.toMatch(/not been measured yet/i);
+    // D15 dropped "Model ranking has not been measured yet" (false: RESULTS.md has model runs). R3-P7 (2026-11-13) may
+    // say that one named provider, the one this build uses, has not been measured; never ranking as a whole.
+    expect(text).not.toMatch(/model ranking has not been measured yet/i);
   });
 
   it('MS-4.8 Google, Apple, Chrome and Safari appear only in the Listen privacy card', () => {
@@ -278,7 +380,10 @@ describe('copy and claims (MS-4, MS-5)', () => {
 
   it('MS-5.1 every percentage on the page comes from getResults(), with both links in #results', () => {
     const r = getResults()!;
-    const allowed = new Set([r.ghost.top1, r.ghost.top5, r.ghost.wordAcc, r.ghost.ksr, r.dict.top1, r.dict.top5]);
+    // Round 3: the per-source split (RESULTS.md "By source", B1 right sentence first) also comes from getResults().
+    // Round 4: word frequency's right word first too (RESULTS.md B0 "Word acc"), so every measure has its pair.
+    expect(r.bySource).not.toBeNull();
+    const allowed = new Set([r.ghost.top1, r.ghost.top5, r.ghost.wordAcc, r.ghost.ksr, r.dict.top1, r.dict.top5, r.dict.wordAcc, r.bySource!.aac.top1, r.bySource!.turk.top1]);
     // Per text node, so a heading ending in a digit ("top 5") never runs into the value after it.
     const found: string[] = [];
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -296,26 +401,60 @@ describe('copy and claims (MS-4, MS-5)', () => {
 });
 
 describe('hero and demo (MS-6)', () => {
-  it('MS-6.1 the banner is Night, with the icon, the display-xl name and the hero buttons', () => {
+  it('MS-6.1 the banner is Night, with the brand line and icon, the promise h1, the lead and the hero actions', () => {
     const top = $('header#top')!;
     expect(top.getAttribute('data-theme')).toBe('night');
-    const icon = top.querySelector('.site-hero img')!;
+    const brand = top.querySelector('.site-hero__brand')!;
+    const icon = brand.querySelector('img')!;
     expect(icon.getAttribute('src')).toBe('/icons/icon.svg');
-    expect(Number(icon.getAttribute('width'))).toBeGreaterThanOrEqual(48);
-    expect(top.querySelector('h1')!.classList.contains('site-hero__name')).toBe(true);
-    const actions = $$('.site-hero .site-actions a');
+    expect(Number(icon.getAttribute('width'))).toBe(64);
+    expect(brand.textContent).toBe('Ninth Life');
+    // The brand line comes right before the h1, the lead right after it.
+    const h1 = top.querySelector('h1')!;
+    expect(h1.classList.contains('site-hero__title')).toBe(true);
+    expect(brand.nextElementSibling).toBe(h1);
+    expect(h1.nextElementSibling!.textContent!.startsWith('A free web app for typing to talk.')).toBe(true);
+    const actions = $$('.site-hero .site-cta a');
     expect(actions.map((a) => [a.textContent, a.getAttribute('href'), a.classList.contains('nl-btn--primary')])).toEqual([
       ['Open the app', '/app', true],
       ['See how it works', '#how', false],
     ]);
+    // "Free. Works offline. No account." directly under the actions.
+    expect($('.site-hero .site-cta')!.nextElementSibling!.textContent).toBe('Free. Works offline. No account.');
   });
 
-  it('MS-6.2 the demo shows the finished frame first: "I need water" and a match chip per word', () => {
-    expect($('.site-demo__text')!.textContent).toBe('I need water');
-    expect($$('.site-demo__slot > [data-state="match"]')).toHaveLength(3);
-    expect($('.site-demo .site-pad')!.getAttribute('aria-hidden')).toBe('true');
-    const caption = $$('.site-demo p.nl-sr-only').map((p) => p.textContent);
-    expect(caption).toContain('Example: the keys 4, 0, 6 3 3 3, 0, 9 2 8 3 7 type "i need water". 0 is space.');
+  it('MS-6.2 the demo shows the finished frame first: "I need water" as a match chip per word, each over its keys', () => {
+    const live = $$('.site-demo__slot > [data-state="match"]');
+    expect(live.map((c) => c.querySelector('.nl-chip__word')!.textContent)).toEqual(['I', 'need', 'water']);
+    expect(live.map((c) => c.querySelector('.nl-chip__code')!.textContent)).toEqual(['4', '6333', '92837']);
+    // Round 4 (2026-11-13, Claude Code): top to bottom the card (the chips), the status line, the keypad, the toolbar;
+    // no caption, no check label (the proof check section explains the check).
+    const demo = $('.site-demo')!;
+    expect([...demo.children].map((c) => c.className.split(' ')[0]).slice(0, 4)).toEqual(['site-demo__card', 'site-demo__status', 'nl-keypad', 'site-demo__tools']);
+    expect($('.site-demo__card ul.site-demo__chips[aria-label="Proof check"]')).not.toBeNull();
+    expect($('.site-demo__caption, .site-demo__check, .site-demo__foot, .site-demo a')).toBeNull();
+    // The example's words are the keypad's description, the digits read one by one.
+    expect($('#site-demo-desc')!.classList.contains('nl-sr-only')).toBe(true);
+    expect($('#site-demo-desc')!.textContent).toContain('One press per letter: 4, 0, 6 3 3 3, 0, 9 2 8 3 7 types “I need water”.');
+    // The toolbar: icon buttons named by their tooltip text (no speech engine in jsdom, so no Hear it).
+    expect($$('.site-demo__tools > button').map((b) => [b.className.split(' ').pop(), collapse(b.textContent ?? '')])).toEqual([
+      ['site-demo__play', 'Play the example'],
+      ['site-demo__clear', 'Clear'],
+    ]);
+    for (const b of $$('.site-demo__tools > button')) expect(b.classList.contains('site-icon-btn')).toBe(true);
+  });
+
+  it('MS-6.11 W4: the hero keys are 12 real buttons in a labelled group, one Tab stop, named like the app keys', () => {
+    const pad = $('.site-demo [role="group"]')!;
+    expect(pad.getAttribute('aria-label')).toBe('Keypad, try it');
+    expect(pad.getAttribute('aria-hidden')).toBeNull();
+    const keys = $$('button[data-try-key]', pad) as HTMLButtonElement[];
+    expect(keys.map((k) => k.dataset.tryKey)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#']);
+    expect(keys.filter((k) => k.tabIndex === 0).map((k) => k.dataset.tryKey)).toEqual(['1']);
+    expect(keys.find((k) => k.dataset.tryKey === '4')!.getAttribute('aria-label')).toBe('4 GHI, G H I');
+    // Key 9 keeps the ninth key's ember ring; nothing is pressed before a press.
+    expect($$('.site-demo .site-key--ninth').map((k) => (k as HTMLElement).dataset.tryKey)).toEqual(['9']);
+    expect($$('.site-demo .is-pressed')).toHaveLength(0);
   });
 });
 
@@ -327,63 +466,85 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
 
   it('MS-13.3 logo images have alt="" beside the visible name', () => {
     for (const img of $$('img')) expect(img.getAttribute('alt')).toBe('');
-    expect($('.site-brand')!.textContent).toBe('Ninth Life');
+    expect($('.site-bar .nl-brand')!.textContent).toBe('Ninth Life');
     expect($('.site-footer__brand')!.textContent).toBe('Ninth Life');
   });
 
   it('MS-7.4 the round-2 drawings are present', () => {
-    // One drawing per box card, in card order, plus the How screen and the proof check.
+    // One drawing per box card, in card order, plus the three How scenes and the proof check.
     const boxes = (id: string) =>
-      $$(`#${id} .site-grid > .site-card > .site-stage > [data-play]`).map((d) => [...d.classList].find((c) => c !== 'site-drawing' && !c.startsWith('site-play--')));
-    expect(boxes('conversation')).toEqual(['site-theysaid', 'site-showflip', 'site-phrases', 'site-wordadd']);
-    expect(boxes('access')).toEqual(['site-keylegend', 'site-touch', 'site-scan', 'site-themes', 'site-layouts']);
-    expect(boxes('privacy')).toEqual(['site-boundary', 'site-ranking', 'site-voices', 'site-listen']);
-    expect($$('.site-how__picture > .site-how-screen')).toHaveLength(1);
-    expect($$('#how .site-how__stage > .site-how-screen[data-play]')).toHaveLength(3);
-    expect($$('#proof figure.site-proof[data-play]')).toHaveLength(1);
+      $$(`#${id} .site-bento > .site-card > .site-stage > [data-play]`).map((d) => [...d.classList].find((c) => c !== 'site-drawing' && !c.startsWith('site-play--')));
+    // Round 4 (2026-11-13, Claude Code, r4-boxes): each section starts with its lead card (They said; One or two
+    // switches; On your device), then its other cards in their round-3 order.
+    expect(boxes('conversation')).toEqual(['site-turn', 'site-table', 'site-save', 'site-spell']);
+    expect(boxes('access')).toEqual(['site-scan', 'site-keylegend', 'site-touch', 'site-themes', 'site-layouts']);
+    expect(boxes('privacy')).toEqual(['site-map', 'site-door-ranking', 'site-door-voices', 'site-door-listen']);
+    // Round 4 (2026-11-13, Claude Code): How is three scenes, one in each step's stage: Press, Pick, Speak.
+    expect(
+      $$('#how .site-how__step > .site-how__stage > .site-how__scene[data-play]').map((d) => [...d.classList].find((c) => /^site-how__(press|pick|speak)$/.test(c))),
+    ).toEqual(['site-how__press', 'site-how__pick', 'site-how__speak']);
+    // Round 4 (r4-proof, lead ruling 1.2): the proof's one play root is its layout, which holds the figure.
+    expect($$('#proof .site-proof-layout[data-play] > figure.site-proof')).toHaveLength(1);
+    expect($$('#proof [data-play]')).toHaveLength(1);
     const kids = (el: Element) => [...el.children].map((c) => [c.textContent, c.className]);
 
-    // Conversation.
+    // Conversation (round 4: one scale; a still arrow from each cause to its result; cause leads, effect follows; at
+    // most three changes at one instant).
     const demo = getDemoData();
     const sentence = finishedSentence(demo);
     expect(sentence).toBe('I need water');
     expect(finishedKeys(demo)).toBe('4 6333 92837');
-    const said = $('#conversation .site-theysaid')!;
+    const arrows = (root: Element) => $$('.site-arrow', root).map((a) => [a.textContent, a.className]);
+    const said = $('#conversation .site-turn')!;
     expect(said.querySelector('.site-strip__label')!.textContent).toBe('They said');
     expect(kids(said.querySelector('.site-strip__line')!)).toEqual([
-      ['Nothing yet.', 'site-strip__empty site-out site-u1'],
-      ['What do you need?', 'site-in site-k1'],
+      ['Nothing yet.', 'site-strip__empty site-out site-u2'],
+      ['Listening. Ask them to speak now.', 'site-strip__status site-during site-k2 site-u3'],
+      ['What do you need?', 'site-in site-k3'],
     ]);
-    expect(said.querySelector('.site-well')!.className).toBe('site-well site-rise site-k2');
+    expect($$('.site-listen__label', said).map((l) => [l.textContent, l.className])).toEqual([
+      ['Listen', 'site-listen__label site-out site-u1'],
+      ['Stop', 'site-listen__label site-during site-k1 site-u4'],
+      ['Listen', 'site-listen__label site-in site-k4'],
+    ]);
+    expect($$('.site-press-ring', said).map((r) => r.className)).toEqual(['site-press-ring site-ring site-k1 site-u2']);
+    expect(arrows(said)).toEqual([['', 'site-arrow site-in site-k4']]);
+    expect(said.querySelector('.site-well__hint')!.className).toBe('site-well__hint site-out site-u5');
+    expect(said.querySelector('.site-well__body')!.className).toBe('site-well__body site-rise site-k5');
     expect(said.querySelector('.site-well__text')!.textContent).toBe(sentence);
     expect(said.querySelector('.site-well__keys')!.textContent).toBe(finishedKeys(demo));
-    const show = $('#conversation .site-showflip')!;
+    const show = $('#conversation .site-table')!;
+    // Round 4 (amends W1 for this drawing): the table's two edges say who faces the turned message, in place of the
+    // small upright card; Done and Flip stay upright for you, as in the app's Show mode.
+    expect($$('.site-edge', show).map((e) => e.textContent)).toEqual(['The person opposite', 'You']);
     const msgs = $$('.site-show__msg', show);
     expect(msgs.map((m) => m.className)).toEqual(['site-show__msg site-out site-u2', 'site-show__msg site-show__msg--flipped site-in site-k2']);
-    for (const m of msgs) expect(kids(m).map(([t]) => t)).toEqual(['Show', sentence]);
+    for (const m of msgs) expect(kids(m).map(([t]) => t)).toEqual(['Show this to the other person', sentence]);
     expect($$('.site-drawn-btn', show).map((b) => b.textContent)).toEqual(['Done', 'Flip']);
     expect($$('.site-press-ring', show).map((r) => r.className)).toEqual(['site-press-ring site-ring site-k1 site-u2']);
-    const phrases = $('#conversation .site-phrases')!;
+    const phrases = $('#conversation .site-save')!;
     expect(phrases.querySelector('.site-drawn-btn')!.textContent).toBe('Save phrase');
-    expect(phrases.querySelector('.site-phrases__well')!.className).toBe('site-well site-phrases__well site-out site-u2');
-    expect(phrases.querySelector('.site-phrases__list')!.className).toBe('site-phrases__list site-in site-k2');
-    expect(phrases.querySelector('.site-phrases__head')!.textContent).toBe('Your phrases');
-    expect(kids(phrases.querySelector('.site-phrases__rows')!)).toEqual([
-      [sentence, 'site-rise site-k3'],
+    expect($$('.site-press-ring', phrases).map((r) => r.className)).toEqual(['site-press-ring site-ring site-k1 site-u2']);
+    expect(arrows(phrases)).toEqual([['', 'site-arrow site-in site-k2']]);
+    expect(phrases.querySelector('.site-sheet')!.className).toBe('site-sheet site-in site-k2');
+    expect(phrases.querySelector('.site-sheet__title')!.textContent).toBe('Your phrases');
+    expect(kids(phrases.querySelector('.site-sheet__rows')!)).toEqual([
+      [sentence, 'site-sheet__new site-rise site-k3'],
       ['Thank you', ''],
-      ['Yes, please', ''],
     ]);
     const spell = getSpellExample();
-    const words = $('#conversation .site-wordadd')!;
+    const words = $('#conversation .site-spell')!;
     expect($$('.nl-chip[data-state]', words).map((c) => [c.getAttribute('data-state'), c.querySelector('.nl-chip__word')!.textContent, c.querySelector('.nl-chip__code')!.textContent])).toEqual([
       ['new', spell.word, spell.code],
       ['match', spell.word, spell.code],
     ]);
     expect([spell.word, spell.code]).toEqual(['Mihai', '64424']);
-    const steps = $$('.site-wordadd__step', words);
-    expect(steps.map((s) => s.className)).toEqual(['site-wordadd__step site-out site-u2', 'site-wordadd__step site-in site-k2']);
-    expect(steps.map((s) => s.querySelector('.site-wordadd__line')!.textContent)).toEqual(['Not in your words yet.', 'In my words.']);
-    expect(steps[0]!.querySelector('.site-drawn-btn')!.textContent).toBe('Add to my words');
+    const rows = $$('.site-spell__row', words);
+    expect(rows.map((s) => s.className)).toEqual(['site-spell__row', 'site-spell__row site-rise site-k2']);
+    expect(rows.map((s) => s.querySelector('.site-spell__line')!.textContent)).toEqual(['Not in your words yet.', 'In my words.']);
+    expect(words.querySelector('.site-drawn-btn')!.textContent).toBe('Add to my words');
+    expect($$('.site-press-ring', words).map((r) => r.className)).toEqual(['site-press-ring site-ring site-k1 site-u2']);
+    expect(arrows(words)).toEqual([['', 'site-arrow site-in site-k2']]);
 
     // Works the way you type.
     const legend = $('#access .site-keylegend')!;
@@ -401,24 +562,35 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
     ]);
     expect([mapKey({ key: 'ArrowLeft' }, 'keyboard', 'pad'), mapKey({ key: 'ArrowRight' }, 'keyboard', 'pad')]).toEqual([null, null]);
     expect($$('.site-press-ring', pair).map((r) => r.className)).toEqual(['site-press-ring site-ring site-k3 site-u4']);
-    expect($$('.site-keylegend__what', legend).map((e) => e.textContent)).toEqual(['types g h i', 'speaks', 'goes back', 'pick a sentence']);
-    expect($$('#access .site-touch__px').map((e) => e.textContent)).toEqual(['72', '128']);
-    expect($$('#access .site-touch .site-key-ring').map((r) => r.className)).toEqual([
-      'site-key-ring site-ring site-k0 site-u1',
-      'site-key-ring site-ring site-k1 site-u2',
+    // Round 4: what each key does appears as its ring goes (cause leads, effect follows).
+    expect($$('.site-keylegend__what', legend).map((e) => [e.textContent, e.className])).toEqual([
+      ['types g h i', 'site-keylegend__what site-in site-k1'],
+      ['speaks', 'site-keylegend__what site-in site-k2'],
+      ['goes back', 'site-keylegend__what site-in site-k3'],
+      ['pick a sentence', 'site-keylegend__what site-in site-k4'],
     ]);
+    // Touch (round 4): both keys on one key panel, never on a stage; each size shows after its tap.
+    const touch = $('#access .site-touch')!;
+    expect($$(':scope > .site-key-panel > .site-key-picture', touch)).toHaveLength(2);
+    expect(kids(touch.querySelector('.site-touch__sizes')!)).toEqual([
+      ['72', 'site-in site-k1'],
+      ['128', 'site-in site-k2'],
+    ]);
+    expect($$('.site-key-ring', touch).map((r) => r.className)).toEqual(['site-key-ring site-ring site-k0 site-u1', 'site-key-ring site-ring site-k1 site-u2']);
     const scan = $('#access .site-scan')!;
     expect(scan.classList.contains('site-play--quick')).toBe(true);
     expect($$('.site-scan__rings > *', scan).map((r) => r.className)).toEqual([
       'site-scan__ring site-scan__ring--row1 site-ring site-k0 site-u1',
-      'site-scan__ring site-scan__ring--row2 site-ring site-k1 site-u2',
-      'site-scan__ring site-scan__ring--row3 site-ring site-k2 site-u4',
-      'site-scan__ring site-scan__ring--key7 site-ring site-k4 site-u5',
-      'site-scan__ring site-scan__ring--key8 site-ring site-k5 site-u6',
-      'site-scan__ring site-scan__ring--key9 site-mark site-k6',
+      'site-scan__ring site-scan__ring--row2 site-ring site-k1 site-u3',
+      'site-scan__ring site-scan__ring--key4 site-mark site-k3',
     ]);
-    expect($$('.site-scan__press', scan).map((r) => r.className)).toEqual(['site-scan__press site-ring site-k3 site-u4', 'site-scan__press site-ring site-k6 site-u7']);
+    expect($$('.site-scan__press', scan).map((r) => r.className)).toEqual(['site-scan__press site-ring site-k2 site-u3', 'site-scan__press site-ring site-k4 site-u5']);
     expect(scan.querySelector('.site-scan__label')!.textContent).toBe('Switch');
+    expect(scan.querySelector('.site-speed')!.textContent).toBe('0.4 s5 s');
+    // MS-7.8 (round 4): the switch types the demo's first press, key 4, and its word as the demo's chip writes it.
+    expect([demo.steps[0]!.key, demo.steps[0]!.labels[0]]).toEqual(['4', 'I']);
+    const typed = scan.querySelector('.site-scan__typed')!;
+    expect([typed.className, ...[...typed.children].map((c) => c.textContent)]).toEqual(['site-scan__typed site-in site-k5', 'I', '4']);
     const halves = $$('#access .site-themes__half');
     expect(halves.map((h) => [h.getAttribute('data-theme'), h.querySelector('.site-themes__label')!.textContent, h.querySelector('.site-themes__hi')!.textContent])).toEqual([
       ['night', 'Night', 'Hi'],
@@ -426,6 +598,12 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
     ]);
     expect(halves.map((h) => h.className)).toEqual(['site-themes__half', 'site-themes__half site-in site-k1']);
     for (const h of halves) expect(textOf(h)).toContain('4 GHI');
+    // Round 4: each half's key sits on its panel; the size changes (2), then the Night key (3), then the Day key (4).
+    expect(halves.map((h) => h.querySelector('.site-themes__key')!.classList.contains('site-key-panel'))).toEqual([true, true]);
+    expect(halves.map((h) => $$('.site-themes__key > span', h).map((s) => s.className))).toEqual([
+      ['site-out site-u3', 'site-in site-k3'],
+      ['site-out site-u4', 'site-in site-k4'],
+    ]);
     expect(kids($('#access .site-themes__size')!)).toEqual([
       ['Large', 'site-out site-u2'],
       ['Extra large', 'site-in site-k2'],
@@ -441,43 +619,69 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
       'site-layouts__box--wide',
     ]);
 
-    // Offline unless you choose (the ranking and voice drawings: MS-7.10).
-    const boundary = $('#privacy .site-boundary')!;
-    expect(boundary.querySelector('.site-boundary__label')!.textContent).toBe('This device');
-    expect(kids(boundary.querySelector('.site-boundary__rows')!)).toEqual([
-      ['What you type', 'site-rise site-k0'],
+    // Offline unless you choose (round 4): the map, then the three ways out (the ranking and voice drawings: MS-7.10).
+    const map = $('#privacy .site-map')!;
+    expect(map.querySelector('.site-bound__label')!.textContent).toBe('This device');
+    expect($$('.site-door__name', map).map((d) => d.textContent)).toEqual(['Model ranking', 'Online voices', 'Listen']);
+    expect(map.querySelector('.site-bound__ways')!.className).toBe('site-bound__ways site-in site-k5');
+    expect(map.querySelector('.site-well')!.className).toBe('site-well site-rise site-k0');
+    expect(kids(map.querySelector('.site-bound__kept')!)).toEqual([
       ['The dictionary', 'site-rise site-k1'],
       ['Saved phrases', 'site-rise site-k2'],
       ['My words', 'site-rise site-k3'],
     ]);
-    const pill = boundary.querySelector('.site-boundary__pill')!;
-    expect([pill.textContent, pill.className]).toEqual(['Offline. Using your dictionary.', 'site-boundary__pill site-rise site-k4']);
-    const listen = $('#privacy .site-listen')!;
+    const pill = map.querySelector('.site-bound__pill')!;
+    expect([pill.textContent, pill.className]).toEqual(['Offline. Using your dictionary.', 'site-bound__pill site-rise site-k4']);
+    const listen = $('#privacy .site-door-listen')!;
     expect(kids(listen.querySelector('.site-strip__line')!)).toEqual([
-      ['Nothing yet.', 'site-strip__empty site-out site-u3'],
-      ['What do you need?', 'site-in site-k3'],
+      ['Nothing yet.', 'site-strip__empty site-out site-u2'],
+      ['Listening. Ask them to speak now.', 'site-strip__status site-during site-k2 site-u4'],
+      ['What do you need?', 'site-in site-k4'],
     ]);
     expect($$('.site-listen__label', listen).map((l) => [l.textContent, l.className])).toEqual([
-      ['Listen', 'site-listen__label site-out site-u2'],
-      ['Stop', 'site-listen__label site-during site-k2 site-u3'],
-      ['Listen', 'site-listen__label site-in site-k3'],
+      ['Listen', 'site-listen__label site-out site-u1'],
+      ['Stop', 'site-listen__label site-during site-k1 site-u5'],
+      ['Listen', 'site-listen__label site-in site-k5'],
     ]);
     expect($$('.site-listen__label', listen).every((l) => l.parentElement!.classList.contains('site-cell'))).toBe(true);
     expect(listen.querySelector('.site-press-ring')!.className).toBe('site-press-ring site-ring site-k1 site-u2');
-    const status = listen.querySelector('.site-listen__status')!;
-    expect([status.textContent, status.className]).toEqual(['Listening. Ask them to speak now.', 'site-listen__status site-during site-k2 site-u3']);
+    expect(arrows(listen)).toEqual([
+      ['Their voice', 'site-arrow site-in site-k3'],
+      ['Text', 'site-arrow site-in site-k3'],
+    ]);
+    expect(listen.querySelector('.site-dest')!.textContent).toBe('The browser maker');
   });
 
   it('MS-7.7 every box card starts with a stage holding one data-play drawing', () => {
-    const cards = $$('#conversation .site-grid > .site-card, #access .site-grid > .site-card, #privacy .site-grid > .site-card');
+    const cards = $$('#conversation .site-bento > .site-card, #access .site-bento > .site-card, #privacy .site-bento > .site-card');
     expect(cards).toHaveLength(13);
+    // Round 4 (r4-boxes): each section's first card is its lead, with the lead stage (at least stage-l from 600px).
+    for (const id of ['conversation', 'access', 'privacy']) {
+      const first = $(`#${id} .site-bento > .site-card`)!;
+      expect(first.classList.contains('site-card--lead'), id).toBe(true);
+      expect(first.firstElementChild!.className, id).toBe('site-stage site-stage--lead');
+      expect($$(`#${id} .site-card--lead`), id).toHaveLength(1);
+    }
+    // What model ranking sends is real text after the card's h3 (MS-7.2 exception, round 4); the stage keeps only an
+    // aria-hidden, invisible copy of it, so the drawing keeps the text's room.
+    const ranking = $('#privacy .site-card--sent')!;
+    expect(ranking.querySelector('.site-stage .site-sent--room')!.textContent).toBe(ranking.querySelector(':scope > .site-sent')!.textContent);
+    expect(ranking.querySelector(':scope > .site-sent')!.closest('[aria-hidden]')).toBeNull();
     for (const card of cards) {
       const stage = card.firstElementChild!;
       const name = card.querySelector('h3')!.textContent ?? '';
       expect(stage.classList.contains('site-stage'), name).toBe(true);
       expect(stage.getAttribute('aria-hidden'), name).toBe('true');
       expect(stage.hasAttribute('data-reveal'), name).toBe(false);
-      expect(stage.nextElementSibling!.tagName, name).toBe('H3');
+      // Conversation (round 3): the h3 sits in an hgroup with the feature name as a small label above it.
+      const next = stage.nextElementSibling!;
+      if (next.tagName === 'HGROUP') {
+        expect(card.closest('#conversation'), name).not.toBeNull();
+        expect([...next.children].map((c) => [c.tagName, c.className]), name).toEqual([
+          ['P', 'site-card__feature'],
+          ['H3', 'site-h3'],
+        ]);
+      } else expect(next.tagName, name).toBe('H3');
       const plays = $$('[data-play]', stage);
       expect(plays, name).toHaveLength(1);
       expect(stage.children, name).toHaveLength(1);
@@ -494,24 +698,32 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
   it("MS-8.11 every drawing's last change is at most 4000 ms", () => {
     // The step lengths of the motion tokens (tokens.test checks the values): frame, quick, sweep, type.
     const STEP_MS: Record<string, number> = { frame: 600, quick: 400, sweep: 240, type: 520 };
-    const HOW_STEP_MS: Record<string, number> = { '1': 520, '2': 240, '3': 600 };
-    const LEAD = 300; // motion-play-lead, column 0 (the How picture, the How stages, the proof figure)
+    const LEAD = 300; // motion-play-lead, column 0 (the proof figure; How step 1)
+    /** The How row's story order from 1024px (round 4, MS-8.11): step 2 waits 4 quick steps, step 3 also 5 sweeps. */
+    const HOW_AFTER = [0, 4 * STEP_MS.quick!, 4 * STEP_MS.quick! + 5 * STEP_MS.sweep!];
     const parts = (root: ParentNode) => $$(['in', 'rise', 'out', 'during', 'ring', 'mark'].map((r) => `.site-${r}`).join(', '), root);
     const stepOf = (root: Element) => {
       const cls = [...root.classList].filter((c) => c.startsWith('site-play--'));
       expect(cls, root.className).toHaveLength(1);
       return STEP_MS[cls[0]!.slice('site-play--'.length)]!;
     };
-    /** The lead from 648px, the largest (site.css V28, N7): + motion-frame for column 1, + 4 quick steps for Touch. */
+    /**
+     * The largest lead at any width (site.css V28, N7; round 4, r4-boxes): + motion-frame per column before the card
+     * in its row. The lead card (i 0) is alone in its row. Conversation and Privacy show cards 1-3 in one row from
+     * 1024px (columns 0-2, MS-8.11 "at most 2"); Access shows two a row, Touch (i 2) waiting 4 quick steps instead.
+     */
     const leadOf = (root: Element) => {
-      const card = root.closest('.site-grid > .site-card');
+      const how = root.closest('.site-how__step');
+      if (how) return LEAD + HOW_AFTER[[...how.parentElement!.children].indexOf(how)]!;
+      const card = root.closest('.site-bento > .site-card');
       if (!card) return LEAD;
       const i = [...card.parentElement!.children].indexOf(card);
-      const access = card.parentElement!.classList.contains('site-grid--access');
-      const col = access ? (i === 3 ? 1 : 0) : i % 2;
-      return LEAD + col * STEP_MS.frame! + (access && i === 1 ? 4 * STEP_MS.quick! : 0);
+      const four = card.parentElement!.classList.contains('site-bento--4');
+      const col = i === 0 ? 0 : four ? (i === 2 ? 0 : (i - 1) % 2) : i - 1;
+      return LEAD + col * STEP_MS.frame! + (four && i === 2 ? 4 * STEP_MS.quick! : 0);
     };
-    const roots = $$('[data-play]');
+    // The Results bars and marks have their own test (round 4, PO-1: bars grow, last change by 1,600 ms).
+    const roots = $$('[data-play]').filter((r) => !r.closest('#results'));
     expect(roots).toHaveLength(13 + 3 + 1);
     for (const root of roots) {
       const step = stepOf(root);
@@ -530,21 +742,50 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
         return [leadOf(root) + n('k') * step, leadOf(root) + n('u') * step] as const;
       });
     };
-    for (const sel of ['#conversation .site-grid', '#privacy .site-grid', '#access .site-grid--access']) {
+    // Round 4: the rows after each lead card (Conversation and Privacy: one row of three; Access: two rows of two).
+    const rows: [string, number[][]][] = [
+      ['#conversation .site-bento', [[1, 2, 3]]],
+      ['#privacy .site-bento', [[1, 2, 3]]],
+      ['#access .site-bento', [[1, 2], [3, 4]]],
+    ];
+    for (const [sel, groups] of rows) {
       const cards = [...$(sel)!.children];
-      for (const [a, b] of [[0, 1], [2, 3]] as const) {
-        for (const [s1, e1] of rings(cards[a]!)) for (const [s2, e2] of rings(cards[b]!)) {
-          expect(s1 < e2 && s2 < e1, `${sel} cards ${a} and ${b}: rings ${s1}-${e1} and ${s2}-${e2}`).toBe(false);
+      for (const g of groups) {
+        for (let x = 0; x < g.length; x += 1) {
+          for (let y = x + 1; y < g.length; y += 1) {
+            const [a, b] = [g[x]!, g[y]!];
+            for (const [s1, e1] of rings(cards[a]!)) for (const [s2, e2] of rings(cards[b]!)) {
+              expect(s1 < e2 && s2 < e1, `${sel} cards ${a} and ${b}: rings ${s1}-${e1} and ${s2}-${e2}`).toBe(false);
+            }
+          }
         }
       }
     }
-    const how = parts($('.site-how__picture')!);
-    expect(how.length).toBeGreaterThan(15);
-    for (const p of how) {
-      const step = HOW_STEP_MS[p.getAttribute('data-s') ?? '']!;
-      expect(step, p.className).toBeGreaterThan(0);
-      expect(lastChangeMs(p.className, step, LEAD), p.className).toBeLessThanOrEqual(4000);
+  });
+
+  it('MS-8.11 (round 4) the How row plays in story order: one ember ring at a time, its last change at 3,780 ms', () => {
+    // The steps' play classes (quick 400, sweep 240) and the row's leads from 1024px: step 2 waits step 1's four
+    // presses, step 3 also step 2's five sweeps (site.css --play-after). The lit numbers keep their scene's clock.
+    const STEP_MS: Record<string, number> = { quick: 400, sweep: 240 };
+    const AFTER = [0, 4 * STEP_MS.quick!, 4 * STEP_MS.quick! + 5 * STEP_MS.sweep!];
+    const steps = $$('#how .site-how__step');
+    expect(steps).toHaveLength(3);
+    const stepOf = (el: Element) => STEP_MS[[...el.classList].find((c) => c.startsWith('site-play--'))!.slice('site-play--'.length)]!;
+    const leadOf = (i: number) => 300 + AFTER[i]!;
+    const n = (el: Element, p: 'k' | 'u') => Number([...el.classList].find((c) => new RegExp(`^site-${p}\\d+$`).test(c))!.slice(6));
+    const rings = steps.map((li, i) =>
+      $$('.site-key-ring, .site-press-ring', li).map((r) => [leadOf(i) + n(r, 'k') * stepOf(li), leadOf(i) + n(r, 'u') * stepOf(li)] as const),
+    );
+    expect(rings.map((r) => r.length)).toEqual([4, 0, 1]);
+    for (const [a, b] of [[0, 1], [0, 2], [1, 2]] as const) {
+      for (const [s1, e1] of rings[a]!) for (const [s2, e2] of rings[b]!) {
+        expect(s1 < e2 && s2 < e1, `How steps ${a + 1} and ${b + 1}: rings ${s1}-${e1} and ${s2}-${e2}`).toBe(false);
+      }
     }
+    const parts = (root: ParentNode) => $$(['in', 'rise', 'out', 'during', 'ring', 'mark'].map((r) => `.site-${r}`).join(', '), root);
+    const last = steps.map((li, i) => Math.max(...parts(li).map((p) => lastChangeMs(p.className, stepOf(li), leadOf(i)))));
+    // Step 2's number goes out as step 3's comes in (3,100 ms): one lit number at a time.
+    expect(last).toEqual([2100, 3300, 3780]);
   });
 
   it('MS-8.11 every step class used on the page has a CSS rule', () => {
@@ -555,8 +796,7 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
   });
 
   it('MS-7.3 no ember fill and at most one ember ring per step', () => {
-    const picture = $('.site-how__picture')!;
-    const scopes = [...$$('[data-play]'), picture];
+    const scopes = $$('[data-play]');
     for (const scope of scopes) expect($$('.is-lit, .is-pressed, .site-key--ninth, .nl-btn--primary', scope), scope.className).toHaveLength(0);
     // The ember rings: pressed rings on drawn keys and buttons, and the scan ring.
     const EMBER = '.site-key-ring, .site-press-ring, .site-scan__ring';
@@ -577,31 +817,43 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
       for (let n = 0; n <= 13; n += 1) expect(rings.filter((r) => shown(r, n)).length, `${label}, step ${n}`).toBeLessThanOrEqual(1);
     };
     for (const root of $$('[data-play]')) check($$(EMBER, root), root.className);
-    for (const s of ['1', '2', '3']) check($$(EMBER, picture).filter((r) => r.getAttribute('data-s') === s), `How step ${s}`);
-    expect($$(EMBER, $('#access')!).length).toBeGreaterThanOrEqual(12);
+    // Round 4: Keyboard 4 + Touch 2 + the switch's 3 scan highlights (row 1, row 2, key 4).
+    expect($$(EMBER, $('#access')!).length).toBeGreaterThanOrEqual(9);
   });
 
-  it('MS-7.10 the ranking drawing lists RANKING_SENT with no count and the voice lines match the Voices card', () => {
-    const ranking = $('#privacy .site-ranking')!;
-    expect(ranking.classList.contains('site-play--quick')).toBe(true);
-    const items = $$('.site-ranking__sent li', ranking);
-    expect(items.map((li) => li.textContent)).toEqual([...RANKING_SENT]);
-    expect(items.map((li) => li.className)).toEqual(['site-rise site-k2', 'site-rise site-k3', 'site-rise site-k4', 'site-rise site-k5']);
-    expect($$('.site-ranking__row', ranking).map((r) => r.textContent)).toEqual(['Off, the default', 'On. Sent to rank:']);
-    expect(ranking.querySelector('.site-ranking__note')!.textContent).toBe('Ranked on this device');
-    expect($$('.site-outline', ranking).map((o) => o.className)).toEqual(['site-outline site-ring site-k0 site-u1', 'site-outline site-ring site-k1 site-u6']);
-    const text = textOf(ranking);
-    expect(text).not.toMatch(/\d/);
+  it('MS-7.10 what ranking sends is RANKING_SENT as real text (no count, no provider); the voice lines match the Voices card', () => {
+    // Round 4 (decisions §2 "Boxes"): the list is real text in the card, from rankingSentText() (MS-4.6), drawn at the
+    // top of the stage (MS-7.2 exception); the drawing keeps the switch, its default in words and the arrow out.
     const p = providerCopy();
-    expect(text).not.toContain(p.service);
-    expect(text).not.toContain(p.company);
-    const voices = $('#privacy .site-voices')!;
-    expect($$('.site-voices__name', voices).map((n) => n.textContent)).toEqual(['Voice (en, on this device)', 'Voice (en, online)']);
-    expect($$('.site-voices__name .site-voices__check', voices).map((c) => c.className)).toEqual(['site-voices__check site-mark site-k1']);
-    expect($$('.site-voices__line', voices).map((l) => [l.textContent, l.className])).toEqual([
-      ['Keeps your words on the device', 'site-voices__line site-in site-k1'],
-      ['Sends the text to the browser maker', 'site-voices__line site-in site-k2'],
+    const sent = $('#privacy .site-card--sent > .site-sent')!;
+    expect(sent.textContent).toBe(`Sent to rank: ${rankingSentText(RANKING_SENT)}.`);
+    for (const item of RANKING_SENT) expect(sent.textContent!.toLowerCase()).toContain(item.toLowerCase());
+    expect(sent.textContent).not.toMatch(/\d/);
+    expect(sent.textContent).not.toContain(p.service);
+    expect(sent.textContent).not.toContain(p.company);
+    const ranking = $('#privacy .site-door-ranking')!;
+    expect(ranking.classList.contains('site-play--quick')).toBe(true);
+    expect($$('.site-door__row', ranking).map((r) => [r.textContent, r.className])).toEqual([
+      ['Model rankingOff', 'site-door__row site-out site-u1'],
+      ['Model rankingOn', 'site-door__row site-in site-k1'],
     ]);
+    expect(ranking.querySelector('.site-bound__note')!.textContent).toBe('Off until you turn it on');
+    expect($$('.site-outline', ranking).map((o) => o.className)).toEqual(['site-outline site-ring site-k0 site-u1']);
+    expect($$('.site-arrow', ranking).map((a) => a.className)).toEqual(['site-arrow site-in site-k2']);
+    // The drawing's own words (its invisible copy of the sent line aside) name no provider and hold no count.
+    const own = ranking.cloneNode(true) as Element;
+    own.querySelector('.site-sent--room')!.remove();
+    expect(textOf(own)).not.toMatch(/\d/);
+    expect(textOf(own)).not.toContain(p.service);
+    expect(textOf(own)).not.toContain(p.company);
+    const voices = $('#privacy .site-door-voices')!;
+    expect($$('.site-voice__name', voices).map((n) => n.textContent)).toEqual(['Voice (en, online)', 'Voice (en, on this device)']);
+    expect($$('.site-voice__name .site-voice__check', voices).map((c) => c.className)).toEqual(['site-voice__check site-mark site-k1']);
+    expect($$('.site-voice__line', voices).map((l) => [l.textContent, l.className])).toEqual([
+      ['Sends the text to the browser maker', 'site-voice__line site-in site-k2'],
+      ['Keeps your words on the device', 'site-voice__line site-in site-k1'],
+    ]);
+    expect($$('.site-arrow', voices).map((a) => [a.textContent, a.className])).toEqual([['The text', 'site-arrow site-in site-k2']]);
     const card = $$('#privacy h3').find((h) => h.textContent === 'Voices')!.closest('.site-card')!;
     const said = card.querySelector(':scope > p')!.textContent!;
     expect(said).toContain('keep your words on the device');
@@ -609,155 +861,210 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
     expect(textOf(voices)).not.toMatch(/\b(Google|Apple|Chrome|Safari)\b/);
   });
 
-  it('MS-10.9 Conversation and Privacy use site-grid--boxes and the switch card is a normal card', () => {
-    // Privacy's cards keep their own height (align-items: start, review N6).
-    for (const [id, cls] of [
-      ['conversation', 'site-grid site-grid--boxes'],
-      ['privacy', 'site-grid site-grid--boxes site-grid--start'],
+  it('MS-10.9 the box grids: a lead card, then two or three cards a row; the switch card leads Access; no CSS order', () => {
+    // Round 4 (r4-boxes): .site-bento--3 (Conversation, Privacy: a lead, then three cards in one row from 1024px) and
+    // .site-bento--4 (Access: a lead, then four cards two by two). No tall tile; the reading order is the DOM order.
+    for (const [id, cls, n] of [
+      ['conversation', 'site-grid site-bento site-bento--3', 4],
+      ['access', 'site-grid site-bento site-bento--4', 5],
+      ['privacy', 'site-grid site-bento site-bento--3', 4],
     ] as const) {
-      const grid = $(`#${id} .site-grid`)!;
-      expect(grid.className).toBe(cls);
-      expect(grid.children).toHaveLength(4);
+      const grid = $(`#${id} .site-bento`)!;
+      expect(grid.className, id).toBe(cls);
+      const kids = [...grid.children].map((c) => c.className.replace(' site-card--sent', ''));
+      expect(kids, id).toEqual([`site-card site-card--lead${id === 'access' ? ' site-card--end' : ''}`, ...Array<string>(n - 1).fill('site-card')]);
     }
-    expect($$('.site-grid--2')).toHaveLength(0);
-    expect(read(web('components/site/site.css'))).not.toContain('.site-grid--2');
-    // The switch card is a normal card at every width (review P2): no tall tile.
-    const grid = $('#access .site-grid--access')!;
-    expect($$('.site-card--tall')).toHaveLength(0);
-    const cards = [...grid.children];
-    expect(cards.map((c) => c.className)).toEqual(Array(5).fill('site-card'));
-    expect(cards[2]!.querySelector('h3')!.textContent).toBe('One or two switches');
-    expect(cards[2]!.firstElementChild!.className).toBe('site-stage site-stage--switch');
-    for (const stage of $$('#privacy .site-stage')) expect(stage.className).toBe('site-stage site-stage--privacy');
-    for (const stage of $$('#conversation .site-stage')) expect(stage.className).toBe('site-stage');
-    for (const card of cards.filter((_, i) => i !== 2)) expect(card.firstElementChild!.className).toBe('site-stage');
+    expect($$('.site-grid--2, .site-grid--boxes, .site-grid--access, .site-card--tall')).toHaveLength(0);
+    expect(read(web('components/site/site.css'))).not.toMatch(/\.site-grid--(2|boxes|access|start|hug)\b/);
+    expect($$('#access .site-bento > .site-card h3').map((h) => h.textContent)).toEqual(['One or two switches', 'Keyboard', 'Touch', 'Your view', 'Phones, tablets and laptops']);
+    const rowStages = $$('#conversation .site-bento > .site-card:not(.site-card--lead) > .site-stage, #privacy .site-bento > .site-card:not(.site-card--lead) > .site-stage');
+    expect(rowStages).toHaveLength(6);
+    for (const stage of rowStages) expect(stage.className).toBe('site-stage site-stage--m');
+    for (const stage of $$('#access .site-bento > .site-card:not(.site-card--lead) > .site-stage')) expect(stage.className).toBe('site-stage');
   });
 
-  it('MS-7.2 drawings, stages and the How picture are aria-hidden; the proof figure exposes only its caption, chips and closing lines; nothing focusable', () => {
-    for (const el of $$('.site-drawing, .site-pad, .site-stage, .site-how__picture > *')) {
+  it('MS-7.2 drawings and stages are aria-hidden; the proof figure exposes only its caption, chips and closing lines; nothing focusable', () => {
+    // The hero's keypad is not a drawing since W4 (real buttons, MS-6.11); every other keypad is.
+    for (const el of $$('.site-drawing, .site-pad:not(.site-demo__keypad), .site-stage')) {
       expect(el.closest('[aria-hidden="true"]'), el.className).not.toBeNull();
     }
     const figure = $('figure.site-proof')!;
     const exposed = $$('*', figure).filter((el) => !el.closest('[aria-hidden="true"]'));
     const allowed = (el: Element) =>
-      el.matches('figcaption, figcaption > .nl-sr-only, ul.site-proof__rows, li.site-proof__row, .site-proof__chip, p.site-proof__said, p.site-proof__example') ||
+      el.matches('figcaption, figcaption > .nl-sr-only, ul.site-proof__rows, li.site-proof__row, .site-proof__chip, div.site-proof__closing, p.site-proof__said, p.site-proof__said > span') ||
       el.closest('.nl-chip[data-state]') !== null ||
       el.querySelector(':scope > .nl-chip[data-state]') !== null;
     for (const el of exposed) expect(allowed(el), el.outerHTML.slice(0, 120)).toBe(true);
     expect($$('.nl-chip[data-state]', figure).filter((c) => !c.closest('[aria-hidden="true"]'))).toHaveLength(3);
-    for (const el of $$('.site-drawing, .site-pad, .site-stage, .site-how__picture, figure.site-proof')) expect($$(FOCUSABLE, el)).toHaveLength(0);
+    for (const el of $$('.site-drawing, .site-pad:not(.site-demo__keypad), .site-stage, figure.site-proof')) expect($$(FOCUSABLE, el)).toHaveLength(0);
     for (const btn of $$('.site-drawn-btn')) expect(btn.tagName).toBe('DIV');
   });
 
-  it('MS-9.3 the legend leads with the check, plus and x icons; wafer is a struck-through reject chip; the differing digit is boxed with an x', () => {
-    const items = $$('.site-proof__more .site-legend li');
-    expect(items).toHaveLength(3);
-    (['check', 'plus', 'x'] as const).forEach((name, i) => {
-      expect(items[i]!.firstElementChild!.isEqualNode(iconNode(name))).toBe(true);
-    });
+  it('MS-9.3 the closing lines lead with the check and x icons; wafer is a struck-through reject chip; its letter that is not on its key is boxed with an x', () => {
+    // Round 4 (2026-11-13, Claude Code): the closing lines, each led by its chip's icon, replace round 3's legend.
     const proof = getProofExample();
+    const said = $$('figure.site-proof p.site-proof__said');
+    expect(said).toHaveLength(2);
+    (['check', 'x'] as const).forEach((name, i) => {
+      expect(said[i]!.firstElementChild!.isEqualNode(iconNode(name))).toBe(true);
+    });
+    expect($$('.site-legend')).toHaveLength(0);
     const chip = $('figure.site-proof [data-state="reject"]')!;
     expect(chip.classList.contains('nl-chip--reject')).toBe(true);
     expect(chip.querySelector('.nl-chip__word')!.textContent).toBe(proof.reject.word);
     expect(read(web('styles/components.css'))).toMatch(/\.nl-chip--reject \.nl-chip__word \{ text-decoration: line-through/);
-    const diff = $$('figure.site-proof .site-digit--diff');
-    expect(diff).toHaveLength(1);
-    const line = diff[0]!.parentElement!;
-    expect($$('.site-digit', line).indexOf(diff[0]!)).toBe(proof.reject.diffAt);
-    expect(diff[0]!.querySelector('.site-digit__box')).not.toBeNull();
-    expect(line.querySelector('.site-digit__x')!.firstElementChild!.isEqualNode(iconNode('x'))).toBe(true);
-    expect(diff[0]!.closest('li')!.querySelector('.site-proof__letters')!.textContent).toBe(proof.reject.word);
+    const boxed = $$('figure.site-proof .site-letter__box');
+    expect(boxed).toHaveLength(1);
+    const letter = boxed[0]!.parentElement!;
+    const line = letter.parentElement!;
+    expect($$('.site-letter', line).indexOf(letter)).toBe(proof.reject.diffAt);
+    expect(boxed[0]!.getAttribute('data-l')).toBe(proof.reject.word[proof.reject.diffAt]);
+    expect($$('.site-letter', line).map((l) => l.firstChild!.textContent).join('')).toBe(proof.reject.word);
+    expect(line.querySelector('.site-proof__x')!.firstElementChild!.isEqualNode(iconNode('x'))).toBe(true);
+    // The figure says the letter is not on the key pressed there: that key's drawn letters do not hold it.
+    const keyLetters = $$('figure.site-proof .site-keycap__letters').map((k) => k.textContent ?? '');
+    expect(keyLetters).toEqual(proof.keyLetters);
+    expect(keyLetters[proof.reject.diffAt]!.toLowerCase()).not.toContain(proof.reject.word[proof.reject.diffAt]);
   });
 
-  it('MS-7.9 the proof figure keeps its accessible text, adds the closing line and has no frame labels', () => {
+  it('MS-7.9 the proof figure keeps its accessible text, splits the closing lines by state and has no frame labels', () => {
     const proof = getProofExample();
     const figure = $('figure.site-proof')!;
-    expect(figure.hasAttribute('data-play')).toBe(true);
-    expect(figure.classList.contains('site-play--sweep')).toBe(true);
+    // Round 4 (lead ruling 1.2): the whole proof layout is the one data-play root; the figure is a reveal block in it.
+    expect(figure.parentElement!.matches('.site-proof-layout.site-play--sweep[data-play]')).toBe(true);
+    expect(figure.hasAttribute('data-play')).toBe(false);
     const caption = figure.querySelector('figcaption')!;
     expect(caption.querySelector(':scope > .nl-sr-only')!.textContent).toBe('Your keys: 92837');
     expect(proof.keys).toBe('92837');
     const visible = caption.querySelector(':scope > [aria-hidden="true"]')!;
-    expect(visible.querySelector('.site-proof__label')!.textContent).toBe('Your keys:');
-    expect(visible.querySelector('.site-proof__digits')).not.toBeNull();
-    const said = figure.querySelector('p.site-proof__said')!;
-    expect(said.textContent).toBe(proofSaidLine(proof));
-    expect(proofSaidLine(proof)).toBe('Can be spoken: water, waves. Never spoken: wafer.');
-    const example = figure.querySelector('p.site-proof__example')!;
-    expect(collapse(example.textContent ?? '')).toBe(
-      `For example, if a model suggested "${proof.reject.word}", the check would drop it: ${proof.reject.word} is ${proof.reject.code}, and your keys are ${proof.keys}.`,
-    );
-    for (const p of [said, example]) {
-      expect(p.closest('[aria-hidden="true"]')).toBeNull();
-      expect([...p.classList]).toEqual(expect.arrayContaining(['site-in', 'site-k12']));
-    }
+    expect(visible.querySelector('.site-proof__label')!.textContent).toBe('Your keys');
+    expect($$('.site-keycap', visible).map((k) => k.textContent)).toEqual(['9WXYZ', '2ABC', '8TUV', '3DEF', '7PQRS']);
+    const [can, never] = $$('p.site-proof__said', figure);
+    expect(can!.textContent).toBe(proofCanLine(proof));
+    expect(proofCanLine(proof)).toBe('Can be spoken: water, waves.');
+    expect(collapse(never!.textContent ?? '')).toBe(proofNeverLine(proof));
+    expect(proofNeverLine(proof)).toBe('Never spoken: wafer. "wafer" is 92337. Your keys are 92837.');
+    expect(textOf(figure).match(/[Nn]ever spoken/g)).toHaveLength(1);
+    const closing = figure.querySelector('.site-proof__closing')!;
+    expect(closing.closest('[aria-hidden="true"]')).toBeNull();
+    expect(closing.className).toBe('site-proof__closing site-in site-k12');
     const chips = $$('.nl-chip[data-state]', figure).filter((c) => !c.closest('[aria-hidden="true"]'));
     expect(chips.map((c) => [c.querySelector('.nl-chip__word')!.textContent, c.getAttribute('data-state')])).toEqual([
       ['water', 'match'],
       ['waves', 'match'],
       ['wafer', 'reject'],
     ]);
-    expect(chips.map((c) => c.parentElement!.className)).toEqual(['site-in site-k9', 'site-in site-k10', 'site-in site-k11']);
+    // Suggestions arrive as typing chips one step apart; the verdicts follow the sweep, the dropped word last.
+    expect(chips.map((c) => c.parentElement!.className)).toEqual(['site-in site-k10', 'site-in site-k10', 'site-in site-k11']);
+    expect($$('.site-proof__chip > [aria-hidden="true"]', figure).map((t) => t.className)).toEqual([
+      'site-during site-k2 site-u10',
+      'site-during site-k3 site-u10',
+      'site-during site-k4 site-u11',
+    ]);
     expect($$('.site-frame__label, .site-frames, .site-frame', figure)).toHaveLength(0);
     for (const label of ['Suggested', 'Checked', 'Dropped']) expect(textOf(figure)).not.toContain(label);
   });
 
-  it('MS-7.9 every digit line holds 5 sweep boxes and no box sits outside a digit line', () => {
+  it('MS-7.9 every line holds 5 column boxes, the letters land under their keys with the box, and no box sits in a chip', () => {
     const figure = $('figure.site-proof')!;
-    const lines = $$('.site-proof__digits', figure);
+    const lines = $$('.site-proof__line', figure);
     expect(lines).toHaveLength(4);
-    const sweep = [4, 5, 6, 7, 8].map((k) => `site-proof__box site-ring site-k${k} site-u${k + 1}`);
+    const sweep = [5, 6, 7, 8, 9].map((k) => `site-proof__box site-ring site-k${k} site-u${k + 1}`);
     for (const line of lines) {
       expect(line.closest('[aria-hidden="true"]')).not.toBeNull();
-      expect($$('.site-digit', line)).toHaveLength(5);
       expect([...line.children].filter((c) => c.classList.contains('site-proof__box')).map((b) => b.className)).toEqual(sweep);
     }
-    // The word rows' digit lines rise one step apart; the caption's line is there from the start.
-    expect(lines.map((l) => l.className)).toEqual([
-      'site-proof__digits',
-      'site-proof__digits site-rise site-k1',
-      'site-proof__digits site-rise site-k2',
-      'site-proof__digits site-rise site-k3',
-    ]);
+    // The keys are there from the start, outlined while step 1 is lit; each word's letters land with their column's box.
+    expect($$('.site-keycap', lines[0]!)).toHaveLength(5);
+    expect(lines[0]!.querySelector('.site-proof__spot')!.className).toBe('site-proof__spot site-ring site-k0 site-u2');
+    for (const line of lines.slice(1)) {
+      expect($$('.site-letter', line).map((l) => l.className)).toEqual([5, 6, 7, 8, 9].map((k) => `site-letter site-rise site-k${k}`));
+    }
+    const k = 5 + getProofExample().reject.diffAt;
+    expect($('.site-letter__box')!.className).toBe(`site-letter__box site-mark site-k${k}`);
+    expect($('.site-proof__x')!.className).toBe(`site-proof__x site-mark site-k${k}`);
     const boxes = $$('.site-proof__box');
     expect(boxes).toHaveLength(20);
     for (const box of boxes) {
-      expect(box.parentElement!.classList.contains('site-proof__digits')).toBe(true);
+      expect(box.parentElement!.classList.contains('site-proof__line')).toBe(true);
       expect(box.closest('.site-proof__chip')).toBeNull();
     }
   });
 
-  it('MS-8.12 the desktop How picture has no data-play and the per-step stages each have one', () => {
-    const picture = $('.site-how__picture')!;
-    expect(picture.hasAttribute('data-play')).toBe(false);
-    expect(picture.querySelector('[data-play]')).toBeNull();
-    expect(picture.hasAttribute('data-reveal')).toBe(true);
-    const stages = $$('#how .site-how__step > .site-stage.site-how__stage');
-    expect(stages).toHaveLength(3);
-    for (const stage of stages) {
-      expect(stage.getAttribute('aria-hidden')).toBe('true');
-      expect(stage.hasAttribute('data-reveal')).toBe(false);
-      expect($$('[data-play]', stage)).toHaveLength(1);
-    }
-    expect(stages.map((s) => [...s.querySelector('[data-play]')!.classList].filter((c) => c.startsWith('site-play--')))).toEqual([
-      ['site-play--type'],
-      ['site-play--sweep'],
-      ['site-play--frame'],
+  it('MS-10.9 MS-8.11 the proof is its head, then one play root holding the figure, the four steps and the note; the step numbers light on its clock', () => {
+    // Round 4 (2026-11-13, Claude Code; lead ruling 1.2): text outside the figure takes only marks (the numbers light)
+    // and never waits for the play.
+    const wrap = $('#proof > .site-wrap')!;
+    expect([...wrap.children].map((c) => c.className)).toEqual(['site-head', 'site-proof-layout site-play--sweep']);
+    const root = wrap.children[1]!;
+    expect(root.hasAttribute('data-play')).toBe(true);
+    expect([...root.children].map((c) => `${c.tagName}.${c.classList[0]}`)).toEqual(['FIGURE.site-proof', 'OL.site-proof-steps', 'DIV.site-proof__more']);
+    const list = root.querySelector('ol.site-proof-steps')!;
+    expect(list.getAttribute('role')).toBe('list');
+    const steps = $$(':scope > li', list);
+    expect(steps.map((s) => s.className)).toEqual(['site-step', 'site-step', 'site-step', 'site-step']);
+    expect(steps.map((s) => collapse(s.querySelector('.site-step__title')!.textContent ?? ''))).toEqual([
+      'You press keys.',
+      'Words are suggested for them.',
+      'Each word is turned back into keys.',
+      'A word that does not match is dropped, never spoken.',
     ]);
-    // Every animated part of the picture names its step.
-    const parts = $$(['in', 'rise', 'out', 'during', 'ring', 'mark'].map((r) => `.site-how__picture .site-${r}`).join(', '));
-    expect(parts.length).toBeGreaterThan(15);
-    for (const part of parts) expect(['1', '2', '3'], part.className).toContain(part.getAttribute('data-s'));
-    // The well's hint, the drawn Speak (secondary, never primary) and the step label's two layers.
-    expect(picture.querySelector('.site-well__hint')!.textContent).toBe('Press a key to start');
-    for (const btn of $$('#how .site-drawn-btn')) {
-      expect(btn.classList.contains('nl-btn--secondary')).toBe(true);
-      expect(btn.classList.contains('nl-btn--primary')).toBe(false);
-    }
-    for (const label of $$('#how .site-step')) {
-      expect(label.classList.contains('site-cell')).toBe(true);
-      expect([...label.children].map((c) => c.className)).toEqual(['', 'site-step__key']);
-    }
+    expect($$('h3, h4, .site-step__line', list)).toHaveLength(0);
+    steps.forEach((s, i) => {
+      const num = s.querySelector('.site-step__num')!;
+      expect(num.getAttribute('aria-hidden')).toBe('true');
+      expect(num.textContent).toBe(`${i + 1}${i + 1}`);
+    });
+    expect(steps.map((s) => s.querySelector('.site-step__lit')!.className)).toEqual([
+      'site-step__lit site-during site-k0 site-u2',
+      'site-step__lit site-during site-k2 site-u5',
+      'site-step__lit site-during site-k5 site-u10',
+      'site-step__lit site-during site-k10 site-u13',
+    ]);
+    const ROLE = /^site-(in|rise|out|during|ring|mark)$/;
+    const outside = $$('*', root).filter((el) => !el.closest('figure') && [...el.classList].some((c) => ROLE.test(c)));
+    expect(outside).toHaveLength(4);
+    expect(outside.every((el) => el.classList.contains('site-step__lit'))).toBe(true);
+    expect(root.querySelector('.site-proof__more a.nl-btn--secondary.nl-btn--xl')!.getAttribute('href')).toBe('/app');
+  });
+
+  it('MS-8.12 (round 4) How is three steps, each a stage with its scene and a .site-step, and no sticky picture', () => {
+    expect($('.site-how__picture')).toBeNull();
+    expect($('#how ol.site-how__steps')!.getAttribute('role')).toBe('list');
+    const steps = $$('#how ol.site-how__steps > li.site-how__step');
+    expect(steps).toHaveLength(3);
+    const playOf = (el: Element) => [...el.classList].filter((c) => c.startsWith('site-play--'));
+    expect(steps.map(playOf)).toEqual([['site-play--quick'], ['site-play--sweep'], ['site-play--sweep']]);
+    expect(steps.map((li) => li.querySelector('.site-how__stage > .site-how__scene')!.className.split(' ')[2])).toEqual([
+      'site-how__press',
+      'site-how__pick',
+      'site-how__speak',
+    ]);
+    steps.forEach((li, i) => {
+      // The step is the scope beside its scene (the data-play root) and carries the scene's play class.
+      expect(li.hasAttribute('data-play-scope') && !li.hasAttribute('data-play')).toBe(true);
+      expect([...li.children].map((c) => c.className)).toEqual(['site-stage site-how__stage', 'site-step']);
+      const stage = li.firstElementChild!;
+      expect(stage.getAttribute('aria-hidden')).toBe('true');
+      expect($$('[data-play]', stage)).toHaveLength(1);
+      expect(playOf(stage.firstElementChild!)).toEqual(playOf(li));
+      // .site-step: the aria-hidden number with its lit layer, the h3 title and the line.
+      const num = li.querySelector('.site-step > .site-step__num')!;
+      expect(num.className).toBe('site-step__num site-cell');
+      expect(num.getAttribute('aria-hidden')).toBe('true');
+      expect([...num.children].map((c) => c.textContent)).toEqual([String(i + 1), String(i + 1)]);
+      expect(num.lastElementChild!.className).toMatch(/^site-step__lit site-during site-k\d+ site-u\d+$/);
+      expect(li.querySelector('.site-step > h3.site-step__title')).not.toBeNull();
+      expect(li.querySelector('.site-step > p.site-step__line')).not.toBeNull();
+    });
+    // Drawn buttons are secondary, never primary (MS-1.6). The limits follow the row as one caveat, icon first.
+    const btns = $$('#how .site-drawn-btn');
+    expect(btns.map((b) => b.textContent)).toEqual(['SpeakSpeaking', 'Show']);
+    for (const btn of btns) expect(btn.classList.contains('nl-btn--secondary') && !btn.classList.contains('nl-btn--primary')).toBe(true);
+    const caveat = $('#how .site-stack > p.site-caveat')!;
+    expect(caveat.textContent).toBe('You need to be able to spell. Ninth Life types words, not symbols. English only for now.');
+    expect(caveat.firstElementChild!.tagName.toLowerCase()).toBe('svg');
+    expect(caveat.firstElementChild!.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('MS-7.3 a repeated key press is two rings, the second late', () => {
@@ -765,7 +1072,10 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
       const key = $$('.nl-key', root).find((k) => k.querySelector('.nl-key__digit')!.textContent === digit)!;
       return $$('.site-key-ring', key).map((r) => r.className);
     };
-    const pads = [$('.site-how__picture .nl-keypad')!, $('#how .site-how__step:nth-child(1) .nl-keypad')!];
+    // Round 4: How's one keypad is a crop, rows 1 and 2 (keys 1 to 6).
+    const pads = [$('#how .site-how__press .nl-keypad')!];
+    expect($$('#how .nl-keypad')).toHaveLength(1);
+    expect($$('.nl-key__digit', pads[0]!).map((d) => d.textContent)).toEqual(['1', '2', '3', '4', '5', '6']);
     for (const pad of pads) {
       expect(ringsOn(pad, '4')).toEqual(['site-key-ring site-ring site-k0 site-u1']);
       expect(ringsOn(pad, '6')).toEqual(['site-key-ring site-ring site-k1 site-u2', 'site-key-ring site-ring site-k2 site-u3 site-late']);
@@ -778,11 +1088,11 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
 
   it('MS-10.8 MS-10.5 every key drawing sets its size inline from the KeypadPicture constants', () => {
     expect(KEY_DRAWING_SIZE).toBe('64px');
-    expect(HERO_KEY_SIZE).toMatch(/^clamp\(64px, .+, 84px\)$/);
     const pads = $$('.nl-keypad.site-pad') as HTMLElement[];
-    // The hero, the How picture, the How step 1 stage and the scan drawing.
-    expect(pads).toHaveLength(4);
-    for (const pad of pads) expect([KEY_DRAWING_SIZE, HERO_KEY_SIZE]).toContain(pad.style.getPropertyValue('--nl-key').trim());
+    // The hero, How step 1's keypad crop and the scan drawing (round 4: the How picture and its stage copy are gone).
+    expect(pads).toHaveLength(3);
+    // The hero's keys are real buttons sized like the drawings (round 4: HERO_KEY_SIZE retired, the demo uses KEY_DRAWING_SIZE).
+    for (const pad of pads) expect(pad.style.getPropertyValue('--nl-key').trim()).toBe(KEY_DRAWING_SIZE);
   });
 
   it('MS-10.8 the Touch keys use TOUCH_MIN_SIZE and TOUCH_XL_SIZE', () => {
@@ -808,19 +1118,18 @@ describe('reveal marks (MS-8.4)', () => {
 
   it('MS-8.4 exactly the blocks of design A4 carry data-reveal', () => {
     expect(marked('#how')).toBe(5);
-    expect(marked('#proof')).toBe(3);
+    expect(marked('#proof')).toBe(4); // round 4: head, figure, steps, note (the layout is the play root, not a reveal)
     expect(marked('#conversation')).toBe(5);
     expect(marked('#access')).toBe(7);
     expect(marked('#privacy')).toBe(5);
     expect(marked('#results')).toBe(4);
-    expect(marked('#limits')).toBe(2);
+    expect(marked('#limits')).toBe(3);
     expect(marked('#faq')).toBe(2);
-    expect(marked('#source')).toBe(3);
     for (const id of SECTION_IDS.slice(0, -1)) expect($(`#${id} .site-head`)!.hasAttribute('data-reveal')).toBe(true);
-    for (const sel of ['.site-how__picture', '.site-proof__more', 'figure.site-proof', '.site-note', '.site-limits', '.site-faq-list', '.site-source__more', '.site-credits']) {
+    for (const sel of ['#how .site-how__step', '#how .site-caveat', '.site-proof__more', 'figure.site-proof', '.site-proof-steps', '.site-note', '.site-limits__card', '.site-faq-list']) {
       expect($(sel)!.hasAttribute('data-reveal'), sel).toBe(true);
     }
-    for (const sel of ['.site-proof__copy', '.site-source__copy', '.site-how__steps', '.site-stats', '#faq details']) {
+    for (const sel of ['.site-proof-layout', '.site-limits','.site-how__steps', '.site-stats', '#faq details']) {
       expect($(sel)!.hasAttribute('data-reveal'), sel).toBe(false);
     }
     for (const dd of $$('.site-stats dd')) expect(dd.hasAttribute('data-reveal')).toBe(false);
@@ -833,10 +1142,12 @@ describe('reveal marks (MS-8.4)', () => {
   it('MS-8.4 sibling cards carry --reveal-i 0, 1, 2, then 2; heading groups carry none', () => {
     const steps = (sel: string) => ($$(`${sel} > [data-reveal]`) as HTMLElement[]).map((e) => e.style.getPropertyValue('--reveal-i'));
     expect(steps('.site-how__steps')).toEqual(['0', '1', '2']);
-    expect(steps('#conversation .site-grid')).toEqual(['0', '1', '2', '2']);
-    expect(steps('#access .site-grid')).toEqual(['0', '1', '2', '2', '2']);
-    expect(steps('#privacy .site-grid')).toEqual(['0', '1', '2', '2']);
-    expect(steps('.site-stats')).toEqual(['0', '1', '2']);
+    // Round 4 (r4-boxes): the stagger restarts in each row: the lead card alone, then the row's cards 0, 1 (, 2).
+    expect(steps('#conversation .site-bento')).toEqual(['0', '0', '1', '2']);
+    expect(steps('#access .site-bento')).toEqual(['0', '0', '1', '0', '1']);
+    expect(steps('#privacy .site-bento')).toEqual(['0', '0', '1', '2']);
+    expect(steps('.site-results__grid')).toEqual(['0', '1', '2']); // round 4: the chart card, by source, presses
+    expect(steps('.site-limits')).toEqual(['0', '1']); // round 4: the two Good to know cards
     for (const head of $$('.site-head')) expect(head.hasAttribute('style')).toBe(false);
   });
 
@@ -882,5 +1193,204 @@ describe('client islands and imports (MS-11.3)', () => {
   it('MS-11.6 the page markup is at most 15 KB gzip', () => {
     const bytes = gzipSync(renderToStaticMarkup(<HomePage />)).length;
     expect(bytes).toBeLessThanOrEqual(15 * 1024);
+  });
+});
+
+describe('shared primitives and the Night close (round 3, 2026-11-12)', () => {
+  it('W2 #start is a Night band with the night sky; its primary sits in a .site-cta like the hero', () => {
+    const start = $('#start')!;
+    expect(start.getAttribute('data-theme')).toBe('night');
+    expect(start.classList.contains('site-night')).toBe(true);
+    expect($('header#top')!.classList.contains('site-night')).toBe(true);
+    const primaries = $$('.nl-btn--primary');
+    expect(primaries).toHaveLength(2);
+    for (const p of primaries) expect(p.closest('.site-cta'), p.textContent ?? '').not.toBeNull();
+    expect(primaries.every((p) => p.classList.contains('nl-btn--xl'))).toBe(true);
+  });
+
+  it('round 4: the close states the four facts as a typographic row (no badges, no icons) instead of the one-line lead', () => {
+    const facts = $$('#start .site-start__facts > li');
+    expect(facts.map((li) => [li.querySelector('.site-start__fact')!.textContent, li.querySelector('.site-start__fact-line')!.textContent])).toEqual(
+      START_FACTS.map(([t, l]) => [t, l]),
+    );
+    expect(START_FACTS.map(([t]) => t)).toEqual(['Free', 'Works offline', 'No account', 'Open source']);
+    for (const li of facts) expect(li.querySelector('.nl-sr-only')!.textContent).toBe(': ');
+    expect($$('#start svg, #start .site-start__facts img')).toHaveLength(0);
+    expect(textOf($('#start')!)).not.toContain('Free. Works offline. No account.');
+    // The row comes before the button, the button before the input-methods note.
+    const primary = $('#start .nl-btn--primary')!;
+    expect(follows($('#start .site-start__facts')!, primary)).toBe(true);
+    expect(follows(primary, $('#start .site-start__note')!)).toBe(true);
+  });
+
+  it('round 4: the footer is a brand column, the Footer navigation in three labelled groups, then the legal block', () => {
+    const footer = $('footer.site-footer')!;
+    // The brand, its promise and a secondary "Open the app" (never an ember fill, MS-9.1).
+    expect($('.site-footer__promise')!.textContent).toBe('A free web app for typing to talk.');
+    const open = $$('a', footer).filter((a) => a.textContent === 'Open the app');
+    expect(open).toHaveLength(1);
+    expect(open[0]!.className).toBe('nl-btn nl-btn--secondary');
+    expect(open[0]!.getAttribute('href')).toBe('/app');
+    expect(open[0]!.closest('nav')).toBeNull();
+    // Three groups, an h2 and a list each, the links in the order footerGroups() gives (in-page anchors on /).
+    const nav = $('footer nav[aria-label="Footer"]')!;
+    const groups = $$('.site-footer__group', nav).map((g) => [g.querySelector('h2')!.textContent, $$('li > a', g).map((a) => [a.textContent, a.getAttribute('href')])]);
+    expect(groups).toEqual(footerGroups('').map((g) => [g.title, g.links.map((l) => [l.label, l.href])]));
+    expect(groups.map(([t]) => t)).toEqual(['Product', 'Trust', 'Project']);
+    const links = $$('a', nav).map((a) => [a.textContent, a.getAttribute('href')]);
+    expect(links).toContainEqual(['Report a problem', ISSUES_URL]);
+    expect(links).toContainEqual(['How we measured', METHOD_URL]);
+    expect(links).toContainEqual(['Source code', REPO_URL]);
+    expect(links).toContainEqual(['Data sources and licenses', NOTICE_URL]);
+    expect(links).toContainEqual(['Credits', '/about#credits']);
+    expect(links).toContainEqual(['Privacy', '#privacy']);
+    expect(links).toContainEqual(['Good to know', '#limits']);
+    expect(links).toContainEqual(['Accessibility', '#accessibility']);
+    // In-page anchors exist on the page; links that leave the site carry the decorative external icon.
+    for (const [, href] of links) if (href!.startsWith('#')) expect(document.getElementById(href!.slice(1)), href!).not.toBeNull();
+    for (const a of $$('a', nav)) expect(a.querySelector('svg[aria-hidden="true"]') !== null).toBe(a.getAttribute('href')!.startsWith('https://'));
+    // The legal block: statement, history line, licence line, then Back to top (to #top, the banner).
+    expect($('.site-footer__legal .site-footer__statement')!.textContent).toBe(NOT_A_MEDICAL_DEVICE);
+    expect($('.site-footer__legal .site-footer__history')!.textContent).toBe(HISTORY_LINE);
+    expect($('.site-footer__caption')!.textContent).toBe('Code MIT. Data CC BY-SA 4.0. Fonts SIL Open Font License.');
+    const top = $$('.site-footer__end .site-links a').map((a) => [collapse(a.textContent ?? ''), a.getAttribute('href')]);
+    expect(top).toEqual([['Back to top', '#top']]);
+    expect($('header#top')).not.toBeNull();
+  });
+
+  it('the footer links report a problem and the method, and its in-page links stay anchors', () => {
+    const nav = $('footer nav[aria-label="Footer"]')!;
+    const links = $$('a', nav).map((a) => [a.textContent, a.getAttribute('href')]);
+    expect(links).toContainEqual(['Report a problem', ISSUES_URL]);
+    expect(links).toContainEqual(['How we measured', METHOD_URL]);
+    expect(links).toContainEqual(['Privacy', '#privacy']);
+    expect(links.every(([, href]) => !href!.startsWith('/#'))).toBe(true);
+    expect($('footer.site-footer > .site-wrap')).not.toBeNull();
+    // Round 3 (R3-P6, lead decision extending W2): the footer is Night in both themes, like the #start close above it.
+    expect($('footer.site-footer')!.getAttribute('data-theme')).toBe('night');
+  });
+
+  it('one card look: feature cards are .site-card, note cards add --note, and site-card--line is gone', () => {
+    expect($$('.site-card--line')).toHaveLength(0);
+    expect(read(web('components/site/site.css'))).not.toContain('site-card--line');
+    // Round 4: the Good to know cards are feature cards (fill and edge), and the Source section with Credits is gone.
+    // Round 4: the Results caveat is a .site-caveat (first, before the numbers), not a note card.
+    // Round 4 (r4-boxes): Privacy's region, retention and log facts are a note card too.
+    expect($$('.site-card--note').map((c) => c.closest('section')!.id)).toEqual(['access', 'privacy']);
+    expect($$('#privacy .site-bento > .site-card').map((c) => c.className)).toEqual(['site-card site-card--lead', 'site-card site-card--sent', 'site-card', 'site-card']);
+  });
+
+  it('one brand lockup (.nl-brand) in the bar and the footer', () => {
+    expect($$('.nl-brand').map((b) => b.textContent)).toEqual(['Ninth Life', 'Ninth Life']);
+    expect($('.site-bar a.nl-brand')!.getAttribute('href')).toBe('#top');
+    expect($('.site-footer .nl-brand')!.classList.contains('nl-brand--small')).toBe(true);
+  });
+});
+
+describe('lower sections (round 3, 2026-11-12, Claude Code)', () => {
+  it('MS-3.1 bands still alternate ground and surface with Results after Proof; #start is the Night close', () => {
+    const bands = $$('main > section').map((s) => (s.classList.contains('site-night') ? 'night' : s.classList.contains('site-band--surface') ? 'surface' : 'ground'));
+    const want = SECTION_IDS.map((_, i) => (i === SECTION_IDS.length - 1 ? 'night' : i % 2 === 0 ? 'ground' : 'surface'));
+    // Conversation became a surface band in the same round (lead, 2026-11-12).
+    expect(bands).toEqual(want);
+    expect($('#conversation')!.className).toBe('site-band site-band--surface');
+  });
+
+  it('Results (round 4): the caveat first, then the chart, the two cards, the model status rows and the links', () => {
+    const r = getResults()!;
+    const stack = $('#results .site-stack')!;
+    const kids = [...stack.children].map((c) => c.className || c.tagName.toLowerCase());
+    expect(kids).toEqual(['site-head', 'site-caveat site-results__caveat', 'site-results__grid', 'site-results__models', 'site-links', 'site-cta']);
+    const caveat = $('#results .site-results__caveat')!;
+    expect(caveat.firstElementChild!.matches('svg.nl-icon[aria-hidden="true"]')).toBe(true);
+    expect(caveat.querySelector('strong')!.textContent).toBe('These figures come from a simulated typist, not from studies with people.');
+    expect(textOf(caveat)).toContain('The app has not yet been tested with people who use AAC.');
+    // Each measure: Ninth Life offline, then word frequency alone, then what it counts (RESULTS.md summary rows).
+    const groups = $$('#results .site-stats__group').map((g) => [...g.children].map((c) => collapse(c.textContent ?? '')));
+    const items = r.items.toLocaleString('en-US');
+    expect(groups).toEqual([
+      ['Right sentence first', `${r.ghost.top1} Ninth Life, offline`, `${r.dict.top1} Word frequency alone`, `of ${items} sentences, with no correction`],
+      ['Right sentence in the top 5', `${r.ghost.top5} Ninth Life, offline`, `${r.dict.top5} Word frequency alone`, `of ${items} sentences`],
+      ['Right word first', `${r.ghost.wordAcc} Ninth Life, offline`, `${r.dict.wordAcc} Word frequency alone`, `of ${r.words!.toLocaleString('en-US')} words, before any correction`],
+    ]);
+    const cards = $$('#results .site-results__card').map((c) => collapse(c.textContent ?? ''));
+    expect(cards[0]).toContain(`${r.bySource!.aac.top1} of ${r.bySource!.aac.items} AAC sentences`);
+    expect(cards[0]).toContain(`${r.bySource!.turk.top1} of ${r.bySource!.turk.items} dialogue replies`);
+    expect(cards[1]).toContain(`${r.ghost.pressesPerChar} key presses per character`);
+    expect(cards[1]).toContain('Letter mode saves no key presses.');
+    expect(cards[1]).toContain(`${r.ghost.scanStepsPerChar} scan steps per character, with one switch`);
+    // Model ranking: an icon and a status word per row (never colour alone), the measured models by name.
+    const rows = $$('#results .site-status li');
+    expect(rows.map((li) => li.querySelector('strong')!.textContent)).toEqual(['Measured', 'Not measured yet:']);
+    for (const li of rows) expect(li.firstElementChild!.matches('svg.nl-icon[aria-hidden="true"]')).toBe(true);
+    expect(collapse(rows[0]!.textContent ?? '')).toContain('with 2 MiniMax models (MiniMax-M3 and MiniMax-M3.1-Flash), on samples of 200 sentences');
+    expect(collapse(rows[1]!.textContent ?? '')).toBe(`Not measured yet: ${providerCopy().service}, which the app's model ranking uses.`);
+    // The links go to the full results and the method, as links that leave the site.
+    const links = $$('#results .site-links a');
+    expect(links.map((a) => [a.getAttribute('href'), a.className, collapse(a.textContent ?? '')])).toEqual([
+      [RESULTS_URL, 'site-go site-go--out', 'Full results'],
+      [METHOD_URL, 'site-go site-go--out', 'How we measured'],
+    ]);
+  });
+
+  it('Results (round 4, PO-1): every bar is its printed value on a full track, and grows once; the numbers never animate', () => {
+    // A bar's length is the number printed beside it (barShare), so a bar can never disagree with its label.
+    const fills = $$('#results .site-meter__fill') as HTMLElement[];
+    expect(fills).toHaveLength(3 * 2 + 2);
+    for (const fill of fills) {
+      const row = fill.closest('dd, li')!;
+      const value = row.querySelector('.site-stats__value')!.textContent!;
+      expect(Number(fill.style.getPropertyValue('--v'))).toBe(barShare(value));
+      expect(fill.parentElement!.getAttribute('aria-hidden')).toBe('true');
+    }
+    // Ours first (k0), the comparison second (k1); the play roots are the 3 measures, the by-source rows and the
+    // scan marks. Each part's last change: lead 300 + k x the root's step + its change (grow 600, mark 120) <= 1,600.
+    const roots = $$('#results [data-play]');
+    expect(roots).toHaveLength(3 + 1 + 1);
+    const STEP_MS: Record<string, number> = { sweep: 240 };
+    for (const root of roots) {
+      const step = STEP_MS[[...root.classList].find((c) => c.startsWith('site-play--'))!.slice('site-play--'.length)]!;
+      const parts = $$('.site-grow, .site-mark', root);
+      expect(parts.length, root.className).toBeGreaterThan(0);
+      for (const p of parts) {
+        const k = Number([...p.classList].find((c) => /^site-k\d+$/.test(c))!.slice(6));
+        const last = 300 + k * step + (p.classList.contains('site-grow') ? 600 : 120);
+        expect(last, p.className).toBeLessThanOrEqual(1600);
+      }
+    }
+    expect($$('.site-stats__group').map((g) => $$('.site-grow', g).map((p) => p.classList.contains('site-k0')))).toEqual([
+      [true, false],
+      [true, false],
+      [true, false],
+    ]);
+    // The numbers are static text: no role class on a value or anything around it inside the chart.
+    for (const v of $$('#results .site-stats__value')) expect(v.closest('.site-in, .site-rise, .site-out, .site-during, .site-mark, .site-grow')).toBeNull();
+    // The grow rule: transform only, motion-grow, filling backwards, under data-site-motion (site.css).
+    const css = read(web('components/site/site.css'));
+    expect(css).toContain('[data-site-motion="on"] [data-play][data-played="1"] .site-grow {\n    animation: site-grow var(--motion-grow) var(--motion-ease-out) calc(var(--play-lead) + var(--k) * var(--play-step)) backwards;');
+    expect(css).toMatch(/@keyframes site-grow \{ from \{ transform: scaleX\(0\); \} to \{ transform: none; \} \}/);
+  });
+
+  it('FAQ: the questions are faqItems(), and the list ends with "Something else? Ask on GitHub"', () => {
+    const shown = $$('#faq details').map((d) => [d.querySelector('summary')!.textContent, d.querySelector('p')!.textContent]);
+    expect(shown).toEqual(faqItems().map(([q, a]) => [q, a]));
+    const ranking = faqItems().find(([q]) => q === 'What does model ranking send, and to whom?')!;
+    expect(ranking[1].toLowerCase()).toContain(rankingSentText().toLowerCase());
+    const more = $('#faq .site-faq-list > p.site-faq__more')!;
+    expect(collapse(more.textContent ?? '')).toBe('Something else? Ask on GitHub');
+    expect(more.querySelector('a')!.getAttribute('href')).toBe(ISSUES_URL);
+  });
+
+  it('Access has a one-line lead; the box stages hug their drawings on phones (W1; round 4: all three sections)', () => {
+    expect($('#access .site-lead')!.textContent).toBe('Keyboard, touch or one or two switches, on the screen you have.');
+    expect($$('.site-bento').map((g) => g.closest('section')!.id)).toEqual(['conversation', 'access', 'privacy']);
+    const css = read(web('components/site/site.css'));
+    expect(css).toMatch(/@media \(max-width: 599px\) \{\s*\.site-bento \.site-stage \{ min-block-size: 0; padding-block: var\(--space-3\); \}/);
+  });
+
+  it('round 4: the Source section is gone and its facts live in the close and the footer; the maker is not named (W6)', () => {
+    expect($('#source')).toBeNull();
+    expect($$('.site-source__block, .site-credits')).toHaveLength(0);
+    for (const sel of ['#start', 'footer']) expect(textOf($(sel)!)).not.toMatch(/\bmaintainer\b|\bmade by\b/i);
   });
 });

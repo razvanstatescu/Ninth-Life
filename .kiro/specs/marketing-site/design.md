@@ -40,9 +40,12 @@ dependency and `scripts/lighthouse.mjs`, in one paused step at the end.
 |---|---|---|---|
 | `/` | `app/page.tsx` (rewritten) | the landing page, `export const dynamic = 'force-static'` | root layout CSS + `components/site/site.css` |
 | `/app` | `app/app/page.tsx` (new) | `<CommunicationScreen />`, exactly what `app/page.tsx` renders today | root layout CSS + `styles/app.css` |
-| `/about` | `app/about/page.tsx` (edited) | unchanged content; links per MS-1.4 | root layout CSS + `styles/app.css` |
+| `/about` | `app/about/page.tsx` (edited; site look since round 3, W3) | its own copy in the site chrome (SiteBar, Night header, prose, SiteFooter); links per MS-1.4 | root layout CSS + `components/site/site.css` (round 3; was `styles/app.css`) |
 | `/welcome` | removed (`app/welcome/` deleted) | 308 to `/` from `next.config.mjs` `redirects()` | none |
 | `/robots.txt` | `app/robots.ts` (new, `force-static`) | `{ rules: { userAgent: '*', allow: '/' } }` | none |
+| `/sitemap.xml` | `app/sitemap.xml/route.ts` (round 3, `force-static`) | `/`, `/about`, `/app` on the origin; 404 with no origin | none |
+| `/llms.txt` | `app/llms.txt/route.ts` (round 3, `force-static`) | Markdown from `components/site/llms.ts` | none |
+| 404 | `app/not-found.tsx` (round 3) | "Page not found", links to `/app` and `/` | root layout CSS |
 | `/api/decode` | unchanged | | |
 
 `app/layout.tsx` keeps the `<html>` element, `viewport` (`viewportFit: 'cover'`, no `maximumScale`),
@@ -119,7 +122,7 @@ every pair of targets inside one group is at least 8px apart.
     <div class="site-wrap site-bar"> brand · <nav aria-label="Main"> · Open the app (secondary) </div>
     <section class="site-wrap site-hero" aria-labelledby="hero-title"> copy · <KeypadDemo/> </section>
   </header>
-  <main id="main" tabIndex={-1}>  how · proof · conversation · access · privacy · results · limits · faq · source · start </main>
+  <main id="main" tabIndex={-1}>  how · proof · results · conversation · access · privacy · limits · faq · source · start </main>   (round 3: results moved up)
   <footer class="site-wrap site-footer"> … </footer>
   <SiteMotion />
 </div>
@@ -147,6 +150,9 @@ components unless marked) live in `packages/web/components/site/`:
 `getResults()` once and passes plain data down.
 
 ### 0. Bar (all sizes)
+
+Round 3 (2026-11-12): the nav shows from 960px and the bar is one row at every width; see "Round 3: hero, bar and the
+try-it keypad" below, which wins over this section.
 
 Brand link to `#top`: `/icons/favicon.svg` 44px (`alt=""`, below 48px the favicon variant) and "Ninth Life"
 (24px is the existing raw value; use `--type-heading-size` 22px with weight 800). `.site-brand` is
@@ -195,6 +201,10 @@ hero's "See how it works" and the footer nav.
 
 ### 1. Hero (MS-6.1)
 
+Round 3 (2026-11-12): the `h1` is the promise, the icon is 48/64px, "See how it works" is a link, the demo's chips sit
+under the sentence and its keys can be pressed; see "Round 3: hero, bar and the try-it keypad" below, which wins over
+this section and "`KeypadDemo` changes".
+
 Background ("Night sky", D13), on `.site-top`, which is `position: relative; isolation: isolate`:
 
 ```css
@@ -241,45 +251,130 @@ compared):
 
 Round 2 (2026-11-11) replaces this section's layout and drawing: see "Round 2" below, R2.3 (MS-7.4, MS-7.8,
 MS-8.12, MS-10.9). Each card keeps a mono step label (`01`, `02`, `03`, `digits` type in `.site-step`, a 56px square),
-`h3` and text; under the list, the spelling line in `body-lg`.
+`h3` and text. Round 3 (2026-11-12, Claude Code): a one-line lead under the `h2`, no spelling line under the list,
+and the runway only with motion: see "Round 3: How, Proof and Conversation" below. Round 4 (2026-11-13, Claude
+Code): replaced by the three-step story row (Press, Pick, Speak), with no sticky picture, runway or step sync: see
+"Round 4: How it works".
 
 ### 3. The proof check (`#proof`)
 
-Desktop: `.site-split` (copy left `flex: 999 1 480px`, figure right `flex: 1 1 380px`), tablet and phone stacked.
-Copy column (`div.site-proof__copy`, not marked for reveal): the heading group `div.site-head` (`h2`, lead), then
-`div.site-proof__more` holding the legend (`h3` and a three-item list, each item led by the matching chip icon,
-`check`, `plus` and `x`, so state is not only colour), the closing line and the secondary "Open the app".
+Round 3 (P2-6) replaces the round-1 `.site-split`: `div.site-wrap.site-proof-layout` holds, in DOM order, the
+heading group `div.site-head.site-proof-layout__head` (`h2`, lead), the figure, then `div.site-proof__more` with the
+legend (`h3` and a two-item list, each item led by the matching chip icon, `check` and `x`, so state is not only
+colour; the plus moved to the Spell card, P3-3), the closing line and a `.site-cta` row with the secondary `nl-btn--xl`
+"Open the app" (64px). One column below 1024px (gap 32, 48 from 600px); from 1024px a grid
+`minmax(0, 1fr) minmax(0, 384px)` with areas `"head figure" "more figure"`, rows `auto 1fr`, gap 32 × 48. No
+`order`, so reading order is the visual order.
 
 `<figure class="site-proof">`: round 2 replaces the three frames with one stable layout, `ProofCheck`: see "Round
 2", R2.4 (MS-7.9).
 
+Round 4 (2026-11-13, Claude Code) replaces the layout and the figure above: see "Round 4: the proof check" at the end
+of this file. In short: the head across the top, then one `data-play` root holding the figure, the four steps
+(`.site-step`) and the note with its button; the legend is gone.
+
 ### 4. In a conversation (`#conversation`)
 
 `h2`, lead, then a 2 × 2 grid of four cards from 648px (`.site-grid--boxes`, round 2), each starting with a stage
-and its drawing: They said, Show and Flip, Saved phrases, Spell and My words. See "Round 2", R2.5 and R2.6.
+and its drawing: They said, Show and Flip, Saved phrases, Spell and My words. See "Round 2", R2.5 and R2.6. Round 3:
+a surface band (Results moved up), 288px stages, benefit-first titles and finished frames with the before and the
+after: see "Round 3: How, Proof and Conversation" below. Round 4: a lead card (They said) and a row of three; see
+"Round 4: the box sections" below, which wins over this section.
 
 ### 5. Ways to type (`#access`)
 
 Grid of five normal cards, 2 columns from 648px (round 2, MS-10.9, V37), each starting with a stage and its drawing:
 Keyboard, Touch, One or two switches, Your view, Phones tablets and laptops (across both columns). See "Round 2", R2.5 and R2.6. Below the grid,
-the accessibility note as a `site-card--line` with its `h3` and the issue link (no stage; it is not a feature box).
+the accessibility note as a `site-card--note` (round 3; was `site-card--line`) with its `h3` and the issue link (no stage; it is not a feature box).
+Round 3 (Claude Code): a one-line lead under the `h2`; a ground band (Results moved up, so the bands still alternate);
+the grid adds `site-grid--hug`: below 600px each stage drops the shared height and hugs its drawing with `space-3` (24px in all, the MS-10.9 switch limit)
+above and below (W1; one card per row, so there is no row to line up).
+Round 4: the switch card leads, then four cards two by two; see "Round 4: the box sections" below, which wins.
 
 ### 6. Offline and private (`#privacy`)
 
-`h2`, lead, a 2 × 2 grid of four `site-card--line` cards from 648px (`.site-grid--boxes`, round 2), each starting
+`h2`, lead, a 2 × 2 grid of four `site-card` cards (round 3: every feature card has the edge; was `site-card--line`) from 648px (`.site-grid--boxes`, round 2), each starting
 with a stage and its drawing: On your device, Model ranking, Voices, Listen. See "Round 2", R2.5 and R2.6. Then the
 "Check it yourself" line with its link.
+Round 3 (Claude Code): a surface band; the Model ranking card keeps two sentences (off by default; what is sent, from
+`rankingSentText()`), so it is about as long as the others; under the grid one `.site-prose` block: `h3` "What
+happens to what ranking sends", a disc list (region, retention, server logs), the "Check it yourself" line and a
+`.site-links` row 8px under it pointing at the evidence (`.kiro/steering/privacy.md` and `lib/decodeClient.ts`, not
+the repo root). The grid adds `site-grid--hug` (phones, as in §5).
+Round 4: the On your device map leads, then the three ways out; see "Round 4: the box sections" below, which wins.
 
 ### 7. Measured, not promised (`#results`)
 
 `h2`, lead, `<dl class="site-stats">` of three stat cards (`repeat(auto-fit, minmax(240px, 1fr))`), the
 paragraph, the model line (when present), the links row. The stat value uses `display` type, static text
 (MS-5.5). Cards may reveal (MS-8.4); the digits inside never animate.
+Round 3 (Claude Code): right after the proof check, on a ground band. Under the stats a `site-card--note`
+(`.site-results__note`, one measure plus its padding wide) holds the caveats, the simulated-typist sentence in bold
+first; then `.site-prose` (ink, `--measure`) with the key-press and scan line, the per-source line
+(`results.bySource`) and the model line, ending in the links row; last a `.site-cta` row with a secondary xl "Open
+the app" (64px, full width on phones), the mid-page way into the app between the hero and the close (review P1-3).
+Neither the note nor the prose is marked for a reveal (the A4 list is unchanged).
+
+Round 4 (2026-11-13, Claude Code; decisions "Results", PO-1; the shared language's chart rule). The figures are graphics
+now, with fewer sentences. In `.site-stack` order:
+- `div.site-head` with the `h2` only: no lead with results.
+- `.site-caveat.site-results__caveat`: the shared limit look; `SiteIcon` `info`, then one paragraph with the
+  simulated-typist sentence in bold. Not marked for a reveal: it is visible from the first frame.
+- `.site-results__grid`: one column, two from 600px. The chart card spans both columns, the two cards sit side by side,
+  and the grid sets `--site-piece` to `--surface-sunken`, the piece colour on a surface card. Inside:
+  - The chart card, `div.site-card.site-results__chart`, `--reveal-i` 0: a `dl.site-stats` of three
+    `div.site-stats__group` (stacked with a hairline, `space-3` apart; three across from 648px, each group a CSS
+    subgrid of the dl's four rows, so the titles, bars and captions line up where a title wraps). Each group holds
+    its `dt`, then two `dd`s (the value line, then the meter), then the caption `dd`, and the key line follows once.
+  - The by-source card, `--reveal-i` 1: an `h3` and a `ul.site-results__rows` of two value lines with meters.
+  - The presses card, `--reveal-i` 2: an `h3`, then two `.site-effort` blocks split by a hairline. The first holds
+    `pressExample()`'s letters over mono digits (aria-hidden), the "1.00" line and its note; the second holds the
+    scan marks (`scanMarks()`, whole and part, aria-hidden) and the "3.57" line.
+- `.site-results__models`: the `h3` "Model ranking" and a `ul.site-status`. Each row has an icon (`Icon` check, or
+  `SiteIcon` `minus`) and a bold status word; model ids are `.site-nowrap`.
+- `.site-links` with two `.site-go.site-go--out` links (`SiteIcon` `external`).
+- The `.site-cta` row.
+
+A value line (`.site-stats__line`) puts the value (`title-sm`, ink; the comparison in `heading`) and its label
+(`body`, ink-muted) on one line, wrapping under it when narrow. It is static text (MS-5.5), and no role class sits on
+it or around it.
+
+A meter (`.site-meter`, not `.site-bar`, which is the site header) is a drawn piece, aria-hidden. Its track is 16px in
+`--site-piece`, 4px corners, the whole (100%). Its fill (`.site-meter__fill`) is `inline-size: calc(var(--v) * 100%)`,
+where `--v` is `barShare()` of the printed value, so the bar can never disagree with its label. The fill is `--ink` for
+ours and `--line-strong` for word frequency alone (`.site-meter--base`). Contrast:
+- `--ink` on the card: 15.1:1 Night, 17.9:1 Day.
+- `--line-strong` on the card: 4.9:1 and 4.5:1; on the track: 4.4:1 and 3.7:1.
+- `--ink` against `--line-strong`: 3.1:1 and 4.0:1 (`dataviz` validator: CVD and normal-vision ΔE pass, 32.9 and
+  36.0).
+Identity is never colour alone: every value carries its label. Forced colours give CanvasText fills on outlined
+Canvas tracks, with GrayText for the comparison.
+
+Motion: the A4 reveals of the head and the three cards, then A7 plays. The `data-play` roots are each
+`.site-stats__group`, the by-source `ul` and the scan marks, all with `site-play--sweep`.
+- Bar fills carry `site-grow site-k0` (ours) or `site-k1` (the comparison). In the Results block's own
+  `@media (prefers-reduced-motion: no-preference)`, before the play they sit at `transform: scaleX(0)`, then
+  `site-grow` runs over `motion-grow` (600ms) at t(k), `motion-ease-out`, filling backwards; `transform-origin` is the
+  start edge (`:dir(rtl)` flips it).
+- The marks are the existing `.site-mark` role (jump over `motion-jump`).
+- No `--play-i`: the three measures play together.
+- The last change ends 1,140 ms after the trigger (at most 1,600, PO-1). The base style is the full bar, so reduced
+  motion and no JavaScript show the finished chart.
+- `site.test.tsx` checks the timing per part and leaves these roots out of the generic MS-8.11 loop, which counts
+  fades and rings.
+
+Heights, measured in Chromium (reduced motion): at 390px the section is 2,082px against 1,961px in round 3 (the
+budget is +150). 1440px: 1,378px; 768px: 1,466px; 320px: 2,522px. There is no horizontal scroll and no text under
+16px at any of them.
 
 ### 8. Good to know (`#limits`)
 
-`h2` and one `site-card--line` holding the list (`body`, disc markers, two columns from 1024px with
+`h2` and one `site-card--note` (round 3) holding the list (`body`, disc markers, two columns from 1024px with
 `columns: 2; column-gap: var(--space-12)`).
+Round 3 (Claude Code): the note card is a grid of three `.site-limits__group`s (`h3` + disc list): Before you start,
+Not tested yet (with "Want to help test it?" and the issue link as a `.site-links` row), What it is not. One column,
+`space-8` apart; three columns from 1024px (`column-gap: space-12`). No CSS columns, so reading order is DOM order.
+Round 4 (2026-11-13, Claude Code): a lead and two cards; see "Round 4: the end of the page".
 
 ### 9. Questions (`#faq`)
 
@@ -290,18 +385,25 @@ transition); `list-style: none` and `::-webkit-details-marker { display: none }`
 the answer in `body`. Items are separated by a `--line-width` (2px) `--line` rule (decorative; the summary's
 own focus ring shows focus), and each `.site-faq` has `padding-block: var(--space-1)`, so two closed summaries
 are 4 + 2 + 4 = 10px apart (MS-10.4 asks for 8px or more). `site.mjs` checks that gap with the link groups.
+Round 3 (Claude Code): 11 questions from `faqItems()` (the FAQPage JSON-LD and `/llms.txt` read the same list), then,
+inside the list's reveal block, `p.site-links.site-faq__more` "Something else? Ask on GitHub" (`ISSUES_URL`, a 56px
+link target, `space-2` after the text).
 
 ### 10. Free and open source (`#source`)
 
 `.site-split`: left `div.site-source__copy` (not marked for reveal) holding the heading group `div.site-head`
 (`h2`, lead) and then `div.site-source__more` with the two `h3` blocks (Why it is free, Who made it) and the
-links row; right a `site-card--line` "Credits" with its list.
+links row; right a `site-card--note` (round 3) "Credits" with its list.
+Round 3 (Claude Code): the two `h3` blocks are `.site-prose` (ink, `--measure`, their own 8px gap); below 600px the
+links row stacks (one 56px link per line) instead of wrapping one and two. The maker stays unnamed (W6).
+Round 4 (2026-11-13, Claude Code): dissolved; `sections/Source.tsx` is deleted. See "Round 4: the end of the page".
 
 ### 11. Closing call to action (`#start`)
 
-Centred column on `--surface`: the icon (96px, `alt=""`, still), `h2`, line, primary "Open the app"
+Centred column on a Night band with the banner's night sky (`.site-night`, `data-theme="night"`, round 3, W2; was `--surface`): the icon (96px, `alt=""`, still), `h2` and line (`.site-head--center`), primary "Open the app" in a `.site-cta--center` row, then the input-methods note
 (`nl-btn--primary nl-btn--xl`). It is the only ember fill in any viewport that shows it (the footer has none).
-No `data-reveal` on this section, because it holds the logo.
+No `data-reveal` on this section, because it holds the logo. Round 4 (2026-11-13, Claude Code): a facts row between
+the `h2` and the button; see "Round 4: the end of the page".
 
 ### 12. Footer
 
@@ -309,6 +411,8 @@ As today's `/welcome` footer, plus the licence line, written out on tokens (R3):
 2px solid var(--line)` and `padding-top: var(--space-12)`, brand image 32px, the licence line and the statement
 in `caption` (14/20), `--ink-muted` (6.4:1 or better). Footer nav links follow the standalone link rule
 (`min-height` and `min-width` `var(--target-min)`) and the group gap `var(--space-2) var(--space-6)`.
+Round 4 (2026-11-13, Claude Code): rebuilt (brand column, three labelled groups, the legal block); see "Round 4: the
+end of the page".
 
 ### Ember per viewport (MS-9.1, D6.2)
 
@@ -336,6 +440,8 @@ as constants, and no other file sets `--nl-key` for a drawing:
 export const KEY_DRAWING_SIZE = '64px';                                   // How, Ways to type
 export const HERO_KEY_SIZE = 'clamp(64px, calc((100vw - 120px) / 3), 84px)'; // the hero demo
 ```
+
+(Round 4, 2026-11-13, Claude Code: `HERO_KEY_SIZE` is retired; the hero demo's keys use `KEY_DRAWING_SIZE`, see "Round 4: the hero demo".)
 
 `size` is typed as `typeof KEY_DRAWING_SIZE | typeof HERO_KEY_SIZE`. Never below 64px (MS-10.5): at 64px
 `.nl-key__letters` is 23px, `.nl-key__letters--4` 17.3px and the digit 16px. Other drawing text (rank numbers,
@@ -422,6 +528,19 @@ Server only (it uses `node:fs`); nothing here reaches the browser except the pla
   - Returns `{ items, ghost: { wordAcc, top1, top5, ksr, scanStepsPerChar }, dict: { top1, top5 }, modelRuns:
     { sizes: number[]; count: number } | null }`; percentages formatted as today (`pct`), steps with two
     decimals. `modelNotRun` goes.
+  - Round 4 (2026-11-13, Claude Code): it also returns the following, each null when missing or invalid in
+    RESULTS.json, so the page leaves it out:
+    - `words` (B1 `words`, a positive integer);
+    - `ghost.pressesPerChar` (B1 `pressesPerChar` to two decimals);
+    - `dict.wordAcc`;
+    - `bySource.{aac,turk}` as `{ top1, items }` (null unless both sources have a valid top-1 and a positive item
+      count).
+  - New pure helpers, unit-tested:
+    - `barShare(printed)`: the printed percentage as 0..1, a bar's length;
+    - `scanMarks(printed)`: "3.57" is `[1, 1, 1, 0.57]`, at most 8 marks;
+    - `pressExample(word = 'home')`: the letters over `encodeWord`'s digits; throws when a letter has no key;
+    - `modelStatus(m, current)`: `{ count, company, models, sizes, service, serviceMeasured }` for the status rows.
+    `modelRunsLine` is built from `modelStatus`, so `/llms.txt` and the page read the same values.
 - `modelRunsLine(m)`: the model line of `content.md` §7 as one string (`sizes` ascending and unique, joined
   with ", " and a final " and "; "with 1 model" when `count` is 1, "with {count} models from one provider"
   otherwise); pure and unit-tested.
@@ -515,7 +634,7 @@ the fallbacks equal the token values.
 | A5 | Scroll-linked frames | **Retired 2026-11-11** (ADR-006 amendment): no scroll timelines anywhere (MS-8.5) | | |
 | A6 | Cross-fade into the app (MS-8.6) | `globals.css`: `@media (prefers-reduced-motion: no-preference) { @view-transition { navigation: auto; } ::view-transition-group(root) { animation-duration: var(--motion-crossfade); } }` | 250 ms cross-fade between `/`, `/app`, `/about` where supported | normal navigation |
 | A7 | Played sequences (MS-8.11, MS-8.13) | `SiteMotion` play observer sets `data-played="1"` once; role classes and step classes, "Round 2" R2.2 | the drawing plays once at the play line, at most 4 s, then rests | finished state from the base styles |
-| A8 | How step sync (MS-8.12) | `SiteMotion` step observer sets `data-how-step` and `data-how-play` on `.site-how`; R2.3 | from 1024px the picture follows the step under the middle line; each step plays once; the active card is outlined | the picture's finished state, no outline |
+| A8 | How step sync (MS-8.12) | **Retired in round 4 (2026-11-13)** with the sticky How picture: How's three scenes are A7 drawings in a sequenced row ("Round 4: How it works") | | |
 
 The A5 frame keyframes, the `.site-frames` stack and the scan named timeline were removed in round 2. Parts that
 replace each other now share a `.site-cell` (one grid cell), and the base styles show each drawing's finished state
@@ -527,12 +646,17 @@ Marked blocks (`data-reveal`), and only these:
 
 - each section's heading group (`div.site-head`: the `h2` and its lead) in `how`, `proof`, `conversation`,
   `access`, `privacy`, `results`, `limits`, `faq` and `source`;
-- each card or figure inside those sections: the How steps (`li`) and the How picture, the rest of the proof
+- each card or figure inside those sections: the How steps (`li`) and, since round 4, How's limit line
+  (`p.site-caveat`; the How picture is gone), the rest of the proof
   copy column (`div.site-proof__more`: the legend, the closing line and the button) and `figure.site-proof`, the
   four conversation cards, the five access cards and the accessibility note, the four privacy cards, the three
-  stat cards (the `div` around each `dt`/`dd` pair, never the `dd`), the Good to know card, the FAQ list as a
+  Results cards (round 4: the chart card, the by-source card and the presses card; never the `dl`, a group or a
+  `dd`, and never the caveat), the Good to know card, the FAQ list as a
   whole (`div.site-faq-list`, not each `details`), and the rest of the source column (`div.site-source__more`:
-  the two `h3` blocks and the links row) and the Credits card.
+  the two `h3` blocks and the links row) and the Credits card. (Round 4, 2026-11-13, Claude Code: the Good to know
+  head and its two cards, `.site-limits__card` with `--reveal-i` 0 and 1, the grid `div.site-limits` unmarked; the
+  source blocks are gone with the section. Proof: `figure.site-proof`, the steps `ol.site-proof-steps` and
+  `div.site-proof__more`, the note and the button; their parent, the play root `div.site-proof-layout`, unmarked.)
 
 No `[data-reveal]` element has a `[data-reveal]` ancestor (MS-8.4): the column wrappers `div.site-proof__copy`
 and `div.site-source__copy`, the `ol` of How steps, the card grids and the `dl` are never marked, so no transform
@@ -597,7 +721,7 @@ State: `step` (starts at the finished frame), `playing`, `startedBy: 'auto' | 'p
   never left half-typed).
 - **Timing**: steps every `motion-demo-step` ms; 12 presses for "i need water", 11 steps after the first, about 5.7 s, so Stop is the
   WCAG 2.2.2 control (MS-8.9). Never loops.
-- **Keys** (MS-6.5, MS-6.9, MS-10.8): rendered by `KeypadPicture` with `size={HERO_KEY_SIZE}`,
+- **Keys** (MS-6.5, MS-6.9, MS-10.8; round 4: `KEY_DRAWING_SIZE`, see "Round 4: the hero demo"): rendered by `KeypadPicture` with `size={HERO_KEY_SIZE}`,
   `pressed={playing ? s.key : undefined}` and `ninth` always `true` (today's `.site-demo__pad` size rule in
   `site.css` goes, because the XL setting overrides it); the root `.site-demo` gets `is-playing` while playing, which hides key 9's resting ring
   by `visibility` (see Drawings), so the pressed ring is the only ring during a play and the arrival fade never
@@ -766,7 +890,8 @@ var(--space-2)`, `grid-auto-rows: var(--space-6)`, so 32 × 24px cells) holding 
 `span.site-proof__box` in the same cells (`grid-area: 1 / (c + 1)`, 2px `--line-strong` inset, `radius-chip`); the
 boxes of column c in all 4 lines are `role('ring', ...SWEEP[c])` with `SWEEP: readonly Span[] = [[4, 5], [5, 6],
 [6, 7], [7, 8], [8, 9]]` and jump together; no box crosses a chip. Then, outside `aria-hidden`, `proofSaidLine(proof)` ("Can be spoken: water, waves. Never spoken: wafer.")
-and the "For example" sentence, in k12. No frame labels. Last change 3.4 s.
+and the "For example" sentence, in k12. No frame labels. Last change 3.4 s. (Superseded in round 4: see "Round 4:
+the proof check".)
 
 ### R2.5 Stages and grids
 
@@ -878,6 +1003,184 @@ and Privacy at 1280 × 800 and 1920 × 1080; the switch card a normal card with 
 drawing at the five layout sizes; Tab order in the Access grid); MS-8.12 (the desktop placeholder rows show at step
 1 and give way to the rows after step 2, V36); MS-8.11 (drawings a 150px flick passes on short phones play in view);
 `axe.mjs` MS-13.1 as today.
+
+## Round 3 (2026-11-12, Claude Code): shared primitives and one theme
+
+Round 3 was done with Claude Code, not Kiro. Product-owner answers W1-W6 are in the ADR-006 amendment of
+2026-11-12; this part covers W2, W3 and the theme review (`findings/theme.md` of the review). MS-14.
+
+- **Primitives** (documented at the top of `components/site/site.css`; every section builds on them):
+  `.site-band` (+ `--surface`), `.site-night` (the night sky: plum glow low left, moon glow high right, Night in both
+  themes with `data-theme="night"`; used by the banner, `#start` and the `/about` header), `.site-wrap`
+  (`--container`), `.site-stack`, `.site-split`, `.site-head` (+ `--center`), `.site-h2`, `.site-h3`, `.site-lead`,
+  `.site-prose` (body 17/26, ink, `--measure`, 16px between paragraphs, a trailing `.site-links` row 8px under its
+  sentence, disc lists), `.site-card` (fill + 2px `--line` edge; padding `space-6` minus the edge, so content boxes
+  and stages keep their width), `.site-card--note` (edge, no fill, ink text), `.site-stage` with `--stage-s` 216,
+  `--stage-m` 288, `--stage-l` 384, `.site-cta` (+ `--center`; every `nl-btn--xl` on the website is `--target-cta`,
+  64px; full width on phones). `site-card--line` and `site-actions` are gone.
+- **Tokens added** to `design/system/tokens.json`: `container` 1200px, `measure` 760px, `stage-s`, `stage-m`,
+  `stage-l`, and the `brand` type style (22/28, 800, -0.01em).
+- **One brand lockup** `.nl-brand` (+ `--small`, 32px with `body-lg` name) in `styles/components.css`: image radius
+  25%, `brand` type, a 56px target as a link. Used by `SiteBar`, `SiteFooter` and `AppHeader`'s `Brand` (`/app`).
+- **Links:** nav links (bar, footer) ink, label weight, underline on hover; content links `--link`, underlined,
+  regular weight. The app footer's links are `body` size like the site footer's.
+- **Ink rule:** ink for primary content (section paragraphs, prose, FAQ answers, list items in notes); ink-muted only
+  for leads, card supporting text, captions and drawing labels.
+- **Theme on first visit (W2):** `THEME_BOOT_SCRIPT` (`lib/settings.ts`) sets `data-theme="system"` outside `/app`
+  when no valid `nl-theme` is stored; a stored theme wins; `/app` keeps Night from the `html` element. It only reads
+  storage (MS-12.1). The app's `applyLook` stores `nl-theme` only once a theme has been chosen (not Night, or any
+  theme once one is stored), so opening `/app` without choosing does not pin the website to Night.
+- **Night close (W2):** `#start` is `site-band site-night` with `data-theme="night"`, so its primary looks exactly
+  like the hero's in Day too (no plum Day ring).
+- **Footer:** the rule runs the full window width (`footer.site-footer > .site-wrap.site-footer__inner`); nav adds
+  "How we measured" (`METHOD_URL`) and "Report a problem" (`ISSUES_URL`); props `home` ("" or "/") and `statement`.
+- **`/about` (W3, overturns D3):** `SiteBar home="/"` and a page head in a `.site-top.site-night` header, `main.site-band`
+  with one `.site-stack` of `.site-prose` sections (`h2.site-h3`), the statement in a `.site-card--note`,
+  `SiteFooter home="/" statement={false}`. It imports `site.css` (one cached stylesheet for the website) instead of
+  `styles/app.css`, whose About rules were removed.
+
+## Round 3: How, Proof and Conversation (2026-11-12, Claude Code)
+
+Done with Claude Code, not Kiro (landing review `findings/top.md` and `findings/theme.md`; W1 of the ADR-006
+amendment of 2026-11-12). Files: `sections/How.tsx`, `pictures/HowScreen.tsx`, `sections/Proof.tsx`,
+`Pictures.tsx`, `sections/Conversation.tsx`, `pictures/Conversation.tsx` and their `site.css` blocks.
+
+- **How runway (W1, amends V30).** From 1024px the base layout is still: the picture beside the steps, not sticky,
+  cards `space-6` apart, no padding, so reduced motion and no JavaScript get a compact section (about 1,020px tall
+  at 1280 × 800, was about 1,920). The runway is in the no-preference block under `[data-site-motion]` (set by the
+  boot script before the first paint, so no layout shift): picture `position: sticky; top: var(--space-12)`
+  (`space-4` under 680px tall), steps `gap: 16svh` (was 24svh) and `padding-block: max(12svh, calc(var(--site-how-h)
+  - 50svh)) max(var(--space-6), calc(var(--site-how-h) + var(--space-12) - 50svh - var(--space-24) * 2))`. The top
+  padding is V30's (step 1 crosses the middle line only with the whole picture in view); the bottom is what keeps
+  the stuck picture whole while step 3 (a card of at least 192px) crosses the middle line, at least 24px (was 36svh).
+  About 1,510px at 1280 × 800 with motion. The step sync (MS-8.12) is unchanged.
+- **How lead and copy.** Lead "Three steps from the keys you press to the sentence you hear." in `.site-head`; step 02
+  without model ranking (P2-5); the spelling line removed (P2-4, Good to know keeps it).
+- **No placeholder rows (W1, amends V36).** In the desktop picture the three dashed `.site-cand__ghost` rows are
+  gone. The rows share a `.site-cell.site-cands-cell` with one line `span.site-cands__hint` "Sentences appear here"
+  (`label` type, `--ink-muted`, centred, `data-s="2"`, `role('out', 0)`): shown while step 2 has not played, fading
+  as the first row rises, hidden in the finished state.
+- **How keys (P3-4).** In `.site-how-screen` only, the 64px keys' letters sit under the digit: `margin-top:
+  space-3`, `label` size × 1.2 for 3-letter keys, `label` size for 4-letter keys and words. Key sizes unchanged.
+- **Step label and h2 on tokens.** `.site-step` weight `--type-heading-weight` (700); `.site-h2` line-height
+  `calc(1em + var(--type-display-line) - var(--type-display-size))`: 60px at 56px, 40px at 36px.
+- **Proof figure (P2-7, P3-3).** The last line is `"{reject}" is {code}. Your keys are {keys}.`, so "never spoken"
+  appears once in the figure. The "Your keys" digits are small keycaps: 32 × 32 cells (`grid-auto-rows: space-8`),
+  `--key` fill, `--on-key` text, a 2px `--line-strong` inset edge (visible on Night's sunken figure), radius 8; the
+  sweep box sits 4px outside the keycap (negative margin) so it shows on the key fill.
+- **Conversation (W1 amends V5-V7, P2-8, P2-9, P3-5).** `site-band site-band--surface`, so cards are
+  `surface-sunken` and stages `surface`. Stages `.site-stage--conversation` (`--stage-m`, 288px). Each card's title
+  is an `hgroup.site-card__titles`: `p.site-card__feature` (the app's feature name, `label` type, `--ink-muted`) then
+  the benefit `h3`. Finished frames (base styles) and plays:
+
+| Box | Plays | Finished state |
+|---|---|---|
+| They said | unchanged | unchanged |
+| Show and Flip | ring on Flip 1-2; upright message out u2, turned in k2; a small upright `.site-show--before` card (label type, `--line` edge, ink-muted) in k2 above the main card | the small upright card above the turned card |
+| Saved phrases | the well with Save phrase stays (a wrapping row, the sentence in `body-lg`); ring on Save phrase 1-2; list in k2; first row rise k3 | the well with Save phrase above "Your phrases" |
+| Spell and My words | the New step (chip over "Not in your words yet.", then Add to my words) stays; ring on Add 1-2; the Matches step rises k2 | New step above the Matches chip and "In my words." |
+
+Tests: `test/site.test.tsx` (MS-7.4, MS-7.7, MS-7.9, MS-9.3, MS-10.9, MS-3.1 bands, MS-8.4), `test/site-css.test.ts`
+("How steps' top padding ... with motion only"), `test/e2e/site.mjs` (the hint line at step 1 and after step 2; the
+reduced-motion layout check: no How runway, Proof figure before the legend and beside or under the head, its 64px
+`.site-cta` button).
+
+## Round 3: hero, bar and the try-it keypad (2026-11-12, Claude Code)
+
+Done with Claude Code, not Kiro. Findings P1-1, P1-2, P2-1, P2-2 and P2-10 of the landing review and the product
+owner's W1 and W4 (ADR-006 amendment of 2026-11-12). Requirements MS-3.1, MS-3.3, MS-6.1, MS-6.2, MS-6.2a, MS-6.4,
+MS-6.7, MS-6.10 to MS-6.14, MS-7.2, MS-11.3. Copy: `content.md` §1. This section wins where §0, §1 and "`KeypadDemo`
+changes" above say otherwise.
+
+### Bar (W1, P2-10)
+
+- The Main navigation shows from 960px (`@media (max-width: 959px) { .site-bar nav { display: none; } }`). Brand
+  (158px), nav (525px) and the header CTA (166px) with the 12px gaps need about 921px including the side padding, so
+  from 960px they are one row with room for font differences; under 960px the bar is brand and CTA. The bar is one
+  row (80px) at every width from 320px; no width puts "Open the app" alone on a row any more (was MS-13.2's documented
+  wrap at 720-1023px and under 352px).
+- Under 352px the brand link shows its icon only: `.site-bar .nl-brand__name` is visually hidden (the clip pattern),
+  so the link's accessible name stays "Ninth Life" and the lockup itself (`.nl-brand`) is not restyled.
+- `SiteBar.tsx` (shared with `/about`) keeps its markup; the rules live in the bar part of `site.css`.
+
+### Hero copy (P1-1, P1-2, P2-2)
+
+```
+p.site-hero__brand   [img.site-hero__icon 48px phone / 64px from 600px] Ninth Life   (brand type, ink)
+h1.site-hero__title  <span>Type on 9 keys.</span> <span>Hear your sentence.</span>     (display, 36-56px, moon)
+p.site-hero__lead    A free web app for typing to talk. Press one key per letter and hear the sentence you meant.
+div.site-cta         a.nl-btn--primary.nl-btn--xl "Open the app"   a.site-hero__how "See how it works"
+p.site-hero__note    Free. Works offline. No account.
+```
+
+- `h1`: `clamp(36px, 9.4vw, var(--type-display-size))`, line height 1.08, display weight and tracking, `--moon`. Each
+  sentence is an inline-block span, so wide screens break between the sentences and narrow ones wrap inside them.
+  Short landscape: `clamp(36px, 11svh, var(--type-display-size))`.
+- The icon is 64px from 600px (was 112px), 48px on phones and in short landscape (MS-6.1's minimum).
+- "See how it works" is a standalone link (56px target, `body-lg`, label weight, ink, underlined) beside the primary;
+  on phones the full-width primary pushes it to its own row. The note follows the actions row.
+- Phones: hero gap `--space-6`, copy gap `--space-3`, no top margin on the actions. Measured (Chromium, Night):
+  390x844: h1 156-235, CTA 349-413, demo top 539, sentence bar to 625, chips to 745, their label to 779, keypad top
+  795 (its top row starts on the first screen). 320x640: bar 80px (one row), demo top 577 (the sentence bar starts on
+  the first screen). Before: 390x844 demo top 774, 320x640 bar 144px and demo top 862.
+
+### Demo order (P2-1)
+
+```
+div.site-demo  (max-width 440px: the three finished chips, 426px, fit one row on desktop)
+  div.site-demo__bar        sentence + digits (sizers) + Hear it
+  div.site-sizer.site-demo__checked
+    [try mode] ul.site-demo__chips.site-sizer__ghost (the finished chips, hidden: holds the height)
+    ul.site-demo__chips aria-label="Proof check"   (example: the fixed slots; try mode: one chip per typed word)
+  p.site-demo__check        Checked against the keys. <a href="#proof">How the check works</a>
+  div.nl-keypad.site-pad.site-demo__keypad  role="group" aria-label="Keypad, try it"  (12 buttons, --nl-key inline)
+  p#site-demo-caption.site-demo__caption   example caption, or the try-it result line
+  div.site-demo__foot       button.site-demo__clear "Clear"   button.site-demo__play (the three labels in a sizer)
+  p.nl-sr-only[role=status][aria-live=polite]
+```
+
+The keypad panel is as wide as the sentence bar (`.site-demo__keypad { width: 100% }`, keys centred). The caption is
+visible: "One press per letter: 4 0 6333 0 92837 types “I need water”. 0 is space. Press the keys to try your own
+words." The digits are `aria-hidden` with a visually hidden copy read digit by digit ("4, 0, 6 3 3 3, 0, 9 2 8 3 7").
+
+### Try it (W4; overturns D13 and the old MS-6.2 picture rule)
+
+- **Keys.** `KeypadDemo` renders the 12 keys itself as `<button class="nl-key site-key site-key--try">` with
+  `KeyFace` (exported from `KeypadPicture.tsx`), `aria-label` from `KEY_ROWS` (the app's names), `data-try-key`, and
+  key 9 keeps `site-key--ninth` (A2 still fades its ring in once). `KeypadPicture` lost its hero-only `ninth` prop;
+  every other keypad is still an `aria-hidden` drawing. `.site-key--try` gets the pointer cursor and the pressed ring
+  while held (`:active::after`); focus is the design system's `.nl-key:focus-visible` ring (4px, 3px offset, inside
+  the panel's 16px padding).
+- **Keyboard.** Roving tabindex: one Tab stop (key 1 first, then the last focused key); ArrowUp/Down/Left/Right move
+  on the 4x3 grid. While a key has focus, the app's `mapKey(e, 'keyboard', 'control')` (`lib/keyboard.ts`) maps typed
+  digits, `*`, `#` and Backspace to key presses (held keys do not repeat); Enter and Space stay the focused button's
+  click. Nothing is captured outside the keypad.
+- **Loading.** The first key press or Clear calls `import('./try-engine')` once; when it resolves, the engine's
+  `loadDictionary()` (the app's `lib/data.ts`: `en.v2.json`, `en.bigram.v1.json`, `core-en.json`, with the same
+  hashed URLs as `/app`, so the service worker's precache is reused) runs. Presses before the engine arrives are
+  queued and replayed. No `next/dynamic`, no prefetch: the chunk is not part of the first load (checked in `site.mjs`
+  by comparing requests before and after the first press).
+- **Engine** (`components/site/try-engine.ts`, no `'use client'`): `press(state, key, dict)` is the app's
+  `composerReducer` + `actionForKey`, with `#` as the app's Next (the next of `readings()` pinned); `view(state, dict)`
+  is the app's `decodeWithPins` (k = 5) → `decodeAround` fallback → `buildSentence`, returning the top sentence's
+  text, one `{ word, code, state }` per word for the ProofChips, up to 3 formatted matches and `speakable`.
+- **Display.** Try mode (`.site-demo.is-trying`) shows the visitor's sentence (or "Press a key to start." muted),
+  their digits, a ProofChip per word (states from the app's proof: match, new, typing, unspelled) and the result line
+  in the caption: "Keys {codes} match: “Good”, “Home”, “Gone”." / loading / none / failed (`TRY_COPY`, `tryLine`). A
+  pressed key shows `is-pressed` for 160ms, so a typed digit is seen to land (a state, no animation; the A3 opacity
+  transition applies only with motion on).
+- **Live region.** The same line, 400ms after the last change (`TRY_ANNOUNCE_MS`), polite.
+- **Example and pressing** (MS-6.14). A press sets `acted`, clears the autoplay timer and, if the example plays,
+  ends it on the finished frame (no announcement), so it never autoplays after a press. "Play the example" clears
+  the visitor's keys and plays the example; Clear in example mode switches to an empty try mode.
+- **No movement under the finger.** The chips area keeps the finished chips' height (a hidden copy in the same grid
+  cell), and the well keeps its sizer, so the keypad does not move while typing until the visitor's sentence or chips
+  outgrow the example's (`site.mjs` checks the keypad's top before and after 4663).
+- **Budgets.** First load: `KeypadDemo` grows by the try-it UI (no decoder, no composer, no data); the engine chunk
+  (core decoder, composer, sentence, data loader) and about 0.9 MB of dictionary load only after a press, as in the
+  app. The SSR markup grows by the 12 buttons' names and the visible caption (MS-11.6 still under 15 KB gzip).
+- **Honesty** (MS-4.2, product.md). The copy says the words match the keys; nothing says the page or a model
+  understands. Results are the offline decoder's only; model ranking is never called from the website.
 
 ## Error handling
 
@@ -1150,8 +1453,8 @@ added to CI in this change (D9).
 
 ## Out of scope (backlog, with the reason)
 
-- An `og:image` social card: Next needs an absolute `metadataBase` for it, and there is no deployed origin yet;
-  make it when the URL exists (CHECKLIST A1).
+- ~~An `og:image` social card~~: done in round 3 (MS-3.6), from `SITE_URL` or Vercel's production URL; see
+  "Round 3: search, sharing and answer engines" below.
 - A size-adjusted fallback font face to remove any font-swap reflow on slow connections: the fonts are preloaded,
   the measured CLS budget (MS-11.2) is the gate, and a fallback face changes `globals.css` for the app too.
 - Lighthouse in CI (D9). Real-device checks (honest limit).
@@ -1226,3 +1529,619 @@ Review: `.agents/tasks/marketing-landing/design-review.md` (2026-11-10, third re
 | 5 | NIT: the proof frame 3 label must be 16px (R5) | "Drawings": frame labels use the `label` size (16px), so "Dropped" outside `aria-hidden` passes MS-10.5. |
 | 6 | NIT: the tablet hero padding is not given (R6) | §1: tablet (600-1023px) padding block `var(--space-12)` / `var(--space-16)`; desktop `var(--space-16)` / `calc(var(--space-16) + var(--space-12))`, no raw 112px. |
 | 7 | NIT: `site.mjs` sizes carry screen and touch, but `newContext` cannot set them (R7) | Test plan: size passes build their contexts like `responsive.mjs` (`viewport`, `screen`, `deviceScaleFactor: 2`, `hasTouch`, `isMobile` on Chromium touch sizes, `reducedMotion`, `serviceWorkers`) plus the same `nl-theme` init script; other runs use `newContext`. |
+
+## Round 3: search, sharing and answer engines (2026-11-12, Claude Code)
+
+Done with Claude Code, not Kiro (findings `seo.md` of the landing review; MS-3.6 to MS-3.9, W5, W6).
+
+- Origin: `lib/site-url.ts` `siteOrigin()` reads `SITE_URL`, then `https://${VERCEL_PROJECT_PRODUCTION_URL}`, else
+  null; invalid values give null. `app/layout.tsx` sets `metadataBase` only with an origin. No origin means no
+  absolute URL anywhere (Next would otherwise fall back to localhost for social images), no `Sitemap:` line and a
+  404 at `/sitemap.xml` (a sitemap's `<loc>` must be absolute). `.kiro/steering/tech.md` records this.
+- Metadata: `components/site/seo.ts` `pageMetadata()` gives each page its title, description, Open Graph base
+  (`website`, `Ninth Life`, `en_US`; repeated because Next replaces a parent `openGraph` wholesale) and, with an
+  origin, its canonical, `og:url` and the social card. Canonical is per page, never in the layout (children
+  would inherit it). `SITE_DEFINITION` is the one definition.
+- Social card: `public/social-card.png`, 1200x630, about 80 KB, made by `scripts/gen-og.mjs`
+  (`pnpm -F @ninth/web og`, Playwright, tokens, self-hosted fonts and the logo) and committed. It is in `public/`
+  but left out of the precache (`next.config.mjs` `NOT_PRECACHED`); its URL carries a content hash. Chosen over
+  `app/opengraph-image.*`, whose file convention cannot be switched off without an origin (it would emit a
+  localhost `og:image`), and over `next/og` (needs TTF/OTF fonts, no CSS variables, WASM in every build).
+- JSON-LD: `components/site/structured-data.ts`, rendered by `app/page.tsx` before the footer; `<` escaped.
+  FAQPage reads `faqItems()`, exported by `Faq.tsx` and used by its own rendering. No Person (W6), no rating.
+- `/llms.txt`: `components/site/llms.ts`; low value (few answer engines fetch it) but one file and it passes
+  Lighthouse's `llms-txt` audit.
+- `/app`: own title and description, a visually hidden `h1` inside `main`, and the first-paint fix (see
+  `docs/testing/performance.md`, "`/app` first paint").
+- Tests: `test/seo.test.tsx` (all of the above), `test/site.test.tsx` MS-3.5, `test/lighthouse-lib.test.ts`
+  (Agentic Browsing reported with no target).
+
+## Round 3 polish: the final review's fixes (2026-11-13, Claude Code)
+
+Done with Claude Code, not Kiro, after an independent final review of the website. Items R3-P1 to R3-P10 in
+tasks.md; the copy is in content.md, the rules in requirements.md (MS-3.9, 4.4, 4.7, 5.3, 6.10, 6.12, 9.1, 10.5, 14.2).
+
+- **The hero keypad never moves (R3-P1, MS-6.10).** Every part of `KeypadDemo` above the keys keeps one size whatever
+  is typed. Each shares a grid cell (`.site-sizer`, one `minmax(0, 1fr)` column) with a hidden copy of the finished
+  example. In try mode the sentence, the keys and the chips are `.site-demo__line`: one line, `nowrap`, clipped, and
+  set right-to-left only so that an overflowing line is start-aligned and shows its end (the inner
+  `.site-demo__end` reads left to right, `unicode-bidi: isolate`); a line that fits sits left (the chips centred). A
+  clipped line gets a 24px mask fade on its left (`data-clipped`, set after each render). Only the last 3 words get a
+  chip (`TRY_CHIPS`). The empty text "Press a key to start." is body size, one line at 320px. The caption sits in
+  `.site-demo__under`: at least 3 body lines, or the example caption's height (its hidden copy), and the try-it line
+  is clamped to 3 lines (the whole line stays the keypad's description and the live announcement). Measured at 12
+  widths from 320 to 1920 in Chromium and WebKit, through key 1, Clear, 4663, #, ##, "He need water", 6 and 8 words
+  and punctuation: the keypad, Clear and Play move 0px (`test/e2e/site.mjs` "try it steady", all 14 sizes).
+- **Key faces under 80px (R3-P2).** The How screen's rule (letters under the digit at label x1.2, words at label)
+  is one shared rule for the How screen, the switch drawing, the Touch drawing's 72px key and, under 360px, the
+  hero's try-it keys (about 67px at 320). The switch drawing's tray pads its keys by 12px (8px only on a 320px
+  window with a fine pointer, where a classic scrollbar leaves a 225px stage), so the 9px scan ring stays inside it.
+- **My words (R3-P3).** The site's running text calls the person's list "My words", the app's feature name: a check
+  is "in the dictionary or in My words", a plus "not in the dictionary or My words yet". The Spell drawing keeps the
+  app's own strings ("Not in your words yet.", "In my words.").
+- **The line after # (R3-P4).** `try-engine.ts` `view()` lists the matches for the keys alone (the same
+  `decodeWithPins` with pins and choices taken off) and adds the sentence on show when # moved past them;
+  `shownIndex` marks it. `tryLine()` marks it "(shown)" when it is not the first and adds no full stop after a match
+  that ends in punctuation.
+- **404 (R3-P5).** `app/not-found.tsx` imports site.css and renders `SiteBar` (home "/"), the head (`.site-h2`,
+  `.site-lead`) and a `.site-cta` row in one Night page, then `SiteFooter`. Title "Ninth Life: page not found", own
+  description; Next keeps the 404 status and `noindex`.
+- **Night footer (R3-P6, lead decision extending W2).** `SiteFooter` carries `data-theme="night"` and the Night
+  ground, on `/`, `/about` and the 404; its favicon tile now sits on Night as in the bar.
+- **The model line (R3-P7, lead decision amending D14).** `getResults().modelRuns` carries the measured provider and
+  model ids; `modelRunsLine(m, rankingProvider())` names them ("2 MiniMax models (MiniMax-M3 and
+  MiniMax-M3.1-Flash)") and says "The app's model ranking uses Anthropic's Claude API, which has not been measured
+  yet." while RESULTS.md has no Anthropic run (or "…, the provider measured here." when it is the same provider).
+  Results and `/llms.txt` use the same function. No model-run number.
+- **Smaller fixes (R3-P8).** The hero's brand line is hidden from 352 to 599px (the bar shows the brand; under 352px
+  it stays as the name alone, the icon is hidden under 600px). Key 1, 0 or # before any letter answers on the line.
+  Chips write "I" (the app's `formatSentence` tokens: `chipLabels()` at build time for the example, `TryWord.label`
+  from `buildSentence` tokens in try mode). Clear and Play share one row on phones (Play flexes; its hidden labels
+  keep its size). The per-source Results line uses plain words; the caveat card spans the stat grid. The footer
+  statement is body type. "Free. Works offline. No account." in the close too. "Who made it" carries the year. The
+  hero keypad's tray hugs its keys; from 600 to 1023px the demo starts at the copy's left edge. How step 3's stage
+  hugs its well on phones (24px above and below).
+- **Canonical of / (R3-P9).** With a `metadataBase`, Next 15 writes the canonical and `og:url` of "/" as the bare
+  origin (`resolveAbsoluteUrlWithPathname`: pathname "/" becomes `origin`). The layout now sets none and
+  `pageMetadata()` writes absolute URLs (canonical, `og:url`, the card image); with no base Next keeps them as
+  written, so "/" is `${origin}/`, the sitemap's and the JSON-LD's URL (`test/seo.test.tsx` R3-P9 runs Next's own
+  resolver both ways).
+- **A row after Access (R3-P10).** A secondary "Open the app" `.site-cta` row ends Access, as Results and Privacy do.
+
+## Round 4: shared language (2026-11-13, Claude Code)
+
+This round was done with Claude Code, not Kiro. The product owner asked for more visuals, motion and
+micro-interactions; seven agents redesigned the sections on one language, below (proposal `proposals/language.md`,
+decisions `01-decisions.md` §1, both in the round's notes). Requirements: MS-7.1, MS-7.3, MS-8.2, MS-8.11 (round-4
+rulings), MS-8.14, MS-8.15. Section designs follow in their own round-4 parts.
+
+### Motion v2
+Principles:
+1. Motion shows cause and effect, then rests.
+2. Motion is calm: small distances, one axis, no scale, spin or slide.
+3. One focus at a time.
+4. Things people press never move.
+5. CSS first, declared in markup (`data-reveal`, `data-play`, role classes). `SiteMotion` stays the only motion
+   script, and no section adds an observer or a listener.
+6. Reduced motion, or no JavaScript, gives the finished page, still.
+
+| # | Where | Trigger | Timing (tokens) | Motion off |
+|---|---|---|---|---|
+| A1, A2 arrival | hero only | load | `motion-fade-slow` after `motion-delay-arrival` | shown at once |
+| A3 demo | hero keypad | autoplay once; Play | `motion-demo-step`; ring `motion-jump` linear | finished example |
+| A4 reveal | heads, cards, figures (never the hero, `#start` or the footer) | the block enters view | `motion-fade`, rise ≤ `motion-reveal-distance`, `motion-stagger` × ≤ 2 | visible |
+| A6 page cross-fade | `/`, `/app`, `/about` | navigation | `motion-crossfade` | plain navigation |
+| A7 play once | every drawing in a stage | the play line | lead + k × step; parts `motion-state` (≤ `motion-nudge`), rings and marks `motion-jump`; ≤ 4,000 ms; a Results bar grows once over `motion-grow` (PO-1) | the base styles are the finished frame |
+| A8 How step sync | retired in round 4, with the sticky How picture (How plays its row once, A7) | | | |
+| A9 control feedback | every real control | hover, press, focus | hover layer `motion-jump` linear (opacity, `state-hover`); a link's icon `motion-state` ease-out, ≤ `motion-hint`; focus instant | colours and edges change at once; nothing moves |
+| A10 live part entry | try-it chips and their checks; a question's answer | the element appears; `details` opens | chip opacity `motion-jump` linear; answer `site-rise` over `motion-state` | appears at once |
+
+Choreography:
+1. **Order.** The head reveals first, then the cards. A drawing plays only once it reaches the play line, which
+   sits above the reveal line, so its card has already started to reveal.
+2. **Cause before effect.** The ring arrives at t(k). At t(k + 1) it leaves and the effect arrives (a handover).
+3. **At most three changes at one instant in view.** A column box drawn across lines counts as one part. Series
+   arrive one per step, at most 4 items. One ember ring per drawing and per row at a time.
+4. **Distances and direction.** Blocks rise ≤ 16px, parts ≤ 8px, a control's icon ≤ 4px in the direction it
+   points. Nothing slides sideways, scales or spins in motion. A turned card is a still frame.
+5. **Durations by size.** 120 ms for highlights (rings, marks, hover layers), 200 ms for parts, 600 ms for blocks
+   and for a growing bar, 900 ms only for the hero's arrival.
+6. **Easing.** Ease-out for anything arriving or fading, linear for highlights. Parts that replace each other share
+   one curve and duration, so their opacities sum to 1 (no dip, no double image).
+7. **Never moves.** Keys, buttons, chips and the keypad never move (MS-6.10, motor memory, keyguards).
+8. **Flashes.** Rings and boxes are thin outlines. No filled area larger than a key changes more than 3 times a
+   second (WCAG 2.3.1).
+
+CSS techniques:
+- **Used:**
+  - transitions and the existing keyframes, on `opacity` and `transform` only, plus Results' `site-grow` (transform
+    only);
+  - `@starting-style` for A10 (without support, parts simply appear);
+  - `:has()`;
+  - `@media (hover: hover)` around every hover state, so a tap leaves no sticky hover.
+- **Not used:**
+  - `will-change` (browsers promote animated opacity and transform themselves);
+  - `content-visibility` (it changes the boxes the observers measure and risks layout shift);
+  - `transition-behavior: allow-discrete`;
+  - scroll timelines;
+  - JavaScript animation;
+  - named view-transition groups (they animate size and position).
+
+### Control feedback (A9) and live parts (A10), as built in `site.css`
+- **The hover layer.** `.site .nl-btn:not(.site-drawn-btn)::after` and `.site .site-key--try::before`:
+  - absolute, `inset: 0`, `border-radius: inherit`, `background: currentColor`, `opacity: 0`;
+  - on `:hover` with `(hover: hover)`, opacity `var(--state-hover)`, except `:disabled` and `[aria-disabled="true"]`.
+
+  The layer is the control's own text colour, so it works on ember, transparent, sunken and plum fills alike, and
+  `site.css` never sets an ember background (MS-9.1). It covers `.site-icon-btn` (r4-hero) as an `.nl-btn`; with a
+  4px transparent border, `inset: 0` is the 48px visible circle.
+- **Secondary button.** The edge turns `--ink` on hover.
+- **Ember link-button.** `.site a.nl-btn--primary:hover` keeps `--on-ember`. Without it, globals.css's `a:hover`
+  (0,1,1) turned the hero's and `#start`'s "Open the app" label ink on hover, about 1.6:1 on ember. This was
+  round 3's bug, made visible by the hover layer.
+- **Links.** Content links and question summaries thicken their underline to `line-width` on hover.
+- **Press and focus.** Press is the design system's own (`ember-deep`, the `surface-sunken` fill, the quiet button's
+  inner ring, a key's ember ring). Focus is `.nl-btn:focus-visible` and the global ring, unchanged and instant.
+- **`.site-go`** (a standalone link that goes somewhere): `inline-flex`, gap `space-2`, 56px tall, then a trailing
+  `SiteIcon`:
+  - `arrow`, turned by `turn` (`site-icon--up`, `--down` or `--left`);
+  - `external` with `.site-go--out`.
+
+  Its `--site-go-hint` points the icon's way; the motion block applies it as a transform on hover and on
+  `:focus-visible`, over `motion-state`.
+- **A10.**
+  - Chips: `@starting-style` opacity 0 and a `motion-jump` transition on
+    `.site-demo:is(.is-playing, .is-trying) .site-demo__chips:not(.site-sizer__ghost) .nl-chip` and its `> .nl-icon`.
+  - Answers: `.site-faq[open] > :not(summary)` runs `site-rise` over `motion-state`, fill `backwards`.
+  - All of it sits under `[data-site-motion="on"]`.
+
+### Illustration language
+- **Stage.** Every drawing sits in a `.site-stage`: `surface-sunken` in a card, `surface` on a surface band, radius
+  `radius-card` − `space-2`, no edge, no shadow. The hero keypad is the exception: it is a real control.
+- **Depth from fills, never shadows.** Band, card (2px `line` edge), stage, piece (`--site-piece`, the card's fill),
+  keypad panel (`--panel` with `--lift`, the one shadow), key.
+  - A key always sits on its panel. A key drawn outside a keypad sits on `.site-key-panel` (padding `space-2`,
+    radius `radius-key` + `space-2`, `--panel`, `--lift`, keys bottom-aligned, several keys allowed): in Night the
+    stage is plum, the key's own fill.
+  - No glows.
+- **Edges.** 2px everywhere. A drawn app component keeps its own edge; containers invented for a drawing have none.
+  Dashed means a boundary or "new"; dotted means typing. Rings are `ring-width`; the scan ring is `scan-width` plus
+  a plum ring.
+- **Scale.** The app's own sizes:
+  - keys 64px, with these exceptions: proof keys 52px (five in a row), the Touch drawing at the true 72 and 128px,
+    and the hero keypad's 64px-tall real keys;
+  - real ProofChips;
+  - the sentence in `candidate`;
+  - digits in mono `label`, ink-muted;
+  - drawn buttons are secondary `nl-btn`s;
+  - UI text in `label`.
+
+  Nothing in a drawing is under 16px. Widths shrink; text never does (MS-7.7).
+- **Ember means a press.** The pressed ring, or the scan highlight; one ring per drawing and per row at a time. The
+  effect is drawn in ink.
+  - Press ring v2: on a drawn button or a drawn computer key, `.site-press-ring` covers the 2px edge
+    (`inset: −line-width`) and carries a `line-width` plum line inside the ember ring, so ember always sits on plum,
+    as on the lit key, the Day primary and the scan ring.
+  - Keys keep the plain ring (`.site-key-ring`).
+- **Icons in drawings and titles.** Always beside their word, 24px (22px beside a word inside `nl-btn` and `nl-chip`;
+  24px in an icon-only `.site-icon-btn`, where the icon is the whole face), in the
+  colour of their row (titles `--ink-muted`), never ember. Proof colours only through ProofChip.
+- **Charts** (lead ruling, then PO-1):
+  - a bar is a drawn piece, 16px thick with 4px corners, on a `--site-piece` track;
+  - our value is `--ink`, a comparison `--line-strong`;
+  - the label and the number are real text beside the bar;
+  - never ember, never colour alone;
+  - the bar grows once from its start edge (`transform: scaleX`, `motion-grow`, the last change ≤ 1,600 ms after the
+    trigger), and its finished full length is the base style.
+- **Captions.**
+  - In a card: feature label (`label`, ink-muted), then the `h3`, then one line (`body`, ink-muted).
+  - Under drawn things: `label`, names in ink 600, values in mono ink-muted.
+  - Never `caption`.
+- **Facts.** `.site-tile` is a 48px tile, `radius-chip`, with a 24px ink icon. Its fill is `surface-sunken` by
+  default, `surface` inside a filled card on a surface band (a note card has no fill, so its tiles stay sunken), and
+  `--site-piece` in a stage. `.site-fact` is a tile and one
+  short line.
+- **Night and Day.** Same structure, tokens swap. The hero, `#start` and the footer are Night always.
+
+### Icons (`components/site/icons.tsx`)
+- **API.** `SiteIcon({ d, label?, className?, turn? })` plus one named export of path data per icon.
+  - It renders `svg.nl-icon` (24px, 2.5px round stroke, `currentColor`; components.css).
+  - Without `label` it is `aria-hidden` and not focusable; with `label` it is `role="img"` with that name.
+  - `turn` (`up`, `down` or `left`) rotates the drawing inside the SVG (a still transform) and adds
+    `site-icon--{turn}`, so `.site-go` points its hint the same way.
+  - Circles are two arcs, so one renderer draws every icon.
+- **Names.** play, replay, backspace, arrow, external, download, minus, info, report, clock, key, keypad, keyboard,
+  view, screens, sun, moon, toggle, lock, cloud, globe, code, chart.
+- **App icons** stay in `components/Icon.tsx` and are used from there, never copied.
+- **Why a separate module.** `Icon.tsx`'s `PATHS` object cannot be tree-shaken, so adding 23 icons there would put
+  about 0.8 KB gzip into the app's chunk and the site's client chunk. Named exports cost a client chunk only what it
+  imports, and server components cost markup only.
+- **Never drawn:** people or hands, devices with features (MS-4.3), third-party marks, sparkles, shields or badges,
+  hearts.
+
+### Shared primitives (`site.css` header list)
+- **Built by r4-language:** the hover layer, `.site-go` (+ `--out`), `.site-tile`, `.site-fact`, `.site-key-panel`,
+  the press ring v2, the A9 and A10 rules.
+- **Built by the section owners, in the same block, reviewed against this language:** `.site-icon-btn` and
+  `.site-tip` (r4-hero), `.site-step` (r4-how, reused by r4-proof) and `.site-caveat` (r4-close).
+- **Not built:** `.site-card--link`, because no section makes a whole card a link.
+- **Removed:** `.site-split`, the round-1 two-column wrap, unused once Source dissolved (rule and header line).
+
+Tests: `test/site-icons.test.ts` (new), `test/site-css.test.ts` (A9, A10, the primitives, the press ring v2, the
+keyframe list with Results' `site-grow`), `test/tokens.test.ts`, and the language's block in `test/e2e/site.mjs`
+(hover and press never move a key or a button; the hint is at most 4px; with reduced motion nothing transforms on
+hover).
+
+## Round 4: the hero demo (2026-11-13, Claude Code)
+
+Done with Claude Code, not Kiro. The product owner: "the right part of the hero section, too crowded, the buttons are
+too big, use some icons, too big in height, find a way to remove the text from there and improve the component
+visually and practically". Decisions §2 Hero (mock D approved; keep the one invitation line; option T). Requirements
+MS-6.2, MS-6.2a, MS-6.3, MS-6.4, MS-6.7, MS-6.10, MS-6.12, MS-6.13, MS-6.15, MS-6.16, MS-10.8. Copy: `content.md` §1.
+This section wins over "Round 3: hero, bar and the try-it keypad" and "`KeypadDemo` changes".
+
+### Structure
+
+```
+div.site-demo[.is-playing|.is-trying][data-tips-off]       one 284px column (--site-demo-w: three 84px keys + gaps)
+  div.site-demo__card                                       surface-sunken, radius-card, 12px in
+    div.site-demo__said                                     at least 64px: two chip lines, or three label lines
+      example   ul.site-demo__chips[aria-label="Proof check"] > li.site-sizer.site-demo__slot (ghost + live ProofChip)
+      try       div.site-demo__line[data-end] > ul.site-demo__chips.site-demo__end > li > ProofChip (the last 3 words)
+      no word   div.site-demo__hint > p (start, key 1, key 0 or #) [+ p.site-demo__kbd "Your keyboard works too."]
+  p.site-demo__status                                       one line: the invitation, "Next: <b>Home</b>, <b>Gone</b>",
+                                                            or the decoder's state
+  div[role=group].nl-keypad.site-pad.site-demo__keypad      aria-describedby="site-demo-desc"; --nl-key: 64px inline
+  div.site-demo__tools                                      three cells, one under each key column
+    button.nl-btn.site-icon-btn.site-demo__play             replay (stop while playing) + span.site-tip--start.site-demo__label
+    button.nl-btn.site-icon-btn.site-icon-btn--filled.site-demo__hear   speaker + span.site-tip (only with speech)
+    button.nl-btn.site-icon-btn.site-demo__clear            x + span.site-tip--end
+  p#site-demo-desc.nl-sr-only                               the example caption's words + "Your keyboard works too."
+  p.nl-sr-only[role=status][aria-live=polite]               the result line (R3-P4) and a person's play
+```
+
+### The parts
+
+- **Chips.** `ProofChip` is unchanged; hero CSS lays it out as a two-column grid: icon and word (`body-lg`, 20/28) on the
+  first line, the code (mono `label`, digit tracking) under the word, so the sentence and its digits show once and
+  "need" over "6333" shows one press per letter. The states keep icon, edge and text treatment (MS-9.3). The example's
+  slots keep R3-P1's ghost chips (MS-6.10). In try mode `.site-demo__line > .site-demo__chips` is `inline-flex`, one
+  row that shows its end.
+- **Status line.** `TRY_COPY.invite` in the example, rendered after hydration (`live`), so the server HTML and a page
+  without JavaScript show nothing there; while trying, `tryStatus()`: `failedShort`, `loading`, `noneShort`, or
+  `view.next` shown as "Next: …".
+- **Next readings.** `try-engine.ts` `TryView.next` (`nextReadings`): the lexicon's `readings()` of the last code in the
+  order `press('#')` steps through them, starting after the word on show, at most `TRY_NEXT` (2), written as the chips
+  write words (`formatSentence` of the sentence with that reading). Verified on the shipped dictionary: 4663 gives
+  Good, then Home, Gone, Hood. Only the lazy engine chunk grows.
+- **Keys.** `--nl-key: 64px` inline (`KEY_DRAWING_SIZE`); the width comes from the row: `flex: 1 1 0` between 64px and
+  `--site-key-w` (`key-min` + `space-3` = 84px), so 84px wide, 80px in a 320px window with a classic scrollbar. Panel:
+  8px padding, radius `radius-key` + `space-2`. The letters sit under the digit at every width (the R3-P2 face). Key 9's
+  resting ring hides while playing and while trying, so at most one ember ring shows. The hover layer is A9's.
+- **Toolbar.** A grid of three cells, `grid-column` per button, so Play and Clear keep their cells when there is no
+  speech. Tab order = DOM order: keypad, Play, Hear it, Clear. Clear is `aria-disabled` while there is nothing to
+  clear (try mode, no key since the last Clear).
+- **`.site-icon-btn` + `.site-tip`** (a shared primitive, in the site.css header list; look reviewed by r4-language).
+  A 56px target drawn as a 48px circle (a 4px transparent border, `background-clip: padding-box`); 2px `line-strong`
+  ring; press: `surface-sunken` fill; `--filled`: `key` fill, `on-key` icon, press: an inner 3px `line-strong` ring;
+  `aria-disabled`: `line` ring, `ink-muted` icon; the design system's focus ring; the A9 hover layer on `::after`. The
+  name is the button's own text in `span.site-tip` (`ink` fill, `ground` text, `label` type) under the button, shown on
+  `(hover: hover)` `:hover` and on `:focus-visible`; `--start` / `--end` hang it from the row's ends so it never leaves
+  the column; `[data-tips-off]` on an ancestor hides it (KeypadDemo sets it on Escape and clears it when focus moves or
+  the pointer leaves the toolbar); in forced colours it gets a 2px `CanvasText` edge.
+- **Keyboard.** `onKeyDown` on the demo root: Escape hides the names; digits, `*`, `#` and Backspace go through the
+  app's `mapKey` to `pressKey`; arrows move only from a key. A document listener covers Safari, which does not focus a
+  clicked button: after a pointer press inside the demo (a capture `pointerdown` listener), keys typed while nothing
+  has focus and the demo is on screen press the keys too; a pointer press elsewhere ends it. Focus is never moved by
+  script (a mouse click shows no focus ring), and a key typed into another control is never taken.
+- **Autoplay.** Two observers: the demo (thresholds 0, 0.1, 0.6, as before) and the toolbar (0 and `TOOLS_IN_VIEW`,
+  0.99). `arm()` runs the `motion-autoplay-delay` timer only while the demo is at least 60% in view and the toolbar is
+  wholly on screen; the toolbar leaving during an automatic play stops it on the finished frame (no announcement).
+  `autoplayDecision` (motion.ts) is unchanged; KeypadDemo adds the toolbar condition.
+- **Option T (tablets).** From 720 to 1023px wide and 600px tall: the hero is a row, `gap: space-6`, the demo fixed at
+  `--site-demo-w`; the copy column is 364px or wider (388px at 744), so the `h1` wraps only between words, and the whole
+  hero is on a portrait tablet's first screen. Phones held sideways keep the stacked hero (MS-10.7).
+
+### Motion (within MS-8; no change needed)
+
+A1 and A2 as before; A3 (the pressed ring, `motion-jump` linear) as before; the autoplay as MS-6.3 with the toolbar
+condition; A10 (r4-language's rule, opacity over `motion-jump`) on the entering chips and their check icon:
+`.site-demo:is(.is-playing, .is-trying) .site-demo__chips:not(.site-sizer__ghost) .nl-chip`; the names fade in over
+`motion-jump` with `motion-ease-out`, after `motion-delay-arrival` on hover and at once on keyboard focus, and hide at
+once. With reduced motion every change is instant; nothing moves a key or a button.
+
+### Measured (Chromium, Night, reduced motion)
+
+| | Round 3 | Round 4 |
+|---|---|---|
+| Demo height, 1440 / 390 / 320 | 758 / 814 / 833 | 476 at every width |
+| Hero height at 1440x900 | 934 | 652 |
+| Keypad top at 390x844 | 735 (row 1 cut) | 595 (rows 1-3 on the first screen) |
+| Demo top at 768x1024 | 583 | 128 (option T) |
+| Visible prose in the example | caption (2 lines) + check line | one status line |
+
+Bytes (gzip): the demo's server markup 1,202 → 1,081 B; its client bundle (minified, React external) 7,027 → 7,418 B
+(+0.39 KB, mostly the shared `SiteIcon` renderer; `KeypadDemo` itself is a little smaller); its CSS (minified) about
++0.5 KB, most of it the shared `.site-icon-btn`/`.site-tip` primitive; MS-11.6 passes.
+
+Tests: `keypad-demo.test.tsx` (43: the finished frame, autoplay with the toolbar, Stop, the toolbar's names, Escape,
+Clear unavailable, keys typed from the toolbar and with nothing focused, the status line and `tryStatus`, `next`);
+`site.test.tsx` (MS-6.2 order and names; MS-4.1's first-render set); `e2e/site.mjs` (the first phone screen, the result
+line in the live region, "Next:", the Tab order, the 14-size steady check on the keypad, the toolbar, the card's
+height and one status line, no-JavaScript status line); `e2e/axe.mjs` (the try-it wait reads the live region).
+
+## Round 4: How it works (2026-11-13, Claude Code)
+
+Done with Claude Code, not Kiro. The product owner asked for "a total revamp, both in the way it looks, feels and
+works"; the approved concept is the story row (proposal `proposals/how.md`, decisions §2). Requirements: MS-7.4, MS-7.7,
+MS-7.8, MS-8.11 (the sequenced row), MS-8.12 (removed), MS-8.13 and MS-10.9. Files: `sections/How.tsx`,
+`pictures/HowScenes.tsx` (replaces `pictures/HowScreen.tsx`), `KeypadPicture.tsx` (a `rows` prop for the crop; the
+`KeyRing.s` field is gone), `site-data.ts` (`getHowData`), `SiteMotion.tsx` and `motion.ts` (the step sync, `activeStep`
+and `howStart` removed), the How blocks of `site.css` and the shared `.site-step`.
+
+**Structure.** `section#how.site-band` > `.site-wrap.site-stack`: the head (`h2`, lead "Three steps. Nothing is said
+until you press Speak."), `ol.site-how__steps[role=list]` with three `li.site-how__step`, then one `p.site-caveat`
+(the info icon and the spelling and language limits, r4-close's approved sentences). Each `li` carries the scene's
+play class and `data-play-scope`, and holds `div.site-stage.site-how__stage[aria-hidden]` > the scene
+(`div.site-drawing.site-how__scene[data-play]`, stretched to fill its stage), then `div.site-step` (the number, an `h3`
+title and one line). No full keypad and no typing well (the hero shows both); no letters over digits (the proof does).
+
+| Step | Scene (the app's own parts) | Play class | Changes (role, step) |
+|---|---|---|---|
+| 1 Press one key per letter | keypad rows 1 and 2 (keys 1 to 6, 64px, on the panel), the digits typed so far | `quick` (400) | rings on 4 k0-u1, 6 k1-u2, 6 again k2-u3 `late`, 3 k3-u4; each digit in one step after its press, k1-k4 |
+| 2 Pick what you meant | the status pill "Offline dictionary ready", the top 3 for 4663 (Good, Home, Gone) as candidate rows | `sweep` (240) | rows rise k1, k2, k3; the marker on row 1 k2-u4; the check on Home k4 |
+| 3 Hear it out loud | the sentence card ("Home", 4663), drawn Speak and Show (secondary) | `sweep` (240) | "Home" and 4663 in k0; the ring on Speak k1-u2; Speak becomes Speaking at k2 |
+
+**Layout.** One column under 1024px: each stage hugs its scene (`space-3` above and below), the step under it, a
+static chevron (`--line-strong`, `ring-width`) in the `space-12` gap. From 600px to 1023px each step puts its 320px
+stage beside its text. From 1024px one row of three (`repeat(3, minmax(0, 1fr))`), every stage `--stage-m` (a
+minimum), the chevrons pointing right in the gaps, level with the stages' middles. DOM order is the reading order in
+every layout (no `order`). Measured: 844px at 1440 × 900 (was 1,448 with motion), 1,422px at 390 × 844 (was 1,916).
+
+**Motion.** Each scene is an A7 drawing. From 1024px the three stages are equal, so they reach the play line together,
+and `--play-after` makes them play in story order (MS-8.11's sequenced row): step 2 `calc(4 * var(--motion-frame-quick))`,
+step 3 that plus `5 * var(--motion-sweep)`. Leads 300, 1,900 and 3,100 ms; last changes 2,100, 3,300 and 3,780 ms.
+Below 1024px each scene plays on its own from the 300ms lead. One ember ring at a time across the row (step 1's last
+ring ends at 2,020 ms, Speak's starts at 3,340). The step numbers light while their scene plays: `.site-step__lit`
+carries a `during` role, and the rule `[data-site-motion="on"] [data-play-scope]:has([data-play][data-played="1"])
+.site-step__lit` plays it on the scene's clock (the `li` carries the play class, and the lead rule covers
+`[data-play-scope]`). Numbers hand over at 3,100 ms (2 off, 3 on). No replay (PO-2). Reduced motion, no JavaScript:
+the finished frames, no number lit.
+
+**`.site-step` (shared, with Proof).** `li` or `div.site-step` > `span.site-step__num.site-cell[aria-hidden]` (the
+digit, then `span.site-step__lit` with a `during` role) + `.site-step__title` (any element; heading type unless a
+section sets its own) + optional `p.site-step__line` (ink-muted, `--measure`). A grid `[tile | text]`; the tile spans
+both rows and the title's padding is `max(0px, calc((tile - 1lh) / 2))`, so its first line centres on the tile at any
+type size, a title-only step is as tall as the tile, and the line follows the title. Tile 48px by `--site-step-num`
+(Proof sets 40px). Lit inside a play root by the A7 `.site-during` rule (Proof), beside one by `[data-play-scope]` and
+`:has()` (How). Forced colours: the outline is on `.site-step__num`.
+
+**Tests.** `site.test.tsx` (MS-7.4 scenes; MS-8.11 the How row in story order, one ember ring at a time, last
+changes 2,100, 3,300 and 3,780; MS-8.12 round 4 structure, the caveat and the drawn buttons; MS-7.3 the repeated 6 on
+the crop; MS-10.8 three keypads; MS-8.4 the marked blocks); `site-css.test.ts` (no step sync, sticky or runway; the
+row and the offsets; the shared `.site-step` and its one `:has()` rule); `site-motion.test.tsx` (the step sync gone: a
+step scope plays like any drawing, no middle-line observer); `site-data.test.ts` (`getHowData` with labels, no well
+texts); `e2e/site.mjs` (the row, the column and stage order at every layout size; How stages equal in the row and
+hugging below; the story order at 1280 × 800 and 1024 × 768 and one scene alone at 768 × 1024; at most one ember ring
+across How; no How animation left 4.5 s after the play line).
+
+## Round 4: the proof check (2026-11-13, Claude Code)
+
+The product owner asked for "a more visual and intuitive visual on the right, possibly animated and coordinated with
+the left section". Done with Claude Code, not Kiro (r4-proof; proposal `proposals/proof.md`, decisions §1.2 and §2
+"Proof" of the round's `01-decisions.md`). Requirements: MS-7.6, MS-7.9, MS-8.4, MS-8.11, MS-9.3, MS-10.5, MS-10.9.
+Files: `sections/Proof.tsx`, `pictures/ProofCheck.tsx` (new; `Pictures.tsx` is deleted), `site-data.ts`
+(`getProofExample` gains `keyLetters` and two checks; `proofCanLine` and `proofNeverLine` replace `proofSaidLine`), the
+proof blocks of `site.css`.
+
+**Layout.** `section#proof` holds `div.site-wrap.site-stack`: the head (`h2`, the lead's first two sentences), then
+`div.site-proof-layout.site-play--sweep[data-play]`, the section's one play root (lead ruling 1.2). In DOM order the root
+holds `figure.site-proof`, `ol.site-proof-steps[role="list"]` and `div.site-proof__more` (the note and the secondary
+64px "Open the app"). One column below 1024px (figure, steps, note: phones meet the figure right after the lead); from
+1024px a grid `minmax(0, 1fr) max-content` with areas `"steps figure" "more figure"`, rows `auto 1fr`, gap 32 × 48, so
+the steps and the note sit left and the figure (about 534px) right; no `order`. The head is `text-wrap: balance`.
+
+**Steps.** Four `li.site-step` (the shared step, r4-how): `span.site-step__num.site-cell[aria-hidden]` (the digit and
+`span.site-step__lit` with `role('during', k, u)`) and the sentence in `span.site-step__title`, with no line and no
+heading. The list sets `--site-step-num` to 40px and the title to `body-lg`. Inside the root, the A7 `.site-during` rule
+lights each number while its beat plays; at rest none is lit.
+
+**Figure** (`ProofCheck`), one grid with `subgrid` lines, so a word's letters always sit under the key that types them:
+
+- Columns: phones `repeat(5, minmax(0, 64px))` (the chips on their own line); from 600px `max-content repeat(5, 52px)`
+  (the chips' column, with "Your keys" in it), gap 8 (4 under 360px), padding 16 / 24 (8 under 360px).
+- `figcaption.site-proof__keys`: the `nl-sr-only` "Your keys: {keys}", then, `aria-hidden`, the label "Your keys" and
+  `span.site-proof__line.site-proof__keyline`: five `span.site-keycap` (`--key` fill, `--on-key`, `radius-chip`, 56px
+  tall; the digit 16px mono in the corner, the letters from `keyLetters` in `label` size at heading weight) on one
+  keypad panel (its `::before`: `--panel`, `--lift`, 8px out), five column boxes and `span.site-proof__spot`.
+- `ul.site-proof__rows`: per word an `li.site-proof__row` with `div.site-cell.site-proof__chip` (the real `ProofChip`
+  and, `aria-hidden`, the typing chip with hidden slots) and `div.site-proof__line.site-proof__spell[aria-hidden]`: five
+  `span.site-letter` (48px slots, `--site-piece` = `--surface`, `heading` size), five column boxes and, for the dropped
+  word, `span.site-letter__box` in the letter at `diffAt` (a reject edge and a reject copy of the letter, `data-l`) and
+  `span.site-proof__x` under it.
+- `div.site-proof__closing` (a 2px `--line` rule above): `p.site-proof__said--can` (`check`, "Can be spoken: water,
+  waves.") and `p.site-proof__said--never` (`x`, "Never spoken: wafer. "wafer" is 92337. Your keys are 92837."), icons
+  `aria-hidden` in `--proof-match` and `--proof-reject`.
+
+**Play** (`motion-sweep` 240 ms steps after `motion-play-lead` 300 ms; t(k) = 300 + 240k):
+
+| Beat (number lit) | Steps | Figure |
+|---|---|---|
+| 1 You press keys (`during` 0-2) | k0 | the keys' outline (`ring` 0-2) |
+| 2 Words are suggested (`during` 2-5) | k2, k3, k4 | the typing chips (`during` k2/k3/k4 to u10/u10/u11) |
+| 3 Turned back into keys (`during` 5-10) | k5-k9 | column box c (`ring` 5+c to 6+c) in all four lines; the letters of column c rise with it (`rise` 5+c); the reject box and x (`mark` 5 + diffAt, k7 today) |
+| 4 Dropped, never spoken (`during` 10-13) | k10, k11, k12 | the match chips (`in` 10), the reject chip (`in` 11), the closing lines (`in` 12) |
+
+The last change is 3,620 ms after the trigger (number 4 off). The box and the letters it checks change in the same
+step, inside the box, where the eye is; the verdicts follow the sweep as its effect (the language's "cause leads"
+rule). At most three changes at once (a box handover counts as one). No ember in the section. Finished state (also
+reduced motion and no JavaScript): every letter, the reject box and x, the real chips, the closing lines, no number lit.
+Plays once per page view (PO-2: no replay button).
+
+**Forced colours**: outlines for `.site-keycap`, `.site-letter__box` and `.site-proof__spot` (and `.site-proof__box`).
+
+**Tests:**
+- `site.test.tsx`:
+  - MS-7.2: what the figure exposes;
+  - MS-9.3: the closing lines' icons; the struck reject chip; the boxed letter with its x, not on its key;
+  - MS-7.9: the caption, the keys, the two lines, the chip and typing-chip steps; the four lines with their boxes,
+    letters, the spot and the mark;
+  - MS-10.9 and MS-8.11: the head, then the root holding figure, steps and note; the steps' classes and lit steps;
+    only the numbers move outside the figure;
+  - MS-8.4: four reveal blocks.
+- `site-data.test.ts`: MS-7.9 the two lines; MS-7.6 `keyLetters` and the dropped letter.
+- `site-css.test.ts` (with r4-language's leave): the differing letter's mark and the forced-colours list.
+- `e2e/site.mjs`:
+  - the proof layout at every size;
+  - the proof root among the tall drawings on phones;
+  - the step numbers in step with the figure at 1280 × 800 and 390 × 844 (seek to 400, 1120, 2080, 3040 and
+    3700 ms);
+  - none lit with reduced motion.
+
+## Round 4: the end of the page (2026-11-13, Claude Code)
+
+Done with Claude Code, not Kiro, after the product owner's "'Good to know' and 'Free and open' either put the info
+across the site and make it more visually appealing" and "make a better footer" (the round's `proposals/close.md`,
+decisions §2). Requirements MS-3.1, MS-3.8, MS-4.4, MS-4.5, MS-4.5a, MS-4.7, MS-9.1, MS-14.5; copy in content.md §8 to
+§12 and `/about`.
+
+- **Limits beside their claims (`.site-caveat`, MS-4.5a).** One shared primitive, documented in the `site.css` header
+  list: `.site .site-caveat` (flex, `space-3` gap, `--measure` wide, ink even inside a card whose `p` is ink-muted),
+  its first child the info icon (`SiteIcon d={info}`), centred on the first body line. The section owners place the
+  lines (How under its row, Results in its caveat note, Access in "Phones, tablets and laptops"; content.md §8).
+- **Good to know (`sections/Limits.tsx`).** The `.site-head` carries the lead `LIMITS_LEAD`. `div.site-limits` is a
+  grid (one column; `minmax(0, 7fr) minmax(0, 5fr)` from 1024px) of two `.site-card.site-limits__card` reveal blocks:
+  - "Before you start": `ul.site-limits__rows`, each `li` a grid of `.site-tile` (the language's 48px tile) with the
+    row's icon (`spell` and `voice` from `Icon.tsx`, `globe` and `toggle` from `icons.tsx`), `.site-limits__key`
+    (label type) and `p.site-limits__text` (body, ink), with 2px `--line` rules between rows. On phones the tile and
+    key share a line and the sentence runs under both; from 600px three columns (48px, 144px, the rest), the key
+    and the sentence's first line centred on the tile by a top padding of (48px minus the line height) / 2.
+  - "Testing so far": `ul.site-limits__status`, each `li` a two-column grid of `.site-limits__check`, a visually
+    hidden ": " and `.site-limits__state` (a 40px pill, label type, 2px `--line-strong` edge; Done adds the app's
+    `check` icon in ink; `--not` is dashed), then `.site-links.site-limits__help`.
+  - Data: `LIMITS_LEAD`, `LIMIT_ROWS`, `TESTING` and `LIMITS` (plain text, page order, for `/llms.txt`).
+- **The close (`sections/Start.tsx`).** `ul.site-start__facts` (`START_FACTS`) between the head and the `.site-cta`:
+  2 x 2 with a cross of 2px `--line` rules under 768px, one row of four with rules between from 768px.
+  `strong.site-start__fact` (heading type, ink) and `span.site-start__fact-line` (body, ink-muted), a visually hidden
+  ": " between them. No icons and no pills: typographic, never badge-like (content.md "Never on the page"). The band
+  stays still (never a reveal block, MS-8.4).
+- **The footer (`SiteFooter.tsx`).** `footer.site-footer[data-theme=night] > .site-wrap.site-footer__inner` (a flex
+  column, `space-8` apart):
+  - `.site-footer__top` (one column; `4fr 8fr` from 1024px): `.site-footer__lead` (the `.nl-brand--small` lockup,
+    `p.site-footer__promise`, `a.nl-btn.nl-btn--secondary` "Open the app") and `nav.site-footer__nav[aria-label=Footer]`,
+    a grid of `.site-footer__group`s (an `h2.site-footer__title` in label type, ink-muted, and a `ul` of nav links):
+    two columns on phones with the last group across both and its links in two columns, three from 600px.
+    `footerGroups(home)` is the one list (the tests read it); links to GitHub carry `SiteIcon d={external}` after
+    the word.
+  - `.site-footer__legal` (a 2px `--line` top rule; statement and history side by side from 1024px):
+    `p.site-footer__statement` (body, unchanged) and `p.site-footer__history` (`HISTORY_LINE`, body, ink-muted).
+  - `.site-footer__end`: the licence line (`caption`) and `p.site-links` "Back to top" (`#top`, `SiteIcon d={arrow}
+    turn="up"` before the word).
+  - The shared link rules (56px targets, the nav-link look, the 8px group gap) still apply; the footer grid only
+    overrides `display`, `align-items` and the gaps with higher specificity, so the shared rule `site-css.test.ts`
+    locks is untouched.
+- **`/about`** gains "Free and open source" and "Credits" (`#credits`) as `.site-prose` sections before the
+  statement; its header is `#top`, as is the 404's.
+- **`/llms.txt`**: "## Good to know" (the lead and the seven rows, from `LIMITS`) between Model ranking and
+  Questions, and the history line after the source link.
+- **The FAQ**: "Is it free?" ends with the two "Why it is free" sentences on model ranking's cost; the shape is kept,
+  so the FAQPage JSON-LD and `/llms.txt` follow.
+- **No theme switch** (decisions §0): MS-12.1 forbids the landing page to write storage, a choice made in the Night
+  footer would change nothing on screen, and Chrome's guidance keeps overrides in settings (the app's Settings has
+  Theme, and the site follows a stored choice).
+
+Tests: `site.test.tsx` (MS-3.1 nine sections; MS-4.5 rows and states read from content.md §8; MS-4.5a the caveat
+lines in How, Results and Access; MS-4.7 in the footer; MS-8.4 reveal counts; the close's facts; the footer's groups,
+hrefs, icons and `#top`; the Source section gone, W6), `about.test.tsx` (the two sections, the credits, `#top`, the
+history line), `seo.test.tsx` (the 404's `#top`; the limits, the history line and the key-press figure in
+`/llms.txt`), and the r4-close block of `test/e2e/site.mjs` at 320, 390, 1280 and 1440px on `/`, `/about` and the
+404 in the Day theme: three groups of 13 links, every one a 56px target, every anchor and `#top` with its target, the
+footer Night, the history line everywhere and the statement everywhere but `/about`, each external icon right after
+its last word, Back to top scrolling to the top, the two Good to know cards side by side only from 1024px, each state
+right of its check, 48px tiles, and the facts row as 2 x 2 under 768px and one row from 768px.
+
+Bytes (measured on the dev server against the round-3 page, gzip): the four blocks (Good to know, the close, the
+footer, and the removed Source section) cost 178 B less in the page's HTML than in round 3, and about as much again in
+the RSC payload that repeats the text; the server markup stays about 11.7 KB of the 15 KB MS-11.6 allows. CSS: the new
+rules are 5.0 KB minified (0.6 KB gzip in the stylesheet's context) and 1.0 KB of round-3 rules went, about +0.4 KB
+gzip. JavaScript: none (every part is a server component; the icons render to markup).
+
+## Round 4: the box sections (2026-11-13, Claude Code)
+
+Done with Claude Code, not Kiro. The product owner, on "Made for both sides...", "Works the way" and "Offline
+unless...": "research and improve visuals in these boxes". Proposal `proposals/boxes.md` of the round (Mobbin: bento
+grids, feature cards with UI fragments, privacy and accessibility sections, face-to-face translation screens, opt-in
+toggles; the web: bento practice, simplified UI graphics, safer animation, privacy labels), approved with the changes
+in decisions §2 "Boxes". Requirements: MS-4.6, MS-7.2, MS-7.4, MS-7.5, MS-7.7, MS-7.8, MS-7.10, MS-8.11, MS-10.9 and
+the new MS-12.4. Files: `sections/{Conversation,Access,Privacy}.tsx`, `pictures/{Conversation,Access,Privacy}.tsx` and
+their `site.css` blocks ("box drawings", the stage sizes, `.site-bento`, the phone hug rule, "box grids from 648px",
+the desktop lead card, the `--play-i` rules).
+
+**Layout (`.site-bento`, MS-10.9).** Each section's grid starts with a lead card (`.site-card--lead`, the shared card
+look, MS-14.3): They said, One or two switches, On your device. From 1024px the lead puts its stage (7fr) beside its
+words (5fr, vertically centred; title in `title-sm`, line in `body-lg`); Access's is mirrored (`.site-card--end`), so
+the leads go left, right, left down the page; below 1024px the stage is on top. Then `.site-bento--3` (Conversation,
+Privacy): one card a row below 648px; two, then the third across the row with its stage beside its words, from 648px;
+three in one row from 1024px (309px or wider). `.site-bento--4` (Access): two a row from 648px, the stage above the
+words at every width (from 1200px the layout boxes take R3-P1's doubled sizes). The cards of a row share its lines
+(`grid-template-rows: subgrid`), so their stages are one height (MS-7.7) and their titles and lines are level. The DOM
+order is the reading order; a lead stage placed on the right by `grid-column` holds nothing focusable or readable.
+
+**Stages.** The lead's is `.site-stage--lead` (`stage-m`, then `stage-l` from 600px); a Conversation or Privacy row's
+`.site-stage--m`; Access's rows keep `stage-s`. Drawings keep `space-4` clear of the sides (`space-2` under 360px) and,
+from 600px, above and below; under 600px every box stage hugs its drawing with `space-3` above and below.
+
+**Drawing language** (decisions §1.3; "Round 4: shared language"): one scale (the sentence in `candidate`, words in
+`label`), depth from fills (the stage, the card's fill for pieces, `.site-key-panel` under every loose key: Touch's two
+keys share one, each Your view half has one, the layout boxes' key blocks are panels with plum dots), press ring v2 on
+drawn buttons and computer keys, ember only for a press or the scan ring, one ring per drawing and per row. A still
+arrow (`.site-arrow`: `SiteIcon` `arrow`, turned) joins a cause to its result, so a finished or reduced-motion frame
+tells the story. Icons sit beside their words: every box card's name carries one (`said`, `flip`, `save`, `spell`;
+`switch`, `keyboard`, `key`, `view`, `screens`; `offline`, `toggle`, `voice`, `mic`), and Your view's halves `moon` and
+`sun`.
+
+| Drawing | Shows (finished frame) | Play (step; k-u) | Last change |
+|---|---|---|---|
+| They said (lead) | the strip with their line and Listen; an arrow; the sentence card with the reply and its keys | frame; Listen ring 1-2, Listen/Stop/Listen 1, 4; line: Nothing yet out 2, status 2-3, line in 3; arrow in 4; hint out 5, reply rise 5 | 3,500 ms |
+| Show and Flip | the Show card turned between the edges "The person opposite" and "You"; Done and Flip upright | frame; Flip ring 1-2; upright out 2, turned in 2 | 1,700 |
+| Saved phrases | the well with Save phrase; an arrow; the Phrases sheet "Your phrases", the new row outlined | frame; ring 1-2; arrow and sheet in 2; new row rise 3 | 2,900 |
+| Spell and My words | New chip, Add to my words; an arrow; the Matches chip | frame; ring 1-2; arrow in 2; Matches rise 2 | 2,900 |
+| One or two switches (lead) | the well "I" and "4", the keypad with key 4 in the scan ring, the 80px switch, "0.4 s" to "5 s" | quick; rows 1 (0-1) and 2 (1-3); press 2-3; key 4 mark 3; press 4-5; hint out 5, word in 5 | 2,500 |
+| Keyboard | the keys and what they do | quick; rings 0-1, 1-2, 2-3, 3-4; each effect in one step after its ring | 2,100 |
+| Touch | keys 72 and 128 on one panel, their sizes under them | frame, after Keyboard's rings; rings 0-1, 1-2; sizes in 1, 2 | 3,300 |
+| Your view | Night and Day halves, keys on panels, "Extra large" | frame; Day in 1; Large to Extra large 2; Night key 3; Day key 4 | 2,900 |
+| Phones, tablets and laptops | three bare layout boxes | frame; boxes rise 0, 1, 2 | 2,300 |
+| On your device (lead) | the outline "This device": the well, The dictionary, Saved phrases, My words, the offline status; Model ranking, Online voices and Listen on its edge (icons only under 600px) | quick; well and rows rise 0-3; status rise 4; the ways out in 5 | 2,500 |
+| Model ranking | the real text "Sent to rank: …"; an arrow up; the switch row on the outline's edge; "Off until you turn it on" | quick; outline 0-1 (line-strong); row Off out 1, On in 1; arrow in 2 | 1,300 |
+| Voices | "The browser maker", the arrow "The text"; the online voice on the edge; the on-device voice inside, checked | frame; check and line in 1; online line and arrow in 2 | 2,300 |
+| Listen | "The browser maker", arrows "Their voice" up and "Text" down; Listen on the edge; They said inside | quick; ring 1-2; Listen/Stop/Listen 1, 5; line: Nothing yet out 2, status 2-4, line in 4; arrows in 3 | 3,700 |
+
+Times are for the largest lead (a third column from 1024px waits 1,200 ms more; Touch waits 1,600 ms). At most three
+parts change at one instant (language rule 3), so They said, Your view and Listen take extra steps. Ember rings in a
+row never overlap: Conversation's row 900-1,500, 1,500-2,100 and 2,100-2,700 ms; Privacy's only ring is Listen's;
+Access's rows as in round 2.
+
+**The ranking card's real text (MS-4.6, MS-7.2).** `.site-card--sent` is a grid: the stage and `p.site-sent` share row
+1, the `h3` is row 2 and the line row 3, so the real text sits at the top of the stage while its DOM place is after the
+`h3` (a heading reader meets it under "Model ranking, if you turn it on"). The drawing holds the same text as an
+`aria-hidden`, `visibility: hidden` copy (`.site-sent--room`) that keeps its room at every width; the real text's margin
+equals the stage's padding (`--site-sent-pad`: `space-4`, `space-3` on phones), so both wrap alike.
+
+**Privacy facts.** A note card: the `h3` "What happens to what ranking sends", three `.site-fact` rows (globe, clock,
+chart) with `{provider.region}`, `{provider.retention}` and the log line, the "Check it yourself" line, and the two
+evidence links as `.site-go--out` with the `external` icon.
+
+**The Night bug.** Loose plum keys sat on a stage of the same colour (`--key` and `--surface-sunken` are both #2a1856 in
+Night), so Touch's keys, the layout boxes' key blocks and the Night half's key vanished; every loose key now sits on a
+key panel.
+
+**Honesty.** "Only three features send words or speech off this device: model ranking, online voices and Listen." was
+checked against every network call in the app (MS-12.4). The drawings name no provider and no browser maker, show no
+voice as the default (`pickVoice` may pick an online voice) and draw no lock, shield or badge. No class name says
+"device" (MS-4.3): `.site-bound` is the outline.
+
+Tests: `site.test.tsx` (MS-4.6, MS-7.4, MS-7.7, MS-8.11 leads and per-row rings, MS-7.3, MS-7.10, MS-10.9, MS-8.4
+`--reveal-i` per row, the note cards, the phone hug rule), `site-css.test.ts` (the stage sizes, the bento columns and
+subgrid rows, the `--play-i` rules), `ranking-provider.test.ts` (the §6 entry keeps the order), `e2e/site.mjs` (equal
+stages per row with the lead on its own, the hug on phones, the cards per row, the switch lead's stage, the Access
+order).

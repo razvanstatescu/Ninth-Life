@@ -17,16 +17,17 @@ export function Brand({ href }: { href?: string }) {
     <>
       {/* Below 48px the favicon variant is used (brand book, Logo). */}
       <img src="/icons/favicon.svg" alt="" width={44} height={44} />
-      <span className="brand__name">Ninth Life</span>
+      <span className="nl-brand__name">Ninth Life</span>
     </>
   );
+  // The shared lockup (.nl-brand in components.css): the website's bar, footer and /about use the same one.
   // On the communication screen the brand is not a link, so a stray tap cannot lose a sentence.
   return href ? (
-    <a className="brand" href={href}>
+    <a className="nl-brand" href={href}>
       {inner}
     </a>
   ) : (
-    <div className="brand">{inner}</div>
+    <div className="nl-brand">{inner}</div>
   );
 }
 

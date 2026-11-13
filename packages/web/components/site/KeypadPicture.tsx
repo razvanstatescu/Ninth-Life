@@ -8,7 +8,8 @@
  * components.css, and only an inline property beats it, so the drawings keep 64 to 84px keys whatever
  * the setting (MS-10.5, MS-10.8). No other file sets the size of a drawing.
  *
- * No 'use client' and no server-only import, so both the server sections and KeypadDemo can use it.
+ * The hero's keypad is not a drawing since W4 (2026-11-12): KeypadDemo renders real buttons with the same
+ * KeyFace and the same inline size. No 'use client' and no server-only import, so both can use this file.
  */
 import type { CSSProperties } from 'react';
 import { ALL_KEYS, KEY_ROWS, type KeyDef, type KeyId } from '@/lib/keys';
@@ -18,13 +19,11 @@ import { role, type KStep, type UStep } from './pictures/roles';
 export const KEY_DRAWING_SIZE = '64px';
 /** The larger drawn key (the Your view drawing's extra-large key). */
 export const KEY_DRAWING_XL_SIZE = '84px';
-/** Key size for the hero demo. */
-export const HERO_KEY_SIZE = 'clamp(64px, calc((100vw - 120px) / 3), 84px)';
 /** The Touch drawing's true key sizes, the one exception to the 64-84px drawn keys (MS-10.8). */
 export const TOUCH_MIN_SIZE = 'var(--key-min)';
 export const TOUCH_XL_SIZE = 'var(--key-xl)';
 
-export type KeyDrawingSize = typeof KEY_DRAWING_SIZE | typeof HERO_KEY_SIZE;
+export type KeyDrawingSize = typeof KEY_DRAWING_SIZE;
 export type SingleKeySize = typeof KEY_DRAWING_SIZE | typeof KEY_DRAWING_XL_SIZE | typeof TOUCH_MIN_SIZE | typeof TOUCH_XL_SIZE;
 
 /** A pressed ring on a drawn key, shown from step k until u; late: a repeated press (design.md 3.2). */
@@ -33,8 +32,6 @@ export interface KeyRing {
   k: KStep;
   u: UStep;
   late?: 'late';
-  /** The How it works step the ring belongs to (data-s), for the desktop How picture's step rules. */
-  s?: '1' | '2' | '3';
 }
 
 /** The rings inside one key: absolute overlays, so the key's layout never changes. */
@@ -43,12 +40,13 @@ function Rings({ id, rings }: { id: KeyId; rings?: readonly KeyRing[] }) {
     <>
       {rings
         ?.filter((ring) => ring.key === id)
-        .map((ring, i) => <div key={i} className={`site-key-ring ${role('ring', ring.k, ring.u, ring.late)}`} data-s={ring.s} />)}
+        .map((ring, i) => <div key={i} className={`site-key-ring ${role('ring', ring.k, ring.u, ring.late)}`} />)}
     </>
   );
 }
 
-function KeyFace({ def }: { def: KeyDef }) {
+/** A key's face: the digit, then its letters or its word. Shared by the drawings and the hero's try-it keys (W4). */
+export function KeyFace({ def }: { def: KeyDef }) {
   return (
     <>
       <span className="nl-key__digit">{def.digit}</span>{' '}
@@ -64,28 +62,27 @@ function KeyFace({ def }: { def: KeyDef }) {
 export function KeypadPicture({
   size,
   pressed,
-  ninth = false,
   className,
   rings,
+  rows,
 }: {
   size: KeyDrawingSize;
   /** The key drawn with the pressed ring. */
   pressed?: string;
-  /** Key 9 keeps its resting ember ring (the hero only). */
-  ninth?: boolean;
   className?: string;
   /** Played pressed rings (A7); a key may hold several with different steps. */
   rings?: readonly KeyRing[];
+  /** Only the first rows, a crop of the keypad on its panel (How step 1 draws rows 1 and 2, keys 1 to 6). */
+  rows?: 2;
 }) {
   const style = { '--nl-key': size } as CSSProperties;
   return (
     <div className={className ? `nl-keypad site-pad ${className}` : 'nl-keypad site-pad'} style={style} aria-hidden="true">
-      {KEY_ROWS.map((row, r) => (
+      {(rows ? KEY_ROWS.slice(0, rows) : KEY_ROWS).map((row, r) => (
         <div key={r} className="nl-keypad__row">
           {row.map((def) => {
             let cls = 'nl-key site-key';
             if (pressed === def.id) cls += ' is-pressed';
-            if (ninth && def.id === '9') cls += ' site-key--ninth';
             return (
               <div key={def.id} className={cls}>
                 <KeyFace def={def} />

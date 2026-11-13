@@ -50,6 +50,8 @@ describe('gen-tokens', () => {
       'motion-frame',
       'motion-frame-quick',
       'motion-sweep',
+      'motion-hint',
+      'motion-grow',
       'motion-ease-out',
       'motion-ease-linear',
     ]);
@@ -67,6 +69,16 @@ describe('gen-tokens', () => {
     expect(root).toContain('--motion-frame: 600ms;');
     expect(root).toContain('--motion-frame-quick: 400ms;');
     expect(root).toContain('--motion-sweep: 240ms;');
+  });
+
+  // Round 4 (2026-11-13, Claude Code): the shared language's tokens (decisions §1.1) and the Results bars' grow (PO-1).
+  it('MS-8.2 MS-8.14 the round-4 tokens: motion-hint, motion-grow and the state group on :root', () => {
+    const root = block(':root');
+    expect(root).toContain('--motion-hint: 4px;');
+    expect(root).toContain('--motion-grow: 600ms;');
+    const state: { name: string; value: string }[] = tokens.state.tokens;
+    expect(state.map((t) => t.name)).toEqual(['state-hover']);
+    expect(root).toContain('--state-hover: 0.08;');
   });
 
   it('throws on unknown or circular aliases', () => {

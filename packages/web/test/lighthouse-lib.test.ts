@@ -11,6 +11,7 @@ import {
   pageBudgets,
   parseArgs,
   renderReport,
+  reportedScores,
   writeBlock,
 } from '../../../scripts/lighthouse-lib.mjs';
 
@@ -131,6 +132,26 @@ describe('scripts/lighthouse-lib.mjs', () => {
     expect(again).toContain('<!-- lighthouse:start -->\nNEW\n<!-- lighthouse:end -->');
     expect(again).not.toContain('abc1234');
     expect(again.match(/## Landing page \(Lighthouse\)/g)).toHaveLength(1);
+  });
+
+  it('Round 3 Agentic Browsing is reported as a fraction with no target, and skipped when a run lacks it', () => {
+    expect(reportedScores({ categories: { 'agentic-browsing': { score: 0.52 } } })).toEqual({ 'agentic-browsing': 0.52 });
+    expect(reportedScores({ categories: {} })).toEqual({ 'agentic-browsing': null });
+    const budgets = pageBudgets(requests.items, requests.pageUrl);
+    const preset = {
+      preset: 'mobile',
+      runs: [{ performance: 100, accessibility: 100, 'best-practices': 100, seo: 100 }],
+      medians: { performance: 100, accessibility: 100, 'best-practices': 100, seo: 100 },
+      metrics: { fcp: 900, lcp: 900, tbt: 0, cls: 0, si: 900 },
+      lcpElement: 'p',
+      budgets,
+    };
+    const base = { lighthouseVersion: '13.6.0', chromiumVersion: 'Chromium 153', url: 'http://localhost:3402/', date: '2026-11-12', commit: 'abc1234', misses: [] };
+    const block = renderReport({ ...base, presets: [{ ...preset, reported: [{ 'agentic-browsing': 1 }] }] });
+    expect(block).toContain('Agentic Browsing (reported, no target): median 1.00 (runs 1.00).');
+    expect(block).toContain('every mobile target and budget met');
+    expect(renderReport({ ...base, presets: [{ ...preset, reported: [{ 'agentic-browsing': null }] }] })).not.toContain('Agentic Browsing');
+    expect(renderReport({ ...base, presets: [preset] })).not.toContain('Agentic Browsing');
   });
 
   it('MS-11.5 neither script spells or spawns a build command', () => {

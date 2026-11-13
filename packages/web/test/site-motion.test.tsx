@@ -11,8 +11,6 @@ import {
   SITE_MOTION_BOOT,
   autoplayDecision,
   msToken,
-  activeStep,
-  howStart,
   shouldPlay,
   splitInitialPlay,
   splitInitialReveal,
@@ -255,31 +253,25 @@ describe('SiteMotion (MS-8.4, MS-8.7, MS-8.8, MS-6.9)', () => {
 });
 
 /**
- * Drawings and the How section for the round-2 triggers (A7, A8). jsdom's innerHeight is 768: the play
- * line is at 537.6px and the middle line at 384px. data-top and data-bottom stand in for the layout;
- * data-nobox gives an element no box (display: none).
+ * Drawings for the round-2 triggers (A7). jsdom's innerHeight is 768: the play line is at 537.6px. data-top and
+ * data-bottom stand in for the layout; data-nobox gives an element no box (display: none). Round 4 (2026-11-13,
+ * Claude Code): the How step sync (A8, MS-8.12) is gone, so the fixture has no How picture or steps; the How steps'
+ * number tiles (.site-step) sit in a [data-play-scope] beside a drawing, which SiteMotion treats like any other.
  */
-function Plays({ how }: { how?: { picture: number | 'nobox'; steps: [number, number, number] } }) {
+function Plays({ scope = false }: { scope?: boolean }) {
   return (
     <div>
       <div data-play="" id="p-above" data-top="-500" data-bottom="-284" />
       <div data-play="" id="p-inview" data-top="100" data-bottom="316" />
       <div data-play="" id="p-below" data-top="2000" data-bottom="2216" />
       <div data-play="" id="p-hidden" data-nobox="" data-top="0" data-bottom="0" />
-      {how && (
-        <div className="site-how" id="how">
-          <div
-            className="site-how__picture"
-            id="pic"
-            data-top={how.picture === 'nobox' ? 0 : how.picture}
-            {...(how.picture === 'nobox' ? { 'data-nobox': '' } : {})}
-          />
-          <ol>
-            {how.steps.map((top, i) => (
-              <li key={i} className="site-how__step" id={`step${i + 1}`} data-top={top} />
-            ))}
-          </ol>
-        </div>
+      {scope && (
+        <ol className="site-how__steps" id="how-steps">
+          <li className="site-how__step" data-play-scope="" id="s-scope" data-top="2400" data-bottom="2800">
+            <div data-play="" id="p-step" data-top="2400" data-bottom="2688" />
+            <div className="site-step" id="s-step" />
+          </li>
+        </ol>
       )}
       <div data-reveal="" id="r-below" data-top="3000" />
       <SiteMotion />
@@ -289,7 +281,6 @@ function Plays({ how }: { how?: { picture: number | 'nobox'; steps: [number, num
 
 const PLAY_AREA = '0px 0px -30% 0px';
 const TOP_LINE = '0px 0px -100% 0px';
-const MIDDLE = '-50% 0px -50% 0px';
 const observerFor = (rootMargin: string) => FakeObserver.all.find((o) => o.options?.rootMargin === rootMargin);
 
 /** Moves an element in the fake layout. */
@@ -310,17 +301,7 @@ const fire = (io: FakeObserver, el: Element, isIntersecting = true) => {
   });
 };
 
-/** Moves the three How steps and calls the step observer back. */
-const stepsAt = (tops: [number, number, number]) => {
-  tops.forEach((top, i) => (block(`step${i + 1}`).dataset.top = String(top)));
-  fire(observerFor(MIDDLE)!, block('step1'));
-};
-const howAttrs = () => {
-  const how = block('how');
-  return { step: how.dataset.howStep, play: how.dataset.howPlay, live: how.hasAttribute('data-how-live') };
-};
-
-describe('SiteMotion played drawings and How step sync (MS-8.11, MS-8.12, MS-8.13)', () => {
+describe('SiteMotion played drawings (MS-8.11, MS-8.13)', () => {
   beforeEach(() => {
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       const top = Number(this.dataset.top ?? 0);
@@ -402,55 +383,20 @@ describe('SiteMotion played drawings and How step sync (MS-8.11, MS-8.12, MS-8.1
 
   it('MS-8.13 reduce during a play marks every drawing instant and nothing replays after no-preference', () => {
     const motion = mockMotion(true);
-    render(<Plays how={{ picture: 2000, steps: [2100, 2600, 3100] }} />);
+    render(<Plays />);
     place('p-below', 250);
     fire(observerFor(PLAY_AREA)!, block('p-below'));
     expect(block('p-below').dataset.played).toBe('1');
     motion.set(false);
     for (const id of ['p-above', 'p-inview', 'p-below', 'p-hidden']) expect(block(id).dataset.played).toBe('instant');
-    expect(howAttrs()).toEqual({ step: undefined, play: undefined, live: false });
     for (const io of FakeObserver.all) expect(io.observed.size).toBe(0);
     const before = FakeObserver.all.length;
     motion.set(true);
     expect(html.dataset.siteMotion).toBe('on');
-    // No drawing is waiting, so no play observer is created; the How steps never play again.
+    // No drawing is waiting, so no play observer is created and nothing plays again.
     const created = FakeObserver.all.slice(before);
     expect(created.some((o) => o.options?.rootMargin === PLAY_AREA)).toBe(false);
     for (const id of ['p-above', 'p-inview', 'p-below', 'p-hidden']) expect(block(id).dataset.played).toBe('instant');
-    const middle = created.find((o) => o.options?.rootMargin === MIDDLE)!;
-    expect(middle).toBeDefined();
-    stepsAt([100, 300, 900]);
-    expect(howAttrs()).toEqual({ step: '2', play: undefined, live: false });
-  });
-
-  it('MS-8.12 activeStep counts the tops at or above the middle line', () => {
-    expect(activeStep([500, 900, 1300], 400)).toBe(0);
-    expect(activeStep([100, 900, 1300], 400)).toBe(1);
-    expect(activeStep([-300, 100, 1300], 400)).toBe(2);
-    expect(activeStep([-900, -300, 100], 400)).toBe(3);
-    expect(activeStep([400, 900, 1300], 400)).toBe(1);
-    expect(activeStep([401, 900, 1300], 400)).toBe(0);
-    expect(activeStep([], 400)).toBe(0);
-  });
-
-  it('MS-8.12 data-how-step follows the middle line and data-how-play only marks a new highest step', () => {
-    mockMotion(true);
-    render(<Plays how={{ picture: 2000, steps: [2100, 2600, 3100] }} />);
-    expect(observerFor(MIDDLE)!.options).toEqual({ rootMargin: MIDDLE, threshold: 0 });
-    expect([...observerFor(MIDDLE)!.observed].map((e) => e.id)).toEqual(['step1', 'step2', 'step3']);
-    stepsAt([300, 900, 1500]);
-    expect(howAttrs()).toEqual({ step: '1', play: '1', live: true });
-    stepsAt([-300, 300, 900]);
-    expect(howAttrs()).toEqual({ step: '2', play: '2', live: true });
-    stepsAt([300, 900, 1500]);
-    expect(howAttrs()).toEqual({ step: '1', play: undefined, live: true });
-    stepsAt([-300, 300, 900]);
-    expect(howAttrs()).toEqual({ step: '2', play: undefined, live: true });
-    stepsAt([-900, -300, 300]);
-    expect(howAttrs()).toEqual({ step: '3', play: '3', live: true });
-    // A callback with no change writes nothing.
-    stepsAt([-900, -300, 200]);
-    expect(howAttrs()).toEqual({ step: '3', play: '3', live: true });
   });
 
   it('MS-8.11 shouldPlay waits for the whole box above the play line', () => {
@@ -590,68 +536,26 @@ describe('SiteMotion played drawings and How step sync (MS-8.11, MS-8.12, MS-8.1
     expect(observerFor(PLAY_AREA)!.observed.has(el)).toBe(false);
   });
 
-  it('MS-8.12 howStart is live below the fold, deferred in view with no active step, finished otherwise', () => {
-    const pic = (top: number, box = true) => ({ getBoundingClientRect: () => ({ top }), getClientRects: () => ({ length: box ? 1 : 0 }) });
-    expect(howStart(pic(800), 768, 0)).toBe('live');
-    expect(howStart(pic(768), 768, 0)).toBe('live');
-    expect(howStart(pic(767), 768, 0)).toBe('deferred');
-    expect(howStart(pic(100), 768, 0)).toBe('deferred');
-    expect(howStart(pic(100), 768, 1)).toBe('finished');
-    expect(howStart(pic(-400), 768, 3)).toBe('finished');
-    expect(howStart(pic(800, false), 768, 0)).toBe('finished');
+  it('MS-8.12 (round 4, removed) How is no step sync: a step scope plays like any drawing, with no middle-line observer', () => {
+    mockMotion(true);
+    render(<Plays scope />);
+    // The four play observers watch the How scene like any drawing below the fold; nothing observes the middle line.
+    expect(FakeObserver.all.filter((o) => o.options?.rootMargin === '-50% 0px -50% 0px')).toHaveLength(0);
+    expect(observerFor(PLAY_AREA)!.observed.has(block('p-step'))).toBe(true);
+    expect(observerFor(PLAY_AREA)!.observed.has(block('s-scope'))).toBe(false);
+    place('p-step', 200, 488);
+    fire(observerFor(PLAY_AREA)!, block('p-step'));
+    expect(block('p-step').dataset.played).toBe('1');
+    // SiteMotion writes nothing on the scope or the step: their light comes from CSS (:has()).
+    for (const id of ['how-steps', 's-scope', 's-step']) {
+      expect(Object.keys(block(id).dataset).filter((k) => k.startsWith('how') || k === 'played'), id).toEqual([]);
+    }
   });
 
-  it('MS-8.12 a How picture below the fold at mount is live and starts at step 0', () => {
+  it('MS-8.11 cleanup disconnects the play observers', () => {
     mockMotion(true);
-    const records = new MutationObserver(() => {});
-    records.observe(document, { attributes: true, subtree: true, attributeFilter: ['data-how-live', 'data-how-step', 'data-site-motion'] });
-    render(<Plays how={{ picture: 2000, steps: [2100, 2600, 3100] }} />);
-    const log = records.takeRecords().map((r) => `${r.attributeName}:${(r.target as HTMLElement).id || 'html'}`);
-    records.disconnect();
-    expect(howAttrs()).toEqual({ step: '0', play: undefined, live: true });
-    expect(log.indexOf('data-how-live:how')).toBeLessThan(log.indexOf('data-site-motion:html'));
-    stepsAt([300, 900, 1500]);
-    expect(howAttrs()).toEqual({ step: '1', play: '1', live: true });
-  });
-
-  it('MS-8.12 a How picture in view at mount with no active step plays from step 1', () => {
-    mockMotion(true);
-    render(<Plays how={{ picture: 300, steps: [900, 1400, 1900] }} />);
-    expect(howAttrs()).toEqual({ step: '0', play: undefined, live: false });
-    stepsAt([300, 900, 1400]);
-    expect(howAttrs()).toEqual({ step: '1', play: '1', live: true });
-    stepsAt([-200, 300, 900]);
-    expect(howAttrs()).toEqual({ step: '2', play: '2', live: true });
-  });
-
-  it('MS-8.12 a How picture in view at mount plays the step a fast scroll reached', () => {
-    mockMotion(true);
-    render(<Plays how={{ picture: 300, steps: [900, 1400, 1900] }} />);
-    stepsAt([-200, 300, 900]);
-    expect(howAttrs()).toEqual({ step: '2', play: '2', live: true });
-  });
-
-  it('MS-8.12 a How picture with a step already active at mount never plays', () => {
-    mockMotion(true);
-    render(<Plays how={{ picture: -200, steps: [100, 900, 1500] }} />);
-    expect(howAttrs()).toEqual({ step: '1', play: undefined, live: false });
-    stepsAt([-500, 100, 900]);
-    expect(howAttrs()).toEqual({ step: '2', play: undefined, live: false });
-    stepsAt([-900, -500, 100]);
-    expect(howAttrs()).toEqual({ step: '3', play: undefined, live: false });
-    // With no box (under 1024px) it is finished too.
-    cleanup();
-    FakeObserver.all = [];
-    render(<Plays how={{ picture: 'nobox', steps: [2100, 2600, 3100] }} />);
-    expect(howAttrs()).toEqual({ step: '0', play: undefined, live: false });
-    stepsAt([300, 900, 1500]);
-    expect(howAttrs()).toEqual({ step: '1', play: undefined, live: false });
-  });
-
-  it('MS-8.11 cleanup disconnects the play and step observers', () => {
-    mockMotion(true);
-    render(<Plays how={{ picture: 2000, steps: [2100, 2600, 3100] }} />);
-    const ios = [observerFor(PLAY_AREA)!, observerFor(TOP_LINE)!, observerFor(MIDDLE)!];
+    render(<Plays />);
+    const ios = [observerFor(PLAY_AREA)!, observerFor(TOP_LINE)!];
     cleanup();
     for (const io of ios) expect(io.observed.size).toBe(0);
   });

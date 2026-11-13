@@ -56,6 +56,8 @@ const TARGETS = [
   { name: 'landing /', path: '/' },
   // Motion on, after every block has been revealed (MS-13.1).
   { name: 'landing / (motion)', path: '/', motion: true },
+  // The hero keypad after 4 6 6 3 (try it, W4, MS-6.11 to MS-6.13).
+  { name: 'landing / (try it: 4663)', path: '/', tryIt: '4663' },
   { name: 'app /app', path: '/app', app: true },
   { name: 'about /about', path: '/about' },
   { name: 'settings sheet on /app', path: '/app', app: true, settings: true },
@@ -78,6 +80,14 @@ try {
         if (t.app) await openApp(page, t.path);
         else await page.goto(BASE_URL + t.path, { waitUntil: 'load' });
         if (t.settings) await openSettings(page);
+        if (t.tryIt) {
+          for (const k of t.tryIt) await page.locator(`[data-try-key="${k}"]`).click();
+          // Round 4 (2026-11-13, Claude Code): the result line is in the demo's polite live region (there is no caption).
+          await page.waitForFunction((code) => (document.querySelector('.site-demo [role="status"]')?.textContent ?? '').startsWith(`Keys ${code} match:`), t.tryIt, {
+            timeout: 20000,
+            polling: 50,
+          });
+        }
         if (t.motion) await scrollToEnd(page);
         const actual = await page.evaluate(() => document.documentElement.dataset.theme);
         const res = await new AxeBuilder({ page }).withTags(TAGS).analyze();

@@ -1,15 +1,20 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { SITE_DEFINITION, SITE_NAME } from '@/components/site/seo';
 import { THEME_BOOT_SCRIPT } from '@/lib/settings';
 import '../styles/tokens.css';
 import '../styles/globals.css';
 import '../styles/components.css';
 // styles/app.css is imported by the app pages (app/app/page.tsx, app/about/page.tsx), not here (ADR-006).
 
+// No metadataBase (round 3, R3-P9, 2026-11-13): with one, Next writes the canonical and og:url of "/" as the bare
+// origin with no trailing slash, while the sitemap and the JSON-LD say `${origin}/`. The pages build their absolute
+// URLs themselves from the origin (lib/site-url.ts, components/site/seo.ts pageMetadata), and Next keeps an absolute
+// URL as written when there is no metadataBase. Without an origin, no absolute URL is emitted anywhere.
 export const metadata: Metadata = {
-  title: 'Ninth Life',
-  description: 'Press keys 2 to 9, one press per letter, and hear the sentence you meant. 9-key predictive text as a way to talk. Free, works offline.',
-  applicationName: 'Ninth Life',
+  title: SITE_NAME,
+  description: SITE_DEFINITION,
+  applicationName: SITE_NAME,
   manifest: '/manifest.webmanifest',
   icons: {
     icon: [

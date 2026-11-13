@@ -98,23 +98,6 @@ export function shouldPlay(r: { top: number; bottom: number }, vh: number): bool
   return inView || (r.top <= 1 && r.top >= -band - 1 && r.bottom >= line - 1); // too tall: in view, or covering the play area
 }
 
-/** The How it works active step (MS-8.12): the number of step tops at or above the middle line (0-3). */
-export function activeStep(tops: readonly number[], middle: number): 0 | 1 | 2 | 3 {
-  const n = tops.filter((top) => top <= middle).length;
-  return n >= 3 ? 3 : n === 2 ? 2 : n === 1 ? 1 : 0;
-}
-
-/**
- * How the desktop How picture starts when motion starts (MS-8.12, V26):
- * 'live'     it has a box and its top is at or below the bottom of the viewport;
- * 'deferred' it has a box, its top is above the bottom of the viewport, and no step is active;
- * 'finished' it has no box (under 1024px), or a step is already active.
- */
-export function howStart(picture: Boxed, viewportHeight: number, step: 0 | 1 | 2 | 3): 'live' | 'deferred' | 'finished' {
-  if (!hasBox(picture) || step > 0) return 'finished';
-  return picture.getBoundingClientRect().top >= viewportHeight ? 'live' : 'deferred';
-}
-
 /** Reads a millisecond motion token from :root, or the fallback when it is missing or does not parse. */
 export function readMotionMs(name: string, fallback: number): number {
   try {

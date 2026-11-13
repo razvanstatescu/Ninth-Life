@@ -19,6 +19,7 @@ import { fileURLToPath } from 'node:url';
 import {
   CATEGORIES,
   CLS_BUDGET,
+  REPORTED_CATEGORIES,
   USAGE,
   UsageError,
   checkTargets,
@@ -28,6 +29,7 @@ import {
   pageBudgets,
   parseArgs,
   renderReport,
+  reportedScores,
   writeBlock,
 } from './lighthouse-lib.mjs';
 
@@ -82,7 +84,7 @@ async function runOnce(preset) {
     chromiumVersion = `Chromium ${browser.version()}`;
     const result = await lighthouse(
       opts.url,
-      { port, output: 'json', logLevel: 'error', onlyCategories: CATEGORIES },
+      { port, output: 'json', logLevel: 'error', onlyCategories: [...CATEGORIES, ...REPORTED_CATEGORIES] },
       preset === 'desktop' ? desktopConfig : undefined,
     );
     if (!result?.lhr) throw new Error('Lighthouse returned no report');
@@ -116,8 +118,10 @@ for (const preset of presets) {
     lighthouseVersion = lhr.lighthouseVersion;
     writeFileSync(resolve(OUT_DIR, `${preset}-${run}.json`), JSON.stringify(lhr));
     const scores = Object.fromEntries(CATEGORIES.map((c) => [c, Math.round((lhr.categories[c]?.score ?? 0) * 100)]));
-    console.log(`${preset} run ${run}: ${CATEGORIES.map((c) => `${c} ${scores[c]}`).join(', ')}`);
-    reports.push({ lhr, scores });
+    const reported = reportedScores(lhr);
+    const extra = REPORTED_CATEGORIES.map((c) => `, ${c} ${reported[c] === null ? 'n/a' : reported[c].toFixed(2)}`).join('');
+    console.log(`${preset} run ${run}: ${CATEGORIES.map((c) => `${c} ${scores[c]}`).join(', ')}${extra}`);
+    reports.push({ lhr, scores, reported });
   }
   const medians = Object.fromEntries(CATEGORIES.map((c) => [c, median(reports.map((r) => r.scores[c]))]));
   // The run with the median Performance score supplies the metrics and the requests.
@@ -140,7 +144,7 @@ for (const preset of presets) {
     if (!(typeof metrics.cls === 'number' && metrics.cls <= CLS_BUDGET)) misses.push(`CLS ${metrics.cls} (budget ${CLS_BUDGET})`);
     if (lcpElement === null || lcpElement === 'img') misses.push(`LCP element ${lcpElement ?? 'unknown'} (should be text)`);
   }
-  measured.push({ preset, runs: reports.map((r) => r.scores), medians, metrics, lcpElement, budgets });
+  measured.push({ preset, runs: reports.map((r) => r.scores), reported: reports.map((r) => r.reported), medians, metrics, lcpElement, budgets });
 }
 
 let commit = 'unknown';

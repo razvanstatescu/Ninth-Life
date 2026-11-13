@@ -36,11 +36,13 @@ describe('routes (ADR-006)', () => {
     expect(config).toMatch(/\{\s*source:\s*'\/welcome',\s*destination:\s*'\/',\s*permanent:\s*true\s*\}/);
   });
 
-  it('MS-1.4 /about links the brand and "Back to the keypad" to /app and the demo link to /', () => {
+  it('MS-1.4 /about (site look since W3, 2026-11-12): the bar brand goes to /, "Open the app" to /app, the demo link to /', () => {
     const about = read(web('app/about/page.tsx'));
-    expect(about).toContain('<Brand href="/app" />');
-    expect(hrefOf(about, 'Back to the keypad')).toEqual(['/app']);
+    expect(about).toContain('<SiteBar home="/" />');
+    expect(about).toContain('<SiteFooter home="/" statement={false} />');
+    expect(hrefOf(read(web('components/site/SiteBar.tsx')), 'Open the app')).toEqual(['/app']);
     expect(hrefOf(about, 'See the demo, the measured results and the source code')).toEqual(['/']);
+    expect(hrefOf(about, 'Back to the keypad')).toEqual([]);
     expect(about).not.toContain('/welcome');
   });
 
@@ -94,12 +96,14 @@ describe('routes (ADR-006)', () => {
     expect(css).toContain('env(safe-area-inset-right)');
   });
 
-  it('MS-11.3 app.css is loaded by the app pages only, not by the layout or the website', () => {
+  it('MS-11.3 app.css is loaded by /app only, not by the layout, the website or /about', () => {
     const imports = (rel: string) => [...read(web(rel)).matchAll(/^import\s+['"]([^'"]+)['"];?$/gm)].map((m) => m[1] ?? '');
     const appCss = (rel: string) => imports(rel).some((s) => /styles\/app\.css$/.test(s));
     expect(appCss('app/layout.tsx')).toBe(false);
     expect(appCss('app/page.tsx')).toBe(false);
     expect(appCss('app/app/page.tsx')).toBe(true);
-    expect(appCss('app/about/page.tsx')).toBe(true);
+    // W3 (2026-11-12): /about uses the website's stylesheet instead.
+    expect(appCss('app/about/page.tsx')).toBe(false);
+    expect(imports('app/about/page.tsx')).toContain('@/components/site/site.css');
   });
 });

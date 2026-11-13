@@ -11,9 +11,10 @@ import { Limits } from '@/components/site/sections/Limits';
 import { Privacy } from '@/components/site/sections/Privacy';
 import { Proof } from '@/components/site/sections/Proof';
 import { Results } from '@/components/site/sections/Results';
-import { Source } from '@/components/site/sections/Source';
 import { Start } from '@/components/site/sections/Start';
 import { finishedKeys, finishedSentence, getDemoData, getHowData, getProofExample, getResults, getSpellExample } from '@/components/site/site-data';
+import { pageMetadata } from '@/components/site/seo';
+import { siteJsonLd } from '@/components/site/structured-data';
 import '@/components/site/site.css';
 
 /**
@@ -30,18 +31,15 @@ const SHARE_TITLE = 'Ninth Life: the old phone keypad, back as a way to talk';
 const SHARE_DESCRIPTION =
   'Press one key per letter and hear the sentence you meant. Every spoken word matches the keys you pressed. Free, works offline, runs in your browser.';
 
-export const metadata: Metadata = {
-  title: TITLE,
-  description: DESCRIPTION,
-  openGraph: { title: SHARE_TITLE, description: SHARE_DESCRIPTION, type: 'website', siteName: 'Ninth Life', locale: 'en' },
-  twitter: { card: 'summary', title: SHARE_TITLE, description: SHARE_DESCRIPTION },
-};
+// Canonical, og:url and the social card only when the origin is known (components/site/seo.ts).
+export const metadata: Metadata = pageMetadata({ path: '/', title: TITLE, description: DESCRIPTION, shareTitle: SHARE_TITLE, shareDescription: SHARE_DESCRIPTION });
 
 export default function HomePage() {
   const demo = getDemoData();
   const how = getHowData();
   const proof = getProofExample();
   const results = getResults();
+  const jsonLd = siteJsonLd(); // WebSite, WebApplication, FAQPage (structured-data.ts); null without an origin
 
   return (
     <div className="site">
@@ -54,15 +52,15 @@ export default function HomePage() {
       <main id="main" tabIndex={-1}>
         <How how={how} />
         <Proof proof={proof} />
+        <Results results={results} />
         <Conversation sentence={finishedSentence(demo)} keys={finishedKeys(demo)} spell={getSpellExample()} />
         <Access />
         <Privacy />
-        <Results results={results} />
         <Limits />
         <Faq />
-        <Source />
         <Start />
       </main>
+      {jsonLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} /> : null}
       <SiteFooter />
       <SiteMotion />
     </div>

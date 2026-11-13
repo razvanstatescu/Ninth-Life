@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { buildRequest } from '../lib/decodeClient';
-import { RANKING_SENT } from '../lib/rankingProvider';
+import { RANKING_SENT, rankingSentText } from '../lib/rankingProvider';
 
 const CONTENT = readFileSync(resolve(__dirname, '../../../.kiro/specs/marketing-site/content.md'), 'utf8');
 
@@ -37,8 +37,9 @@ describe('RANKING_SENT', () => {
     expect(Object.keys(req!).sort()).toEqual(['beams', 'codes', 'context', 'k', 'lang', 'lattice', 'mode', 'v']);
 
     // The items appear in this order in the Privacy card (§6) and the §9 answer. The card says "its own best
-    // guesses", so the owner of the guesses is not compared there.
-    const card = CONTENT.match(/^- `h3` \*\*Model ranking, if you turn it on\*\*.*$/m)?.[0].toLowerCase();
+    // guesses", so the owner of the guesses is not compared there. Round 4 (r4-boxes): the card's list is real text
+    // drawn in its stage ("Sent to rank: {rankingSentText()}."), so the whole §6 entry is read, not only its first line.
+    const card = CONTENT.match(/^- `h3` \*\*Model ranking, if you turn it on\*\*[\s\S]*?(?=\n- |\n\n)/m)?.[0].toLowerCase();
     const answer = CONTENT.match(/^- \*\*What does model ranking send, and to whom\?\*\*.*$/m)?.[0].toLowerCase();
     expect(card).toBeDefined();
     expect(answer).toBeDefined();
@@ -46,5 +47,18 @@ describe('RANKING_SENT', () => {
     for (const p of positions(answer!, lower)) expect(p).toBeGreaterThanOrEqual(0);
     const cardNeedles = lower.map((s) => s.replace("ninth life's ", ''));
     for (const p of positions(card!, cardNeedles)) expect(p).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('rankingSentText (one list everywhere, landing review 2026-11-12)', () => {
+  it('joins RANKING_SENT into one clause, keeping the name capitalised', () => {
+    expect(rankingSentText()).toBe("your keys, the dictionary words that match them, Ninth Life's own best guesses and the other person's last line");
+    expect(rankingSentText(['A', 'B'])).toBe('a and b');
+    expect(rankingSentText(['Only'])).toBe('only');
+  });
+
+  it('/about says what ranking sends with the same clause', () => {
+    const about = readFileSync(resolve(__dirname, '../app/about/page.tsx'), 'utf8');
+    expect(about).toContain('rankingSentText()');
   });
 });

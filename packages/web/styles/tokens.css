@@ -21,6 +21,11 @@
   --ring-width: 3px;
   --line-width: 2px;
   --target-cta: 64px;
+  --container: 1200px;
+  --measure: 760px;
+  --stage-s: 216px;
+  --stage-m: 288px;
+  --stage-l: 384px;
   --radius-chip: 14px;
   --radius-key: 24px;
   --radius-card: 28px;
@@ -41,8 +46,11 @@
   --motion-frame: 600ms;
   --motion-frame-quick: 400ms;
   --motion-sweep: 240ms;
+  --motion-hint: 4px;
+  --motion-grow: 600ms;
   --motion-ease-out: cubic-bezier(0.2, 0, 0, 1);
   --motion-ease-linear: linear;
+  --state-hover: 0.08;
   --type-display-xl-size: 96px;
   --type-display-xl-line: 0.95;
   --type-display-xl-weight: 800;
@@ -70,6 +78,10 @@
   --type-heading-size: 22px;
   --type-heading-line: 28px;
   --type-heading-weight: 700;
+  --type-brand-size: 22px;
+  --type-brand-line: 28px;
+  --type-brand-weight: 800;
+  --type-brand-tracking: -0.01em;
   --type-body-lg-size: 20px;
   --type-body-lg-line: 30px;
   --type-body-lg-weight: 400;
@@ -192,6 +204,7 @@
 .nl-type-candidate { font-family: var(--font-sans); font-size: var(--type-candidate-size); line-height: var(--type-candidate-line); font-weight: var(--type-candidate-weight); }
 .nl-type-key-letters { font-family: var(--font-sans); font-size: var(--type-key-letters-size); line-height: var(--type-key-letters-line); font-weight: var(--type-key-letters-weight); letter-spacing: var(--type-key-letters-tracking); }
 .nl-type-heading { font-family: var(--font-sans); font-size: var(--type-heading-size); line-height: var(--type-heading-line); font-weight: var(--type-heading-weight); }
+.nl-type-brand { font-family: var(--font-sans); font-size: var(--type-brand-size); line-height: var(--type-brand-line); font-weight: var(--type-brand-weight); letter-spacing: var(--type-brand-tracking); }
 .nl-type-body-lg { font-family: var(--font-sans); font-size: var(--type-body-lg-size); line-height: var(--type-body-lg-line); font-weight: var(--type-body-lg-weight); }
 .nl-type-body { font-family: var(--font-sans); font-size: var(--type-body-size); line-height: var(--type-body-line); font-weight: var(--type-body-weight); }
 .nl-type-label { font-family: var(--font-sans); font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); }

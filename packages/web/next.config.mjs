@@ -25,6 +25,7 @@ const md5 = (/** @type {string} */ file) => createHash('md5').update(readFileSyn
  * - latin-ext font subsets: CSS loads them only for text that needs them (unicode-range);
  * - the data licence and notice (attribution pages, not needed to talk offline);
  * - en.v1.json: the eval's lexicon. The app ships the compact en.v2.json (ADR-data-003).
+ * - social-card.png: the link-preview image (components/site/seo.ts); only link-preview crawlers fetch it.
  */
 const NOT_PRECACHED = [
   /^icons\/icon(-maskable)?-(192|512)\.png$/,
@@ -32,6 +33,7 @@ const NOT_PRECACHED = [
   /^fonts\/.*-latin-ext\.woff2$/,
   /^data\/(LICENSE|NOTICE\.md)$/,
   /^data\/lexicon\/en\.v1\.json$/,
+  /^social-card\.png$/,
 ];
 
 /**

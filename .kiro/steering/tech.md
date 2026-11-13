@@ -10,6 +10,7 @@ Checked against the repo on 2026-11-09. If a version or command here disagrees w
 
 - pnpm 10 workspace (`packageManager: pnpm@10.28.0`), Node 22 or later, TypeScript 5.6, Vitest 2.1, fast-check 3.
 - `packages/web`: Next.js **15.1.12** App Router, React 19, Serwist service worker (offline), IndexedDB through `idb`. Deployed on Vercel (not yet live).
+- Site URL: none decided yet. `packages/web/lib/site-url.ts` reads `SITE_URL` (set it when a custom domain exists; server-only), else Vercel's `VERCEL_PROJECT_PRODUCTION_URL` (set on every Vercel deployment, previews included, so previews canonicalise to production), else nothing. With no origin the site emits no absolute URL: no canonical, `og:url`, `og:image` or JSON-LD, no `Sitemap:` line in robots.txt, and `/sitemap.xml` answers 404 (a sitemap needs absolute `<loc>` URLs; an empty or localhost one would be invalid or wrong). Read at build time (the pages are static). Record the URL here once it is live.
 - `packages/core`: pure TypeScript (keymap, validator, lexicon, bigram model, ghost decoder, scanning). No DOM, no network.
 - `packages/decoder`: the `/api/decode` handler. One provider-aware `AnthropicLlmClient` over plain `fetch` that speaks the Anthropic Messages protocol to Anthropic or to MiniMax's compatible endpoint (ADR-001, ADR-002). Default model `MiniMax-M3` when only `MINIMAX_API_KEY` is set, otherwise `claude-haiku-5-5`.
 - `packages/eval`: offline baselines B0/B1 and model runs B2-B4; Python 3 only for rebuilding `data/`.

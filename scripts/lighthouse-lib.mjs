@@ -8,6 +8,23 @@ export const PRESETS = ['mobile', 'desktop'];
 export const CATEGORIES = ['performance', 'accessibility', 'best-practices', 'seo'];
 export const CATEGORY_NAMES = { performance: 'Performance', accessibility: 'Accessibility', 'best-practices': 'Best Practices', seo: 'SEO' };
 
+/**
+ * Categories reported with no target (Round 3, 2026-11-12). Lighthouse 13.3+ "Agentic Browsing" scores a
+ * fraction (0 to 1): the accessibility tree, layout shift and /llms.txt when it exists. A run that lacks a
+ * category reports "n/a".
+ */
+export const REPORTED_CATEGORIES = ['agentic-browsing'];
+export const REPORTED_NAMES = { 'agentic-browsing': 'Agentic Browsing' };
+
+/**
+ * The reported categories' scores of one run, as fractions, or null for a category the run lacks.
+ * @param {{ categories?: Record<string, { score?: number | null } | undefined> }} lhr
+ * @returns {Record<string, number | null>}
+ */
+export function reportedScores(lhr) {
+  return Object.fromEntries(REPORTED_CATEGORIES.map((c) => [c, typeof lhr.categories?.[c]?.score === 'number' ? /** @type {number} */ (lhr.categories[c].score) : null]));
+}
+
 /** MS-11.1 (mobile): Performance 95 or more, every other category 100. */
 export const TARGETS = { performance: 95, accessibility: 100, 'best-practices': 100, seo: 100 };
 
@@ -195,6 +212,7 @@ const ms = (v) => (typeof v === 'number' ? `${Math.round(v).toLocaleString('en-U
  * @param {{
  *   lighthouseVersion: string, chromiumVersion: string, url: string, date: string, commit: string,
  *   presets: { preset: string, runs: Record<string, number>[], medians: Record<string, number>,
+ *     reported?: Record<string, number | null>[],
  *     metrics: { fcp?: number, lcp?: number, tbt?: number, cls?: number, si?: number }, lcpElement: string | null,
  *     budgets: Budgets }[],
  *   misses: string[],
@@ -216,6 +234,13 @@ export function renderReport(result) {
     p.runs.forEach((r, i) => out.push(`| Run ${i + 1} | ${CATEGORIES.map((c) => r[c] ?? 'n/a').join(' | ')} |`));
     out.push(`| **Median** | ${CATEGORIES.map((c) => `**${p.medians[c] ?? 'n/a'}**`).join(' | ')} |`);
     if (mobile) out.push(`| Target | ${CATEGORIES.map((c) => (c === 'performance' ? '95 or more' : '100')).join(' | ')} |`);
+    for (const c of REPORTED_CATEGORIES) {
+      const runs = (p.reported ?? []).map((r) => r[c]).filter((v) => typeof v === 'number');
+      if (!runs.length) continue;
+      const name = REPORTED_NAMES[/** @type {keyof typeof REPORTED_NAMES} */ (c)];
+      out.push('');
+      out.push(`${name} (reported, no target): median ${median(runs).toFixed(2)} (runs ${runs.map((v) => v.toFixed(2)).join(', ')}).`);
+    }
     out.push('');
     const m = p.metrics;
     out.push(

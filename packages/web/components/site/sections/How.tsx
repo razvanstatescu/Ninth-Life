@@ -1,33 +1,51 @@
 /**
- * How it works (#how, content.md §2, design.md 4.1). From 1024px the How picture is sticky beside the
- * steps and SiteMotion's step observer drives it (A8, MS-8.12): it is not a data-play root. Under
- * 1024px the picture is hidden and each step card holds its own stage, a data-play root (A7). The
- * step label is a cell with two layers, plain and key-styled; the key layer marks the active step.
+ * How it works (#how, content.md §2, design.md "Round 4: How it works"). Round 4 (2026-11-13, Claude Code): three
+ * steps, Press, Pick and Speak, each a stage holding its scene (pictures/HowScenes.tsx, a data-play root) and then a
+ * .site-step (number, title, one line). One column under 1024px, the stage beside its text from 600px, one row from
+ * 1024px, where site.css plays the scenes once in story order (MS-8.11). Each step is a [data-play-scope], so its
+ * number lights while its scene plays (.site-step, :has()). The limits these steps carry (spelling, English) follow
+ * the row as one .site-caveat. The sticky picture, its runway and the step sync (A8, MS-8.12) are gone.
  */
 import type { CSSProperties } from 'react';
-import { HowScreen } from '../pictures/HowScreen';
+import { HowPick, HowPress, HowSpeak } from '../pictures/HowScenes';
+import { play, role, type PlayClass } from '../pictures/roles';
+import { SiteIcon, info } from '../icons';
 import type { HowData } from '../site-data';
 
-const STEPS = [
+const STEPS: readonly {
+  n: 1 | 2 | 3;
+  play: PlayClass;
+  /** The number's lit layer: on while the step's scene plays. */
+  lit: string;
+  Scene: typeof HowPress;
+  title: string;
+  line: string;
+}[] = [
   {
-    label: '01',
-    part: 1,
+    n: 1,
+    play: 'quick',
+    lit: role('during', 0, 4),
+    Scene: HowPress,
     title: 'Press one key per letter',
-    text: 'Keys 2 to 9 carry the letters. G, H and I share key 4, so "home" is 4 6 6 3, and so is "good". No tapping a key three times and no code to learn. 0 is space.',
+    line: 'G, H and I share key 4, so "home" and "good" are both 4663.',
   },
   {
-    label: '02',
-    part: 2,
-    title: 'Pick the sentence you meant',
-    text: 'Sentences appear as you type, ranked by an offline dictionary on your device. If you turn on model ranking, a language model can use what the other person just said to put the likely one first. Choosing a sentence never speaks it.',
+    n: 2,
+    play: 'sweep',
+    lit: role('during', 1, 5),
+    Scene: HowPick,
+    title: 'Pick what you meant',
+    line: 'Ranked by an offline dictionary on your device. Picking one never speaks it.',
   },
   {
-    label: '03',
-    part: 3,
+    n: 3,
+    play: 'sweep',
+    lit: role('during', 0, 2),
+    Scene: HowSpeak,
     title: 'Hear it out loud',
-    text: "Nothing is spoken until you press Speak. Your browser's voice says it. If there is no voice, Show puts the sentence in big text for the other person to read.",
+    line: "Your browser's voice says it. With no voice, Show puts it in big text.",
   },
-] as const;
+];
 
 export function How({ how }: { how: HowData }) {
   return (
@@ -37,28 +55,29 @@ export function How({ how }: { how: HowData }) {
           <h2 id="how-title" className="site-h2">
             How it works
           </h2>
+          <p className="site-lead">Three steps. Nothing is said until you press Speak.</p>
         </div>
-        <div className="site-how">
-          <div className="site-how__picture" data-reveal="">
-            <HowScreen how={how} part="all" />
-          </div>
-          <ol className="site-how__steps">
-            {STEPS.map((s, i) => (
-              <li key={s.label} className="site-card site-how__step" data-reveal="" style={{ '--reveal-i': Math.min(i, 2) } as CSSProperties}>
-                <span className="site-step site-cell" aria-hidden="true">
-                  <span>{s.label}</span>
-                  <span className="site-step__key">{s.label}</span>
+        <ol className="site-how__steps" role="list">
+          {STEPS.map(({ n, play: p, lit, Scene, title, line }, i) => (
+            <li key={n} className={`site-how__step ${play(p)}`} data-play-scope="" data-reveal="" style={{ '--reveal-i': i } as CSSProperties}>
+              <div className="site-stage site-how__stage" aria-hidden="true">
+                <Scene how={how} />
+              </div>
+              <div className="site-step">
+                <span className="site-step__num site-cell" aria-hidden="true">
+                  <span>{n}</span>
+                  <span className={`site-step__lit ${lit}`}>{n}</span>
                 </span>
-                <h3 className="site-h3">{s.title}</h3>
-                <p>{s.text}</p>
-                <div className="site-stage site-how__stage" aria-hidden="true">
-                  <HowScreen how={how} part={s.part} />
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-        <p className="site-how__spell">You need to be able to spell. Ninth Life types words, not symbols.</p>
+                <h3 className="site-step__title">{title}</h3>
+                <p className="site-step__line">{line}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <p className="site-caveat" data-reveal="">
+          <SiteIcon d={info} />
+          <span>You need to be able to spell. Ninth Life types words, not symbols. English only for now.</span>
+        </p>
       </div>
     </section>
   );

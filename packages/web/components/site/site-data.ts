@@ -13,14 +13,24 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { Lexicon, bigramModel, decodeGhost, encodeWord, unigramModel, type BigramFile, type LanguageModel, type LexiconFile } from '@ninth/core';
-import { MODEL_PROFILES, isModelId } from '@ninth/decoder';
+import { KEY_LETTERS, Lexicon, bigramModel, decodeGhost, encodeWord, formatSentence, unigramModel, type BigramFile, type Digit, type LanguageModel, type LexiconFile } from '@ninth/core';
+import { MODEL_PROFILES, isModelId, type Provider } from '@ninth/decoder';
+import { PROVIDER_COPY, rankingProvider, type RankingProvider } from '@/lib/rankingProvider';
 
 export const REPO_URL = 'https://github.com/razvanstatescu/Ninth-Life';
 export const RESULTS_URL = `${REPO_URL}/blob/main/packages/eval/RESULTS.md`;
 export const METHOD_URL = `${REPO_URL}/blob/main/docs/architecture/data-and-eval.md#4-evaluation-method`;
 export const ISSUES_URL = `${REPO_URL}/issues`;
 export const NOTICE_URL = `${REPO_URL}/blob/main/data/NOTICE.md`;
+/** Evidence for Privacy's "Check it yourself" (round 3): the rules the code follows, and the code that builds the ranking request. */
+export const PRIVACY_RULES_URL = `${REPO_URL}/blob/main/.kiro/steering/privacy.md`;
+export const RANKING_REQUEST_URL = `${REPO_URL}/blob/main/packages/web/lib/decodeClient.ts`;
+/**
+ * The history line (MS-4.7, D15; round 4: in the site footer of every page and in /llms.txt). One constant, so the
+ * footer, /llms.txt and the tests can never differ. Stated plainly, as .kiro/steering/product.md's history note does.
+ */
+export const HISTORY_LINE =
+  'Made for Kiroween 2026. The first version was written with Claude Code by Anthropic; from Nov 10, 2026 the work continued in Kiro. The website was reviewed and revised with Claude Code on Nov 12-13, 2026.';
 
 /** The fixed example the demo types: one press per letter, 0 between words. */
 export const DEMO_WORDS = ['i', 'need', 'water'] as const;
@@ -32,6 +42,12 @@ export interface DemoStep {
   codes: string[];
   /** What the offline decoder shows for those codes (top sentence), or null for a code with no word yet. */
   words: (string | null)[];
+  /**
+   * How each word is written on its proof chip, as the app writes it (round 3, R3-P8): the sentence's own tokens
+   * from @ninth/core formatSentence ("I", a capital first word), as the app's ProofPanel labels its chips with
+   * buildSentence's tokens. Null where `words` is null.
+   */
+  labels: (string | null)[];
 }
 
 export interface DemoData {
@@ -106,6 +122,15 @@ export function sentenceCase(words: readonly (string | null)[]): string {
   return text.replace(/\bi\b/g, 'I').replace(/^./, (c) => c.toUpperCase());
 }
 
+/**
+ * The chip label of each word: the app's formatSentence tokens (lib/sentence.ts buildSentence → ProofPanel labels).
+ * A word not typed yet keeps its place with a letterless stand-in, so the tokens line up with the words.
+ */
+export function chipLabels(words: readonly (string | null)[]): (string | null)[] {
+  const tokens = formatSentence(words.map((w) => w || '-')).split(' ');
+  return words.map((w, i) => (w ? (tokens[i] ?? w) : null));
+}
+
 let demoCache: DemoData | null = null;
 
 export function getDemoData(): DemoData {
@@ -135,7 +160,7 @@ export function getDemoData(): DemoData {
         words = [...typed.slice(0, -1).map((_, i) => head[i] ?? null), tail];
       }
     }
-    steps.push({ key, codes: [...typed], words });
+    steps.push({ key, codes: [...typed], words, labels: chipLabels(words) });
   }
 
   const candidates =
@@ -165,10 +190,10 @@ export type SiteDictionary = Dictionary | null;
 
 export interface HowData {
   code: '4663';
-  /** The well after each press (4, 46, 466, 4663), sentence case, decoded as the hero demo does. */
-  typing: [string, string, string, string];
   /** The top 3 sentences for 4663, best first. */
   sentences: string[];
+  /** The same sentences as the app lists them: sentence case ("Good", "Home", "Gone"). */
+  labels: string[];
   /** Index in `sentences` of "home", the word the drawing picks; -1 with no dictionary. */
   chosen: number;
 }
@@ -176,30 +201,21 @@ export interface HowData {
 const HOW_CODE = '4663';
 
 /**
- * The How it works drawing (MS-7.8): the well after each press of 4 6 6 3, and the top 3 sentences
- * with "home" chosen. It throws when the dictionary is loaded but the example stops being true, so the
- * build fails rather than showing a false drawing. With no dictionary it shows digits only.
+ * The How it works drawing (MS-7.8; round 4, 2026-11-13, Claude Code: the well after each press is gone with the
+ * typing well): the keys 4663 and the top 3 sentences with "home" chosen. It throws when the dictionary is loaded
+ * but the example stops being true, so the build fails rather than showing a false drawing. With no dictionary it
+ * shows the digits only.
  */
 export function getHowData(dict: SiteDictionary = dictionary()): HowData {
-  const prefixes = [1, 2, 3, 4].map((n) => HOW_CODE.slice(0, n));
-  const digits = (p: string) => p.split('').join(' ');
-  if (!dict) {
-    const [a, b, c, d] = prefixes.map(digits) as [string, string, string, string];
-    return { code: HOW_CODE, typing: [a, b, c, d], sentences: [], chosen: -1 };
-  }
+  if (!dict) return { code: HOW_CODE, sentences: [], labels: [], chosen: -1 };
   const { lexicon, lm } = dict;
   if (encodeWord('home') !== HOW_CODE || encodeWord('good') !== HOW_CODE) {
     throw new Error('site-data: "home" and "good" are no longer both 4663');
   }
-  const typed = prefixes.map((p) => {
-    const best = decodeGhost([p], { lexicon, lm, k: 1 })[0]?.words[0] ?? lexicon.completions(p, 1)[0];
-    return best ? sentenceCase([best]) : digits(p);
-  });
   const sentences = decodeGhost([HOW_CODE], { lexicon, lm, k: 3 }).map((c) => c.words.join(' '));
   const chosen = sentences.indexOf('home');
   if (chosen < 0) throw new Error('site-data: "home" is no longer in the top 3 for 4663');
-  const [a, b, c, d] = typed as [string, string, string, string];
-  return { code: HOW_CODE, typing: [a, b, c, d], sentences, chosen };
+  return { code: HOW_CODE, sentences, labels: sentences.map((s) => sentenceCase(s.split(' '))), chosen };
 }
 
 export interface SpellExample {
@@ -224,6 +240,11 @@ const isProofColumn = (n: number): n is ProofColumn => Number.isInteger(n) && n 
 export interface ProofExample {
   /** The keys pressed: the code of "water". */
   keys: string;
+  /**
+   * The letters of each pressed key, upper case, from @ninth/core's KEY_LETTERS ("WXYZ", "ABC", ...). Round 4
+   * (2026-11-13, Claude Code): the figure draws them on its five keys, so a visitor sees that "f" is not on TUV.
+   */
+  keyLetters: string[];
   words: { word: string; code: string }[];
   /** The words whose code equals the keys. */
   matches: string[];
@@ -231,14 +252,24 @@ export interface ProofExample {
   reject: { word: string; code: string; diffAt: ProofColumn };
 }
 
-/** The proof figure's closing line (MS-7.9): "Can be spoken: water, waves. Never spoken: wafer." */
-export function proofSaidLine(proof: ProofExample): string {
-  return `Can be spoken: ${proof.matches.join(', ')}. Never spoken: ${proof.reject.word}.`;
+/** The proof figure's first closing line (MS-7.9, round 4): "Can be spoken: water, waves." */
+export function proofCanLine(proof: ProofExample): string {
+  return `Can be spoken: ${proof.matches.join(', ')}.`;
+}
+
+/**
+ * The proof figure's second closing line (MS-7.9, round 4): round 3's "Never spoken" and the two codes, together
+ * under the x: 'Never spoken: wafer. "wafer" is 92337. Your keys are 92837.'
+ */
+export function proofNeverLine(proof: ProofExample): string {
+  const { word, code } = proof.reject;
+  return `Never spoken: ${word}. "${word}" is ${code}. Your keys are ${proof.keys}.`;
 }
 
 /**
  * The proof example (MS-7.6). It throws when the example no longer shows a dropped word, so the
- * build fails rather than showing a false claim.
+ * build fails rather than showing a false claim. Round 4: also when a word does not have one letter per key, or
+ * when the dropped word's letter at diffAt is on the key pressed there (the figure says it is not).
  */
 export function getProofExample(): ProofExample {
   const keys = encodeWord('water') ?? '';
@@ -249,17 +280,52 @@ export function getProofExample(): ProofExample {
   let diffAt = 0;
   while (diffAt < dropped.code.length && dropped.code[diffAt] === keys[diffAt]) diffAt += 1;
   if (!isProofColumn(diffAt)) throw new Error('site-data: the proof example no longer differs inside its 5 digits');
-  return { keys, words, matches, reject: { ...dropped, diffAt } };
+  if (words.some((w) => w.word.length !== keys.length)) throw new Error('site-data: a proof word no longer has one letter per key');
+  const keyLetters = keys.split('').map((d) => KEY_LETTERS[d as Digit]);
+  if (keyLetters[diffAt]!.includes(dropped.word[diffAt]!)) throw new Error('site-data: the dropped letter is on the key pressed there');
+  return { keys, keyLetters: keyLetters.map((l) => l.toUpperCase()), words, matches, reject: { ...dropped, diffAt } };
+}
+
+export interface ModelRuns {
+  sizes: number[];
+  count: number;
+  /** The one provider every counted run's model belongs to (MODEL_PROFILES). */
+  provider: Provider;
+  /** The measured model ids, sorted ("MiniMax-M3", "MiniMax-M3.1-Flash"). */
+  models: string[];
+}
+
+/** One test source of RESULTS.md "By source": B1's right sentence first and how many items the source has. */
+export interface SourceResult {
+  top1: string;
+  items: number;
 }
 
 export interface SiteResults {
   items: number;
-  /** B1: offline dictionary with the bigram model (what the app ships). */
-  ghost: { wordAcc: string; top1: string; top5: string; scanStepsPerChar: string; ksr: string };
-  /** B0: word frequency only, for comparison. */
-  dict: { top1: string; top5: string };
-  /** Model-ranking runs (letter mode, B4 ok, known models, one provider), or null. No names. */
-  modelRuns: { sizes: number[]; count: number } | null;
+  /**
+   * The words in the test sentences (B1 `words`; RESULTS.md 2,730 + 2,160 by source, "of 4890" in the initials table):
+   * the denominator of "Right word first". Null when RESULTS.json does not give it (round 4).
+   */
+  words: number | null;
+  /**
+   * B1: offline dictionary with the bigram model (what the app ships). Round 4: `pressesPerChar` ("1.00", RESULTS.md
+   * "Letter-mode B1 needs 1.00 presses per character") replaces the KSR on the page; null when RESULTS.json lacks it.
+   */
+  ghost: { wordAcc: string; top1: string; top5: string; scanStepsPerChar: string; ksr: string; pressesPerChar: string | null };
+  /** B0: word frequency only, for comparison (round 4: its word accuracy too, so every measure has its pair). */
+  dict: { top1: string; top5: string; wordAcc: string };
+  /**
+   * B1 right sentence first per test source (RESULTS.md "By source"): AACText's test sentences and the Turk
+   * dialogue replies, which are longer and more varied, each with its item count (round 4). Null when RESULTS.json
+   * has no valid split (round 3).
+   */
+  bySource: { aac: SourceResult; turk: SourceResult } | null;
+  /**
+   * Model-ranking runs (letter mode, B4 ok, known models, one provider), or null. Round 3 (R3-P7, 2026-11-13): with the
+   * provider and the model ids that were measured, so the page can say which models the numbers come from.
+   */
+  modelRuns: ModelRuns | null;
 }
 
 interface Metrics {
@@ -269,6 +335,9 @@ interface Metrics {
   top5: number;
   ksr: number;
   scanStepsPerChar: number;
+  /** Checked where they are used (round 4): the page leaves them out when they are missing or invalid. */
+  words?: unknown;
+  pressesPerChar?: unknown;
 }
 
 const pct = (x: number) => `${(Math.round(x * 1000) / 10).toFixed(1)}%`;
@@ -293,6 +362,17 @@ function okMetrics(configs: unknown, id: string): Metrics | null {
   return valid ? (m as unknown as Metrics) : null;
 }
 
+/** B1's right-sentence-first and item count on each test source, or null unless both sources are there and valid. */
+function bySourceOf(configs: unknown): SiteResults['bySource'] {
+  if (!Array.isArray(configs)) return null;
+  const c = configs.find((x) => isObject(x) && x.id === 'B1' && x.status === 'ok') as Record<string, unknown> | undefined;
+  const s = c?.bySource;
+  if (!isObject(s) || !isObject(s.aac) || !isObject(s.turk)) return null;
+  const { aac, turk } = s;
+  if (!inRange(aac.top1, 0, 1) || !inRange(turk.top1, 0, 1) || !isPositiveInt(aac.items) || !isPositiveInt(turk.items)) return null;
+  return { aac: { top1: pct(aac.top1), items: aac.items }, turk: { top1: pct(turk.top1), items: turk.items } };
+}
+
 function modelRunsOf(file: unknown): SiteResults['modelRuns'] {
   if (file === undefined) return null; // no file: no model line, no warning
   if (file === null) {
@@ -302,7 +382,7 @@ function modelRunsOf(file: unknown): SiteResults['modelRuns'] {
   if (!isObject(file) || !isObject(file.runs)) return null;
   const models = new Set<string>();
   const sizes = new Set<number>();
-  const providers = new Set<string>();
+  const providers = new Set<Provider>();
   for (const run of Object.values(file.runs)) {
     if (!isObject(run) || run.mode !== 'letter') continue;
     const model = run.model;
@@ -322,7 +402,7 @@ function modelRunsOf(file: unknown): SiteResults['modelRuns'] {
     console.warn('[site] model runs come from more than one provider; content.md §7 needs new copy');
     return null;
   }
-  return { sizes: [...sizes].sort((a, b) => a - b), count: models.size };
+  return { sizes: [...sizes].sort((a, b) => a - b), count: models.size, provider: [...providers][0] as Provider, models: [...models].sort() };
 }
 
 export function getResults(read: JsonReader = readJson): SiteResults | null {
@@ -334,26 +414,102 @@ export function getResults(read: JsonReader = readJson): SiteResults | null {
     console.warn('[site] RESULTS.json is missing or invalid; the results section shows no numbers');
     return null;
   }
+  const presses = b1.pressesPerChar;
   return {
     items: b1.items,
+    words: isPositiveInt(b1.words) ? b1.words : null,
     ghost: {
       wordAcc: pct(b1.wordAcc),
       top1: pct(b1.top1),
       top5: pct(b1.top5),
       scanStepsPerChar: b1.scanStepsPerChar.toFixed(2),
       ksr: pct(b1.ksr),
+      pressesPerChar: typeof presses === 'number' && Number.isFinite(presses) && presses > 0 ? presses.toFixed(2) : null,
     },
-    dict: { top1: pct(b0.top1), top5: pct(b0.top5) },
+    dict: { top1: pct(b0.top1), top5: pct(b0.top5), wordAcc: pct(b0.wordAcc) },
+    bySource: bySourceOf(configs),
     modelRuns: modelRunsOf(read(['..', 'eval', 'RESULTS.llm.json'])),
   };
 }
 
-const joinSizes = (sizes: readonly number[]) =>
-  sizes.length <= 1 ? sizes.join('') : `${sizes.slice(0, -1).join(', ')} and ${sizes[sizes.length - 1]}`;
+/**
+ * The length of a Results bar (round 4, 2026-11-13, Claude Code; MS-5.1): the printed percentage as a share of the
+ * whole track, so a bar can never disagree with its label ("85.6%" is 0.856). Clamped to 0..1.
+ */
+export function barShare(printed: string): number {
+  const v = Number.parseFloat(printed) / 100;
+  return Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 0;
+}
 
-/** The model line of content.md §7 as one string. */
-export function modelRunsLine(m: { sizes: readonly number[]; count: number }): string {
-  const sizes = [...new Set(m.sizes)].sort((a, b) => a - b);
-  const models = m.count === 1 ? 'with 1 model' : `with ${m.count} models from one provider`;
-  return `Model ranking has also been measured, on samples of ${joinSizes(sizes)} sentences ${models}. Those numbers, with how often a reply would have come too late to use, are in the full results.`;
+/**
+ * The Results presses figure (round 4): a word's letters over the keys that type them, one press per letter, computed
+ * with encodeWord (never typed by hand). "home" is the How it works example (4663). Throws when a letter has no key.
+ */
+export function pressExample(word = 'home'): [letter: string, digit: string][] {
+  const code = encodeWord(word);
+  if (!code || code.length !== word.length) throw new Error(`site-data: "${word}" is no longer one key per letter`);
+  return word.split('').map((letter, i) => [letter, code[i]!]);
+}
+
+/**
+ * The marks of "{n} scan steps per character" (round 4): one whole mark per step and the rest as a part mark, read
+ * from the printed value ("3.57" is [1, 1, 1, 0.57]); at most 8 marks.
+ */
+export function scanMarks(printed: string): number[] {
+  const v = Number.parseFloat(printed);
+  if (!Number.isFinite(v) || v <= 0) return [];
+  const whole = Math.min(Math.floor(v), 8);
+  const part = Math.round((v - Math.floor(v)) * 100) / 100;
+  const marks: number[] = Array.from({ length: whole }, () => 1);
+  if (part > 0 && whole < 8) marks.push(part);
+  return marks;
+}
+
+const joinWords = (items: readonly (string | number)[]) =>
+  items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+const joinSizes = (sizes: readonly number[]) => joinWords(sizes);
+
+/** What the model-ranking status rows say (round 4), from the same values as the model line. */
+export interface ModelStatus {
+  count: number;
+  /** The measured provider's company name ("MiniMax"). */
+  company: string;
+  /** The measured model ids, sorted. */
+  models: string[];
+  /** The distinct sample sizes, ascending and joined ("200", "200 and 300"). */
+  sizes: string;
+  /** The ranking service this build sends to, and whether it is the provider measured. */
+  service: string;
+  serviceMeasured: boolean;
+}
+
+/**
+ * The model-ranking status of content.md §7 (round 4, 2026-11-13, Claude Code; amends the round-3 model line on the
+ * page): what was measured, and whether the provider this build uses (`current`, lib/rankingProvider.ts) is the one.
+ * The page shows it as status rows; `/llms.txt` keeps the one-line form, `modelRunsLine`. No model-run number.
+ */
+export function modelStatus(m: ModelRuns, current: RankingProvider = rankingProvider()): ModelStatus {
+  return {
+    count: m.count,
+    company: PROVIDER_COPY[m.provider].company,
+    models: [...m.models].sort(),
+    sizes: joinSizes([...new Set(m.sizes)].sort((a, b) => a - b)),
+    service: PROVIDER_COPY[current].service,
+    serviceMeasured: current === m.provider,
+  };
+}
+
+/**
+ * The model line of content.md §7 as one string. Round 3 (R3-P7, 2026-11-13, lead decision; amends D14 and MS-5.3):
+ * it names the provider and the models that were measured, and says whether the provider this build sends model
+ * ranking to (`current`, lib/rankingProvider.ts) is the measured one. Still no model-run number on the page. Round 4:
+ * built from `modelStatus`, so the page's status rows and `/llms.txt` read the same values.
+ */
+export function modelRunsLine(m: ModelRuns, current: RankingProvider = rankingProvider()): string {
+  const s = modelStatus(m, current);
+  const models = `with ${s.count} ${s.company} ${s.count === 1 ? 'model' : 'models'} (${joinWords(s.models)})`;
+  const which = s.serviceMeasured
+    ? `The app's model ranking uses ${s.service}, the provider measured here.`
+    : `The app's model ranking uses ${s.service}, which has not been measured yet.`;
+  return `Model ranking has also been measured, on samples of ${s.sizes} sentences ${models}. Those numbers, with how often a reply would have come too late to use, are in the full results. ${which}`;
 }

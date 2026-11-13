@@ -66,9 +66,11 @@ describe('site.css (static)', () => {
     expect(blocks).toHaveLength(1);
     const landscape = blocks[0]!;
     expect(landscape.body).toMatch(/\.site-bar nav \{ display: none; \}/);
-    expect(landscape.body).toMatch(/\.site-hero__name \{ font-size: clamp\(48px, 16svh, var\(--type-display-xl-size\)\); \}/);
+    expect(landscape.body).toMatch(/\.site-hero__title \{ font-size: clamp\(36px, 11svh, var\(--type-display-size\)\); \}/);
     for (const b of atBlocks(css, /min-width: (600|1024)px/)) expect(b.start).toBeLessThan(landscape.start);
-    expect(atBlocks(css, /^@media \(max-width: 719px\)$/)[0]!.body).toMatch(/\.site-bar nav \{ display: none; \}/);
+    // W1 (2026-11-12): the nav shows from 960px, so the bar is one row at every width; under 352px the brand is its icon.
+    expect(atBlocks(css, /^@media \(max-width: 959px\)$/)[0]!.body).toMatch(/\.site-bar nav \{ display: none; \}/);
+    expect(atBlocks(css, /^@media \(max-width: 351px\)$/)[0]!.body).toMatch(/\.site-bar \.nl-brand__name \{[^}]*position: absolute;[^}]*clip-path: inset\(50%\);/);
   });
 
   it('MS-10.5 MS-10.8 sets no key size and has no .site-demo__pad rule', () => {
@@ -169,7 +171,8 @@ describe('site.css and globals.css (motion)', () => {
     const siteMotion = rules(noPreference(css).map((b) => b.body).join('\n')).filter((r) => motionDecls(r).length > 0);
     expect(siteMotion.length).toBeGreaterThan(10);
     for (const r of siteMotion) {
-      for (const part of r.selector.split(',')) expect(part.trim(), r.selector).toMatch(/^\[data-site-motion/);
+      // Split on top-level commas only, so :is(a, b) and :not(a, b) stay whole (round 4).
+      for (const part of r.selector.split(/,(?![^(]*\))/)) expect(part.trim(), r.selector).toMatch(/^\[data-site-motion/);
     }
     expect(atBlocks(css, REDUCE)).toHaveLength(0);
   });
@@ -229,11 +232,25 @@ describe('site.css and globals.css (motion)', () => {
   it('MS-8.10 every @keyframes changes only opacity and transform', () => {
     const all = [...keyframes(css), ...keyframes(globalsCss)];
     const names = (source: string) => [...source.matchAll(/@keyframes ([a-z-]+) \{/g)].map((m) => m[1]);
-    expect(names(css)).toEqual(['site-fade-in', 'site-reveal', 'site-in', 'site-out', 'site-rise']);
+    // Round 4 (PO-1): the Results bars grow once with site-grow, a transform-only keyframe; the A10 answer reuses
+    // site-rise, so no other keyframe is added.
+    expect([...names(css)].sort()).toEqual(['site-fade-in', 'site-grow', 'site-in', 'site-out', 'site-reveal', 'site-rise']);
     expect(names(globalsCss)).toEqual([]);
-    expect(all).toHaveLength(5);
+    expect(all).toHaveLength(6);
     for (const k of all) {
       for (const m of k.body.matchAll(/([a-z-]+)\s*:/g)) expect(['opacity', 'transform']).toContain(m[1]);
+    }
+    // site-grow plays only on a played drawing's .site-grow part, filling backwards, so the full bar is the finished
+    // state; a scaled-down bar exists only as that part's before-play state.
+    for (const r of rules(css)) {
+      for (const d of motionDecls(r)) {
+        if (!/\bsite-grow\b/.test(d.value)) continue;
+        for (const part of r.selector.split(/,(?![^(]*\))/)) expect(part.trim()).toMatch(/\[data-play\]\[data-played="1"\] \.site-grow$/);
+        expect(d.value, r.selector).toMatch(/ backwards$/);
+      }
+      for (const v of declsOf(r, 'transform')) {
+        if (/scale/.test(v)) expect(r.selector, v).toMatch(/^\[data-site-motion="on"\] \[data-play\]:not\(\[data-played\]\) \.site-grow$/);
+      }
     }
   });
 
@@ -353,43 +370,44 @@ describe('site.css round 2 (played drawings, stages and grids)', () => {
     expect(top).toContain('.site-drawing .nl-candidate { cursor: default; }');
     // Stages: minimum heights from tokens (216px, Privacy 288px, switches 384px), so text spacing (WCAG 1.4.12)
     // grows a stage instead of cutting its drawing off (MS-7.7, review N8); no fixed block-size on a stage.
-    expect(top).toMatch(/\.site-stage \{[^}]*overflow: clip;[^}]*min-block-size: calc\(var\(--space-24\) \* 2 \+ var\(--space-6\)\);/);
-    expect(top).toContain('.site-stage--privacy { min-block-size: calc(var(--space-24) * 3); }');
-    expect(top).toContain('.site-stage--switch { min-block-size: calc(var(--space-24) * 4); }');
+    expect(top).toMatch(/\.site-stage \{[^}]*overflow: clip;[^}]*min-block-size: var\(--stage-s\);/);
+    // Round 4 (r4-boxes): a row's stage is 288px (stage-m); a lead card's stage at least 384px (stage-l) from 600px.
+    expect(top).toContain('.site-stage--m { min-block-size: var(--stage-m); }');
+    expect(top).toContain('.site-stage--lead { min-block-size: var(--stage-m); }');
+    expect(css).toContain('@media (min-width: 600px) { .site-stage--lead { min-block-size: var(--stage-l); } }');
     expect(top).not.toMatch(/\.site-(?:how__)?stage[^{,]*\{[^}]*(?<!min-)block-size/);
   });
 
-  it('MS-10.9 Access is 2 columns of normal cards from 648px, with no tall card and no order', () => {
+  it('MS-10.9 the box grids: a lead card across the grid, then two cards a row from 648px; no tall card and no order', () => {
+    // Round 4 (r4-boxes): .site-bento (Conversation, Access, Privacy). Every card is at least 288px wide from 648px.
     const at = (width: number) => atBlocks(css, new RegExp(`^@media \\(min-width: ${width}px\\)$`)).map((b) => b.body).join('\n');
-    expect(at(648)).toContain('.site-grid--access { grid-template-columns: repeat(2, minmax(0, 1fr)); }');
-    // Your view shares the switch card's row, so its stage takes the switch stage's height; the last card spans the row.
-    expect(at(648)).toContain('.site-grid--access > :nth-child(4) > .site-stage { min-block-size: calc(var(--space-24) * 4); }');
-    expect(at(648)).toContain('.site-grid--access > :nth-child(5) { grid-column: 1 / -1; }');
-    expect(at(648)).toContain('.site-grid--start { align-items: start; }');
-    expect(at(1024)).not.toContain('.site-grid--access');
+    expect(at(648)).toContain('.site-bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }');
+    expect(at(648)).toContain('.site-bento > .site-card--lead { grid-column: 1 / -1; }');
+    // A row's cards share its lines (subgrid), so their stages are one height and their titles level (MS-7.7).
+    expect(at(648)).toContain('.site-bento--3 > .site-card:not(.site-card--lead) { display: grid; grid-row: span 3; grid-template-rows: subgrid; row-gap: var(--space-3); }');
+    expect(at(648)).toContain('.site-bento--4 > .site-card:not(.site-card--lead) { display: grid; grid-row: span 4; grid-template-rows: subgrid; row-gap: var(--space-3); }');
     expect(css).not.toContain('site-card--tall');
-    for (const r of rules(css)) if (r.selector.includes('site-grid--access')) expect(declsOf(r, 'grid-row'), r.selector).toEqual([]);
-    expect(outsideAtRules(css)).toContain('.site-grid--boxes, .site-grid--access { grid-template-columns: minmax(0, 1fr); }');
+    expect(css).not.toMatch(/\.site-grid--(boxes|access|start|hug)\b/);
     expect(css).not.toMatch(/(^|[{;\s])order\s*:/);
     expect(css).not.toContain('auto-fit, minmax(288px');
   });
 
-  it('MS-10.9 site-grid--boxes has 2 columns from 648px', () => {
-    const at648 = atBlocks(css, /^@media \(min-width: 648px\)$/);
-    const layout = at648.filter((b) => b.body.includes('.site-grid--boxes { grid-template-columns'));
-    expect(layout).toHaveLength(1);
-    expect(layout[0]!.body).toContain('.site-grid--boxes { grid-template-columns: repeat(2, minmax(0, 1fr)); }');
-    // It is the only rule that gives the boxes more than one column.
+  it('MS-10.9 Conversation and Privacy show three cards a row from 1024px; the lead card puts its stage beside its words', () => {
+    const at1024 = atBlocks(css, /^@media \(min-width: 1024px\)$/).map((b) => b.body).join('\n');
+    expect(at1024).toContain('.site-bento--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }');
+    expect(at1024).toMatch(/\.site-card--lead \{[^}]*grid-template-columns: minmax\(0, 7fr\) minmax\(0, 5fr\);/);
+    // The only rules that give a box grid more than one column: 2 from 648px, 3 for .site-bento--3 from 1024px.
     for (const r of rules(css)) {
-      if (/\.site-grid--boxes(?![\w-])/.test(r.selector) && r.selector !== '.site-grid--boxes, .site-grid--access') {
-        for (const v of declsOf(r, 'grid-template-columns')) expect(v).toBe('repeat(2, minmax(0, 1fr))');
+      if (/^\.site-bento(--[34])?$/.test(r.selector)) {
+        for (const v of declsOf(r, 'grid-template-columns')) expect(['repeat(2, minmax(0, 1fr))', 'repeat(3, minmax(0, 1fr))'], r.selector).toContain(v);
       }
     }
   });
 
   it('MS-8.11 the play lead uses --play-i, never --reveal-i', () => {
     const lead = motionRules.filter((r) => declsOf(r, '--play-lead').length > 0);
-    expect(lead.map((r) => r.selector)).toEqual(['[data-site-motion="on"] :is([data-play], .site-how__picture)']);
+    // Round 4 (2026-11-13, Claude Code): a [data-play-scope] (a How step beside its scene) gets the lead too.
+    expect(lead.map((r) => r.selector)).toEqual(['[data-site-motion="on"] :is([data-play], [data-play-scope])']);
     // motion-frame per column (review N7), so a neighbour's single ring has ended; --play-after for longer ones.
     expect(declsOf(lead[0]!, '--play-lead')).toEqual(['calc(var(--motion-play-lead) + var(--play-i, 0) * var(--motion-frame) + var(--play-after, calc(var(--motion-jump) * 0)))']);
     for (const r of rules(css)) {
@@ -399,75 +417,73 @@ describe('site.css round 2 (played drawings, stages and grids)', () => {
     }
     // The column rules (V28).
     const at = (width: number) => atBlocks(motionBody, new RegExp(`^@media \\(min-width: ${width}px\\)$`)).map((b) => b.body).join('\n');
-    expect(at(648)).toContain('[data-site-motion="on"] .site-grid--boxes > :nth-child(2n) { --play-i: 1; }');
-    expect(at(648)).toContain('[data-site-motion="on"] .site-grid--access > :nth-child(4) { --play-i: 1; }');
+    // Round 4 (r4-boxes): after each lead card, the cards' columns: the second of a row is column 1 from 648px, the
+    // third of Conversation's and Privacy's row column 2 from 1024px.
+    expect(at(648)).toContain('[data-site-motion="on"] .site-bento > :nth-child(2n + 3) { --play-i: 1; }');
     // Touch waits for the Keyboard drawing's four quick rings.
-    expect(at(648)).toContain('[data-site-motion="on"] .site-grid--access > :nth-child(2) { --play-after: calc(4 * var(--motion-frame-quick)); }');
-    expect(at(1024)).not.toContain('--play-i');
+    expect(at(648)).toContain('[data-site-motion="on"] .site-bento--4 > :nth-child(3) { --play-i: 0; --play-after: calc(4 * var(--motion-frame-quick)); }');
+    expect(at(1024)).toContain('[data-site-motion="on"] .site-bento--3 > :nth-child(4) { --play-i: 2; }');
+    // Round 4 (lead ruling, MS-8.11): the column lead counts at most 2 columns, so a row of three staggers.
+    for (const r of rules(css)) for (const v of declsOf(r, '--play-i')) expect(['0', '1', '2'], r.selector).toContain(v);
   });
 
-  it('MS-8.12 How parts take --play-step from their data-s and the not-reached rules need data-how-live', () => {
-    const at1024 = atBlocks(motionBody, /^@media \(min-width: 1024px\)$/).map((b) => b.body).join('\n');
-    for (const [s, token] of [['1', 'motion-demo-step'], ['2', 'motion-sweep'], ['3', 'motion-frame']]) {
-      expect(at1024).toContain(`[data-site-motion="on"] .site-how__picture [data-s="${s}"] { --play-step: var(--${token}); }`);
-    }
-    const how = rules(at1024).filter((r) => r.selector.includes('.site-how__picture') && ROLE.test(r.selector));
-    // Not reached yet: the before-play state, only once the story is live, only for later steps.
-    const notReached = how.filter((r) => motionDecls(r).length === 0);
-    expect(notReached).toHaveLength(3);
-    for (const r of notReached) {
-      for (const part of r.selector.split(',').map((p) => p.trim())) {
-        const m = part.match(/^\[data-site-motion="on"\] \.site-how\[data-how-live\]\[data-how-step="([012])"\] \.site-how__picture \.site-(in|mark|rise|out)\[data-s(?:="([123])")?\]$/);
-        expect(m, part).not.toBeNull();
-        if (m![3] !== undefined) expect(Number(m![3]), part).toBeGreaterThan(Number(m![1]));
-        else expect(m![1], part).toBe('0');
-      }
-    }
-    // The step that plays: one rule per role, each part scoped to data-how-play="N" and that step's parts.
-    const playing = how.filter((r) => motionDecls(r).length > 0);
-    expect(playing).toHaveLength(6);
-    for (const r of playing) {
-      const parts = r.selector.split(',').map((p) => p.trim());
-      expect(parts).toHaveLength(3);
-      parts.forEach((p, i) => {
-        expect(p).toMatch(new RegExp(`^\\[data-site-motion="on"\\] \\.site-how\\[data-how-play="${i + 1}"\\] \\.site-how__picture \\.site-[a-z]+\\[data-s="${i + 1}"\\]$`));
-      });
-    }
-    // data-s is styled only inside the motion block.
-    for (const r of rules(outside)) expect(r.selector, r.selector).not.toContain('[data-s');
-  });
-
-  it("MS-8.12 the How steps' top padding uses --site-how-h from 1024px", () => {
-    const at1024 = atBlocks(outside, /^@media \(min-width: 1024px\)$/).map((b) => b.body).join('\n');
-    expect(at1024).toMatch(/\.site-how \{[^}]*--site-how-h: calc\(var\(--space-24\) \* 6 \+ var\(--space-8\) \+ var\(--space-2\)\);/);
-    expect(at1024).toMatch(/\.site-how__picture \{[^}]*position: sticky; top: var\(--space-12\); block-size: var\(--site-how-h\);/);
-    expect(at1024).toContain('.site-how__steps { gap: 24svh; padding-block: max(12svh, calc(var(--site-how-h) - 50svh)) 36svh; }');
-    expect(at1024).not.toContain('40svh');
-    const short = atBlocks(css, /^@media \(min-width: 1024px\) and \(max-height: 679px\)$/);
-    expect(short).toHaveLength(1);
-    expect(short[0]!.body).toContain('.site-how__picture { top: var(--space-4); }');
-    // The round-1 scroll timeline is gone.
-    expect(css).not.toMatch(/timeline-scope|--site-how\b(?!-h)|site-frames--how/);
-    // Under 1024px the picture is hidden and the stages have their heights (416, 288, 160px, minimums: N8).
+  it('MS-8.12 (round 4, removed) How has no step sync, sticky picture or runway; from 1024px its row plays in story order', () => {
+    // A8 is gone with the sticky picture (MS-8.12 removed): no data-how-*/data-s rule, no runway, nothing sticky.
+    expect(css).not.toMatch(/data-how-|\[data-s[=\]]|site-how__picture|--site-how-h|site-how-screen|1[26]svh|timeline-scope|site-frames--how/);
+    for (const r of rules(css)) expect(declsOf(r, 'position').join(' '), r.selector).not.toContain('sticky');
+    // Story order (MS-8.11, round 4): step 2 waits step 1's four presses, step 3 also step 2's five sweeps.
+    const motion1024 = atBlocks(motionBody, /^@media \(min-width: 1024px\)$/).map((b) => b.body).join('\n');
+    expect(motion1024).toContain('[data-site-motion="on"] .site-how__step:nth-child(2) { --play-after: calc(4 * var(--motion-frame-quick)); }');
+    expect(motion1024).toContain(
+      '[data-site-motion="on"] .site-how__step:nth-child(3) { --play-after: calc(4 * var(--motion-frame-quick) + 5 * var(--motion-sweep)); }',
+    );
+    // Below 1024px no How step waits: each plays on its own at the play line.
+    const motionOutside1024 = without(motionBody, atBlocks(motionBody, /^@media \(min-width: 1024px\)$/));
+    for (const r of rules(motionOutside1024)) if (r.selector.includes('site-how')) expect(declsOf(r, '--play-after'), r.selector).toEqual([]);
+    // One column, three from 1024px. Below 1024px a stage hugs its scene (12px above and below); in the row every
+    // stage is --stage-m, a minimum (N8), so the three scenes reach the play line together.
     const top = outsideAtRules(css);
-    expect(top).toContain('.site-how__picture { display: none; }');
-    expect(top).toContain('.site-how__step:nth-child(1) .site-how__stage { min-block-size: calc(var(--space-24) * 4 + var(--space-8)); }');
-    expect(top).toContain('.site-how__step:nth-child(2) .site-how__stage { min-block-size: calc(var(--space-24) * 3); }');
-    expect(top).toContain('.site-how__step:nth-child(3) .site-how__stage { min-block-size: calc(var(--space-24) + var(--space-16)); }');
+    expect(top).toContain('.site-how__steps { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-12); }');
+    expect(top).toContain('.site-how__stage { min-block-size: 0; padding: var(--space-3) var(--space-2); }');
+    const at1024 = atBlocks(outside, /^@media \(min-width: 1024px\)$/).map((b) => b.body).join('\n');
+    expect(at1024).toContain('.site-how__steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }');
+    expect(at1024).toContain('.site-how__stage { min-block-size: var(--stage-m); padding: var(--space-4); }');
   });
 
-  it('MS-7.9 MS-9.3 the differing digit brightens only with its mark: no colour of its own, an ink copy in the box', () => {
-    // An unstepped colour on .site-digit--diff would single the digit out before the sweep reaches it (review B3).
-    expect(css).not.toMatch(/\.site-digit--diff[^{]*\{[^}]*color/);
-    expect(css).toMatch(/\.site-digit__box \{[^}]*color: var\(--ink\);/);
-    expect(css).toContain('.site-digit__box::before { content: attr(data-d); }');
+  it('round 4 .site-step is shared: unscoped base rules; its number lights inside a play root (A7) or beside one (:has())', () => {
+    const top = outsideAtRules(css);
+    // The base rules carry no section scope (a section may still set its own type or tile size on top).
+    const base = rules(top).map((r) => r.selector).filter((s) => /^\.site-step(__[a-z]+)?$/.test(s));
+    expect(base.sort()).toEqual(['.site-step', '.site-step__line', '.site-step__lit', '.site-step__num', '.site-step__title']);
+    expect(top).toMatch(/\.site-step \{ display: grid; grid-template-columns: var\(--site-step-num, var\(--space-12\)\) minmax\(0, 1fr\);/);
+    // A title with or without a line: its first line centres on the tile, whatever its type size (1lh).
+    expect(top).toMatch(/\.site-step__title \{[^}]*padding-top: max\(0px, calc\(\(var\(--site-step-num, var\(--space-12\)\) - 1lh\) \/ 2\)\);/);
+    // Beside a root: the one :has() rule, in the motion block, on the root's clock, filling backwards only.
+    const lit = motionRules.filter((r) => r.selector.includes('.site-step__lit'));
+    expect(lit.map((r) => r.selector)).toEqual(['[data-site-motion="on"] [data-play-scope]:has([data-play][data-played="1"]) .site-step__lit']);
+    expect(layers(declsOf(lit[0]!, 'animation')[0]!)).toEqual([
+      'site-out var(--motion-state) var(--motion-ease-out) calc(var(--play-lead) + var(--u) * var(--play-step)) backwards',
+      'site-in var(--motion-state) var(--motion-ease-out) calc(var(--play-lead) + var(--k) * var(--play-step)) backwards',
+    ]);
+    // The forced-colours outline is on the tile.
+    expect(atBlocks(css, /forced-colors: active/).map((b) => b.body).join('\n')).toMatch(/\.site-step__num \{\s*outline:/);
+  });
+
+  it('MS-7.9 MS-9.3 the differing letter turns reject only with its mark: the plain letter is ink, the box draws a reject copy', () => {
+    // Round 4 (2026-11-13, Claude Code): the letter under its key replaces round 3's digit. A colour on the plain letter
+    // would single it out before the sweep reaches its column (review B3), so only the mark (.site-letter__box) has it.
+    expect(css).toMatch(/\.site-letter \{[^}]*color: var\(--ink\);/);
+    expect(css).not.toMatch(/\.site-letter\s*\{[^}]*--proof-reject/);
+    expect(css).toMatch(/\.site-letter__box \{[^}]*color: var\(--proof-reject\);[^}]*box-shadow: inset 0 0 0 var\(--line-width\) var\(--proof-reject\);/);
+    expect(css).toContain('.site-letter__box::before { content: attr(data-l); }');
   });
 
   it('MS-9.3 in forced colours every drawn ring and box keeps an outline and the toggle knob stays visible', () => {
+    // Round 4: a section may keep its forced-colours rules in its own block (Results), so read every block.
     const forced = atBlocks(css, /^@media \(forced-colors: active\)$/);
-    expect(forced).toHaveLength(1);
-    const body = forced[0]!.body;
-    for (const sel of ['.site-press-ring', '.site-key-ring', '.site-key::after', '.site-scan__press', '.site-outline', '.site-proof__box', '.site-digit__box', '.site-step', '.site-scan__ring']) {
+    expect(forced.length).toBeGreaterThanOrEqual(1);
+    const body = forced.map((b) => b.body).join('\n');
+    for (const sel of ['.site-press-ring', '.site-key-ring', '.site-key::after', '.site-scan__press', '.site-outline', '.site-proof__box', '.site-proof__spot', '.site-letter__box', '.site-keycap', '.site-step__num', '.site-scan__ring']) {
       expect(body).toMatch(new RegExp(`${sel.replace(/[.*+?^${}()|[\]\\:]/g, '\\$&')}[^{]*\\{[^}]*outline:`));
     }
     expect(body).toContain('.site-toggle, .site-toggle__knob { forced-color-adjust: none; }');
@@ -479,7 +495,105 @@ describe('site.css round 2 (played drawings, stages and grids)', () => {
     expect(rules).toEqual(['.site-footer__caption']);
   });
 
-  it('MS-6.7 Hear it while the demo plays is drawn as a disabled quiet button through aria-disabled (review R3-N6)', () => {
-    expect(css).toMatch(/\.site-demo__bar \.nl-btn--quiet\[aria-disabled="true"\] \{[^}]*color: var\(--ink-muted\);[^}]*background: var\(--surface-sunken\);/);
+  it('MS-6.7 Hear it while the demo plays is drawn as a disabled icon button through aria-disabled, with no hover layer (review R3-N6; round 4)', () => {
+    // Round 4 (r4-hero): Hear it is a .site-icon-btn; aria-disabled draws a --line ring and an --ink-muted icon.
+    expect(css).toMatch(/\.site-icon-btn\[aria-disabled="true"\] \{[^}]*color: var\(--ink-muted\);[^}]*box-shadow: inset 0 0 0 var\(--line-width\) var\(--line\);/);
+    // A9's hover layer skips it, as it skips every disabled control (MS-8.14).
+    expect(css).toContain('.site .nl-btn:not(.site-drawn-btn, :disabled, [aria-disabled="true"]):hover::after');
+  });
+});
+
+// ---- round 4: the shared language (r4-language; design.md "Round 4: shared language") --------------------------
+
+describe('site.css round 4 (shared language: A9, A10 and the primitives)', () => {
+  const motionBody = noPreference(css).map((b) => b.body).join('\n');
+  const top = outsideAtRules(css);
+  const hoverBlocks = (source: string) => atBlocks(source, /^@media \(hover: hover\)$/).map((b) => b.body).join('\n');
+
+  it("MS-8.14 the hover layer: a real control's own text colour over its fill, opacity only, at --state-hover", () => {
+    // The layer: absolute, the control's shape, its own text colour, hidden at rest. Drawn buttons get none.
+    expect(top).toMatch(
+      /\.site \.nl-btn:not\(\.site-drawn-btn\)::after, \.site \.site-key--try::before \{\s*content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;\s*background: currentColor; opacity: 0;\s*\}/,
+    );
+    expect(top).toContain('.site .nl-btn { position: relative; -webkit-tap-highlight-color: transparent; }');
+    // globals.css's a:hover must not turn an ember link-button's label ink (1.6:1 on ember, MS-9.2).
+    expect(top).toContain('.site a.nl-btn--primary:hover { color: var(--on-ember); }');
+    // Shown on hover only on devices that hover, never on disabled or aria-disabled controls; a secondary's edge goes ink.
+    const hover = hoverBlocks(without(css, noPreference(css)));
+    expect(hover).toMatch(/\.site \.nl-btn:not\(\.site-drawn-btn, :disabled, \[aria-disabled="true"\]\):hover::after,\s*\.site \.site-key--try:hover::before \{ opacity: var\(--state-hover\); \}/);
+    expect(hover).toContain('.site .nl-btn--secondary:not(.site-drawn-btn, :disabled, [aria-disabled="true"]):hover { border-color: var(--ink); }');
+    // Links thicken their underline; the brand lockup is never underlined (the wordmark is never altered).
+    expect(hover).toContain('.site a:not(.nl-btn, .nl-brand):hover, .site .site-faq summary:hover { text-decoration: underline; text-decoration-thickness: var(--line-width); }');
+    // Outside the hover query no rule shows the layer, so a tap leaves no sticky hover.
+    for (const r of rules(top)) if (/:hover::(after|before)/.test(r.selector)) throw new Error(`${r.selector} shows the layer outside (hover: hover)`);
+    // The fade: opacity only, over motion-jump, linear, with motion on.
+    expect(motionBody).toMatch(
+      /\[data-site-motion\] \.site \.nl-btn:not\(\.site-drawn-btn\)::after,\s*\[data-site-motion\] \.site \.site-key--try::before \{ transition: opacity var\(--motion-jump\) var\(--motion-ease-linear\); \}/,
+    );
+  });
+
+  it('MS-8.14 nothing a person presses moves: no transform, scale or size change on a key, button or chip state', () => {
+    for (const r of rules(css)) {
+      if (!/(\.nl-key|\.site-key|\.nl-btn|\.site-icon-btn|\.nl-chip)[^,]*:(hover|active|focus|focus-visible)\b/.test(r.selector)) continue;
+      for (const d of r.decls) expect(['transform', 'translate', 'scale', 'rotate', 'width', 'height', 'inline-size', 'block-size', 'zoom'], r.selector).not.toContain(d.prop);
+    }
+  });
+
+  it('MS-8.14 .site-go: a 56px standalone link whose trailing icon points --motion-hint further its way, only with motion on', () => {
+    expect(top).toContain('.site-go { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--target-min); border-radius: var(--radius-chip); }');
+    expect(top).toContain('.site-go > .nl-icon { flex: none; --site-go-hint: translateX(var(--motion-hint)); }');
+    expect(top).toContain('.site-go > .site-icon--up { --site-go-hint: translateY(calc(var(--motion-hint) * -1)); }');
+    expect(top).toContain('.site-go > .site-icon--down { --site-go-hint: translateY(var(--motion-hint)); }');
+    expect(top).toContain('.site-go > .site-icon--left { --site-go-hint: translateX(calc(var(--motion-hint) * -1)); }');
+    expect(top).toContain('.site-go--out > .nl-icon { --site-go-hint: translate(var(--motion-hint), calc(var(--motion-hint) * -1)); }');
+    // The hint is applied only in the motion block: on keyboard focus, and on hover where the device hovers.
+    for (const r of rules(without(css, noPreference(css)))) {
+      if (/\.site-go/.test(r.selector)) expect(declsOf(r, 'transform'), r.selector).toEqual([]);
+    }
+    expect(motionBody).toContain('[data-site-motion] .site-go > .nl-icon { transition: transform var(--motion-state) var(--motion-ease-out); }');
+    expect(motionBody).toContain('[data-site-motion] .site-go:focus-visible > .nl-icon { transform: var(--site-go-hint); }');
+    expect(hoverBlocks(motionBody)).toContain('[data-site-motion] .site-go:hover > .nl-icon { transform: var(--site-go-hint); }');
+  });
+
+  it('MS-8.15 A10: try-it chips fade in as they mount (opacity only) and an answer rises in as it opens, only with motion on', () => {
+    const chip = '[data-site-motion="on"] .site-demo:is(.is-playing, .is-trying) .site-demo__chips:not(.site-sizer__ghost) .nl-chip';
+    expect(motionBody).toContain(`${chip},\n  ${chip} > .nl-icon {\n    transition: opacity var(--motion-jump) var(--motion-ease-linear);\n  }`);
+    const starting = blocksOf(motionBody, /@starting-style\s*\{/);
+    const chips = starting.filter((b) => b.body.includes(chip));
+    expect(chips).toHaveLength(1);
+    expect(chips[0]!.body).toContain(`${chip} > .nl-icon { opacity: 0; }`);
+    // Every @starting-style sits inside the motion block, so nothing enters with motion off.
+    expect(blocksOf(css, /@starting-style\s*\{/).length).toBe(starting.length);
+    expect(motionBody).toContain('[data-site-motion="on"] .site-faq[open] > :not(summary) { animation: site-rise var(--motion-state) var(--motion-ease-out) backwards; }');
+  });
+
+  it('MS-7.3 press ring v2: on a drawn button or computer key the ember ring covers the edge, with a plum line inside; keys keep the plain ring', () => {
+    expect(top).toContain(
+      '.site-press-ring { box-shadow: inset 0 0 0 var(--ring-width) var(--ember), inset 0 0 0 calc(var(--ring-width) + var(--line-width)) var(--plum); }',
+    );
+    expect(top).toContain(':is(.site-drawn-btn, .site-kbd) > .site-press-ring { inset: calc(var(--line-width) * -1); }');
+    expect(top).toMatch(/\.site-press-ring, \.site-key-ring \{[^}]*box-shadow: inset 0 0 0 var\(--ring-width\) var\(--ember\);/);
+  });
+
+  it('MS-7.3 a key drawn outside a keypad sits on .site-key-panel: the panel fill and its lift, never a bare stage', () => {
+    expect(top).toMatch(
+      /\.site-key-panel \{\s*display: inline-flex; align-items: flex-end; gap: var\(--space-2\); padding: var\(--space-2\);\s*border-radius: calc\(var\(--radius-key\) \+ var\(--space-2\)\); background: var\(--panel\); box-shadow: var\(--lift\);\s*\}/,
+    );
+  });
+
+  it('the fact tile and fact row: a 48px tile whose fill follows the surface under it, tokens only', () => {
+    expect(top).toMatch(
+      /\.site-tile \{\s*display: grid; place-items: center; flex: none; inline-size: var\(--space-12\); block-size: var\(--space-12\);\s*border-radius: var\(--radius-chip\); background: var\(--surface-sunken\); color: var\(--ink\);\s*\}/,
+    );
+    // A note card has no fill, so on a surface band its tiles stay sunken (r4-boxes, round 4).
+    expect(top).toContain('.site-band--surface .site-card:not(.site-card--note) .site-tile { background: var(--surface); }');
+    expect(top).toContain('.site-stage .site-tile { background: var(--site-piece); }');
+    expect(top).toContain('.site-fact { display: flex; align-items: center; gap: var(--space-4); }');
+  });
+
+  it('the header lists the round-4 shared primitives', () => {
+    for (const name of ['the hover layer (A9)', '.site-go (+ --out)', '.site-tile', '.site-fact', '.site-key-panel', '.site-press-ring (v2)', 'components/site/icons.tsx']) {
+      expect(raw.slice(0, raw.indexOf('*/'))).toContain(name);
+    }
   });
 });
