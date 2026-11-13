@@ -9,3 +9,4 @@ export * from './lm';
 export * from './decode';
 export * from './format';
 export * from './scan';
+export * from './intent';

@@ -1,3 +1,4 @@
+import type { ReplyIntent } from '@ninth/core';
 import { z } from 'zod';
 
 // Request and response shapes for POST /api/decode (Next.js Route Handler on Vercel).
@@ -21,6 +22,9 @@ export const LIMITS = {
   maxRejectedWordChars: 16,
 } as const;
 
+/** Reply types the service accepts (the same three as `ReplyIntent` in @ninth/core). */
+export const REPLY_INTENT_VALUES = ['agree', 'disagree', 'ask'] as const satisfies readonly ReplyIntent[];
+
 const code = z.string().regex(/^[2-9]+$/, 'code must be digits 2-9').max(LIMITS.maxCodeDigits);
 // Lattice and beam words are hints from the client. They are untrusted and re-validated.
 const word = z.string().min(1).max(LIMITS.maxWordChars);
@@ -38,6 +42,11 @@ export const DecodeRequestSchema = z
       .object({
         partner: z.string().max(LIMITS.maxPartnerChars).optional(),
         recent: z.array(z.string().max(LIMITS.maxRecentChars)).max(LIMITS.maxRecent).optional(),
+        /**
+         * Reply type the person picked (DS-9, ADR-008). It only orders readings of the same keys;
+         * any other value is a 400 that names the path, never the value. Never logged (DS-6.1).
+         */
+        intent: z.enum(REPLY_INTENT_VALUES).optional(),
       })
       .strict()
       .optional(),

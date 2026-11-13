@@ -23,6 +23,8 @@ import {
 // validate input -> kill switch -> quota -> LLM with timeout -> parse -> validate every candidate
 // with @ninth/core -> dedupe -> merge with the request's ghost beams -> top k.
 // Any LLM failure returns 200 with ghost beams and `degraded: true`.
+// `context.intent` (reply type, DS-9) reaches only the prompt, through buildPrompt. It is never
+// logged, and the ghost fallback keeps the client's beam order, which the client re-ranked for it.
 
 export interface DecodeOptions {
   /** Server-side LLM deadline. Below the client's 1,500 ms so the reply still arrives in time. */

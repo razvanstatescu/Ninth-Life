@@ -1,6 +1,9 @@
 /**
  * Model ranking client (contracts.md §3, source plan §4.3). Optional and off by default.
- * - Sends the keys (codes plus the offline lattice) and the partner's last line. Nothing else.
+ * - Sends the keys (codes plus the offline lattice and ghost beams), the partner's last line, the reply
+ *   type picked (Agree, Disagree or Ask; only when one is pressed, web-ui Req 29.8, ADR-008) and, only
+ *   when "Include what you said" is on, your last 3 sentences in this conversation (web-ui Req 27.11).
+ *   Nothing else. The beams are already in the reply type's order, so the server's fallback follows it.
  * - Any non-200, bad JSON or more than DECODE_TIMEOUT_MS (1,500 ms by default; set at build time
  *   from the server's DECODE_TIMEOUT_MS, lib/publicEnv.mjs) -> null, and the screen stays in ghost mode.
  * - Every returned sentence is checked again here with validate(); the proof panel uses this result.
@@ -8,7 +11,7 @@
  *   shown struck through; they never become candidates.
  * - Nothing here speaks. Speak is always a separate press.
  */
-import { proof, validate, type Candidate, type Lexicon, type Mode, type WordProof } from '@ninth/core';
+import { isReplyIntent, proof, validate, type Candidate, type Lexicon, type Mode, type ReplyIntent, type WordProof } from '@ninth/core';
 
 export const DEFAULT_DECODE_TIMEOUT_MS = 1500;
 
@@ -20,7 +23,7 @@ export function clientTimeoutMs(v: string | undefined = process.env.NEXT_PUBLIC_
 }
 
 export const DECODE_TIMEOUT_MS = clientTimeoutMs();
-export const LIMITS = { codes: 20, codeLen: 16, partner: 280, recent: 3, perSlot: 12, beams: 10, bodyBytes: 4096 } as const;
+export const LIMITS = { codes: 20, codeLen: 16, partner: 280, recent: 3, recentChars: 280, perSlot: 12, beams: 10, bodyBytes: 4096 } as const;
 
 export function decodeUrl(): string {
   return process.env.NEXT_PUBLIC_DECODE_URL || '/api/decode';
@@ -34,7 +37,8 @@ export interface DecodeRequest {
   lattice: string[][];
   /** Top ghost sentences, best first; the server falls back to these if the model fails. */
   beams?: string[][];
-  context: { partner?: string; recent: string[] };
+  /** `intent` only when a reply type is pressed; the key is left out otherwise (never null). */
+  context: { partner?: string; recent: string[]; intent?: ReplyIntent };
   k: number;
 }
 
@@ -69,6 +73,8 @@ export function buildRequest(
   mode: Mode,
   k = 5,
   beams: string[][] = [],
+  recent: readonly string[] = [],
+  intent?: ReplyIntent,
 ): DecodeRequest | null {
   if (codes.length === 0 || codes.length > LIMITS.codes) return null;
   if (codes.some((c) => c.length === 0 || c.length > LIMITS.codeLen || !/^[2-9]+$/.test(c))) return null;
@@ -84,12 +90,20 @@ export function buildRequest(
   if (beams.length > 0) req.beams = beams.slice(0, LIMITS.beams);
   const p = partner?.trim();
   if (p) req.context.partner = p.slice(0, LIMITS.partner);
-  // Keep under the 4 KB body limit: trim the lattice first, never the codes.
+  req.context.recent = recent
+    .map((r) => r.trim().slice(0, LIMITS.recentChars))
+    .filter(Boolean)
+    .slice(-LIMITS.recent);
+  if (isReplyIntent(intent)) req.context.intent = intent;
+  // Keep under the 4 KB body limit: trim the lattice first, never the codes; then drop the oldest
+  // recent sentences (long non-Latin text can be 3 bytes a character).
+  const size = () => new TextEncoder().encode(JSON.stringify(req)).length;
   let perSlot: number = LIMITS.perSlot;
-  while (new TextEncoder().encode(JSON.stringify(req)).length > LIMITS.bodyBytes && perSlot > 1) {
+  while (size() > LIMITS.bodyBytes && perSlot > 1) {
     perSlot = Math.max(1, Math.floor(perSlot / 2));
     req.lattice = lat.map((slot) => slot.slice(0, perSlot));
   }
+  while (size() > LIMITS.bodyBytes && req.context.recent.length > 0) req.context.recent = req.context.recent.slice(1);
   return req;
 }
 
@@ -186,12 +200,20 @@ export async function decodeRemote(
   }
 }
 
-/** Small LRU on codes + partner line (source plan §4.5 step 5). */
+/**
+ * Small LRU on codes + partner line + recent sentences + reply type (source plan §4.5 step 5; web-ui
+ * Req 27.11, 29.8).
+ */
 export class DecodeCache {
   private map = new Map<string, RemoteResult>();
   constructor(private max = 20) {}
-  static key(codes: string[], partner?: string): string {
-    return `${codes.join(' ')}|${partner?.trim() ?? ''}`;
+  static key(codes: string[], partner?: string, recent: readonly string[] = [], intent?: ReplyIntent): string {
+    let key = `${codes.join(' ')}|${partner?.trim() ?? ''}`;
+    // JSON keeps the recent lines apart whatever they contain; no recent keeps the old key.
+    if (recent.length > 0) key += `|${JSON.stringify(recent)}`;
+    // A reply type is one of three fixed words, so it cannot run into the other parts; none keeps the old key.
+    if (intent) key += `|intent:${intent}`;
+    return key;
   }
   get(key: string): RemoteResult | undefined {
     const v = this.map.get(key);

@@ -1,14 +1,18 @@
 'use client';
 import type { StatusLine } from '@/lib/status';
+import { SHEET_REPLY_ROWS } from '@/lib/replies';
 import { StatusPill } from './AppHeader';
 import { Button } from './Button';
+import { QuickReplies } from './QuickReplies';
 import { Sheet } from './Sheet';
 
 /**
  * The compact header's Menu (web-ui Req 15.3): the full status, then Phrases, My words, Voice and Settings.
  * Each choice opens its own sheet in place of this one. In the phone layout (web-ui Req 24) the Menu
  * button sits in the action bar and the sheet also holds the sentence's less used actions: Save
- * phrase and Spell this word, and Sentences on a short phone that has no suggestion row (Req 24.9).
+ * phrase and Spell this word, and Sentences on a short phone that has no suggestion row (Req 24.9),
+ * They said and the whole Conversation (Req 27.6). Quick replies come first on every layout with a Menu
+ * (web-ui Req 28.4): the only place for them on a short phone, and "Hold on" in two taps while typing.
  */
 export function MenuSheet({
   open,
@@ -21,6 +25,7 @@ export function MenuSheet({
   onClose,
   sentence,
   about,
+  onReply,
 }: {
   open: boolean;
   status: StatusLine[];
@@ -40,12 +45,24 @@ export function MenuSheet({
     onSentences?: () => void;
     onProof?: () => void;
     onPartner?: () => void;
+    /** The whole conversation (web-ui Req 27.6: on a short phone the only way to it). */
+    onConversation?: () => void;
   } | null;
   /** Phones and tablets: the About links and this sentence (the footer is not on the screen). */
   about?: string | null;
+  /** Speak a quick reply (web-ui Req 28.4); the caller closes the Menu. */
+  onReply?: (text: string) => void;
 }) {
   return (
     <Sheet open={open} name="menu" title="Menu" onClose={onClose} scanning={scanning}>
+      {onReply ? (
+        <section className="group" aria-labelledby="menu-replies">
+          <h3 className="group__title" id="menu-replies">
+            Quick replies
+          </h3>
+          <QuickReplies variant="menu" rows={SHEET_REPLY_ROWS} onSay={onReply} />
+        </section>
+      ) : null}
       {sentence ? (
         <section className="group" aria-labelledby="menu-sentence">
           <h3 className="group__title" id="menu-sentence">
@@ -69,8 +86,13 @@ export function MenuSheet({
               </Button>
             ) : null}
             {sentence.onPartner ? (
-              <Button variant="secondary" icon="voice" onClick={sentence.onPartner}>
+              <Button variant="secondary" icon="said" onClick={sentence.onPartner}>
                 They said
+              </Button>
+            ) : null}
+            {sentence.onConversation ? (
+              <Button variant="secondary" icon="thread" onClick={sentence.onConversation}>
+                Conversation
               </Button>
             ) : null}
           </div>

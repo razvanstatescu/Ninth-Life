@@ -16,7 +16,7 @@
  * The handler's deadline is lifted to EVAL_TIMEOUT_MS so that quality is measured on every reply;
  * the share of calls slower than the route's 1,200 ms deadline is reported separately.
  */
-import { decodeGhost, lattice, normalize, validate, type LanguageModel, type Lexicon, type Mode } from '@ninth/core';
+import { INTENT_POOL, decodeGhost, lattice, normalize, rankByIntent, validate, type LanguageModel, type Lexicon, type Mode, type ReplyIntent } from '@ninth/core';
 import {
   apiVersionFor,
   AnthropicLlmClient,
@@ -61,16 +61,24 @@ export interface LlmRunContext {
   baseUrl?: string;
 }
 
-/** The request the app sends for these keys (decodeClient.ts buildRequest), or null when it sends none. */
-export function appRequest(codes: string[], mode: Mode, partner: string | undefined, lex: Lexicon, lm: LanguageModel): Record<string, unknown> | null {
+/**
+ * The request the app sends for these keys (decodeClient.ts buildRequest), or null when it sends none.
+ * With a reply type (ADR-008) the app decodes a pool of INTENT_POOL, re-ranks it with rankByIntent,
+ * sends the top 5 as beams and adds `context.intent`.
+ */
+export function appRequest(codes: string[], mode: Mode, partner: string | undefined, lex: Lexicon, lm: LanguageModel, intent?: ReplyIntent): Record<string, unknown> | null {
   if (codes.length === 0 || codes.length > APP.codes || codes.some((c) => c.length === 0 || c.length > APP.codeLen)) return null;
   const lat = lattice(codes, lex, APP.perSlot, mode);
   if (lat.some((slot) => slot.length === 0)) return null; // the app waits for a known word
-  const beams = decodeGhost(codes, { lexicon: lex, lm, k: APP.k, mode }).map((c) => c.words);
-  const req: Record<string, unknown> & { lattice: string[][] } = { v: 1, lang: 'en', mode, codes, lattice: lat, context: { recent: [] as string[] }, k: APP.k };
+  const beams = intent
+    ? rankByIntent(decodeGhost(codes, { lexicon: lex, lm, k: INTENT_POOL, mode }), intent).slice(0, APP.k).map((c) => c.words)
+    : decodeGhost(codes, { lexicon: lex, lm, k: APP.k, mode }).map((c) => c.words);
+  const context: { recent: string[]; partner?: string; intent?: ReplyIntent } = { recent: [] };
+  const req: Record<string, unknown> & { lattice: string[][] } = { v: 1, lang: 'en', mode, codes, lattice: lat, context, k: APP.k };
   if (beams.length > 0) req.beams = beams.slice(0, 10);
   const p = partner?.trim();
-  if (p) (req.context as { partner?: string }).partner = p.slice(0, APP.partner);
+  if (p) context.partner = p.slice(0, APP.partner);
+  if (intent) context.intent = intent;
   let perSlot: number = APP.perSlot;
   while (new TextEncoder().encode(JSON.stringify(req)).length > APP.bodyBytes && perSlot > 1) {
     perSlot = Math.max(1, Math.floor(perSlot / 2));
@@ -208,9 +216,9 @@ function latticeDecoder(ctx: LlmRunContext): Decoder {
     label: LABEL.B4,
     deterministic: false,
     validated: true,
-    async decode({ codes, mode, partner }: DecodeInput): Promise<DecodeOutput> {
+    async decode({ codes, mode, partner, intent }: DecodeInput): Promise<DecodeOutput> {
       const stats = emptyStats();
-      const body = appRequest(codes, mode, partner, ctx.lex, ctx.lm);
+      const body = appRequest(codes, mode, partner, ctx.lex, ctx.lm, intent);
       if (!body) {
         stats.skipped++;
         return { candidates: [], raw: [], usd: 0, llm: stats };
@@ -260,7 +268,7 @@ const bodyKey = (profile: ModelProfile, prompt: Prompt, maxTokens: number) =>
  */
 export async function planCalls(
   ids: readonly LlmConfig[],
-  items: readonly { id: string; codes: string[]; partner?: string }[],
+  items: readonly { id: string; codes: string[]; partner?: string; intent?: ReplyIntent }[],
   mode: Mode,
   k: number,
   ctx: Pick<LlmRunContext, 'lex' | 'lm' | 'profile'>,
@@ -269,7 +277,7 @@ export async function planCalls(
   for (const config of ids) {
     for (const item of items) {
       if (config === 'B4') {
-        const body = appRequest(item.codes, mode, item.partner, ctx.lex, ctx.lm);
+        const body = appRequest(item.codes, mode, item.partner, ctx.lex, ctx.lm, item.intent);
         if (!body) continue;
         const probe = new ProbeClient();
         await handleDecode(body, { ipHash: 'plan' }, { llm: probe, quota: quotaOff, flags: new StaticFlags(true), now: () => 0, options: { log: () => {} } });

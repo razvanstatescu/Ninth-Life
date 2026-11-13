@@ -7,14 +7,18 @@
  *   B2 LLM raw        LLM proposals, no validator (measures how often an LLM breaks the keys).
  *   B3 LLM+val        LLM proposals filtered by validate().
  *   B4 lattice+val    LLM constrained to the lattice + ghost beams, then validate() (shipping design).
+ *   B1i               B1 re-ranked for the reply type (rankByIntent over a pool of INTENT_POOL), only
+ *                     in an `--intent oracle` run, where the reply type comes from the gold sentence.
  *
  * B2-B4 take an `LlmProposer`, which the decoder package supplies (packages/decoder wraps its
  * LlmClient + buildPrompt + parseReply). Without one they are reported as "not run".
  */
 import {
+  INTENT_POOL,
   bigramModel,
   decodeGhost,
   lattice,
+  rankByIntent,
   unigramModel,
   validate,
   type BigramFile,
@@ -43,6 +47,25 @@ export function ghostDecoder(lex: Lexicon, bigrams: BigramFile, lmOpts?: LmOptio
     deterministic: true,
     validated: true,
     decode: ({ codes, k, mode }) => ({ candidates: decodeGhost(codes, { lexicon: lex, lm, k, mode }).map((c) => c.words) }),
+  };
+}
+
+/**
+ * B1+intent (oracle): the app's offline reply-type path. Decode a pool of INTENT_POOL, re-rank it
+ * for the reply type, keep the top k. Without a reply type it is exactly B1.
+ */
+export function ghostIntentDecoder(lex: Lexicon, bigrams: BigramFile, lmOpts?: LmOptions): Decoder {
+  const lm = bigramModel(bigrams, lex, lmOpts);
+  return {
+    id: 'B1i',
+    label: 'B1+intent (oracle)',
+    deterministic: true,
+    validated: true,
+    decode: ({ codes, k, mode, intent }) => {
+      if (!intent) return { candidates: decodeGhost(codes, { lexicon: lex, lm, k, mode }).map((c) => c.words) };
+      const pool = decodeGhost(codes, { lexicon: lex, lm, k: Math.max(k, INTENT_POOL), mode });
+      return { candidates: rankByIntent(pool, intent).slice(0, k).map((c) => c.words) };
+    },
   };
 }
 

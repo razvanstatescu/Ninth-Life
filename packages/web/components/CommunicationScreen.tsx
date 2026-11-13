@@ -7,12 +7,19 @@
  * and the rest are in sheets (lib/layout.ts, web-ui Req 24 and 25, ADR-003). Phones held sideways
  * get the rotate screen. Ghost mode (offline dictionary)
  * always works; model ranking is optional, off by default, and never speaks on its own.
+ * The conversation (what they said, what you said; web-ui Req 27, ADR-007) lives in memory only
+ * (lib/conversation.ts): the header's They said button, a strip or a panel show its newest turns, and the
+ * Conversation sheet holds all of them. Everything the person chooses to say goes through sayAndRecord.
+ * Quick replies (web-ui Req 28) take the suggestion area when there is no sentence to choose.
+ * Reply types (web-ui Req 29, ADR-008): Agree, Disagree, Ask for their newest line, only reorder the
+ * sentences (and Ask adds a "?"); the area's last row, the laptop list, or the Conversation and Sentences sheets.
  */
-import { encodeWord, lattice, normalize, type Candidate, type Lexicon } from '@ninth/core';
+import { REPLY_INTENTS, encodeWord, lattice, normalize, type Candidate, type Lexicon, type ReplyIntent } from '@ninth/core';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactElement } from 'react';
 import { EMPTY, actionForKey, codesOf, composerReducer, type ComposerState } from '@/lib/composer';
 import { loadDictionary, type DictState } from '@/lib/data';
 import { DecodeCache, buildRequest, decodeRemote, type RejectedSuggestion } from '@/lib/decodeClient';
+import { decodeContext, recordMine, replyIntentFor, useConversation, type MeVia, type ThemVia, type Turn } from '@/lib/conversation';
 import { focusContext, mapKey } from '@/lib/keyboard';
 import {
   isShell,
@@ -20,9 +27,12 @@ import {
   sectionOrder,
   SPLIT_ROWS_QUERIES,
   splitSuggestionRows,
+  STACK_NO_HEADER_QUERY,
   STACK_ROWS_QUERIES,
   STACK_SHORT_QUERY,
+  STACK_THREAD_QUERY,
   stackSuggestionRows,
+  threadRows,
   useLayout,
   useMediaQuery,
   visibleSentences,
@@ -33,6 +43,7 @@ import { KEY_ROWS, type KeyDef } from '@/lib/keys';
 import { applyMyWords, buildDisplayMap, makeMyWord, mergeMyWords, showWord, type MyWord } from '@/lib/myWords';
 import { MAX_CANDIDATES, buildSentence, decodeAround, decodeWithPins, mergeCandidates, readings, spellTarget } from '@/lib/sentence';
 import { DEFAULT_SETTINGS, applyLook, readStoredLook, sanitizeSettings, stepScanMs, type Settings } from '@/lib/settings';
+import { acceptReply, replyCells, replyRows, suggestionMode } from '@/lib/replies';
 import { pickVoice, speak, speechSupported } from '@/lib/speech';
 import {
   deleteMyWord,
@@ -57,6 +68,8 @@ import { useVoices } from '@/lib/useVoices';
 import { AppHeader } from './AppHeader';
 import { Button } from './Button';
 import { CandidateList } from './CandidateList';
+import { ConversationSheet } from './ConversationSheet';
+import { ThreadPanel, ThreadStrip, useAddCells } from './ConversationStrip';
 import { Footer, NOT_A_MEDICAL_DEVICE } from './Footer';
 import { Icon } from './Icon';
 import { Keypad } from './Keypad';
@@ -66,6 +79,8 @@ import { PartnerTurn } from './PartnerTurn';
 import { PhoneSuggestions, phoneSuggestions } from './PhoneSuggestions';
 import { RotateNotice, usePortraitLock } from './RotateNotice';
 import { PhrasesSheet } from './PhrasesSheet';
+import { QuickReplies, type ReplySlot } from './QuickReplies';
+import { REPLY_TYPE_LABEL, ReplyTypes } from './ReplyTypes';
 import { ProofPanel } from './ProofPanel';
 import { ScanBar } from './ScanBar';
 import { SettingsSheet } from './SettingsSheet';
@@ -86,13 +101,22 @@ const KEYPAD_ROWS = KEY_ROWS.length; // 4
  * Phrases / Voice / Settings on wide screens). Phone layout: the same rows, with the action row being
  * the action bar (Menu, Speak, Show) and the last row the sentence card's Clear (or Undo).
  */
+/** Sentences, or the quick replies while they hold the area (web-ui Req 28.6). */
 export const CAND_ROW = KEYPAD_ROWS; // scan row 4
 export const OFFER_ROW = KEYPAD_ROWS + 1; // scan row 5
 export const ACTION_ROW = KEYPAD_ROWS + 2; // scan row 6
 export const MENU_ROW = KEYPAD_ROWS + 3; // scan row 7
+/**
+ * The conversation (web-ui Req 27.10): after the card's Clear on phones, after the header on laptops.
+ * 0 cells under 620px (no header; the row is skipped), 1 for the header's They said button, up to 4 for
+ * the strip (2 turns, They said, All), up to 6 for the laptop panel (3 turns, Listen, Type their line, All).
+ */
+export const THREAD_ROW = KEYPAD_ROWS + 4; // scan row 8
 const WIDE_MENU = ['phrases', 'voice', 'settings'] as const;
 
-type SheetName = 'menu' | 'settings' | 'voice' | 'phrases' | 'words' | 'spell' | 'sentences' | 'proof' | 'partner' | null;
+type SheetName = 'menu' | 'settings' | 'voice' | 'phrases' | 'words' | 'spell' | 'sentences' | 'proof' | 'partner' | 'conversation' | null;
+/** What the person chose to say: Speak (keys), a phrase, a quick reply, Say again. Each becomes a 'you said' turn. */
+export type SayAndRecord = (text: string, via: Exclude<MeVia, 'shown'>) => boolean;
 const WORDS_NOT_SAVED = 'My words could not be saved on this device, so they last until you close the app. Storage may be off in this browser window.';
 
 export function CommunicationScreen({
@@ -118,7 +142,12 @@ export function CommunicationScreen({
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [dict, setDict] = useState<DictState>(initialDict ?? { status: 'loading' });
   const [composer, dispatch] = useReducer(composerReducer, EMPTY);
-  const [partner, setPartner] = useState('');
+  // The conversation (web-ui Req 27): memory only, shared with the sheets; They said is its newest 'them' line.
+  const conv = useConversation();
+  const [focusTurn, setFocusTurn] = useState<number | null>(null);
+  const [panelAdding, setPanelAdding] = useState(false);
+  // Voice to text for They said (web-ui Req 26): allowed once, from the notice or Settings.
+  const dictation = useMemo(() => ({ allowed: settings.dictation, onAllow: () => setSettings((s) => ({ ...s, dictation: true })) }), [settings.dictation]);
   const [remote, setRemote] = useState<{ key: string; candidates: Candidate[]; rejected: RejectedSuggestion[]; rejectedCount: number } | null>(null);
   const [sheet, setSheet] = useState<SheetName>(null);
   const [show, setShow] = useState<{ text: string; reason: string | null } | null>(null);
@@ -145,6 +174,7 @@ export function CommunicationScreen({
   const voices = useVoices(settings.lang);
   const cache = useRef(new DecodeCache());
   const lastPointerKey = useRef<{ id: string; at: number } | null>(null);
+  const lastReply = useRef<{ text: string; at: number } | null>(null);
 
   // ---- load settings, dictionary, phrases ---------------------------------------------------
   useEffect(() => {
@@ -191,12 +221,32 @@ export function CommunicationScreen({
   const lex = dict.status === 'ready' ? dict.lexicon : null;
   const display = useMemo(() => buildDisplayMap(myWords, [...spelled].map(([w, d]) => ({ w, display: d }))), [myWords, spelled]);
   const codes = useMemo(() => codesOf(composer), [composer]);
+  // The reply type (web-ui Req 29): only the one pressed for their newest line counts (a new line resets it).
+  const intent = replyIntentFor(conv.state, composer.intent, composer.intentFor);
+  // Their line changed or went away: drop the stale type, and Ask's automatic "?" with it.
+  useLayoutEffect(() => {
+    if (composer.intent && !intent) dispatch({ type: 'intent' });
+  }, [composer.intent, intent]);
+  // A spoken sentence is not re-ranked: a type pressed while it is still on show is for the next one.
+  const rankIntent = composer.spoken ? undefined : intent;
   const ghost = useMemo(
-    () => (dict.status === 'ready' ? decodeWithPins(composer, dict.lexicon, dict.lm, { k: MAX_CANDIDATES, mode: settings.mode }) : []),
+    () => (dict.status === 'ready' ? decodeWithPins(composer, dict.lexicon, dict.lm, { k: MAX_CANDIDATES, mode: settings.mode, intent: rankIntent }) : []),
     // lexVersion: the lexicon was changed in place (addWords), so decode again.
-    [composer, dict, settings.mode, lexVersion],
+    [composer, dict, settings.mode, lexVersion, rankIntent],
   );
-  const remoteKey = DecodeCache.key(codes, partner);
+  // Ranking context (web-ui Req 27.11): their newest line, and your last 3 lines only with "Include what
+  // you said" on. Your lines count from before this sentence started, so speaking or showing it does not
+  // re-rank the sentence still on screen.
+  const ctxBefore = useRef(conv.state.nextId);
+  const wasSpoken = useRef(composer.spoken);
+  if (codes.length === 0 || (wasSpoken.current && !composer.spoken)) ctxBefore.current = conv.state.nextId;
+  wasSpoken.current = composer.spoken;
+  const before = ctxBefore.current;
+  const decodeCtx = useMemo(
+    () => decodeContext(conv.state, { recent: settings.llmRecent, before, intent: composer.spoken ? undefined : composer.intent, intentFor: composer.intentFor }),
+    [conv.state, settings.llmRecent, before, composer.spoken, composer.intent, composer.intentFor],
+  );
+  const remoteKey = DecodeCache.key(codes, decodeCtx.partner, decodeCtx.recent, decodeCtx.intent);
   const llmActive = settings.llm && online && dict.status === 'ready';
   const remoteNow = llmActive && remote?.key === remoteKey ? remote : null;
   const pinned = composer.slots.some((s) => s.pin);
@@ -222,13 +272,14 @@ export function CommunicationScreen({
     if (!llmActive || dict.status !== 'ready' || codes.length === 0 || pinned) return;
     const lat = lattice(codes, dict.lexicon, 12, settings.mode);
     if (lat.some((slot) => slot.length === 0)) return; // an unfinished word: nothing to rank yet
-    const key = DecodeCache.key(codes, partner);
+    const key = remoteKey;
     const hit = cache.current.get(key);
     if (hit) {
       setRemote({ key, candidates: hit.candidates, rejected: hit.rejected, rejectedCount: hit.rejectedCount });
       return;
     }
-    const req = buildRequest(codes, lat, partner, settings.mode, MAX_CANDIDATES, ghost.map((c) => c.words));
+    // The beams are already in the reply type's order, so the server's fallback follows it (ADR-008).
+    const req = buildRequest(codes, lat, decodeCtx.partner, settings.mode, MAX_CANDIDATES, ghost.map((c) => c.words), decodeCtx.recent, decodeCtx.intent);
     if (!req) return;
     const ctrl = new AbortController();
     const t = setTimeout(() => {
@@ -242,7 +293,8 @@ export function CommunicationScreen({
       clearTimeout(t);
       ctrl.abort();
     };
-  }, [llmActive, dict, codes, partner, settings.mode, pinned, ghost]);
+    // remoteKey stands for the context (partner, recent lines and reply type).
+  }, [llmActive, dict, codes, remoteKey, settings.mode, pinned, ghost]);
 
   // ---- actions --------------------------------------------------------------------------------
   const say = useCallback((msg: string) => {
@@ -321,13 +373,51 @@ export function CommunicationScreen({
     [noVoice, voices.voices, settings.voiceURI, settings.rate, settings.pitch],
   );
 
+  /**
+   * Speak something the person chose and add it to the conversation as a 'you said' turn (web-ui Req
+   * 27.2). Call it inside the press (iOS gesture). Test voice uses speakText and is not a turn.
+   */
+  const sayAndRecord: SayAndRecord = useCallback(
+    (text, via) => {
+      const ok = speakText(text);
+      if (ok) recordMine(text, via);
+      return ok;
+    },
+    [speakText],
+  );
+
   const speakNow = useCallback(() => {
     if (!sentence.speakable) {
       if (codes.length > 0) say('Finish the last word before you speak.');
       return;
     }
-    if (speakText(sentence.text)) dispatch({ type: 'spoken' });
-  }, [sentence.speakable, sentence.text, codes.length, speakText, say]);
+    if (sayAndRecord(sentence.text, 'keys')) dispatch({ type: 'spoken', words: sentence.words.map((w) => w.word ?? '') });
+  }, [sentence.speakable, sentence.text, sentence.words, codes.length, sayAndRecord, say]);
+
+  /**
+   * A quick reply (web-ui Req 28.2): speak exactly its text inside the press, leave the sentence alone,
+   * and ignore a second press of the same reply within the accept delay (a tremor). It becomes a "you
+   * said" turn (28.7).
+   */
+  const sayReply = useCallback(
+    (text: string) => {
+      const r = acceptReply(lastReply.current, text, Date.now(), settings.acceptDelayMs);
+      lastReply.current = r.last;
+      if (r.ok) sayAndRecord(text, 'quick');
+    },
+    [sayAndRecord, settings.acceptDelayMs],
+  );
+
+  /** Say again in the Conversation sheet: the same repeat guard as a quick reply (a tremor's double tap). */
+  const lastAgain = useRef<{ text: string; at: number } | null>(null);
+  const sayAgain = useCallback(
+    (text: string) => {
+      const r = acceptReply(lastAgain.current, text, Date.now(), settings.acceptDelayMs);
+      lastAgain.current = r.last;
+      if (r.ok) sayAndRecord(text, 'again');
+    },
+    [sayAndRecord, settings.acceptDelayMs],
+  );
 
   const clearAll = useCallback(() => {
     if (composer.slots.length > 0) setUndo(composer);
@@ -543,17 +633,101 @@ export function CommunicationScreen({
   }, [phone, layout]);
   const phoneCandCells = sug.items.length + (spellOffer || sug.more ? 1 : 0);
 
+  // ---- reply types (web-ui Req 29) ---------------------------------------------------------------------
+  // Offered while the newest turn is theirs. Pressing the pressed one releases it.
+  const replyTypesOn = conv.awaitingReply && conv.lastThem !== null;
+  const lastThemId = conv.lastThem?.id;
+  const setIntent = useCallback((next: ReplyIntent | undefined) => dispatch({ type: 'intent', intent: next, turn: lastThemId }), [lastThemId]);
+  const toggleIntent = useCallback((t: ReplyIntent) => setIntent(intent === t ? undefined : t), [intent, setIntent]);
+
+  // ---- quick replies (web-ui Req 28) ------------------------------------------------------------------
+  // Nothing typed, or the sentence was just spoken: the area holds the replies instead of the sentences.
+  const replyMode = suggestionMode({ typed: codes.length > 0, spoken: composer.spoken, enabled: settings.quickReplies });
+  // Reply types go here on the shells while the newest turn is theirs: with 2 or more rows they take the
+  // last row, by the keys (on 2 rows the second reply row stays in Menu). Laptops show them under the replies instead
+  // (laptopGroup). Null: not shown.
+  const replySlot = useMemo<ReplySlot | null>(
+    () =>
+      replyTypesOn && phone
+        ? {
+            cells: REPLY_INTENTS.length,
+            render: (lit) => <ReplyTypes variant="row" value={intent} onToggle={setIntent} litIndex={lit} />,
+            choose: (i) => {
+              const t = REPLY_INTENTS[i];
+              if (t) toggleIntent(t);
+            },
+          }
+        : null,
+    [replyTypesOn, phone, intent, setIntent, toggleIntent],
+  );
+  const slotCells = replySlot?.cells ?? 0;
+  // Shells: the rows that fit (none on a short phone: Menu > Quick replies). Laptops: one row of 5 on wide
+  // (the header has Phrases), 2 rows of 3 on compact.
+  const replyGrid = useMemo(
+    () => (phone ? replyRows(sugRows, slotCells) : layout === 'wide' ? replyRows(1, slotCells, true) : replyRows(3, slotCells)),
+    [phone, sugRows, slotCells, layout],
+  );
+  const showReplies = replyMode === 'replies' && replyGrid.length > 0;
+  const replyList = useMemo(() => (showReplies ? replyCells(replyGrid) : []), [showReplies, replyGrid]);
+  /** A press or a switch on the area's cell `i`: speak a reply, open Phrases, or the slot's own choice. */
+  const chooseReplyCell = useCallback(
+    (i: number) => {
+      const cell = replyList[i];
+      if (!cell) return;
+      if (cell.kind === 'reply') sayReply(cell.text);
+      else if (cell.kind === 'phrases') setSheet('phrases');
+      else replySlot?.choose(cell.index);
+    },
+    [replyList, sayReply, replySlot],
+  );
+  // On the shells the sentences are not on screen while the replies are, so Alt+1-5 and the arrows do
+  // nothing then (a sentence shortcut never speaks or changes anything unseen).
+  const sentencesHidden = phone && showReplies;
+  // Laptops: the group sits under the quick replies (or alone while typing) above the Sentences list until
+  // Speak; its cells follow the replies' in the sentence scan row (web-ui Req 29.5, 29.7).
+  const laptopGroup = !phone && replyTypesOn;
+  const groupCells = laptopGroup ? REPLY_INTENTS.length : 0;
+  // Shells: the group in the Conversation and Sentences sheets (the only place on 1-row and short phones,
+  // and while typing on the others).
+  const sheetGroup = phone && replyTypesOn ? <ReplyTypes variant="sheet" value={intent} onToggle={setIntent} /> : null;
+
   const openSheet = useCallback((name: SheetName) => setSheet(name), []);
   const showCurrent = useCallback(() => {
-    if (sentence.speakable && sentence.text) setShow({ text: sentence.text, reason: null });
+    if (!sentence.speakable || !sentence.text) return;
+    setShow({ text: sentence.text, reason: null });
+    recordMine(sentence.text, 'shown');
   }, [sentence.speakable, sentence.text]);
-  const actionsRef = useRef({ pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout, openSpell, offers, addOffer, phone, sug, spellOffer, openSentences, undo, undoClear });
-  actionsRef.current = { pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout, openSpell, offers, addOffer, phone, sug, spellOffer, openSentences, undo, undoClear };
+
+  // ---- the conversation on the main screen (web-ui Req 27.4-27.6) ------------------------------------
+  const threadView = threadRows(layout, { tall: useMediaQuery(STACK_THREAD_QUERY), noHeader: useMediaQuery(STACK_NO_HEADER_QUERY) });
+  const newestFirst = useMemo(() => [...conv.turns].reverse(), [conv.turns]);
+  // The header button (Req 27.4) shows their newest line: what you said is already on the card, and their
+  // line is the context worth seeing. Yours only when they have said nothing yet.
+  const bubbleTurn = conv.lastThem ?? newestFirst[0] ?? null;
+  const addCells = useAddCells(dictation);
+  const threadShown = threadView === 3 ? Math.min(3, newestFirst.length) : threadView === 2 ? Math.min(2, newestFirst.length) : 0;
+  const threadCells = threadView === 0 ? 0 : threadView === 1 ? 1 : threadView === 2 ? threadShown + 2 : threadShown + (panelAdding ? 0 : addCells + 1);
+  /** Open the Conversation sheet, with focus on a turn's first button (or on Close). */
+  const openConversation = useCallback((id: number | null) => {
+    setFocusTurn(id);
+    setSheet('conversation');
+  }, []);
+  const openPartner = useCallback(() => setSheet('partner'), []);
+  const addThem = useCallback(
+    (text: string, via: ThemVia) => {
+      if (!text.trim()) return;
+      conv.addThem(text, via);
+      say('Added to the conversation.');
+    },
+    [conv, say],
+  );
+  const actionsRef = useRef({ pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout, openSpell, offers, addOffer, phone, sug, spellOffer, openSentences, undo, undoClear, threadView, newestFirst, bubbleTurn, threadShown, openConversation, openPartner, replyList, chooseReplyCell, groupCells, toggleIntent });
+  actionsRef.current = { pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout, openSpell, offers, addOffer, phone, sug, spellOffer, openSentences, undo, undoClear, threadView, newestFirst, bubbleTurn, threadShown, openConversation, openPartner, replyList, chooseReplyCell, groupCells, toggleIntent };
   const scanner = useScanner({
     mode: scanMode,
     rows: phone
-      ? [...KEY_ROWS.map((r) => r.length), phoneCandCells, 0, PHONE_ACTIONS.length, 1]
-      : [...KEY_ROWS.map((r) => r.length), candCells, offers.length, ACTIONS.length, menuCells],
+      ? [...KEY_ROWS.map((r) => r.length), showReplies ? replyList.length : phoneCandCells, 0, PHONE_ACTIONS.length, 1, threadCells]
+      : [...KEY_ROWS.map((r) => r.length), replyList.length + groupCells + candCells, offers.length, ACTIONS.length, menuCells, threadCells],
     loops: settings.scanLoops,
     scanMs: settings.scanMs,
     acceptDelayMs: settings.acceptDelayMs,
@@ -563,13 +737,21 @@ export function CommunicationScreen({
       if (row < KEYPAD_ROWS) {
         const def = KEY_ROWS[row]?.[cell];
         if (def) a.pressKey(def);
+      } else if (row === CAND_ROW && cell < a.replyList.length) {
+        a.chooseReplyCell(cell);
       } else if (row === CAND_ROW && a.phone) {
         const item = a.sug.items[cell];
         if (item) a.selectCandidate(item.index);
         else if (a.spellOffer) a.spellOffer.onClick();
         else if (a.sug.more) a.openSentences();
       } else if (row === CAND_ROW) {
-        if (cell < shownSentences.count) a.selectCandidate(cell);
+        // Laptops: the replies (or the reply types) come first in the row, then the sentences.
+        const g = cell - a.replyList.length;
+        const c = g - a.groupCells;
+        if (g < a.groupCells) {
+          const t = REPLY_INTENTS[g];
+          if (t) a.toggleIntent(t);
+        } else if (c < shownSentences.count) a.selectCandidate(c);
         else a.sentenceToggle?.onClick();
       } else if (row === OFFER_ROW) {
         const o = a.offers[cell];
@@ -591,6 +773,20 @@ export function CommunicationScreen({
         else if (act === 'spell') a.openSpell();
       } else if (row === MENU_ROW) {
         a.openSheet(a.layout === 'wide' ? (WIDE_MENU[cell] ?? null) : 'menu');
+      } else if (row === THREAD_ROW) {
+        const turn = cell < a.threadShown ? a.newestFirst[cell] : undefined;
+        if (a.threadView === 1) {
+          const last = a.bubbleTurn;
+          if (last) a.openConversation(last.id);
+          else a.openPartner();
+        } else if (turn) a.openConversation(turn.id);
+        else if (a.threadView === 2) {
+          if (cell === a.threadShown) a.openPartner();
+          else a.openConversation(null);
+        } else if (a.threadView === 3) {
+          // The panel's Listen / Type their line / All, exactly as a press (Listen starts inside it).
+          document.querySelectorAll<HTMLButtonElement>('[data-thread="panel"] .thread-panel__actions button')[cell - a.threadShown]?.click();
+        }
       }
     },
   });
@@ -608,8 +804,8 @@ export function CommunicationScreen({
   });
 
   // ---- physical keyboard ----------------------------------------------------------------------
-  const handlers = useRef({ pressKey, speakNow, moveSelection, selectCandidate, scanner, sheetScanner, overlayScanMode, access: settings.access, overlayOpen });
-  handlers.current = { pressKey, speakNow, moveSelection, selectCandidate, scanner, sheetScanner, overlayScanMode, access: settings.access, overlayOpen };
+  const handlers = useRef({ pressKey, speakNow, moveSelection, selectCandidate, scanner, sheetScanner, overlayScanMode, access: settings.access, overlayOpen, sentencesHidden });
+  handlers.current = { pressKey, speakNow, moveSelection, selectCandidate, scanner, sheetScanner, overlayScanMode, access: settings.access, overlayOpen, sentencesHidden };
   useEffect(() => {
     let swallowKeyUp: string | null = null;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -652,10 +848,10 @@ export function CommunicationScreen({
           h.speakNow();
           break;
         case 'move':
-          h.moveSelection(intent.delta);
+          if (!h.sentencesHidden) h.moveSelection(intent.delta);
           break;
         case 'rank':
-          h.selectCandidate(intent.rank - 1);
+          if (!h.sentencesHidden) h.selectCandidate(intent.rank - 1);
           break;
       }
     };
@@ -718,10 +914,37 @@ export function CommunicationScreen({
   const quickPhrases = dict.status === 'ready' ? (dict.pack?.phrases ?? []) : [];
   const actionLit = (i: number) => scanRow === ACTION_ROW && litCell === i;
 
-  // Voice to text for They said (web-ui Req 26): allowed once, from the notice or Settings.
-  const dictation = { allowed: settings.dictation, onAllow: () => setSettings((s) => ({ ...s, dictation: true })) };
   const sections: Record<Section, ReactElement> = {
-    partner: <PartnerTurn key="partner" value={partner} onChange={setPartner} dictation={dictation} />,
+    thread:
+      threadView === 3 ? (
+        <div key="thread" className="order-partner" data-section="thread">
+          <ThreadPanel
+            turns={newestFirst}
+            adding={panelAdding}
+            onAdding={setPanelAdding}
+            onAdd={addThem}
+            onOpenTurn={openConversation}
+            onOpen={() => openConversation(null)}
+            dictation={dictation}
+            switchOn={scanMode !== null}
+            scanning={scanRow === THREAD_ROW}
+            litIndex={scanRow === THREAD_ROW ? litCell : -1}
+          />
+        </div>
+      ) : threadView === 2 ? (
+        <div key="thread" className="order-thread" data-section="thread">
+          <ThreadStrip
+            turns={newestFirst}
+            onOpenTurn={openConversation}
+            onOpen={() => openConversation(null)}
+            onAdd={openPartner}
+            scanning={scanRow === THREAD_ROW}
+            litIndex={scanRow === THREAD_ROW ? litCell : -1}
+          />
+        </div>
+      ) : (
+        <span key="thread" hidden />
+      ),
     speak: phone ? (
       <div key="speak" className={scanRow === MENU_ROW ? 'phone-card nl-scanrow is-scanning order-speak' : 'phone-card nl-scanrow order-speak'} data-section="speak">
         <SpeakBar
@@ -735,6 +958,7 @@ export function CommunicationScreen({
           onSpeak={speakNow}
           hideSpeak
           digitsApart
+          tag={intent ? REPLY_TYPE_LABEL[intent] : undefined}
           extra={
             undo ? (
               <Button variant="secondary" onClick={undoClear} lit={scanRow === MENU_ROW && litCell === 0} className="phone-card__undo">
@@ -768,6 +992,7 @@ export function CommunicationScreen({
           speakLit={actionLit(0)}
           speaking={speaking}
           onSpeak={speakNow}
+          tag={intent ? REPLY_TYPE_LABEL[intent] : undefined}
         />
         <div className="speak-actions">
           <Button variant="secondary" icon="x" onClick={clearAll} disabled={codes.length === 0} lit={actionLit(1)}>
@@ -787,6 +1012,18 @@ export function CommunicationScreen({
     ),
     cands: phone ? (
       <div key="cands" className="order-cands" data-section="cands">
+        {showReplies ? (
+          <QuickReplies
+            variant="area"
+            rows={replyGrid}
+            size={sugRows}
+            scanning={scanRow === CAND_ROW}
+            litIndex={scanRow === CAND_ROW ? litCell : -1}
+            onSay={sayReply}
+            onPhrases={() => setSheet('phrases')}
+            slot={replySlot}
+          />
+        ) : (
         <PhoneSuggestions
           items={sug.items}
           more={sug.more}
@@ -798,6 +1035,7 @@ export function CommunicationScreen({
           onSelect={selectCandidate}
           onMore={openSentences}
         />
+        )}
       </div>
     ) : (
       <div key="cands" className="order-cands" data-section="cands">
@@ -810,18 +1048,66 @@ export function CommunicationScreen({
             </p>
           </div>
         ) : null}
-        <CandidateList
-          candidates={sentence.candidates}
-          selectedIndex={sentence.selectedIndex}
-          punct={composer.punct}
-          scanning={scanRow === CAND_ROW}
-          litIndex={scanRow === CAND_ROW ? litCell : -1}
-          emptyText={candEmpty}
-          onSelect={selectCandidate}
-          shown={shownSentences.count}
-          toggle={sentenceToggle}
-          display={display}
-        />
+        {showReplies ? (
+          // Laptops: the replies, then the sentences (after Speak) or the empty text, one scan row.
+          <div className={scanRow === CAND_ROW ? 'cands-area nl-scanrow is-scanning' : 'cands-area nl-scanrow'}>
+            <QuickReplies
+              variant="line"
+              rows={replyGrid}
+              litIndex={scanRow === CAND_ROW ? litCell : -1}
+              onSay={sayReply}
+              onPhrases={() => setSheet('phrases')}
+            />
+            {laptopGroup ? (
+              <ReplyTypes
+                variant="line"
+                value={intent}
+                onToggle={setIntent}
+                litIndex={scanRow === CAND_ROW && litCell >= replyList.length ? litCell - replyList.length : -1}
+              />
+            ) : null}
+            <CandidateList
+              candidates={sentence.candidates}
+              selectedIndex={sentence.selectedIndex}
+              punct={composer.punct}
+              litIndex={scanRow === CAND_ROW ? litCell - replyList.length - groupCells : -1}
+              emptyText={candEmpty}
+              onSelect={selectCandidate}
+              shown={shownSentences.count}
+              toggle={sentenceToggle}
+              display={display}
+            />
+          </div>
+        ) : laptopGroup ? (
+          // Laptops while typing: the reply types, then the sentences, one scan row.
+          <div className={scanRow === CAND_ROW ? 'cands-area nl-scanrow is-scanning' : 'cands-area nl-scanrow'}>
+            <ReplyTypes variant="line" value={intent} onToggle={setIntent} litIndex={scanRow === CAND_ROW && litCell < groupCells ? litCell : -1} />
+            <CandidateList
+              candidates={sentence.candidates}
+              selectedIndex={sentence.selectedIndex}
+              punct={composer.punct}
+              litIndex={scanRow === CAND_ROW ? litCell - groupCells : -1}
+              emptyText={candEmpty}
+              onSelect={selectCandidate}
+              shown={shownSentences.count}
+              toggle={sentenceToggle}
+              display={display}
+            />
+          </div>
+        ) : (
+          <CandidateList
+            candidates={sentence.candidates}
+            selectedIndex={sentence.selectedIndex}
+            punct={composer.punct}
+            scanning={scanRow === CAND_ROW}
+            litIndex={scanRow === CAND_ROW ? litCell : -1}
+            emptyText={candEmpty}
+            onSelect={selectCandidate}
+            shown={shownSentences.count}
+            toggle={sentenceToggle}
+            display={display}
+          />
+        )}
       </div>
     ),
     proof: (
@@ -900,13 +1186,17 @@ export function CommunicationScreen({
           onVoice={() => setSheet('voice')}
           onSettings={() => setSheet('settings')}
           actions={!phone}
-          partner={phone ? { text: partner, onEdit: () => setSheet('partner') } : null}
+          thread={
+            phone && threadView === 1
+              ? { last: bubbleTurn, onOpen: () => openConversation(bubbleTurn?.id ?? null), onAdd: openPartner, lit: scanRow === THREAD_ROW }
+              : null
+          }
           scanPill={phone && scanMode ? (scanActive ? 'Scanning' : 'Scanning paused') : null}
         />
 
         {phone ? (
           <main className={`app-main app-main--${layout}`}>
-            <div className="shell-screen">{order.flat().filter((k) => !(noSugRow && k === 'cands')).map((k) => sections[k])}</div>
+            <div className="shell-screen">{order.flat().filter((k) => !(noSugRow && k === 'cands') && !(k === 'thread' && threadView !== 2)).map((k) => sections[k])}</div>
           </main>
         ) : isTwoColumn(layout) ? (
           <main className="app-main">
@@ -946,13 +1236,20 @@ export function CommunicationScreen({
                 },
                 canSpell,
                 onSpell: openSpell,
-                onSentences: noSugRow ? openSentences : undefined,
+                // Short phones, and while the replies hold the area after Speak (web-ui Req 24.9, 28.5).
+                onSentences: noSugRow || (showReplies && sentence.candidates.length > 0) ? openSentences : undefined,
                 onProof: () => setSheet('proof'),
                 onPartner: () => setSheet('partner'),
+                onConversation: () => openConversation(null),
               }
             : null
         }
         about={phone ? NOT_A_MEDICAL_DEVICE : null}
+        onReply={(text) => {
+          // Speak inside the press, then back to the keys (web-ui Req 28.4: "Hold on" while typing).
+          sayReply(text);
+          setSheet(null);
+        }}
       />
       {phone ? (
         <Sheet open={sheet === 'proof'} name="proof" title="Check the words" onClose={() => setSheet(null)} scanning={overlayScanMode !== null}>
@@ -968,13 +1265,16 @@ export function CommunicationScreen({
         </Sheet>
       ) : null}
       {phone ? (
-        <Sheet open={sheet === 'partner'} name="partner" title="They said" onClose={() => setSheet(null)} scanning={overlayScanMode !== null}>
-          <p className="sheet__lead">What the other person just said. With model ranking on, it helps rank your sentences; it is never stored.</p>
-          {sheet === 'partner' ? <PartnerTurn value={partner} onChange={setPartner} startEditing onDone={() => setSheet(null)} dictation={dictation} /> : null}
+        <Sheet open={sheet === 'partner'} name="partner" title="They said" onClose={() => setSheet(null)} scanning={overlayScanMode !== null} initialFocusId="partner-field">
+          <p className="sheet__lead">What the other person just said. It goes into the conversation on this screen and is never saved. With model ranking on, it helps rank your sentences.</p>
+          {sheet === 'partner' ? (
+            <PartnerTurn value="" onChange={addThem} onDone={() => setSheet(null)} dictation={dictation} inputId="partner-field" autoFocus={overlayScanMode === null} />
+          ) : null}
         </Sheet>
       ) : null}
       {phone ? (
         <Sheet open={sheet === 'sentences'} name="sentences" title="Sentences for your keys" onClose={() => setSheet(null)} scanning={overlayScanMode !== null}>
+          {sheetGroup}
           <div className="scan-cluster" data-scan-row="sentences">
             <CandidateList
               candidates={sentence.candidates}
@@ -1005,10 +1305,11 @@ export function CommunicationScreen({
         phrases={phrases}
         quickPhrases={quickPhrases}
         scanning={overlayScanMode !== null}
-        onSpeakQuick={(text) => speakText(text)}
+        onSpeakQuick={(text) => sayAndRecord(text, 'phrase')}
+        onReply={layout === 'wide' ? sayReply : undefined}
         error={phraseError}
         onSpeak={(p) => {
-          speakText(p.text);
+          sayAndRecord(p.text, 'phrase');
           void markPhraseUsed(p.id).then(() => listPhrases().then(setPhrases)).catch(() => undefined);
         }}
         onDelete={(p) => {
@@ -1041,6 +1342,18 @@ export function CommunicationScreen({
         scanning={overlayScanMode !== null}
         onUse={useSpelled}
         onClose={() => setSheet(null)}
+      />
+      <ConversationSheet
+        open={sheet === 'conversation'}
+        scanning={overlayScanMode !== null}
+        focusTurnId={focusTurn}
+        dictation={dictation}
+        onSayAgain={sayAgain}
+        onShow={(t: Turn) => setShow({ text: t.text, reason: t.who === 'me' ? 'You said' : 'They said' })}
+        onAdded={() => say('Added to the conversation.')}
+        onAnnounce={say}
+        onClose={() => setSheet(null)}
+        replyTypes={sheetGroup}
       />
       <ShowMode text={show?.text ?? null} reason={show?.reason ?? null} scanning={overlayScanMode !== null} onClose={() => setShow(null)} />
     </div>

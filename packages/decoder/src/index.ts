@@ -4,6 +4,7 @@ export {
   DecodeResponseSchema,
   RejectedWordSchema,
   REJECTED_WORD_RE,
+  REPLY_INTENT_VALUES,
   LIMITS,
   readBody,
   type DecodeRequest,
@@ -12,7 +13,7 @@ export {
   type RejectedWord,
   type ErrorBody,
 } from './schema.js';
-export { buildPrompt, estimateTokens, SYSTEM_PROMPT, FEW_SHOTS, type Prompt, type FewShot } from './prompt.js';
+export { buildPrompt, estimateTokens, renderUserTurn, SYSTEM_PROMPT, FEW_SHOTS, PROMPT_VERSION, type Prompt, type FewShot, type UserTurnInput } from './prompt.js';
 export { parseReply } from './parse.js';
 export {
   AnthropicLlmClient,

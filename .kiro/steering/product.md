@@ -30,6 +30,9 @@ Write for adults. No cartoons, no baby talk. Describe the tool ("type on 9 keys,
 - Access: keyboard, touch, 1-switch and 2-switch scanning with adjustable speed.
 - Web Speech voices, voice picker, saved phrases on the device only; Show mode (big text, Flip for the person opposite).
 - "They said": the other person's last line, typed or heard with Listen (the browser's speech recognition, off until allowed, ADR-004).
+- The conversation (web-ui Req 27, ADR-007): what they said and what you said, newest first, kept in memory only and gone on reload. Say again, Show, Copy or Share a turn; Clear conversation asks first.
+- Quick replies (web-ui Req 28): "Hold on." "Yes." "No." "Pardon?" "Thanks." one press away when nothing is typed, and in Menu while typing. Each speaks only when pressed; off in Settings.
+- Reply types after the other person speaks: Agree, Disagree, Ask. They only change the order of the sentences for your keys, never the words; Ask also adds a question mark (ADR-008, web-ui Req 29).
 
 ## Devices (web-ui Req 24, 25; ADR-003)
 
@@ -58,10 +61,10 @@ Allowed: "free", "works offline", "runs in your browser", "every spoken word mat
 
 ## Honest limits to keep visible
 
-Needs literacy and spelling. Voices depend on the device. Model ranking sends the typed digits, candidate words and the partner's last line to the configured provider (`lib/rankingProvider.ts` holds the exact copy): Anthropic (not only in the EU; deletes API inputs and outputs within 30 days unless it must keep them for policy or legal reasons) or MiniMax (no published deletion period or no-training promise; data stored in the US). Listen may send the other person's voice to the browser maker (Google in Chrome, Apple in Safari). Not tested with AAC users unless the user-validation log says so. Not yet tried on real phones and tablets, only in simulators.
+Needs literacy and spelling. Voices depend on the device. Model ranking sends the typed digits, candidate words, the partner's last line and the reply type picked (if any) (and, only with "Include what you said" on, the person's last 3 sentences) to the configured provider (`lib/rankingProvider.ts` holds the exact copy): Anthropic (not only in the EU; deletes API inputs and outputs within 30 days unless it must keep them for policy or legal reasons) or MiniMax (no published deletion period or no-training promise; data stored in the US). Listen may send the other person's voice to the browser maker (Google in Chrome, Apple in Safari). Not tested with AAC users unless the user-validation log says so. Not yet tried on real phones and tablets, only in simulators.
 
 ## How we work
 
 Spec first for anything non-trivial: `.kiro/specs/<name>/` with EARS requirements, design and tasks, and fast-check properties for the core logic. Each task names the requirement IDs it satisfies. Bugs worth a record get a Bugfix spec. Log Kiro usage in `docs/KIRO_LOG.md` (the `log-task` hook adds spec tasks; add other sessions by hand). Contracts between packages live in `docs/architecture/contracts.md`; decisions in `docs/decisions/`.
 
-History, stated plainly for the write-up: Nov 6-9, 2026 the code and this `.kiro/` folder were written with Claude Code (Anthropic), outside Kiro (`docs/KIRO_LOG.md` row 1). From Nov 10 the work happens in Kiro. Never describe earlier work as Kiro work.
+History, stated plainly for the write-up: Nov 6-9, 2026 the code and this `.kiro/` folder were written with Claude Code (Anthropic), outside Kiro (`docs/KIRO_LOG.md` row 1). From Nov 10 the work happens in Kiro, with one exception: on Nov 11 the conversation thread, quick replies and reply types (web-ui Req 27-29, ADR-007, ADR-008) were built with Claude Code on branch `feature/conversation-replies` (`docs/KIRO_LOG.md`). Never describe that work, or the earlier work, as Kiro work.

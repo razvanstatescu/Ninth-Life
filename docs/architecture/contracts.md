@@ -89,6 +89,18 @@ export function scanReducer(cfg: ScanConfig, s: ScanState, e: ScanEvent): { stat
 //   2-switch step scan: 'advance' moves highlight, 'select' picks.
 //   After `loops` full passes without a select, phase -> 'paused' (no more ticks until 'select').
 //   Property: any cell reachable in <= rows.length + max(row length) highlight steps and exactly 2 selects.
+
+// --- intent.ts (reply types, ADR-008) -------------------------------
+export type ReplyIntent = 'agree' | 'disagree' | 'ask';
+export const REPLY_INTENTS: readonly ReplyIntent[];  // display order
+export const INTENT_WEIGHT = 2;                      // log10 per cue point
+export const INTENT_POOL = 12;                       // ghost pool re-ranked before the top k
+export const INTENT_CUE_MIN = -1, INTENT_CUE_MAX = 2;
+export function isReplyIntent(x: unknown): x is ReplyIntent;
+export function intentCue(words: readonly string[], intent: ReplyIntent): number; // -1..2, reads only the words
+export function rankByIntent<T extends { words: readonly string[]; score: number }>(c: readonly T[], intent?: ReplyIntent): T[];
+//   score + INTENT_WEIGHT * cue, stable sort; a permutation of the input (every result still validates);
+//   no reply type = the input order.
 ```
 
 ## 2. Data files (`data/`, CC BY-SA 4.0)
@@ -135,6 +147,11 @@ export function createFetchHandler(cfg: FetchHandlerConfig): (req: Request) => P
 `beams: string[][]` (the client's top ghost sentences, at most 10; returned when the model fails).
 Each response candidate also carries `source: 'llm' | 'ghost'`.
 
+`context` may also carry `intent: 'agree' | 'disagree' | 'ask'` (optional; the reply type the person
+picked, ADR-008, DS-9). Any other value is a 400 that names the path only. It reaches only the prompt
+(`<reply_type>`, prompt v8), never the logs. The client sends it only when one is pressed, sends beams
+already re-ranked with `rankByIntent`, and includes it in its cache key.
+
 The 200 response (`DecodeResponse`, zod `DecodeResponseSchema` in `packages/decoder/src/schema.ts`):
 
 ```ts
@@ -148,7 +165,11 @@ The 200 response (`DecodeResponse`, zod `DecodeResponseSchema` in `packages/deco
 `rejectedWords`: at most 5, model order, one per (slot, word); each `word` is normalized,
 `^[a-z]+(?:'[a-z]+)*$`, at most 16 characters, does not match `expectedCode` (= `codes[slot]`) and is
 in no returned candidate. Shown struck through in the proof panel, never spoken, never logged. Limits: at most 20 codes, each at
-most 16 digits, partner at most 280 chars, at most 3 recent items, body at most 4 KB. The server and
+most 16 digits, partner at most 280 chars, at most 3 recent items of at most 280 chars, body at most 4 KB.
+`context.partner` is the newest "they said" turn; `context.recent` is the person's last 3 "you said" turns from
+before the current sentence, oldest first, and is `[]` unless both `llm` and `llmRecent` are on (web-ui Req 27.11,
+ADR-007; built by `decodeContext()` in `packages/web/lib/conversation.ts`). The client drops the oldest recent item
+if the body would pass 4 KB. The client's cache key is codes + partner + recent + reply type (`DecodeCache.key`; none of the last two keeps the old key). The server and
 client both run `validate()`. The server stops waiting for the model at 1,200 ms; the client times
 out at 1,500 ms and stays in ghost mode. `NEXT_PUBLIC_DECODE_URL` can point the client elsewhere,
 but is normally unset (same-origin `/api/decode`).
@@ -158,11 +179,19 @@ but is normally unset (same-origin `/api/decode`).
 ```ts
 type Settings = { mode: 'letter'|'initials'; access: 'keyboard'|'touch'|'scan1'|'scan2';
   scanMs: number; scanLoops: number; acceptDelayMs: number; voiceURI?: string; rate: number; pitch: number;
-  llm: boolean; dictation: boolean; theme: 'night'|'day'|'system'; targetSize: 'l'|'xl'; lang: 'en' };
+  llm: boolean; llmRecent: boolean; dictation: boolean; quickReplies: boolean; theme: 'night'|'day'|'system'; targetSize: 'l'|'xl'; lang: 'en' };
+// llmRecent (default false, ADR-007): with model ranking on, also send your last 3 sentences as context.recent.
+// quickReplies (default true, web-ui Req 28): Yes, No, Hold on, Pardon?, Thanks in the suggestion area when nothing is typed.
+// The reply type (web-ui Req 29, ADR-008) is not a setting: ComposerState.intent / intentFor, memory only,
+// cleared by Speak, Clear and a new "they said" line.
+// The conversation itself (packages/web/lib/conversation.ts) is memory only and is never stored:
+type Turn = { id: number; who: 'them'|'me'; text: string; at: number;
+  via: 'typed'|'heard'|'keys'|'phrase'|'quick'|'again'|'shown' };
 type Phrase = { id: string; text: string; lang: string; uses: number; lastUsed: number; pinned: boolean };
 type VocabPack = { id: string; lang: string; version: number; words: { w: string; boost: number }[]; phrases: string[] };
 ```
-IndexedDB via `idb`. Nothing is stored unless the person taps "Save phrase". History is opt-in.
+IndexedDB via `idb`. Nothing is stored unless the person taps "Save phrase". History is opt-in. The conversation thread
+(web-ui Req 27) is never written to IndexedDB, localStorage or sessionStorage.
 
 ## 5. Keypad key roles (fixed, from the design system)
 

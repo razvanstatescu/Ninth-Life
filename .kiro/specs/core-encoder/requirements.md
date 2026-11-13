@@ -141,3 +141,14 @@ everywhere, so that client and server always agree.
 
 7.1 THE package source SHALL use no DOM APIs and no Node-only APIs.
 7.2 THE package entry point SHALL export the whole contract surface of `contracts.md` §1.
+
+## Requirement 8: Reply type re-rank (ADR-008)
+**User story:** As a person answering someone, I want Agree, Disagree or Ask to put the fitting
+sentence first, so that I reach it sooner, while the words still come only from my keys.
+
+8.1 THE engine SHALL offer `rankByIntent(candidates, intent?)` that returns a permutation of its input.
+8.2 WHEN the input sentences pass `validate()`, every output sentence SHALL pass it.
+8.3 WHEN no reply type is given, THE order SHALL be the input order.
+8.4 Candidates with equal adjusted scores SHALL keep their input order.
+8.5 A candidate SHALL NOT pass one whose score is more than (INTENT_CUE_MAX - INTENT_CUE_MIN) x
+    INTENT_WEIGHT higher.

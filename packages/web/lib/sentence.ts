@@ -8,15 +8,18 @@ import {
   decodeGhost,
   encodeWord,
   formatSentence,
+  INTENT_POOL,
   lattice,
   matchesCode,
   proof,
+  rankByIntent,
   validate,
   type Candidate,
   type LanguageModel,
   type Lexicon,
   type Mode,
   type ProofState,
+  type ReplyIntent,
 } from '@ninth/core';
 import { codesOf, type ComposerState } from './composer';
 import { showWord, type DisplayMap } from './myWords';
@@ -73,15 +76,23 @@ export function partialFor(lex: Lexicon, code: string): string | undefined {
   return encodeWord(out) === code ? out : undefined;
 }
 
-/** Ghost decode that honours words the person pinned. Pinned slots hold exactly one word. */
+/**
+ * Ghost decode that honours words the person pinned. Pinned slots hold exactly one word.
+ * With a reply type (web-ui Req 29, ADR-008) it decodes a pool of INTENT_POOL, reorders it with
+ * rankByIntent and keeps the top k: the same sentences for the keys, in another order.
+ */
 export function decodeWithPins(
   state: ComposerState,
   lex: Lexicon,
   lm: LanguageModel,
-  opts: { k?: number; mode?: Mode; context?: string[] } = {},
+  opts: { k?: number; mode?: Mode; context?: string[]; intent?: ReplyIntent } = {},
 ): Candidate[] {
-  const codes = codesOf(state);
   const k = opts.k ?? MAX_CANDIDATES;
+  if (opts.intent) {
+    const pool = decodeWithPins(state, lex, lm, { ...opts, intent: undefined, k: Math.max(k, INTENT_POOL) });
+    return rankByIntent(pool, opts.intent).slice(0, k);
+  }
+  const codes = codesOf(state);
   const mode = opts.mode ?? 'letter';
   if (codes.length === 0) return [];
   const pinned = state.slots.some((s) => s.pin);

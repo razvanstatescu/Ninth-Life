@@ -138,3 +138,12 @@ a prepared model run, so that we know how much the mode depends on the model bef
 9.1 WHILE in initials mode, THE simulated user SHALL press one key per word (the key of its first letter) and one space key between words; WHEN the gold sentence is not in the top k, it SHALL press # through the slot's 12 readings as the app does, AND IF the gold word is not among them, THEN it SHALL retype that word in letter mode (its full code plus # presses) and count it as retyped.
 9.2 WHEN `pnpm -F @ninth/eval eval` or `quick` is run, THE harness SHALL also report B0 and B1 in initials mode on the same items (word accuracy, sentence top-1 and top-5, presses per character, words retyped) and the share of gold words and sentences inside the 12-word initials lattice.
 9.3 WHEN `pnpm -F @ninth/eval llm --mode initials` is run, THE harness SHALL send one-digit codes in initials mode through the same B4 path (default config B4; `--only` may add B2 and B3).
+
+## Requirement 10: Reply types, upper bound (ADR-008)
+10.1 WHEN `--intent oracle` is given, THE harness SHALL evaluate only items with a partner line and a
+     reply type read off the gold sentence ("?" ask, no/not/never/nope/nah first disagree, an agreeing
+     word first agree).
+10.2 THE offline CLI SHALL run B1 and B1i "B1+intent (oracle)" (B1 re-ranked with rankByIntent over a
+     pool of INTENT_POOL) and SHALL NOT write into packages/eval.
+10.3 THE model CLI SHALL send the reply type as `context.intent` with re-ranked beams for B4, in its own
+     RESULTS.md section (`<model>:<mode>:intent-oracle`), labelled an upper bound.

@@ -61,7 +61,7 @@ const field = () => screen.getByRole('textbox', { name: 'They said' }) as HTMLIn
 const press = (name: string) => fireEvent.click(screen.getByRole('button', { name }));
 
 function open(allowed: boolean, onAllow = vi.fn(), onChange = vi.fn(), value = '') {
-  render(<PartnerTurn value={value} onChange={onChange} startEditing dictation={{ allowed, onAllow }} />);
+  render(<PartnerTurn value={value} onChange={onChange} dictation={{ allowed, onAllow }} />);
   return { onAllow, onChange };
 }
 
@@ -160,7 +160,15 @@ describe('They said: Listen (web-ui Req 26)', () => {
     expect(screen.getByRole('button', { name: 'Listen' })).toBeTruthy();
     expect(screen.getByRole('status').textContent).toBe('');
     press('Done');
-    expect(onChange).toHaveBeenCalledWith('do you want some tea');
+    // 27.3: Listen filled the line, so the new 'they said' turn is marked heard.
+    expect(onChange).toHaveBeenCalledWith('do you want some tea', 'heard');
+  });
+
+  it('27.3 a typed line is handed back as typed', () => {
+    const { onChange } = open(true);
+    fireEvent.change(field(), { target: { value: ' Tea or coffee? ' } });
+    press('Done');
+    expect(onChange).toHaveBeenCalledWith('Tea or coffee?', 'typed');
   });
 
   it('26.4 once allowed, Listen starts at once; Stop keeps what was heard', () => {

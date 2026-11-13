@@ -25,7 +25,8 @@ afterEach(() => {
 
 describe('phone layout (web-ui Req 24)', () => {
   it('24.1 one screen top to bottom: sentence card, suggestions, keypad, action bar, in DOM (and focus) order; nothing below', () => {
-    expect(sectionOrder('stack').columns).toEqual([['speak', 'cands', 'pad', 'actions']]);
+    // 27.4: 'thread' is the strip on tall tablets only; on phones the newest turn is in the header.
+    expect(sectionOrder('stack').columns).toEqual([['thread', 'speak', 'cands', 'pad', 'actions']]);
     const { container } = render(<CommunicationScreen initialDict={miniDict()} layout="stack" />);
     const screenSections = [...container.querySelectorAll('.shell-screen > [data-section]')].map((el) => el.getAttribute('data-section'));
     expect(screenSections).toEqual(['speak', 'cands', 'pad', 'actions']);
@@ -86,12 +87,12 @@ describe('phone layout (web-ui Req 24)', () => {
     expect(phoneSuggestions(cands.slice(0, 2), 0, 2)).toEqual({ items: [{ index: 1, text: 'B' }], more: false });
   });
 
-  it('24.5 the Menu sheet holds what the screen leaves out: Save phrase, Spell, Check the words, They said, About', () => {
+  it('24.5 27.6 the Menu sheet holds what the screen leaves out: Save phrase, Spell, Check the words, They said, Conversation, About', () => {
     render(<CommunicationScreen initialDict={miniDict()} layout="stack" />);
     typeDigits('4');
     press('Menu');
     const menu = document.querySelector<HTMLElement>('[data-scan-row="sentence"]')!;
-    expect(within(menu).getAllByRole('button').map((b) => b.textContent)).toEqual(['Save phrase', 'Spell this word', 'Check the words', 'They said']);
+    expect(within(menu).getAllByRole('button').map((b) => b.textContent)).toEqual(['Save phrase', 'Spell this word', 'Check the words', 'They said', 'Conversation']);
     // The footer's links and the intended-purpose sentence are in the Menu too.
     expect(screen.getByRole('link', { name: 'About Ninth Life' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'How Ninth Life works' })).toBeTruthy();

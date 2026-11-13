@@ -62,3 +62,5 @@
 - [x] 17. Compact lexicon `data/lexicon/en.v2.json` from `build_lexicon.py` (`compact_lexicon`, `--compact-only`), ADR-data-003 (Req 5.9)
   - [x] Python: lossless + deterministic for 300 random v1 dicts, JavaScript key order, committed v2 in sync (`scripts/test_build_lexicon.py` `CompactTest`)
   - [x] TS: header, order, v1 and v2 load to the same Lexicon (`test/compact.test.ts`); `--lexicon data/lexicon/en.v2.json` gives the same `RESULTS.json` as v1 apart from the lexicon SHA-256
+
+- [x] 18. `--intent oracle` on both CLIs (Req 10.1 - 10.3): `src/intent.ts`, `ghostIntentDecoder` (B1i), `appRequest(..., intent)` (`test/intent.test.ts`)

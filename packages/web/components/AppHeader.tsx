@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { Button } from './Button';
 import type { StatusLine } from '@/lib/status';
+import type { Turn } from '@/lib/conversation';
+import { ThreadBubble } from './ConversationStrip';
 import { Icon, type IconName } from './Icon';
 
 export function StatusPill({ icon, tone, children }: { icon?: IconName; tone?: 'ok' | 'warn' | 'info'; children: ReactNode }) {
@@ -46,7 +48,7 @@ export function AppHeader({
   onVoice,
   onSettings,
   actions = true,
-  partner = null,
+  thread = null,
   scanPill = null,
 }: {
   status: StatusLine[];
@@ -61,8 +63,11 @@ export function AppHeader({
   onSettings: () => void;
   /** False in the phone layout: Menu lives in the action bar under the keypad (web-ui Req 24). */
   actions?: boolean;
-  /** Phones and tablets: "They said" as a header button (the line, or an invitation to add it). */
-  partner?: { text: string; onEdit: () => void } | null;
+  /**
+   * Phones and tablets 620-1149px tall (web-ui Req 25.3, 27.4): the They said button at the end of the
+   * header. No turns: opens the They said field. With turns: the newest one, which opens the Conversation sheet.
+   */
+  thread?: { last: Turn | null; onOpen: () => void; onAdd: () => void; lit?: boolean } | null;
   /** Phones and tablets: switch scanning state, shown as a pill (the scan bar is not on the screen). */
   scanPill?: string | null;
 }) {
@@ -85,20 +90,7 @@ export function AppHeader({
           </StatusPill>
           {scanPill ? <StatusPill icon="switch" tone="info">{scanPill}</StatusPill> : null}
         </div>
-        {partner ? (
-          // A speech-bubble button at the end of the header, the same 56px square as Clear. With a line
-          // it widens to show it; the name keeps the visible words (WCAG 2.5.3, voice control).
-          partner.text ? (
-            <Button variant="secondary" icon="said" onClick={partner.onEdit} className="header-partner">
-              <span className="nl-sr-only">They said: </span>
-              <span className="header-partner__text">{partner.text}</span>
-            </Button>
-          ) : (
-            <Button variant="secondary" icon="said" onClick={partner.onEdit} aria-label="They said" className="header-partner header-partner--empty">
-              {null}
-            </Button>
-          )
-        ) : null}
+        {thread ? <ThreadBubble last={thread.last} onOpen={thread.onOpen} onAdd={thread.onAdd} lit={thread.lit} /> : null}
       </div>
       {actions ? (
         <>

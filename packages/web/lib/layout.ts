@@ -11,19 +11,20 @@
  *            height, header, card, suggestions and action bar on the left (web-ui Req 25).
  *   rotate   a phone held sideways (its shorter screen side < 600px): phones are portrait only, so the
  *            screen asks to turn the phone upright (product decision, ADR-003).
- *   Everything else (proof, They said, switch-scanning controls, About) is one tap away in a sheet.
+ *   Everything else (proof, They said, the whole conversation, switch-scanning controls, About) is one tap
+ *   away in a sheet. The conversation's newest turns show where they fit (threadRows).
  * Fine pointer (laptop and desktop windows):
- *   wide     (>= 960px): the In-context-app artboard. Left: They said, SpeakBar, sentences, proof.
+ *   wide     (>= 960px): the In-context-app artboard. Left: the conversation, SpeakBar, sentences, proof.
  *            Right: keypad, scan control, keyboard hint. Header: pills, Phrases, Voice, Settings.
  *   compact  (600-959px): one column, keypad first: SpeakBar, keypad, scan control, sentences
- *            (3, then More), proof, They said, hint. Header: icon + name, one status pill, Menu.
+ *            (3, then More), proof, the conversation, hint. Header: icon + name, one status pill, Menu.
  *   stack / split also serve narrow (< 600px) and short landscape (< 600px tall) windows.
  * The DOM follows the visual order so focus order matches what people see (accessibility rule 7).
  */
 import { useSyncExternalStore } from 'react';
 
 export type Layout = 'wide' | 'compact' | 'split' | 'stack' | 'rotate';
-export type Section = 'partner' | 'speak' | 'cands' | 'proof' | 'pad' | 'scan' | 'hint' | 'actions';
+export type Section = 'thread' | 'speak' | 'cands' | 'proof' | 'pad' | 'scan' | 'hint' | 'actions';
 
 export const WIDE_QUERY = '(min-width: 960px)';
 /** Short landscape windows (fine pointer). */
@@ -40,11 +41,12 @@ export const COMPACT_SENTENCES = 3;
 
 /** Top-to-bottom order of the main sections; two-column layouts list the left column first. */
 export function sectionOrder(layout: Layout): { columns: Section[][] } {
-  if (layout === 'wide') return { columns: [['partner', 'speak', 'cands', 'proof'], ['pad', 'scan', 'hint']] };
-  if (layout === 'split') return { columns: [['speak', 'cands', 'actions'], ['pad']] };
-  if (layout === 'stack') return { columns: [['speak', 'cands', 'pad', 'actions']] };
+  if (layout === 'wide') return { columns: [['thread', 'speak', 'cands', 'proof'], ['pad', 'scan', 'hint']] };
+  if (layout === 'split') return { columns: [['thread', 'speak', 'cands', 'actions'], ['pad']] };
+  // The stack shows the thread strip only when tall (threadRows); otherwise it is in the header.
+  if (layout === 'stack') return { columns: [['thread', 'speak', 'cands', 'pad', 'actions']] };
   if (layout === 'rotate') return { columns: [[]] };
-  return { columns: [['speak', 'pad', 'scan', 'cands', 'proof', 'partner', 'hint']] };
+  return { columns: [['speak', 'pad', 'scan', 'cands', 'proof', 'thread', 'hint']] };
 }
 
 /** The one-screen shells (no page scroll): stack and split. */
@@ -126,6 +128,27 @@ export function splitSuggestionRows(h: { r3: boolean; r4: boolean }): 2 | 3 | 4 
   return h.r4 ? 4 : h.r3 ? 3 : 2;
 }
 export const SPLIT_ROWS_QUERIES = { r3: '(min-height: 700px)', r4: '(min-height: 800px)' } as const;
+
+/**
+ * The conversation thread on the main screen (web-ui Req 27.4-27.6, ADR-007), measured so the keys
+ * never change size or place:
+ *   0  stack under 620px tall: no header, so the thread is in Menu > This sentence > Conversation;
+ *   1  stack 620-1149px: the newest turn inside the header's They said button (0 extra px);
+ *   2  split, and stack 1150px or taller: a fixed-height strip with the newest 2 turns above the card
+ *      (the stack has 162px or more to spare there, so 96px keys stay 96px);
+ *   3  wide and compact (a laptop window, the page may scroll): a panel with the newest 3 turns.
+ */
+export function threadRows(layout: Layout, h: { tall: boolean; noHeader: boolean }): 0 | 1 | 2 | 3 {
+  if (layout === 'rotate') return 0;
+  if (layout === 'wide' || layout === 'compact') return 3;
+  if (layout === 'split') return 2;
+  if (h.noHeader) return 0;
+  return h.tall ? 2 : 1;
+}
+/** The stack shell is tall enough for the 2-turn strip (iPad 11" with no toolbar, 10" Android tablets, iPad Pro 13"). */
+export const STACK_THREAD_QUERY = '(min-height: 1150px)';
+/** Under 620px the stack shell hides its header (styles/app.css), and the They said button with it. */
+export const STACK_NO_HEADER_QUERY = '(max-height: 619px)';
 
 /** A media query as React state (false on the server and in tests without matchMedia). */
 export function useMediaQuery(query: string): boolean {

@@ -23,6 +23,9 @@
  *   --no-write          print only
  *   --items-out <path>  per-item JSONL (default .cache/llm/runs/<model>-<mode>-<date>.jsonl)
  *   --cache-dir <dir>   response cache root (default packages/eval/.cache/llm)
+ *   --intent oracle     reply types (ADR-008): only items with a partner line and a reply type read off
+ *                       the gold sentence; B4 sends it as context.intent with re-ranked beams, and B1i
+ *                       (B1+intent) runs beside B1. An upper bound, in its own RESULTS section
  *
  * Exit codes: 0 done, 1 error (nothing written), 2 no API key for the model's provider, 3 estimate above $1
  * without --yes.
@@ -32,7 +35,8 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { bigramModel, Lexicon, type Mode } from '@ninth/core';
 import { apiVersionFor, costMicros, DEFAULT_MODEL, isModelId, MODEL_IDS, MODEL_PROFILES, type ModelId } from '@ninth/decoder';
-import type { LlmConfig } from '../decoders';
+import { ghostIntentDecoder, type LlmConfig } from '../decoders';
+import { oracleIntent, oracleItems } from '../intent';
 import { EVAL_DIR, loadBigramFile, loadFixture, loadLexiconFile, PATHS, readLock } from '../fixture';
 import { sample } from '../rng';
 import { DEFAULT_K, DEFAULT_SEED, HARNESS_VERSION, runEval } from '../run';
@@ -59,6 +63,7 @@ export interface LlmArgs {
   write: boolean;
   itemsOut?: string;
   cacheDir: string;
+  intent?: 'oracle';
 }
 
 const CONFIGS: readonly LlmConfig[] = ['B2', 'B3', 'B4'];
@@ -102,6 +107,11 @@ export function parseLlmArgs(argv: string[]): LlmArgs {
     else if (x === '--no-write') a.write = false;
     else if (x === '--items-out') a.itemsOut = resolve(val());
     else if (x === '--cache-dir') a.cacheDir = resolve(val());
+    else if (x === '--intent') {
+      const v = val();
+      if (v !== 'oracle') throw new Error(`--intent takes oracle (got ${v})`);
+      a.intent = v;
+    }
     else if (x === '--') continue;
     else throw new Error(`unknown option ${x}`);
   }
@@ -137,13 +147,14 @@ export async function llmMain(argv: string[], deps: LlmMainDeps = {}): Promise<n
   const bigFile = loadBigramFile();
   const lex = Lexicon.fromJSON(lexFile.data);
   const lm = bigramModel(bigFile.data, lex);
-  const selected: TestItem[] = args.limit ? sample(items, args.limit, args.seed) : items.slice();
+  const pool = args.intent ? oracleItems(items) : items;
+  const selected: TestItem[] = args.limit ? sample(pool, args.limit, args.seed) : pool.slice();
 
   // A dry run never shares cache entries with real replies.
   const cache = new ResponseCache(join(args.cacheDir, args.dryRun ? 'fake' : profile.provider));
   const plan = await planCalls(
     ids,
-    selected.map((it) => ({ id: it.id, codes: codesFor(it, args.mode), partner: it.partner })),
+    selected.map((it) => ({ id: it.id, codes: codesFor(it, args.mode), partner: it.partner, intent: args.intent ? oracleIntent(it) : undefined })),
     args.mode,
     args.k,
     { lex, lm, profile },
@@ -182,9 +193,10 @@ export async function llmMain(argv: string[], deps: LlmMainDeps = {}): Promise<n
     k: args.k,
     mode: args.mode,
     seed: args.seed,
-    only: ['B0', 'B1', ...ids],
-    extra: llmDecoders(ids, ctx),
+    only: ['B0', 'B1', ...(args.intent ? ['B1i'] : []), ...ids],
+    extra: [...(args.intent ? [ghostIntentDecoder(lex, bigFile.data)] : []), ...llmDecoders(ids, ctx)],
     concurrency: args.concurrency,
+    ...(args.intent ? { intent: args.intent } : {}),
   });
 
   const spentMicros = transport.sent.reduce((s, e) => {
@@ -201,6 +213,7 @@ export async function llmMain(argv: string[], deps: LlmMainDeps = {}): Promise<n
     fixture: { path: lock.fixture.path, sha256 },
     subset: { items: selected.length, limit: args.limit ?? null, seed: args.seed },
     configs: run.results.configs.filter((c) => c.status === 'ok'),
+    ...(args.intent ? { intent: args.intent } : {}),
   };
   const command = `pnpm -F @ninth/eval llm ${argv.filter((a) => a !== '--yes').join(' ')}`.trim();
   const section = renderSection(results, run.timing, {
@@ -213,7 +226,7 @@ export async function llmMain(argv: string[], deps: LlmMainDeps = {}): Promise<n
   out(section);
 
   // Per-item records (gitignored by default): what each config showed and what each call cost.
-  const itemsOut = args.itemsOut ?? join(args.cacheDir, 'runs', `${args.dryRun ? 'dry-' : ''}${profile.id}-${args.mode}-${date}.jsonl`);
+  const itemsOut = args.itemsOut ?? join(args.cacheDir, 'runs', `${args.dryRun ? 'dry-' : ''}${profile.id}-${args.mode}${args.intent ? '-intent-oracle' : ''}-${date}.jsonl`);
   mkdirSync(dirname(itemsOut), { recursive: true });
   const lines: string[] = [];
   for (const c of results.configs) {
@@ -245,9 +258,9 @@ export async function llmMain(argv: string[], deps: LlmMainDeps = {}): Promise<n
     const mdPath = join(target, 'RESULTS.md');
     const jsonPath = join(target, 'RESULTS.llm.json');
     const md = existsSync(mdPath) ? readFileSync(mdPath, 'utf8') : '';
-    writeFileSync(mdPath, upsertSection(md, runId(results.model, results.mode), section));
+    writeFileSync(mdPath, upsertSection(md, runId(results.model, results.mode, results.intent), section));
     const file: LlmResultsFile = existsSync(jsonPath) ? (JSON.parse(readFileSync(jsonPath, 'utf8')) as LlmResultsFile) : { harness: HARNESS_VERSION, runs: {} };
-    file.runs[runId(results.model, results.mode)] = results;
+    file.runs[runId(results.model, results.mode, results.intent)] = results;
     file.runs = Object.fromEntries(Object.entries(file.runs).sort(([a], [b]) => a.localeCompare(b)));
     writeFileSync(jsonPath, JSON.stringify(file, null, 2) + '\n');
     err(`updated ${relative(process.cwd(), mdPath)} and ${relative(process.cwd(), jsonPath)}\n`);

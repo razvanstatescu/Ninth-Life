@@ -122,9 +122,11 @@ so that motor memory holds and I never tap a key three times.
 11.2 WHEN `prefers-reduced-motion: reduce` is set, THE app SHALL remove all transitions.
 
 ## Requirement 12: Model ranking
-12.1 Model ranking SHALL be off by default AND its setting SHALL say that it sends the keys and the other person's last
-     line to a cloud model.
-12.2 WHEN model ranking is on and online, THE app SHALL send codes, lattice, ghost beams and the partner line, and nothing else.
+12.1 Model ranking SHALL be off by default AND its setting SHALL say that it sends the keys, the other person's last
+     line and the reply type picked (Agree, Disagree or Ask, Req 29) to a cloud model (and, with "Include what you
+     said" on, your last 3 sentences, Req 27.11). Settings, About and Welcome SHALL use one shared sentence for this.
+12.2 WHEN model ranking is on and online, THE app SHALL send codes, lattice, ghost beams and the partner line,
+     `context.recent` only as Req 27.11 allows, `context.intent` only as Req 29.8 allows, and nothing else.
 12.3 IF the request fails, returns non-200 or takes more than 1,500 ms, THEN THE app SHALL stay in ghost mode without a message.
 12.4 THE app SHALL re-run `validate()` on every returned sentence; sentences that fail SHALL NOT be listed.
 12.5 THE app SHALL NOT speak model output on its own; only a Speak press speaks.
@@ -132,7 +134,8 @@ so that motor memory holds and I never tap a key three times.
 
 ## Requirement 13: Storage and privacy
 13.1 Phrases SHALL be stored in IndexedDB only when the person presses Save phrase, and SHALL be deletable with a confirmation.
-13.2 "They said" SHALL be optional, typed, at most 280 characters, and never stored.
+13.2 "They said" SHALL be optional, typed, at most 280 characters, and never stored; the conversation it belongs to
+     (Req 27) SHALL be kept in memory only.
 13.3 THE app SHALL set no cookies, call no analytics and load no third-party fonts at runtime.
 
 ## Requirement 14: Copy and claims
@@ -373,9 +376,9 @@ scrolls, so that nothing I need is ever out of reach.
      About (with the intended-purpose sentence) SHALL be reachable from the main screen in one tap (Menu, the header's They
      said, or the contextual suggestion row) AND SHALL open in sheets.
 25.3 THE header's They said control SHALL be a speech-bubble button at the end of the header, the same square as Clear,
-     named "They said"; WHEN a line is set it SHALL widen to show the line on one row (cut with an ellipsis), its name
-     holding the visible words. THE They said sheet SHALL open in its text field; Done SHALL save the line and close the
-     sheet.
+     named "They said"; WHEN the conversation has a turn it SHALL widen to show the newest turn (Req 27.4), its name
+     holding the visible words. THE They said sheet SHALL open in its text field; Done SHALL add the line to the
+     conversation and close the sheet.
 25.4 WHILE switch scanning is on, THE header SHALL show a Scanning pill; its speed and on/off SHALL be in Settings.
 25.5 A tablet in landscape SHALL show the header, sentence card, suggestions and action bar on the left and the keypad
      on the right, level with the action bar; in portrait the stack of Req 24.
@@ -400,3 +403,91 @@ it without either of us typing.
      typing, Cancel, Escape and closing SHALL turn the microphone off.
 26.6 A blocked or missing microphone, nothing heard, no connection or no service SHALL be said in words in the status
      line, pointing to typing.
+
+## Requirement 27: Conversation thread (2026-11-11, ADR-007)
+
+**User story:** As a person who types to talk, I want a short record of what they said and what I said, so that I can
+say something again, show it, or keep track, without anything being saved.
+
+27.1 THE app SHALL keep a conversation of turns (they said, you said) in memory only, at most 50, AND SHALL NOT write it
+     to any storage; a reload, leaving the page or closing it SHALL clear it.
+27.2 WHEN a sentence, a phrase or a repeated turn is spoken, or the current sentence is shown, THE app SHALL add a "you
+     said" turn, unless the newest turn is the same "you said" line from the last 60 s; Test voice SHALL NOT add one.
+27.3 WHEN Done is pressed in They said, THE app SHALL add a "they said" turn (marked heard when Listen filled any of it);
+     Change SHALL edit only the newest one, and saving it empty SHALL remove it.
+27.4 WHILE the stack shell is 620-1149px tall, THE header's They said button SHALL show their newest line on one row
+     with the word "They" (or, while they have said nothing, your newest line with "You"), AND with no turns SHALL open
+     the They said field.
+27.5 WHILE the split shell is shown, or the stack shell is at least 1150px tall, THE app SHALL show the newest 2 turns in
+     a strip of fixed height above the sentence card, with They said and All; laptop layouts SHALL show the newest 3
+     in a panel with Listen, Type their line and All.
+27.6 THE thread SHALL NOT change the keys' size or position, AND THE main screen SHALL NOT scroll at any size in
+     `responsive.mjs`; under 620px the thread SHALL be in Menu > This sentence > Conversation.
+27.7 THE Conversation sheet SHALL list every turn newest first with Say again (yours only), Show and Copy, AND SHALL offer
+     Share only where the browser can share and Copy only where it can copy.
+27.8 WHEN Say again is chosen, THE app SHALL speak that text and nothing else, inside the press.
+27.9 WHEN Clear conversation is chosen, THE app SHALL ask to confirm, AND on confirm SHALL remove every turn.
+27.10 IN scan modes the thread SHALL be the scan row after the card's Clear (phones) or the header (laptops), AND each
+     turn in the sheet SHALL be its own scan row.
+27.11 WHERE model ranking and "Include what you said" (off by default, shown only while model ranking is on) are both on,
+     THE app SHALL send at most the last 3 "you said" turns from before the current sentence, each at most 280
+     characters, as `context.recent`; otherwise `recent` SHALL be empty. THE decode cache key SHALL include them.
+
+## Requirement 28: Quick replies (2026-11-11)
+
+**User story:** As a person who types to talk, I want Yes, No, Hold on and a few other replies one press away when
+nothing is typed, so that I can answer at once, or ask the other person to wait while I type.
+
+28.1 WHILE nothing is typed, or the sentence on show has been spoken, AND `quickReplies` is on (default), THE suggestion
+     area SHALL show the quick replies "Hold on.", "Yes.", "No." (row 1) and "Pardon?", "Thanks.", Phrases (row 2, where
+     2 rows fit), in that order, in equal cells at least 56px tall, never cut; laptops SHALL show the 5 replies in one
+     row (wide, where the header has Phrases) or 2 rows of 3 (compact) above the Sentences list.
+28.2 WHEN a reply is chosen by touch, keyboard or switch, THE app SHALL speak exactly its visible text inside that
+     handler, SHALL NOT change the sentence, AND SHALL ignore a repeat of the same reply within the accept delay.
+28.3 THE app SHALL NOT speak or show any reply or typing status without that choice; with `quickReplies` off THE area
+     SHALL keep its empty text.
+28.4 WHILE the stack shell drops the suggestion rows (Req 24.9), the replies SHALL be in Menu > Quick replies; THE Menu
+     (and Phrases on wide) SHALL start with that group on every layout, also while typing; a reply chosen there SHALL
+     close the Menu.
+28.5 WHILE the replies hold the area and there are sentences (after Speak), Menu > This sentence SHALL offer Sentences.
+28.6 THE replies SHALL be the cells of scan row 4 (on laptops before the sentences in that row); the swap between
+     replies and sentences SHALL NOT move the keypad AND SHALL NOT be announced; WHILE the replies hold the shells'
+     area, Alt+1-5 and the arrows SHALL do nothing.
+28.7 WHEN a reply is spoken, THE app SHALL record it as a "you said" turn (Req 27.2).
+28.8 WHERE the area has 2 or more rows, its last row (by the keys) SHALL be able to hold the reply-type group (Req 29)
+     while the newest turn is theirs; the replies SHALL keep the rows above it, AND the second reply row SHALL stay in
+     Menu where it does not fit (2 rows).
+
+## Requirement 29: Reply types (2026-11-11, ADR-008)
+
+**User story:** As a person answering someone, I want to say whether I agree, disagree or ask before I type, so that
+the fitting sentence comes first, while the words still come only from my keys.
+
+29.1 WHILE the latest turn is the other person's, THE app SHALL offer Agree, Disagree and Ask as a `role="group"` (name
+     "Reply type") of buttons with `aria-pressed`, at most one pressed. Pressing the pressed one SHALL release it.
+     None pressed means no steering.
+29.2 THE reply type SHALL only reorder sentences that match the keys: offline the app SHALL decode a pool of
+     `INTENT_POOL` (12), reorder it with `rankByIntent` and show the top 5. It SHALL NOT add, remove or change words,
+     AND every listed sentence SHALL pass `validate()`. Model sentences keep the model's order.
+29.3 WHEN Ask is chosen and no punctuation is set, THE sentence SHALL end with "?" (punctuation, outside the words);
+     leaving Ask SHALL remove a "?" that Ask added. Key 1 and Back SHALL change or remove it as usual, and after that it
+     is the person's. Chosen while the spoken sentence is still on show, the type (and Ask's "?") SHALL start the next.
+29.4 THE reply type SHALL belong to their newest line while it is the newest turn, AND SHALL be cleared by Speak, by
+     Clear (Undo brings it back), by a new or removed They said line and by any "you said" turn (Show, a reply, a
+     phrase, Say again), so it never steers while the group is not on screen. THE sentence on show when Speak is
+     pressed SHALL stay on show unchanged until the next key, AND a spoken sentence SHALL NOT be re-ranked.
+29.5 THE group SHALL use only existing fixed-height areas: the last row of the shells' suggestion area, just above the
+     keys, where it has 2 or more rows (while nothing is typed); the Conversation sheet (top) and the Sentences sheet on every shell (the only place
+     on 1-row and short phones, and while typing); on laptops, under the quick replies, and above the Sentences list
+     while typing, until Speak. THE keypad SHALL NOT move. Buttons SHALL be at least 56px with 16px text or larger. THE group
+     SHALL look like a setting, not like something to say: a labelled segmented control ("Reply type") on a sunken
+     track, unlike the reply chips. The pressed state SHALL show as a fill, a 4px inner ring and a check mark in both
+     themes (at least 3:1 against the track), never ember.
+29.6 WHILE a type is pressed, THE key line SHALL start with it as a word ("Ask · 9428 47") where the line is shown.
+29.7 Scanning: THE group's buttons SHALL be cells of the suggestion scan row, after the quick replies (laptops: before
+     the sentences); in a sheet the group SHALL be one scan row.
+29.8 WHEN model ranking is on, THE request SHALL include `context.intent` only when a reply type is pressed (the key is
+     left out otherwise), with the ghost beams already in its order, AND the decode cache key SHALL include it.
+29.9 THE copy SHALL say what reply types do and SHALL NOT say that the model understands or decides, nor claim any
+     effect: "Agree, Disagree and Ask change the order of the sentences for your keys. They never change the words. Ask
+     also adds a question mark." Req 12.1 and 12.2 name the reply type in what is sent.

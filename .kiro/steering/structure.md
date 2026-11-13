@@ -8,8 +8,8 @@ inclusion: always
 - `packages/decoder/` — `/api/decode` logic: schema, prompt (`src/prompt.ts`), model profiles (`src/models.ts`), client (`src/llm.ts`), fetch adapter and env (`src/adapters/fetch.ts`), `scripts/live-check.ts`. Spec: `decoder-service/`.
 - `packages/web/` — the app. Spec: `web-ui/` (Req 1-26).
   - `app/` pages (`/`, `/about`, `/welcome`), `app/api/decode/route.ts`, `app/sw.ts`.
-  - `components/` — `CommunicationScreen.tsx` (the screen and its sheets), `Keypad`, `SpeakBar`, `PhoneSuggestions`, `AppHeader`, `PartnerTurn` (They said, Listen), `ShowMode`, `MenuSheet`, `SettingsSheet`, `SpellSheet`, `MyWordsSheet`, `PhrasesSheet`, `RotateNotice`, `Icon`.
-  - `lib/` — `layout.ts` (wide, compact, stack, split, rotate), `composer.ts`, `sentence.ts`, `keyboard.ts`, `useScanner.ts`, `useOverlayScan.ts`, `speech.ts`, `dictation.ts`, `settings.ts`, `storage.ts`, `data.ts`, `rankingProvider.ts`, `publicEnv.mjs`.
+  - `components/` — `CommunicationScreen.tsx` (the screen and its sheets), `Keypad`, `SpeakBar`, `PhoneSuggestions`, `AppHeader`, `PartnerTurn` (the They said field, Listen), `ConversationStrip` (the thread in the header, strip or panel), `ConversationSheet`, `ShowMode`, `MenuSheet`, `SettingsSheet`, `SpellSheet`, `MyWordsSheet`, `PhrasesSheet`, `RotateNotice`, `Icon`.
+  - `lib/` — `layout.ts` (wide, compact, stack, split, rotate), `composer.ts`, `sentence.ts`, `keyboard.ts`, `useScanner.ts`, `useOverlayScan.ts`, `speech.ts`, `dictation.ts`, `conversation.ts` (the memory-only thread), `settings.ts`, `storage.ts`, `data.ts`, `rankingProvider.ts`, `publicEnv.mjs`.
   - `styles/` — `tokens.css` (generated from the design system), `globals.css`, `components.css`, `app.css` (layouts and the one-screen shell).
   - `test/` Vitest + Testing Library; `test/e2e/` Playwright scripts (`responsive.mjs` checks 24 phone and tablet sizes).
 - `packages/eval/` — harness, `RESULTS.md` (the only numbers we may quote), fixtures with NOTICE, `.cache/` (git-ignored, never commit).

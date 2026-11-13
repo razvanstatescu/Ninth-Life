@@ -13,8 +13,18 @@ export type Settings = {
   rate: number;
   pitch: number;
   llm: boolean;
+  /**
+   * With model ranking on, also send the last 3 things you said in this conversation (`context.recent`,
+   * web-ui Req 27.11, ADR-007). Off by default; shown only while model ranking is on.
+   */
+  llmRecent: boolean;
   /** Voice to text for "They said": allowed once the person has read where the audio goes (ADR-004). */
   dictation: boolean;
+  /**
+   * Quick replies ("Hold on." "Yes." "No." "Pardon?" "Thanks.") in the suggestion area when nothing is typed
+   * (web-ui Req 28). On by default; off keeps the area's empty text, and they stay in Menu and Phrases.
+   */
+  quickReplies: boolean;
   theme: ThemeChoice;
   targetSize: 'l' | 'xl';
   lang: 'en';
@@ -36,7 +46,9 @@ export const DEFAULT_SETTINGS: Settings = Object.freeze({
   rate: RATE.default,
   pitch: PITCH.default,
   llm: false,
+  llmRecent: false,
   dictation: false,
+  quickReplies: true,
   theme: 'night',
   targetSize: 'l',
   lang: 'en',
@@ -66,7 +78,9 @@ export function sanitizeSettings(input: unknown): Settings {
     rate: Math.round(clamp(s.rate, RATE.min, RATE.max, d.rate) * 10) / 10,
     pitch: Math.round(clamp(s.pitch, PITCH.min, PITCH.max, d.pitch) * 10) / 10,
     llm: s.llm === true,
+    llmRecent: s.llmRecent === true,
     dictation: s.dictation === true,
+    quickReplies: s.quickReplies !== false,
     theme: oneOf(s.theme, ['night', 'day', 'system'] as const, d.theme),
     targetSize: oneOf(s.targetSize, ['l', 'xl'] as const, d.targetSize),
     lang: 'en',

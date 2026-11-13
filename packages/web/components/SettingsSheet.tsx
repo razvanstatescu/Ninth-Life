@@ -11,7 +11,7 @@ import {
   type Settings,
 } from '@/lib/settings';
 import { useDictationSupported } from '@/lib/dictation';
-import { providerCopy } from '@/lib/rankingProvider';
+import { REPLY_TYPES_HELP, SENT_FOR_RANKING, RECENT_SENDS, RECENT_SETTING, providerCopy } from '@/lib/rankingProvider';
 import { pickVoice } from '@/lib/speech';
 import type { VoicesState } from '@/lib/useVoices';
 import { Button } from './Button';
@@ -174,7 +174,9 @@ export function SettingsSheet({
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => onChange(sanitizeSettings({ ...settings, [k]: v }));
   const current = pickVoice(voices.voices, settings.voiceURI);
   const llmHelpId = useId();
+  const recentHelpId = useId();
   const dictationHelpId = useId();
+  const repliesHelpId = useId();
   const dictationOk = useDictationSupported();
   const voiceIndex = current ? voices.voices.findIndex((v) => v.voiceURI === current.voiceURI) : -1;
   const stepVoice = (d: 1 | -1) => {
@@ -347,6 +349,25 @@ export function SettingsSheet({
         />
       </section>
 
+      <section className="group" aria-labelledby="set-replies">
+        <h3 className="group__title" id="set-replies">
+          Quick replies
+        </h3>
+        <div className="scan-cluster" data-scan-row="quick-replies">
+          <label className="toggle">
+            <input type="checkbox" role="switch" checked={settings.quickReplies} aria-describedby={repliesHelpId} onChange={(e) => set('quickReplies', e.target.checked)} />
+            <span className="toggle__text">Quick replies</span>
+            <span className="toggle__state" aria-hidden="true">
+              {settings.quickReplies ? 'On' : 'Off'}
+            </span>
+          </label>
+        </div>
+        <p className="field__help" id={repliesHelpId}>
+          Show Yes, No, Hold on and other replies when nothing is typed. Each one speaks when you press it. When off, they are still in Menu, or in Phrases on a laptop.
+        </p>
+        <p className="field__help">After the other person speaks, you can also pick a reply type. {REPLY_TYPES_HELP}</p>
+      </section>
+
       <section className="group" aria-labelledby="set-model">
         <h3 className="group__title" id="set-model">
           Model ranking
@@ -361,8 +382,25 @@ export function SettingsSheet({
         </label>
         </div>
         <p className="field__help" id={llmHelpId}>
-          Off by default. When on, your keys and the last thing they said are sent to {providerCopy().service}, which suggests the order of the sentences. {providerCopy().retention} Every word is still checked against your keys, and nothing is spoken until you press Speak. Offline, your dictionary is used.
+          Off by default. When on, {SENT_FOR_RANKING} are sent to {providerCopy().service}, which suggests the order of the sentences. {providerCopy().retention} Every word is still checked against your keys, and nothing is spoken until you press Speak. Offline, your dictionary is used.
         </p>
+        {settings.llm ? (
+          // Web-ui Req 27.11, ADR-007: a second, separate yes for sending what you said.
+          <div className="field field--sub">
+            <div className="scan-cluster" data-scan-row="llm-recent">
+              <label className="toggle">
+                <input type="checkbox" role="switch" checked={settings.llmRecent} aria-describedby={recentHelpId} onChange={(e) => set('llmRecent', e.target.checked)} />
+                <span className="toggle__text">{RECENT_SETTING}</span>
+                <span className="toggle__state" aria-hidden="true">
+                  {settings.llmRecent ? 'On' : 'Off'}
+                </span>
+              </label>
+            </div>
+            <p className="field__help" id={recentHelpId}>
+              Off by default. When on, {RECENT_SENDS} are sent too. The conversation itself is never saved.
+            </p>
+          </div>
+        ) : null}
       </section>
 
       {dictationOk ? (

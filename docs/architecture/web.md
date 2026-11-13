@@ -26,7 +26,10 @@ Spec: `.kiro/specs/web-ui/` (requirements, design, tasks). Contracts: `docs/arch
 | `Button`, `Icon` | Button, iconography | Real `<button>`, inline 24px stroke icons |
 | `AppHeader`, `StatusPill` | In-context-app artboard | Logo (favicon variant at 44px). Wide: every status pill, Phrases / Voice / Settings. Compact: one summary pill and Menu (both in the HTML, CSS shows one) |
 | `MenuSheet` | | Compact header's Menu: Phrases, Voice, Settings and the full status |
-| `PartnerTurn` | artboard "They said" | Optional typed line from the other person, never stored |
+| `PartnerTurn` | artboard "They said" | The field for the other person's line (typed or Listen); Done adds a turn to the conversation |
+| `ConversationStrip`, `ConversationSheet` | Button, phone suggestion row | The conversation (web-ui Req 27, ADR-007): newest turns on screen, every turn in the sheet; memory only |
+| `QuickReplies` | phone suggestion row chip, Button | Quick replies (web-ui Req 28): the suggestion area when nothing is typed, Menu, Phrases on wide |
+| `ReplyTypes` | Button (toggle), Settings segmented style | Reply types (web-ui Req 29, ADR-008): Agree, Disagree, Ask, a segmented control; the area's last row (by the keys), laptops under the quick replies, the Conversation and Sentences sheets; only reorder the sentences |
 | `ScanBar` | artboard scan control | "Switch scanning: 1.2 s a step", Slower, Faster |
 | `Sheet`, `SettingsSheet`, `PhrasesSheet` | Interface kit | Native `<dialog>` sheets; Close is the first scan row. Phrases has saved phrases and the pack's quick phrases |
 | `ShowMode` | | Full-screen big text when there is no voice |

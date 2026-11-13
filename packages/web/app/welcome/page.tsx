@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Icon } from '@/components/Icon';
 import { NOT_A_MEDICAL_DEVICE } from '@/components/Footer';
-import { providerCopy } from '@/lib/rankingProvider';
+import { RECENT_SETTING, SENT_FOR_RANKING, providerCopy } from '@/lib/rankingProvider';
 import { ProofChip } from '@/components/ProofChip';
 import { KeypadDemo } from '@/components/site/KeypadDemo';
 import { METHOD_URL, REPO_URL, RESULTS_URL, getDemoData, getResults } from '@/components/site/site-data';
@@ -178,7 +178,8 @@ export default function WelcomePage() {
                 </h3>
                 <p>
                   Typing, the dictionary and the proof check run in your browser. After one visit the app works with no connection. No account, no cookies, no
-                  analytics, no ads. Saved phrases stay on your device, and only when you press Save phrase.
+                  analytics, no ads. Saved phrases stay on your device, and only when you press Save phrase. The conversation on screen is never saved and is
+                  gone when you reload, leave or close the page.
                 </p>
               </div>
               <div className="site-card site-card--line">
@@ -186,9 +187,9 @@ export default function WelcomePage() {
                   <Icon name="gear" /> Model ranking is opt-in
                 </h3>
                 <p>
-                  It is off until you turn it on in Settings. Then Ninth Life sends your keys, the dictionary words that match them, its own best guesses and the
-                  other person&apos;s last line to {providerCopy().service} to rank the sentences. Processing is not limited to the EU. {providerCopy().retention} Our
-                  server logs timings and counts, never your words.
+                  It is off until you turn it on in Settings. Then Ninth Life sends {SENT_FOR_RANKING} to {providerCopy().service} to
+                  rank the sentences, and the last 3 things you said only if you also turn on
+                  &quot;{RECENT_SETTING}&quot;. Processing is not limited to the EU. {providerCopy().retention} Our server logs timings and counts, never your words.
                 </p>
               </div>
               <div className="site-card site-card--line">

@@ -43,3 +43,12 @@ Each task names the requirements it satisfies and the tests that cover them.
   - [x] 15.2 Live check per provider (`test/live-check.test.ts`); web `lib/publicEnv.mjs` provider and timeout (`packages/web/test/publicEnv.test.ts`); provider-aware privacy copy (`lib/rankingProvider.ts`)
   - [x] 15.3 Prompt v6: conversation first, guesses marked as fallible (`test/prompt.test.ts`, `docs/research/minimax-models.md`)
   - [ ] 15.4 Spend cap for MiniMax (prepaid balance or MiniMax limits) written into the runbook before going public (ADR-002 trade-offs)
+- [x] 16. Reply type (DS-9; amended DS-5.2, DS-6.1, DS-6.6; ADR-008)
+  - [x] 16.1 Schema: optional `context.intent` (`agree` | `disagree` | `ask`, `REPLY_INTENT_VALUES`); anything else is a 400 that names the path only (`test/schema.test.ts`)
+  - [x] 16.2 Prompt v8 (`PROMPT_VERSION`): rule 8, `<reply_type>` after `<partner>`, one validating few-shot (`66 69 929`, agree) (`test/prompt.test.ts`)
+  - [x] 16.3 Handler passes `context.intent` to `buildPrompt`; validation unchanged; ghost fallback keeps the client's re-ranked beam order (`test/handler.test.ts` "reply type (DS-9)")
+  - [x] 16.4 P1 soundness with a random reply type; P3 privacy with a reply type on every path plus an unknown one: no `intent` key and no reply-type value in any log line (`test/handler.test.ts`)
+  - [x] 16.5 Offline re-rank `rankByIntent` in `@ninth/core` (`packages/core/src/intent.ts`, `packages/core/test/intent.test.ts`, properties P-I1 to P-I5)
+  - [x] 16.6 Eval option `--intent oracle` (B1i "B1+intent (oracle)", and B4 with `context.intent`), an upper bound that never writes into `packages/eval` (`packages/eval/test/intent.test.ts`)
+  - [x] 16.8 Web client: `context.intent` only while one is pressed (the key left out otherwise), beams re-ranked over `INTENT_POOL`, intent in the cache key, `SENT_FOR_RANKING` names the reply type in Settings, About and Welcome (DS-6.6; web-ui Req 29.8, 12.1; `packages/web/test/reply-types.test.tsx`)
+  - [ ] 16.7 With a key: v6-vs-v8 regression without a reply type on the seed-9 sample of 200, and `pnpm -F @ninth/eval llm --intent oracle`; results into `packages/eval/RESULTS.md` before any claim

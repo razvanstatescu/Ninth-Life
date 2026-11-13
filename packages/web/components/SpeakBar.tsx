@@ -25,6 +25,7 @@ export function SpeakBar({
   hideSpeak = false,
   digitsApart = false,
   extra,
+  tag,
 }: {
   tokens: string[];
   words: DisplayWord[];
@@ -45,6 +46,8 @@ export function SpeakBar({
   digitsApart?: boolean;
   /** Controls at the end of the bar (the phone layout's Clear / Undo). */
   extra?: ReactNode;
+  /** The reply type pressed ("Ask"), shown as a word at the start of the key line (web-ui Req 29.6). */
+  tag?: string;
 }) {
   const empty = tokens.length === 0;
   const textRef = useRef<HTMLParagraphElement>(null);
@@ -58,9 +61,25 @@ export function SpeakBar({
     if (over) el.scrollTop = el.scrollHeight;
   }, [shown]);
   // Apart from the sentence, the key line keeps its place even when empty, so nothing moves on the first key.
+  // The key line is always there on the shells, so the type shows even before the first key; on laptops
+  // the group itself stays on screen, so the word joins the keys only once there are keys.
+  const tagEl =
+    tag && (!empty || digitsApart) ? (
+      <span className="nl-speakbar__tag">
+        <span className="nl-sr-only">Reply type: </span>
+        {tag}
+        {empty ? null : (
+          <span className="nl-speakbar__sep" aria-hidden="true">
+            ·
+          </span>
+        )}
+        {empty ? null : <span className="nl-sr-only">. </span>}
+      </span>
+    ) : null;
   const digits =
     empty && !digitsApart ? null : (
       <span className="nl-speakbar__digits">
+        {tagEl}
         {empty ? null : (
           <>
             <span className="nl-sr-only">Keys: </span>

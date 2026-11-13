@@ -24,21 +24,27 @@ describe('phones and tablets', () => {
     const { container } = render(<CommunicationScreen initialDict={miniDict()} layout="split" />);
     const main = container.querySelector('main.app-main--split')!;
     expect(main).toBeTruthy();
-    expect([...main.querySelectorAll('.shell-screen > [data-section]')].map((c) => c.getAttribute('data-section'))).toEqual(['speak', 'cands', 'actions', 'pad']);
+    // 27.5: the conversation strip first, above the card.
+    expect([...main.querySelectorAll('.shell-screen > [data-section]')].map((c) => c.getAttribute('data-section'))).toEqual(['thread', 'speak', 'cands', 'actions', 'pad']);
     expect(container.querySelector('.app-footer')).toBeNull();
   });
 
-  it('25.3 They said is a speech-bubble button in the header; with a line it shows the line and keeps its words in the name', () => {
+  it('25.3 27.4 They said is a speech-bubble button in the header; with a turn it shows the newest one, named by its words', () => {
     render(<CommunicationScreen initialDict={miniDict()} layout="stack" />);
     const empty = screen.getByRole('button', { name: 'They said' });
     expect(empty.className).toContain('header-partner--empty');
     expect(empty.querySelector('.nl-icon')).toBeTruthy();
+    // No turns yet: one tap opens the They said field.
     fireEvent.click(empty);
     fireEvent.change(screen.getByPlaceholderText('Type what the other person said'), { target: { value: 'Tea or coffee?' } });
     fireEvent.click(screen.getByRole('button', { name: 'Done' }));
-    const full = screen.getByRole('button', { name: 'They said: Tea or coffee?' });
+    const full = screen.getByRole('button', { name: 'They: Tea or coffee?' });
     expect(full.className).not.toContain('header-partner--empty');
+    expect(full.querySelector('.thread-tag')!.textContent).toBe('They');
     expect(full.querySelector('.header-partner__text')!.textContent).toBe('Tea or coffee?');
+    // With turns it opens the Conversation sheet.
+    fireEvent.click(full);
+    expect(document.querySelector('dialog[data-overlay="conversation"]')?.hasAttribute('open')).toBe(true);
   });
 
   it('rotate (a phone held sideways) shows only the turn-upright screen', () => {

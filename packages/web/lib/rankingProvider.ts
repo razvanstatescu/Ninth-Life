@@ -34,6 +34,18 @@ export const PROVIDER_COPY: Readonly<Record<RankingProvider, ProviderCopy>> = {
   },
 };
 
+/**
+ * What model ranking sends, said the same way in Settings, About and Welcome (web-ui Req 12.1, 27.11,
+ * 29.9, ADR-007, ADR-008). The reply type goes only while one is pressed; `recent` only when the person
+ * also turns on "Include what you said" (off by default).
+ */
+export const SENT_FOR_RANKING =
+  "your keys, the dictionary words for them, the app's own best-guess sentences, the last thing the other person said and the reply type you picked (Agree, Disagree or Ask)";
+/** What reply types do, for Settings and About help (web-ui Req 29.2, 29.3). No effect claim, ADR-008. */
+export const REPLY_TYPES_HELP = 'Agree, Disagree and Ask change the order of the sentences for your keys. They never change the words. Ask also adds a question mark.';
+export const RECENT_SENDS = 'the last 3 things you said in this conversation';
+export const RECENT_SETTING = 'Include what you said';
+
 export function providerCopy(p: RankingProvider = rankingProvider()): ProviderCopy {
   return PROVIDER_COPY[p];
 }

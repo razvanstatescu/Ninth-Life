@@ -18,6 +18,8 @@ export interface LlmRunResults {
   fixture: { path: string; sha256: string };
   subset: { items: number; limit: number | null; seed: number };
   configs: ConfigResult[];
+  /** 'oracle': reply type read off the gold sentence (ADR-008); an upper bound, its own section. */
+  intent?: 'oracle';
 }
 
 export interface LlmResultsFile {
@@ -38,7 +40,7 @@ const OPEN = (id: string) => `<!-- llm-run:${id} -->`;
 const CLOSE = (id: string) => `<!-- /llm-run:${id} -->`;
 const ANY_SECTION = /<!-- llm-run:([^ ]+) -->[\s\S]*?<!-- \/llm-run:\1 -->\n?/g;
 
-export const runId = (model: string, mode: string) => `${model}:${mode}`;
+export const runId = (model: string, mode: string, intent?: 'oracle') => `${model}:${mode}${intent ? `:intent-${intent}` : ''}`;
 
 /** All model-run sections in a RESULTS.md, in file order, each ending with a newline. */
 export function llmSections(md: string): string[] {
@@ -86,12 +88,15 @@ function row(c: ConfigResult, t: Timing[string] | undefined, mode: string): stri
 }
 
 export function renderSection(run: LlmRunResults, timing: Timing, ctx: SectionContext): string {
-  const id = runId(run.model, run.mode);
+  const id = runId(run.model, run.mode, run.intent);
   const s = run.subset;
   const subset = s.limit === null ? `full set, ${s.items} items` : `seeded sample of ${s.items} items (\`--limit ${s.limit}\`, seed ${s.seed})`;
   const title = ctx.dryRun
     ? `## DRY RUN, fake Messages API (not a measurement): ${run.model}, ${run.mode} mode, ${s.items} items, ${ctx.date}`
     : `## Model ranking: ${run.model}, ${run.mode} mode, ${s.items} items, ${ctx.date}`;
+  const intentNote = run.intent
+    ? [`- Reply type: read off the gold sentence ("?" ask, no/not/never first disagree, yes/ok first agree), only on items with a partner line. **An upper bound, not a measurement of real use.** B1i is B1 re-ranked for the reply type; B4 sends it as \`context.intent\` with re-ranked beams.`]
+    : [];
   const initials = run.mode === 'initials';
   const head =
     `| Config | Word acc | Sent top-1 | Sent top-5 | KSR | ${initials ? 'Presses/char | ' : ''}Invalid pre-validator | p50 ms | p95 ms | Calls > 1.2 s | Calls | In tok/call | Out tok/call | Cache-read tok/call | $/1k |\n` +
@@ -120,6 +125,7 @@ export function renderSection(run: LlmRunResults, timing: Timing, ctx: SectionCo
     `- Model: \`${run.model}\` (\`${run.label}\`), ${run.model.startsWith('MiniMax') ? 'MiniMax Anthropic-compatible API' : 'Anthropic Messages API'}, \`anthropic-version: ${run.anthropicVersion}\``,
     `- Run: ${ctx.date} (UTC), ${subset}, k = ${run.k}, mode = ${run.mode}, concurrency ${ctx.concurrency}`,
     `- This run: ${n.sent} requests sent, ${n.hits} replies from the response cache, ${n.retries} retries, ${money(n.spentUsd)} spent`,
+    ...intentNote,
     `- B0 and B1 rows are the offline baselines on the same items. Tokens and cost come from each reply's \`usage\` at \`packages/decoder/src/models.ts\` list prices; "In tok/call" counts uncached, cache-read and cache-write input. Latency is the recorded time of each successful API call (a cached reply keeps its original time); "Calls > 1.2 s" would have fallen back to ghost beams at the route's deadline.`,
     '',
     head,

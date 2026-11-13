@@ -150,3 +150,68 @@ Built 2026-11-09 outside Kiro (Claude Code); see `docs/KIRO_LOG.md`. Research: `
         unmount, typing wins, errors in words, on-device choice, plain-HTTP page)
 - [ ] 55. Try Listen on real devices over HTTPS: Chrome on Android (online and on-device), Safari on iPhone and iPad, a
       Home Screen web app on iOS (expected to fail with a clear message); log in `docs/research/web-speech.md` (Req 26)
+
+## Conversation thread (Req 27; ADR-007)
+- [x] 56. `lib/conversation.ts`: `Turn`, pure `conversationReducer` (50 turns, 280/500 characters, the same "you said"
+      line within 60 s is one turn, Change only on the newest "they said"), selectors (`lastTurn`, `lastThem`,
+      `awaitingReply`, `recentMine`, `threadText`, `decodeContext`), a memory-only store and `useConversation()`;
+      They said derived from it; `sayAndRecord(text, via)` in `CommunicationScreen` for Speak, phrases and Say again,
+      Show records `shown`, Test voice does not (Req 27.1-27.3, 13.2)
+  - [x] 56.1 Tests: `test/conversation.test.ts` (fast-check: limits, order, the 60 s rule, recent lines), `test/dictation.test.tsx` (heard / typed)
+- [x] 57. The thread on the main screen: `threadRows`, `STACK_THREAD_QUERY`, `STACK_NO_HEADER_QUERY`; `ThreadBubble` in the
+      header (stack 620-1149px), `ThreadStrip` (split, stack 1150px and taller, fixed height), `ThreadPanel` on laptops,
+      Menu > This sentence > Conversation; `THREAD_ROW` in the scan grid (Req 27.4-27.6, 27.10, 25.3)
+  - [x] 57.1 Tests: `test/conversation-ui.test.tsx`, `test/mobile.test.tsx` (25.3, 27.4), `test/phone.test.tsx` (Menu),
+        `test/layout.test.ts`; `test/e2e/responsive.mjs` (2 turns and a long They said at 24 sizes: no scroll, keys
+        unchanged, bubble or strip where expected), `test/e2e/switch.mjs` (thread row, Say again), `test/e2e/keyboard.mjs`
+- [x] 58. `components/ConversationSheet.tsx`: every turn newest first, Say again, Show (labelled You said / They said),
+      Copy, Change and Remove on the newest "they said", Listen and Type their line, Share or Copy all only where the
+      browser can, Clear conversation with a confirm; polite announcements (Req 27.7-27.9)
+  - [x] 58.1 Tests: `test/conversation-ui.test.tsx`, `test/e2e/axe.mjs` (screen and sheet), `test/e2e/conversation.mjs`
+        (nothing in storage, a reload clears it)
+- [x] 59. "Include what you said" (`llmRecent`, off by default, shown only with model ranking on): `context.recent`
+      from `decodeContext`, lines from before the current sentence, cache key with recent, 4 KB guard; copy in Settings,
+      About and Welcome from `lib/rankingProvider.ts` (Req 27.11, 12.1, 12.2)
+  - [x] 59.1 Tests: `test/conversation.test.ts` (request size, cache key, setting), `test/conversation-ui.test.tsx` (request body, Settings)
+- [ ] 60. Product owner: confirm memory only with no timed clear, and the opt-in for sending recent lines (ADR-007)
+
+## Quick replies (Req 28)
+- [x] 61. `lib/replies.ts` (`QUICK_REPLIES`, `suggestionMode`, `replyRows` with the reply-type slot, `acceptReply`),
+      `components/QuickReplies.tsx` (area, line, menu), the suggestion area's modes in `CommunicationScreen` (`sayReply`
+      with the repeat guard through `sayAndRecord(text, 'quick')`, `CAND_ROW` cells, Alt+1-5 and arrows off while the
+      replies hold the shells' area, Sentences in Menu after Speak), Menu > Quick replies on every layout with a Menu and
+      at the top of Phrases on wide, the `quickReplies` setting (on by default) in Settings, styles in `styles/app.css`
+      (Req 28.1-28.8)
+  - [x] 61.1 Tests: `test/replies.test.ts` (mode table, rows, slot, repeat guard, setting), `test/quick-replies.test.tsx`
+        (show and hide, speak once, double press, setting off, no live region, scan row 4, Alt+1, Menu on a short phone,
+        laptops, Phrases, the slot), `test/m1b.test.tsx` (Menu and scan counts); `test/e2e/responsive.mjs` (24 sizes:
+        equal cells >= 56px, none cut, no scroll, the keypad still), `test/e2e/switch.mjs` (Yes. with 1 and 2 switches,
+        the short phone's Menu), `test/e2e/keyboard.mjs`, `test/e2e/axe.mjs` (Menu and Phrases), `test/e2e/conversation.mjs`
+- [ ] 62. Try quick replies with AAC users and partners: is "Hold on." enough while typing, and are the 5 the right ones (Req 28)
+
+## Reply types (Req 29)
+- [x] 63. Composer `intent` / `intentFor` / `autoPunct` and the `intent` action (Ask's "?", carried over after Speak,
+      cleared by Speak and Clear); `replyIntentFor` and `decodeContext({intent, intentFor})` in `lib/conversation.ts`;
+      `decodeWithPins(..., {intent})` over `INTENT_POOL`; `buildRequest(..., intent)` and the cache key in
+      `lib/decodeClient.ts` (Req 29.2-29.4, 29.8, 12.2)
+  - [x] 63.1 Tests: `test/reply-types.test.tsx` (composer, pool and validate, 66 69 929 Agree on the mini and the real
+        dictionary, request omits `intent` when none, cache key, request body from the screen)
+- [x] 64. `components/ReplyTypes.tsx` (row, line, sheet) in the area's slot (2+ rows), on laptops under the quick
+      replies and above the Sentences list while typing, at the top of the Conversation and Sentences sheets on the
+      shells; `SpeakBar` `tag` on the key line; styles in `styles/app.css`; `SENT_FOR_RANKING` and `REPLY_TYPES_HELP`
+      in Settings, About and Welcome (Req 29.1, 29.5-29.7, 29.9, 12.1)
+  - [x] 64.1 Tests: `test/reply-types.test.tsx` (group and `aria-pressed`, where it shows, resets, key line, two-switch
+        scan), `test/conversation-ui.test.tsx` (sheet scan rows); `test/e2e/responsive.mjs` (24 sizes: keypad box
+        identical with and without the group, cells >= 56px, no scroll, ring not ember, key line, "?"),
+        `test/e2e/switch.mjs` (Ask by two switches within 12 presses), `test/e2e/keyboard.mjs` (Tab to Ask, Enter
+        presses and releases), `test/e2e/axe.mjs` (screen and Conversation sheet)
+- [x] 64a. Polish after review: the group is a labelled segmented control on a sunken track in the area's last row (by
+      the keys), pressed with a check mark in both themes; the header bubble shows their newest line; the strip's
+      1-turn and empty states; the sheet's even action rows; Speak keeps the sentence said on show and a spoken
+      sentence is not re-ranked; any "you said" turn ends the type; Say again's repeat guard; the full "what is sent"
+      sentence (Req 27.4, 27.8, 28.8, 29.4, 29.5, 12.1)
+  - [x] 64a.1 Tests: `test/replies.test.ts`, `test/quick-replies.test.tsx` (slot last), `test/reply-types.test.tsx`
+        (Speak twice says the same, a "you said" turn ends the type, copy), `test/conversation-ui.test.tsx` (bubble,
+        Say again guard), `test/e2e/responsive.mjs` (bubble shows their line, the group in the last row)
+- [ ] 65. Measure before any claim: `pnpm -F @ninth/eval llm --intent oracle` and a v6-vs-v8 regression need a key
+      (decoder-service task 16.7); try reply types with AAC users (ADR-008)

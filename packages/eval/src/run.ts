@@ -1,6 +1,7 @@
 /** Run decoders over test items with the simulated user. Pure apart from the timing clock. */
 import { DEFAULT_LETTER_PENALTY, lattice, Lexicon, type BigramFile, type LexiconFile, type LexiconFileV2, type LmOptions, type Mode } from '@ninth/core';
 import { dictDecoder, ghostDecoder, llmDecoder, LLM_CONFIGS, type LlmProposer } from './decoders';
+import { oracleIntent } from './intent';
 import { aggregate, percentile } from './metrics';
 import { sample } from './rng';
 import { codesFor, simulate } from './simulate';
@@ -37,6 +38,11 @@ export interface RunInput {
   concurrency?: number;
   /** Items to evaluate instead of the quick/full choice (e.g. a seeded `--limit` sample). */
   select?: (items: TestItem[]) => TestItem[];
+  /**
+   * 'oracle': pass each item's reply type, read off the gold sentence (src/intent.ts), to every
+   * decoder. Only decoders that read `intent` (B1i, B4) use it. An upper bound, not a measurement.
+   */
+  intent?: 'oracle';
 }
 
 /** The server-side model deadline in the decode route (packages/decoder DEFAULT_TIMEOUT_MS). */
@@ -143,7 +149,8 @@ export async function runEval(input: RunInput): Promise<RunOutput> {
     if (!wanted(d.id)) continue;
     const decodeOne = async (item: TestItem) => {
       const t0 = now();
-      const out = await d.decode({ codes: codesFor(item, mode), mode, k, partner: item.partner });
+      const intent = input.intent === 'oracle' ? oracleIntent(item) : undefined;
+      const out = await d.decode({ codes: codesFor(item, mode), mode, k, partner: item.partner, ...(intent ? { intent } : {}) });
       return { out, ms: now() - t0 };
     };
     const runs = d.deterministic

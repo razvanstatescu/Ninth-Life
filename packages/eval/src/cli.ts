@@ -20,6 +20,10 @@
  *   --write / --no-write force writing on or off (quick defaults to off, full to on)
  *   --json               print RESULTS.json to stdout instead of the table
  *   --no-initials        skip the offline initials-mode baseline (B0/B1 with one key per word)
+ *   --intent oracle      reply types (ADR-008): only items with a partner line and a reply type read
+ *                        off the gold sentence ("?" ask, no/not... disagree, yes/ok... agree); runs B1
+ *                        and B1i "B1+intent (oracle)". An upper bound: prints only, and never writes
+ *                        RESULTS into packages/eval (pass --write --out <dir> to keep it elsewhere)
  *
  * B2-B4 against the Anthropic API: `pnpm -F @ninth/eval llm` (src/llm/cli.ts). Rewriting
  * RESULTS.md here keeps the "Model ranking" sections that command wrote.
@@ -27,7 +31,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { LlmProposer } from './decoders';
+import { ghostIntentDecoder, type LlmProposer } from './decoders';
+import { oracleItems } from './intent';
 import { EVAL_DIR, lexiconSourceSha, loadBigramFile, loadFixture, loadLexiconFile, PATHS, readLock } from './fixture';
 import { withLlmSections } from './llm/report';
 import { initialsTable, resultsMarkdown, table } from './report';
@@ -47,6 +52,7 @@ interface Args {
   write?: boolean;
   json: boolean;
   initials: boolean;
+  intent?: 'oracle';
 }
 
 export function parseArgs(argv: string[]): Args {
@@ -71,9 +77,15 @@ export function parseArgs(argv: string[]): Args {
     else if (x === '--no-write') a.write = false;
     else if (x === '--json') a.json = true;
     else if (x === '--no-initials') a.initials = false;
+    else if (x === '--intent') {
+      const v = val();
+      if (v !== 'oracle') throw new Error(`--intent takes oracle (got ${v})`);
+      a.intent = v;
+    }
     else if (x === '--') continue;
     else throw new Error(`unknown option ${x}`);
   }
+  if (a.intent && a.write && a.out === EVAL_DIR) throw new Error('--intent oracle is an upper bound on a subset: it never writes RESULTS into packages/eval; pick another --out');
   return a;
 }
 
@@ -121,6 +133,26 @@ export async function main(argv: string[]): Promise<number> {
     k: args.k,
     lm: args.letterPenalty === undefined ? undefined : { letterPenalty: args.letterPenalty },
   };
+  if (args.intent) {
+    const lex = Lexicon.fromJSON(lexicon.data);
+    const run = await runEval({
+      ...common,
+      select: (all) => oracleItems(selectItems(all, args.quick, args.seed)),
+      only: args.only ?? ['B1', 'B1i'],
+      extra: [ghostIntentDecoder(lex, bigram.data, common.lm)],
+      intent: 'oracle',
+    });
+    if (args.write) {
+      mkdirSync(args.out, { recursive: true });
+      writeFileSync(join(args.out, 'RESULTS.intent-oracle.json'), serializeResults(run.results));
+    }
+    if (args.json) process.stdout.write(serializeResults(run.results));
+    else {
+      process.stdout.write(`Reply type from the gold sentence (upper bound, not a measurement): ${run.results.subset.items} items with a partner line and a reply type, k=${run.results.k}\n\n`);
+      process.stdout.write(table(run.results, run.timing) + '\n');
+    }
+    return 0;
+  }
   const { results, timing } = await runEval({ ...common, only: args.only, llm });
   // Initials-mode baseline (spec Req 9): offline configs only, same items.
   let initialsTiming = {};

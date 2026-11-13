@@ -1,7 +1,7 @@
 /**
  * Eval harness types. Spec: .kiro/specs/eval-harness (Req 3.x decoders, Req 4.x simulated user and metrics).
  */
-import type { Mode } from '@ninth/core';
+import type { Mode, ReplyIntent } from '@ninth/core';
 
 /** One frozen test item (a line of fixtures/test.v1.jsonl). */
 export interface TestItem {
@@ -23,6 +23,8 @@ export interface DecodeInput {
   /** Number of sentence candidates wanted. */
   k: number;
   partner?: string;
+  /** Reply type, only in an `--intent oracle` run (from the gold sentence, src/intent.ts). */
+  intent?: ReplyIntent;
 }
 
 export interface DecodeOutput {

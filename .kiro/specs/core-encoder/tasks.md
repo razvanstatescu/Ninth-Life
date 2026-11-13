@@ -50,3 +50,7 @@
   - [x] 22.2 Smoke: `en.v2.json` decodes "4 6333 92837" to "i need water" and completes 54824 to "kitchen" (`test/smoke.test.ts`, Req 2.11)
   - [x] 22.3 Real data: v1 and v2 load to the same lexicon (`packages/eval/test/compact.test.ts`, Req 2.11)
 - [ ] 23. Optional: parse in a Web Worker. Not justified by the numbers in `docs/testing/performance.md` (parse is off the key path and under 100 ms on desktop); revisit if a real low-end phone shows a long task during loading (Req 2.9 follow-up)
+
+- [x] 24. Reply type re-rank `rankByIntent`, `intentCue`, `INTENT_POOL` (ADR-008) (Req 8.1 - 8.5)
+  - [x] 24.1 Properties P23-P27 (`test/intent.test.ts` P-I1..P-I5); cue examples; real-lexicon examples (66 69 929 Agree -> "on my way")
+  - [x] 24.2 Exported from the index (`test/portability.test.ts` Req 7.2)

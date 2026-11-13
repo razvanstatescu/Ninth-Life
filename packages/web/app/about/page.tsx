@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Brand } from '@/components/AppHeader';
 import { Footer, NOT_A_MEDICAL_DEVICE } from '@/components/Footer';
-import { providerCopy } from '@/lib/rankingProvider';
+import { REPLY_TYPES_HELP, SENT_FOR_RANKING, RECENT_SENDS, RECENT_SETTING, providerCopy } from '@/lib/rankingProvider';
 
 export const metadata: Metadata = {
   title: 'About Ninth Life',
@@ -29,6 +29,7 @@ export default function AboutPage() {
               key 4, so &quot;hi&quot; is 4 4. There is no tapping a key three times and no code to learn.
             </p>
             <p>It runs in your browser and works offline. You can type with a keyboard, by touch, or with one or two switches.</p>
+            <p>After the other person speaks, you can pick a reply type. {REPLY_TYPES_HELP}</p>
             <p>
               <a href="/welcome">See the demo, the measured results and the source code</a>
             </p>
@@ -42,9 +43,9 @@ export default function AboutPage() {
               is not in your words yet, and a struck-through word was suggested but does not match.
             </p>
             <p>
-              Model ranking is off by default. When you turn it on, your keys, the dictionary words for them and the last thing the other person said are sent to
-              {provider.service}, which suggests the order of the sentences. It cannot add words: everything it suggests goes through the same check, and
-              nothing is spoken until you press Speak.
+              Model ranking is off by default. When you turn it on, {SENT_FOR_RANKING} are sent to {provider.service}, which suggests the order of the
+              sentences. If you also turn on &quot;{RECENT_SETTING}&quot;, {RECENT_SENDS} are sent too. It cannot add words: everything it suggests goes through
+              the same check, and nothing is spoken until you press Speak.
             </p>
           </section>
 
@@ -53,6 +54,10 @@ export default function AboutPage() {
             <ul>
               <li>No account, no cookies, no analytics.</li>
               <li>Ninth Life does not store what you say. Saved phrases stay on this device, and only when you press Save phrase.</li>
+              <li>
+                The conversation (what they said and what you said) is kept only on the open page, never saved: it is gone when you reload, leave or close the page,
+                and Clear conversation removes it sooner. Share and Copy hand the text to the app you pick.
+              </li>
               <li>
                 With model ranking on, {provider.company} receives what is sent for ranking. {provider.retention}
               </li>

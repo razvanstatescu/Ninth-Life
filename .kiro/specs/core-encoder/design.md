@@ -83,6 +83,11 @@ Each property is a fast-check test in `packages/core/test/`, named after the req
 | P20 | `tokenize(formatSentence(ws, p))` equals the normalized `ws`, still validates, ends with p | Req 6.4 | "Req 6.4 ..." (2 properties) |
 | P21 | For any lexicon, prev, word and penalty p <= 0: a one-letter word outside a/i scores in [off + p, off]; every other word scores exactly as with the penalty off | Req 4.5 | `lm.test.ts` "Req 4.5 the letter penalty only lowers ..." |
 | P22 | For any lexicon and codes: the lattice ignores the LM; an exhaustive beam and `decodeGhost(k = all)` return the same sentence set with and without the penalty; sentences without a penalised letter keep their exact score | Req 5.8 | `decode.test.ts` "Req 5.8 the letter penalty never removes a valid reading ..." |
+| P23 | rankByIntent output is a permutation of the input (same objects, each once) | Req 8.1 | `intent.test.ts` "P-I1 ..." |
+| P24 | Re-ranked decodeGhost pools (mini and random lexicons, both modes) all pass validate | Req 8.2 | `intent.test.ts` "P-I2 ..." |
+| P25 | No reply type = identity | Req 8.3 | `intent.test.ts` "P-I3 ..." |
+| P26 | Stable ties: in a score-ordered pool equal cues keep order; equal adjusted scores keep input order | Req 8.4 | `intent.test.ts` "P-I4 ..." (2 properties) |
+| P27 | Bounded effect: never passes a candidate scoring more than 3 x W higher; finite beats non-finite | Req 8.5 | `intent.test.ts` "P-I5 ..." |
 
 Example tests pin the behavior people see: `"isn't" -> "4768"`, `4663 -> good, home, gone`,
 `["i"] -> "I"`, `"4 6333 92837" -> "i need water"`, and the real-lexicon smoke test.

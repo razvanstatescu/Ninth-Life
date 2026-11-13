@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { DecodeRequestSchema, LIMITS, readBody } from '../src/schema.js';
+import { REPLY_INTENTS } from '@ninth/core';
+import { DecodeRequestSchema, LIMITS, REPLY_INTENT_VALUES, issuePaths, readBody } from '../src/schema.js';
 
 // DS-1 (input limits). Plan §4.3: <= 20 codes, <= 16 digits each, partner <= 280 chars,
 // <= 3 recent items, body <= 4 KB.
@@ -89,6 +90,47 @@ describe('DecodeRequestSchema', () => {
     expect(DecodeRequestSchema.safeParse(ok).success).toBe(true);
     const bad = { ...base(), mode: 'initials' };
     expect(DecodeRequestSchema.safeParse(bad).success).toBe(false);
+  });
+});
+
+describe('DecodeRequestSchema: reply type (DS-9.1, DS-5.2)', () => {
+  it('accepts no intent, and each of agree, disagree, ask', () => {
+    expect(DecodeRequestSchema.parse(base()).context?.intent).toBeUndefined();
+    for (const intent of ['agree', 'disagree', 'ask'] as const) {
+      const r = DecodeRequestSchema.parse({ ...base(), context: { partner: 'Are you coming?', intent } });
+      expect(r.context?.intent).toBe(intent);
+    }
+    expect(DecodeRequestSchema.parse({ ...base(), context: { intent: 'ask' } }).context).toEqual({ intent: 'ask' });
+  });
+
+  it('matches the reply types in @ninth/core', () => {
+    expect([...REPLY_INTENT_VALUES]).toEqual([...REPLY_INTENTS]);
+  });
+
+  it.each(['', 'Agree', 'ASK', 'yes', 'no', 'question', ' ask', 'ask ', 'agree,ask', 'zqsecretvalue', 1, true, null, ['ask'], { v: 'ask' }])(
+    'rejects intent %j with 400 paths that do not echo the value',
+    (intent) => {
+      const r = DecodeRequestSchema.safeParse({ ...base(), context: { partner: 'Are you coming?', intent } });
+      expect(r.success).toBe(false);
+      if (!r.success) {
+        const issues = issuePaths(r.error);
+        expect(issues.some((i) => i.startsWith('context.intent:'))).toBe(true);
+        const shown = JSON.stringify(issues);
+        if (typeof intent === 'string' && intent.trim()) expect(shown).not.toContain(intent.trim());
+        expect(shown).not.toContain('Are you coming');
+      }
+    },
+  );
+
+  it('rejects intent outside context (unknown top-level field)', () => {
+    expect(DecodeRequestSchema.safeParse({ ...base(), intent: 'ask' }).success).toBe(false);
+  });
+
+  it('a full request with the longest intent still fits in 4 KB when the rest fits', () => {
+    const ctx = { partner: 'a'.repeat(LIMITS.maxPartnerChars), recent: Array(LIMITS.maxRecent).fill('b'.repeat(200)), intent: 'disagree' };
+    const body = JSON.stringify({ ...base(), context: ctx });
+    expect(readBody(body).ok).toBe(true);
+    expect(DecodeRequestSchema.safeParse(JSON.parse(body)).success).toBe(true);
   });
 });
 

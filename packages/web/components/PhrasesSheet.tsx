@@ -1,7 +1,9 @@
 'use client';
 import { useState } from 'react';
+import { SHEET_REPLY_ROWS } from '@/lib/replies';
 import type { Phrase } from '@/lib/storage';
 import { Button } from './Button';
+import { QuickReplies } from './QuickReplies';
 import { Sheet } from './Sheet';
 
 /** Quick phrases shown at first, and how many more each "More quick phrases" adds (web-ui Req 17.3). */
@@ -17,7 +19,8 @@ export function chunk<T>(items: readonly T[], size: number): T[][] {
 
 /**
  * Saved phrases (stored on this device only, and only after "Save phrase") and quick phrases
- * from the vocab pack. Choosing a phrase speaks it; nothing here is spoken on its own.
+ * from the vocab pack. Choosing a phrase speaks it; nothing here is spoken on its own. On laptops (no Menu)
+ * the quick replies come first (web-ui Req 28.4).
  */
 export function PhrasesSheet({
   open,
@@ -29,6 +32,7 @@ export function PhrasesSheet({
   onSpeakQuick,
   onDelete,
   onMyWords,
+  onReply,
   onClose,
 }: {
   open: boolean;
@@ -43,6 +47,8 @@ export function PhrasesSheet({
   onDelete: (p: Phrase) => void;
   /** Open My words (web-ui Req 21.3). */
   onMyWords?: () => void;
+  /** Laptops: speak a quick reply (web-ui Req 28.4). */
+  onReply?: (text: string) => void;
   onClose: () => void;
 }) {
   const [confirming, setConfirming] = useState<string | null>(null);
@@ -50,6 +56,14 @@ export function PhrasesSheet({
   const quick = quickPhrases.slice(0, shown);
   return (
     <Sheet open={open} name="phrases" title="Phrases" onClose={onClose} scanning={scanning}>
+      {onReply ? (
+        <section className="group" aria-labelledby="phrases-replies">
+          <h3 className="group__title" id="phrases-replies">
+            Quick replies
+          </h3>
+          <QuickReplies variant="menu" rows={SHEET_REPLY_ROWS} onSay={onReply} />
+        </section>
+      ) : null}
       {onMyWords ? (
         <div className="scan-cluster sheet__link" data-scan-row="my-words">
           <Button variant="secondary" icon="spell" onClick={onMyWords}>

@@ -8,7 +8,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { BASE_URL, check, done, loadPlaywright, newContext, openApp } from './lib.mjs';
+import { BASE_URL, addTheirLine, check, closeShow, done, loadPlaywright, newContext, openApp } from './lib.mjs';
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const BLOCKING = new Set(process.env.AXE_STRICT ? ['minor', 'moderate', 'serious', 'critical'] : ['serious', 'critical']);
@@ -30,16 +30,67 @@ const TARGETS = [
   { name: 'welcome /welcome', path: '/welcome' },
   { name: 'about /about', path: '/about' },
   { name: 'settings sheet on /', path: '/', app: true, settings: true },
+  // Web-ui Req 27: the thread on the main screen (header button or panel) and the Conversation sheet.
+  { name: 'conversation on /', path: '/', app: true, thread: 'screen' },
+  { name: 'conversation sheet on /', path: '/', app: true, thread: 'sheet' },
+  // Web-ui Req 28: the quick replies on the empty screen are in 'app /'; here Menu (Phrases on wide) with its group.
+  { name: 'quick replies in Menu or Phrases on /', path: '/', app: true, replies: true },
+  // Web-ui Req 29: the reply types after their line, Ask pressed (area or laptop list), and in the Conversation sheet.
+  { name: 'reply types on /', path: '/', app: true, replyTypes: 'screen' },
+  { name: 'reply types in the Conversation sheet on /', path: '/', app: true, replyTypes: 'sheet' },
 ];
+
+/** Their line, then Ask: on the screen when it is there, else in the Conversation sheet (left open for 'sheet'; on laptops the sheet has no group). */
+async function pressAsk(page, where) {
+  await addTheirLine(page, 'Are you coming to the party tonight?');
+  const onScreen = page.locator('main [data-intent="ask"]');
+  if (where === 'screen' && (await onScreen.first().isVisible().catch(() => false))) {
+    await onScreen.first().click();
+    await page.keyboard.press('3');
+    return;
+  }
+  const all = page.locator('.thread-panel__actions button', { hasText: 'All' });
+  if (await all.first().isVisible().catch(() => false)) await all.first().click();
+  else await page.locator('.thread-bubble').click();
+  await page.locator('dialog[data-overlay="conversation"][open]').waitFor({ state: 'visible', timeout: 5000 });
+  // The shells have the group at the top of the sheet; laptops keep it on the screen.
+  const inSheet = page.locator('dialog[data-overlay="conversation"][open] [data-intent="ask"]');
+  if (await inSheet.count()) await inSheet.click();
+}
+
+/** Menu on phones, Phrases on wide: both start with the Quick replies group. */
+async function openRepliesSheet(page) {
+  const menu = page.locator('.phone-actions button', { hasText: 'Menu' });
+  if (await menu.first().isVisible().catch(() => false)) await menu.first().click();
+  else await page.getByRole('button', { name: /^phrases$/i }).first().click();
+  await page.locator('dialog[open] [data-scan-row="quick-replies"]').first().waitFor({ state: 'visible', timeout: 5000 });
+}
+
+/** Two turns: a "they said" line, then "I need water" spoken with Enter. Optionally open the sheet. */
+async function makeConversation(page, openSheet) {
+  await addTheirLine(page, 'Do you want tea or coffee with your lunch today?');
+  for (const k of '406333092837') await page.keyboard.press(k);
+  await page.waitForFunction(() => /need water/i.test(document.querySelector('.nl-speakbar__text')?.textContent ?? ''));
+  await page.locator('#keypad').focus();
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(150);
+  await closeShow(page);
+  if (!openSheet) return;
+  const all = page.locator('.thread-panel__actions button', { hasText: 'All' });
+  if (await all.first().isVisible().catch(() => false)) await all.first().click();
+  else await page.locator('.thread-bubble').click();
+  await page.locator('dialog[data-overlay="conversation"][open]').waitFor({ state: 'visible', timeout: 5000 });
+}
 const VIEWPORTS = [
   { label: '1280', width: 1280, height: 900 },
   { label: '390', width: 390, height: 844 },
 ];
 
-const { chromium } = loadPlaywright();
-const browser = await chromium.launch();
+// ENGINE=webkit runs it in Safari's engine.
+const engine = process.env.ENGINE ?? 'chromium';
+const browser = await loadPlaywright()[engine].launch();
 const report = [];
-console.log(`axe ${TAGS.join(', ')} on ${BASE_URL}`);
+console.log(`axe ${TAGS.join(', ')} on ${BASE_URL} (${engine})`);
 try {
   for (const theme of ['night', 'day']) {
     for (const vp of VIEWPORTS) {
@@ -49,6 +100,9 @@ try {
         if (t.app) await openApp(page, t.path);
         else await page.goto(BASE_URL + t.path, { waitUntil: 'load' });
         if (t.settings) await openSettings(page);
+        if (t.thread) await makeConversation(page, t.thread === 'sheet');
+        if (t.replies) await openRepliesSheet(page);
+        if (t.replyTypes) await pressAsk(page, t.replyTypes);
         const actual = await page.evaluate(() => document.documentElement.dataset.theme);
         const res = await new AxeBuilder({ page }).withTags(TAGS).analyze();
         const label = `${t.name} [${theme}, ${vp.label}]`;

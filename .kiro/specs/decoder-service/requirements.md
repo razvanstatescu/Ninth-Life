@@ -3,7 +3,8 @@
 Owner: decoder (`packages/decoder`, route `packages/web/app/api/decode`).
 Sources: `docs/plan/00-source-plan.md` §4.3, §4.5, §4.7, §10; `docs/architecture/contracts.md` §3;
 `docs/decisions/ADR-000-nextjs.md`, `docs/decisions/ADR-001-anthropic-api-no-aws.md`,
-`docs/decisions/ADR-002-minimax-provider.md`. Last updated 2026-11-09 (DS-7.7-7.10: MiniMax).
+`docs/decisions/ADR-002-minimax-provider.md`, `docs/decisions/ADR-008-reply-types-steer-ranking.md`.
+Last updated 2026-11-11 (DS-9: reply type; amended DS-5.2, DS-6.1, DS-6.6).
 
 ## Introduction
 
@@ -102,8 +103,9 @@ budget and the endpoint stays up through Jan 29, 2027.
 1. THE service SHALL reject bodies larger than 4,096 bytes with 413 before parsing them.
 2. THE service SHALL reject, with 400, requests with more than 20 codes, a code longer than 16
    digits or containing anything but 2-9, a partner line over 280 characters, more than 3 recent
-   items, more than 12 words per lattice slot, more than 10 beams, `k` outside 1-5, unknown fields,
-   or a lattice whose length differs from the codes.
+   items, more than 12 words per lattice slot, more than 10 beams, `k` outside 1-5, a
+   `context.intent` other than `agree`, `disagree` or `ask` (DS-9.1), unknown fields, or a lattice
+   whose length differs from the codes.
 3. WHEN it rejects a request, THE service SHALL NOT echo request values in the response.
 4. THE route SHALL accept only POST, and only from the deployment's own origin or an origin listed
    in `ALLOWED_ORIGINS`; in production a request without an Origin header SHALL be refused (403). THE
@@ -111,8 +113,8 @@ budget and the endpoint stays up through Jan 29, 2027.
 
 ## Requirement DS-6: Privacy
 
-1. THE service SHALL NOT log request bodies, words, codes, partner or recent text, IP addresses, IP
-   hashes or error messages.
+1. THE service SHALL NOT log request bodies, words, codes, partner or recent text, the reply type
+   (`context.intent`), IP addresses, IP hashes or error messages.
 2. THE service SHALL log one metrics record per request containing only numbers, booleans, a fixed
    outcome enum, the model label and an error class name.
 3. THE service SHALL key quotas by a salted SHA-256 hash of the client IP and the UTC day; the raw
@@ -120,7 +122,8 @@ budget and the endpoint stays up through Jan 29, 2027.
 4. Quota records SHALL expire 24 hours after their last write.
 5. THE route SHALL run without payload capture (no body logging in Vercel logs or drains).
 6. THE app SHALL tell the person, before and while model ranking is on, that their keys, the
-   dictionary words and the partner's line are sent to the configured provider (Anthropic or MiniMax, named from
+   dictionary words, the partner's line and the reply type they picked (Agree, Disagree or Ask) are
+   sent to the configured provider (Anthropic or MiniMax, named from
    `NEXT_PUBLIC_DECODE_PROVIDER`), and what that provider says about retention; it SHALL NOT claim EU-only processing or that nothing is kept.
 
 ## Requirement DS-7: Model API
@@ -159,3 +162,21 @@ budget and the endpoint stays up through Jan 29, 2027.
    example answer SHALL validate against its codes.
 5. THE service SHALL send `max_tokens` 120 for typical inputs (more only for long sentences, at most
    400).
+
+## Requirement DS-9: Reply type
+
+**User story:** As a person answering someone, I want to say whether I agree, disagree or ask, so
+that the sentence I mean comes first, without the app ever choosing my words.
+
+Decision: `docs/decisions/ADR-008-reply-types-steer-ranking.md`. Client side: `web-ui` Requirement 29.
+
+1. THE service SHALL accept an optional `context.intent` of `agree`, `disagree` or `ask` and SHALL
+   reject any other value with 400 without echoing it (DS-5.3).
+2. WHEN `intent` is present, THE prompt SHALL pass it as a `<reply_type>` tag in the user turn, right
+   after the partner line. THE system prompt SHALL stay constant (DS-8.1); prompt version v8 adds
+   rule 8: the reply type only orders readings of the same keys and never changes rules 1 to 4.
+3. THE reply type SHALL only order candidates. DS-1 validation SHALL apply unchanged, and the
+   degraded reply SHALL keep the client's beam order (the client re-ranks its beams for the reply
+   type before sending them; the service does not re-rank).
+4. THE service SHALL NOT log, trace or count `intent` (DS-6.1). Metrics SHALL have no field for it.
+5. Few-shots that carry a reply type SHALL be invented and SHALL validate (DS-8.4).

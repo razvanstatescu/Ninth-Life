@@ -52,7 +52,7 @@ describe('phone layout (web-ui Req 15)', () => {
   it('Req 15.1: SpeakBar, then keypad, then sentences, then proof, in DOM (and focus) order', () => {
     render(<CommunicationScreen initialDict={miniDict()} layout="compact" />);
     const order = [...document.querySelectorAll('[data-section]')].map((el) => el.getAttribute('data-section'));
-    expect(order).toEqual(['speak', 'pad', 'cands', 'proof']);
+    expect(order).toEqual(['speak', 'pad', 'cands', 'proof', 'thread']);
   });
 
   it('Req 15.2 + 15.3 + 21.3: one status pill and a Menu that opens Phrases, My words, Voice and Settings', () => {
@@ -63,7 +63,8 @@ describe('phone layout (web-ui Req 15)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
     const menu = openSheet('menu') as HTMLElement;
     expect(menu).toBeTruthy();
-    expect(within(menu).getAllByRole('button').map((b) => b.textContent)).toEqual(['Close', 'Phrases', 'My words', 'Voice', 'Settings']);
+    // Web-ui Req 28.4: the quick replies come first in every Menu.
+    expect(within(menu).getAllByRole('button').map((b) => b.textContent)).toEqual(['Close', 'Hold on.', 'Yes.', 'No.', 'Pardon?', 'Thanks.', 'Phrases', 'My words', 'Voice', 'Settings']);
     fireEvent.click(within(menu).getByRole('button', { name: 'Settings' }));
     expect(openSheet('menu')).toBeNull();
     expect(openSheet('settings')).toBeTruthy();
@@ -94,8 +95,8 @@ describe('phone layout (web-ui Req 15)', () => {
 describe('switch access everywhere (web-ui Req 16)', () => {
   it('Req 16.1 + 16.2 + 16.3: the header is a scan row; Settings scans its own rows, Close first, and scan speed changes by switch', () => {
     render(<CommunicationScreen initialDict={miniDict()} layout="wide" initialSettings={{ access: 'scan2', acceptDelayMs: 0 }} />);
-    // Keypad rows 0-3, sentences (empty, skipped), actions, header: 6 moves.
-    for (let i = 0; i < 6; i++) sw(' ');
+    // Keypad rows 0-3, the quick replies in the sentences' row (web-ui Req 28.6), actions, header: 7 moves.
+    for (let i = 0; i < 7; i++) sw(' ');
     expect(document.querySelector('.app-header__actions.app-header--wide')!.classList.contains('is-scanning')).toBe(true);
     sw('Enter');
     sw(' ');
@@ -165,7 +166,8 @@ describe('switch access everywhere (web-ui Req 16)', () => {
 
   it('Req 16.1 + 16.5: on phones the header row is Menu; the Menu sheet scans Close, then Phrases / Voice / Settings', () => {
     render(<CommunicationScreen initialDict={miniDict()} layout="compact" initialSettings={{ access: 'scan2', acceptDelayMs: 0 }} />);
-    for (let i = 0; i < 6; i++) sw(' ');
+    // Keypad rows 0-3, the quick replies (web-ui Req 28.6), actions, header.
+    for (let i = 0; i < 7; i++) sw(' ');
     sw('Enter');
     expect(screen.getByRole('button', { name: 'Menu' }).classList.contains('is-lit')).toBe(true);
     sw('Enter');

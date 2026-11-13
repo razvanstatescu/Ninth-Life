@@ -374,7 +374,7 @@
 .statement { padding: var(--space-6); border-radius: var(--radius-card); border: 2px solid var(--line-strong); background: var(--surface); }
 
 @media (prefers-reduced-motion: no-preference) {
-  .scan-cluster, .seg__opt, .app-header__actions, .proof__offers, .spell__letter { transition: box-shadow 120ms linear; }
+  .scan-cluster, .seg__opt, .app-header__actions, .proof__offers, .spell__letter, .thread-strip, .thread-panel, .thread-row { transition: box-shadow 120ms linear; }
 }
 
 /* Short phones in portrait (iPhone SE 375 x 667, 360 x 740 Androids): a denser keypad panel so the
@@ -468,6 +468,104 @@ body:has(.app--shell) { min-height: 0; }
 .phone-sugg--3 { height: calc(3 * var(--target-min) + 2 * var(--space-2) + 12px); }
 .phone-sugg--4 { height: calc(4 * var(--target-min) + 3 * var(--space-2) + 12px); }
 
+/* Quick replies (web-ui Req 28; components/QuickReplies.tsx). The sentence rows' chip (surface, line border,
+   20px/600), centred in equal cells of a 3-column grid; Phrases is the outlined secondary button because it
+   opens a sheet instead of speaking. No ember and no rank badge, so a reply never reads as a sentence. A
+   cell may wrap to 2 lines (large text, text spacing), never cut. */
+.quick-replies { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.quick-replies__row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); min-width: 0; }
+.quick-reply {
+  min-width: 0; min-height: var(--target-min); padding: var(--space-1) var(--space-2);
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  border-radius: var(--radius-chip); border: 2px solid var(--line); background: var(--surface); color: var(--ink);
+  font-family: var(--font-sans); font-size: 20px; line-height: 26px; font-weight: 600; cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.quick-reply:active { background: var(--surface-sunken); }
+.quick-reply:focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: 3px; }
+.quick-reply.is-lit { box-shadow: 0 0 0 var(--scan-width) var(--ember), 0 0 0 calc(var(--scan-width) + 3px) var(--plum); }
+.quick-reply--phrases { background: transparent; border-color: var(--line-strong); font-size: 18px; line-height: 22px; font-weight: 700; }
+.quick-reply--phrases:active { background: var(--surface-sunken); }
+/* The shells' area keeps the sentence rows' fixed height (phone-sugg--N). Its rows share that height, from
+   56px up to a key's height, so on tablets the replies match the keys beside or below them; what is left
+   stays under them, where sentences go when you type. */
+.quick-replies--area .quick-replies__row { flex: 1 1 0; min-height: var(--target-min); max-height: var(--key-size); }
+.quick-replies--area .quick-reply { height: 100%; }
+/* Tall cells (a tablet in either orientation): the size of a sentence in the laptop list. */
+.quick-replies--area.phone-sugg--4 .quick-reply:not(.quick-reply--phrases),
+.app--split .quick-replies--area .quick-reply:not(.quick-reply--phrases) { font-size: var(--type-candidate-size); line-height: var(--type-candidate-line); }
+.quick-replies--area.phone-sugg--4 .quick-reply--phrases,
+.app--split .quick-replies--area .quick-reply--phrases { font-size: 22px; line-height: 28px; }
+/* Split: the area is the grid cell between the card and the action bar; the replies fill its height. */
+.app--split .quick-replies--area { height: calc(100% + 12px); }
+/* Menu and Phrases: on the sheet's surface the chips take the sheet buttons' stronger outline. */
+.quick-replies--menu .quick-reply { border-color: var(--line-strong); }
+/* Laptops: one row of 5 (wide) or 2 rows of 3 (compact) above the Sentences list, one scan row with it. */
+.cands-area { display: flex; flex-direction: column; gap: var(--space-4); padding: 6px; margin: -6px; border-radius: calc(var(--radius-card) + 6px); }
+.cands-area .cands { padding: 0; margin: 0; }
+.app--wide .quick-replies--line .quick-replies__row:not(.quick-replies__slot) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+/* Reply types (web-ui Req 29; components/ReplyTypes.tsx): a segmented control, so they read as a setting
+   and never as a fourth reply. One sunken track (the reply chips are raised surface cells with a border);
+   the three are bare on it, bold at label weight. The pressed one is lifted onto the surface with a 2px ink
+   border, a 2px inset ink ring (4px, the Settings segmented style) and a check mark: ink on the track is
+   well over 3:1 in both themes. Never ember (Speak is the one ember thing). In the area the track starts
+   with its "Reply type" label. */
+.reply-types {
+  grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-1);
+  min-width: 0; border-radius: var(--radius-chip); background: var(--surface-sunken); container-type: inline-size;
+}
+.reply-types--labelled { grid-template-columns: auto repeat(3, minmax(0, 1fr)); }
+.reply-types__label {
+  align-self: center; width: min-content; padding: 0 var(--space-2) 0 var(--space-4);
+  font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: 600; color: var(--ink-muted);
+}
+.reply-type {
+  min-width: 0; min-height: var(--target-min); padding: var(--space-1) var(--space-2);
+  display: flex; align-items: center; justify-content: center; gap: var(--space-1); text-align: center;
+  border-radius: var(--radius-chip); border: 2px solid transparent; background: transparent; color: var(--ink);
+  font-family: var(--font-sans); font-size: 18px; line-height: 22px; font-weight: 700; cursor: pointer;
+  overflow-wrap: anywhere;
+}
+@media (hover: hover) { .reply-type:not([aria-pressed="true"]):hover { background: var(--line); } }
+.reply-type:active { background: var(--line); }
+.reply-type:focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: 2px; }
+.reply-type[aria-pressed="true"] { background: var(--surface); border-color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); }
+.reply-type.is-lit { box-shadow: 0 0 0 var(--scan-width) var(--ember), 0 0 0 calc(var(--scan-width) + 3px) var(--plum); }
+.reply-type[aria-pressed="true"].is-lit { box-shadow: inset 0 0 0 2px var(--ink), 0 0 0 var(--scan-width) var(--ember), 0 0 0 calc(var(--scan-width) + 3px) var(--plum); }
+.reply-type__mark { flex: none; width: 20px; height: 20px; }
+/* A narrow track: the check mark sits above the word, so the word stays whole, on the same line as the
+   other two, and the mark always shows. */
+@container (max-width: 439px) {
+  .reply-type { position: relative; }
+  .reply-type__mark { position: absolute; top: 2px; left: 50%; width: 16px; height: 16px; transform: translateX(-50%); }
+}
+/* A wide track: the label on one line. */
+@container (min-width: 520px) { .reply-types__label { width: auto; white-space: nowrap; padding-right: var(--space-4); } }
+/* The shells' area: the last row, after the replies. Its own height (a key's minimum on tablets), lighter
+   than the reply rows above it. */
+.quick-replies--area .reply-types { height: 100%; }
+.quick-replies--area .reply-type { height: 100%; }
+.quick-replies--area.phone-sugg--4 .quick-replies__slot,
+.app--split .quick-replies--area .quick-replies__slot { flex: 0 0 var(--key-min); }
+.quick-replies--area.phone-sugg--4 .reply-type,
+.app--split .quick-replies--area .reply-type { font-size: 20px; line-height: 26px; }
+/* Laptops: a title over the track, like the Quick replies and Sentences titles. */
+.reply-types-line { grid-column: 1 / -1; display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+/* In a sheet the track is the scan row itself: no scan-cluster padding, so it lines up with the text. */
+.reply-types.scan-cluster { padding: 0; margin: 0; border-radius: var(--radius-chip); }
+/* Sheets: title, the track, what it does. */
+.reply-types-sheet { display: flex; flex-direction: column; gap: var(--space-3); }
+.reply-types-sheet__title { margin: 0; font-size: var(--type-heading-size); line-height: var(--type-heading-line); font-weight: 700; }
+.reply-types-sheet .field__help { margin: 0; }
+
+/* The key line's reply type ("Ask · 9428 47"): a word in the sentence's font, before the keys. */
+.nl-speakbar__tag { font-family: var(--font-sans); font-weight: 700; letter-spacing: 0; color: var(--ink); white-space: nowrap; }
+.nl-speakbar__sep { margin: 0 0.4em; font-weight: 700; }
+.app--shell .nl-speakbar__tag { flex: none; }
+.app--shell .nl-speakbar__tag:last-child { margin-right: auto; } /* nothing typed yet: the word alone, at the start */
+.app--shell .nl-speakbar__tag + .nl-sr-only + .nl-speakbar__digits-end { min-width: 0; overflow: hidden; display: flex; justify-content: flex-end; white-space: pre; }
+
 /* Keypad: fills the space left over; keys 72-96px tall, as wide as the room allows up to 1.75x. */
 .app--shell [data-section="pad"] {
   min-height: calc(4 * var(--key-min) + 3 * var(--space-2) + 12px); min-width: 0;
@@ -509,8 +607,8 @@ body:has(.app--shell) { min-height: 0; }
    on the right, filling the height. One grid on .app__inner (main and its screen are see-through). */
 .app--split .app__inner {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 46%);
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
-  grid-template-areas: "header pad" "speak pad" "cands pad" "actions pad";
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  grid-template-areas: "header pad" "thread pad" "speak pad" "cands pad" "actions pad";
   column-gap: var(--space-6); row-gap: var(--space-2);
   height: calc(100svh - max(var(--space-2), env(safe-area-inset-top)) - max(var(--space-2), env(safe-area-inset-bottom)));
   max-width: none;
@@ -518,6 +616,7 @@ body:has(.app--shell) { min-height: 0; }
 .app--split { --app-pad-bottom: var(--space-2); --app-pad-x: var(--space-4); }
 .app--split .app-main, .app--split .shell-screen { display: contents; }
 .app--split .app-header { grid-area: header; }
+.app--split [data-section="thread"] { grid-area: thread; }
 .app--split [data-section="speak"] { grid-area: speak; }
 .app--split [data-section="cands"] { grid-area: cands; min-height: 0; }
 .app--split [data-section="actions"] { grid-area: actions; }
@@ -545,6 +644,98 @@ body:has(.app--shell) { min-height: 0; }
   .rotate__title { font-size: 26px; line-height: 32px; }
   .rotate__text { font-size: var(--type-body-size); line-height: var(--type-body-line); }
 }
+
+/* The conversation (web-ui Req 27, ADR-007; components/ConversationStrip.tsx, ConversationSheet.tsx).
+   Who said it is a word ("They", "You") and a shape: their lines are filled, yours are outlined. No ember. */
+.thread-tag {
+  flex: none; display: inline-grid; place-items: center; min-width: 56px; height: 32px; padding: 0 var(--space-2);
+  border-radius: 10px; border: 2px solid transparent; background: var(--surface-sunken); color: var(--ink-muted);
+  font-size: var(--type-label-size); line-height: 1; font-weight: 700;
+}
+[data-who="me"] > .thread-tag { background: transparent; border-color: var(--line-strong); }
+/* One turn on one row: the main screen's strip and panel (a button that opens the sheet on it). */
+.thread-row {
+  display: flex; align-items: center; gap: var(--space-3); width: 100%; min-width: 0;
+  height: var(--target-min); padding: 0 var(--space-4) 0 var(--space-2);
+  border-radius: var(--radius-chip); border: 2px solid var(--line); background: var(--surface); color: var(--ink);
+  font-family: var(--font-sans); font-size: 20px; line-height: 26px; font-weight: 600; text-align: left; cursor: pointer;
+}
+.thread-row[data-who="me"] { background: transparent; }
+.thread-row:focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: 3px; }
+.thread-row.is-lit { box-shadow: 0 0 0 var(--scan-width) var(--ember), 0 0 0 calc(var(--scan-width) + 3px) var(--plum); }
+.thread-row__text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The header's They said button with a turn: the tag, then the line at 20px, cut with an ellipsis. */
+.header-partner.thread-bubble { gap: var(--space-2); padding: 0 var(--space-4) 0 var(--space-2); font-size: 20px; line-height: 26px; }
+/* The strip (split; stack 1150px or taller): a fixed height whatever is said, so the keys never move. */
+.thread-strip {
+  flex: none; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--space-2);
+  height: calc(2 * var(--target-min) + var(--space-2) + 12px); padding: 6px; margin: -6px;
+  border-radius: calc(var(--radius-chip) + 6px);
+}
+.thread-strip__turns, .thread-strip__actions { display: grid; grid-template-rows: repeat(2, var(--target-min)); gap: var(--space-2); min-width: 0; }
+.thread-strip__actions .nl-btn { justify-content: flex-start; padding: 0 var(--space-4); }
+/* One turn: it takes both rows, up to 3 lines, so the strip never shows a lone button by an empty row. */
+.thread-row--tall { grid-row: span 2; height: auto; align-items: center; padding-top: var(--space-2); padding-bottom: var(--space-2); }
+.thread-row--tall .thread-row__text { white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; }
+/* None: an outlined empty box over both rows, the size the turns will take. */
+.thread-strip__empty {
+  grid-row: span 2; display: flex; align-items: center; margin: 0; padding: 0 var(--space-4);
+  border-radius: var(--radius-chip); border: 2px dashed var(--line-strong);
+  font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: 600; color: var(--ink-muted);
+}
+/* The panel on laptops, in the old They said card's place. */
+.thread-panel {
+  display: flex; flex-direction: column; gap: var(--space-3);
+  padding: var(--space-4) var(--space-4) var(--space-4) var(--space-6); border-radius: var(--radius-card); background: var(--surface);
+}
+.thread-panel__title { margin: 0; font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: 600; color: var(--ink-muted); }
+.thread-panel__empty { margin: 0; font-size: 22px; line-height: 30px; color: var(--ink-muted); }
+.thread-panel__turns { display: flex; flex-direction: column; gap: var(--space-2); }
+.thread-panel__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.thread-panel .partner { padding: 0; background: transparent; }
+/* The sheet: Listen and Type their line, then the turns, newest first, then Share and Clear. */
+.thread-add { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-3); }
+.thread-all { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.thread-list { display: flex; flex-direction: column; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.thread-item {
+  display: flex; flex-direction: column; gap: var(--space-2); margin: 0;
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-6);
+  border-radius: var(--radius-card); border: 2px solid transparent; background: var(--surface-sunken);
+}
+.thread-item[data-who="me"] { background: transparent; border-color: var(--line-strong); }
+.thread-item__who { margin: var(--space-1) 0 0; font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: 700; color: var(--ink-muted); }
+.thread-item__text { margin: 0; font-size: var(--type-candidate-size); line-height: var(--type-candidate-line); font-weight: 600; overflow-wrap: anywhere; }
+/* A turn's buttons: one row where the sheet is wide; on a phone two even rows (the line's own actions, then
+   Change and Remove on the newest "they said"), each an equal-width grid, so nothing wraps alone. */
+.thread-item__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-1); }
+.thread-item__row { display: contents; }
+.thread-item__actions .nl-btn { padding: 0 var(--space-4); }
+.thread-item .partner { padding: 0; background: transparent; }
+/* Narrow phones: words only and label size (names keep the words). */
+@media (max-width: 599px) {
+  .thread-item { padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4); }
+  .thread-add .nl-icon { display: none; }
+  .thread-add .nl-btn { padding: 0 var(--space-3); }
+  /* Share (or Copy all) and Clear conversation, and the confirm's Keep and Clear: full-width rows. */
+  .thread-all, .thread-confirm .field__row { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
+}
+/* A turn narrower than 600px (a phone, a tablet's or laptop's side sheet): the turn's buttons in even rows;
+   words only under 400px. */
+.thread-item { container: thread-item / inline-size; }
+@container thread-item (max-width: 399px) {
+  .thread-item__actions .nl-icon { display: none; }
+  .thread-item__actions .nl-btn { font-size: var(--type-label-size); }
+}
+@container thread-item (max-width: 599px) {
+  .thread-item__actions .nl-btn { padding: 0 var(--space-2); min-width: 0; }
+  .thread-item__actions { flex-direction: column; }
+  .thread-item__row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--space-2); }
+  .thread-item__row:empty { display: none; }
+}
+.thread-confirm { padding: var(--space-4); border-radius: var(--radius-card); border: 2px solid var(--danger); }
+.thread-confirm__q { margin: 0; font-size: var(--type-body-lg-size); line-height: var(--type-body-lg-line); font-weight: 700; }
+/* Settings: "Include what you said" belongs to Model ranking. */
+.field--sub { padding-left: var(--space-6); border-left: 2px solid var(--line-strong); }
 
 /* Menu sheet: the intended-purpose sentence under the About links (it is not on the shells' screen). */
 .menu__note { margin: 0; font-size: var(--type-body-size); line-height: var(--type-body-line); color: var(--ink-muted); }

@@ -38,7 +38,7 @@ Read the component README before building or changing that component. If somethi
 - **Candidate:** up to 5, ranked; selecting does not speak, Speak does; `aria-pressed` for selection; every listed candidate already passed the proof check.
 - **ProofChip:** match (check icon, solid border), new (plus icon, dashed border), reject (x icon, struck through, never spoken). Announce the state as a word.
 - **SpeakBar:** the sentence in `utterance`, the key sequence under it in mono `ink-muted`, then Speak. Empty state says "Press a key to start". Never truncate. In the phone and tablet shell the sentence card has a fixed height in whole lines (1 to 3 by screen height) and scrolls inside itself, with Clear (then Undo) on the right.
-- **Icons:** inline SVG, 24px grid, 2.5px round stroke, `currentColor`, all in `components/Icon.tsx` (speaker, voice, check, plus, x, back, space, gear, switch, save, menu, show, flip, spell, said, mic, stop, offline). Add new ones there in the same style. No emoji, no filled glyph sets, no pictures of people, no mascot, no cartoon cat.
+- **Icons:** inline SVG, 24px grid, 2.5px round stroke, `currentColor`, all in `components/Icon.tsx` (speaker, voice, check, plus, x, back, space, gear, switch, save, menu, show, flip, spell, said, mic, stop, thread, copy, share, offline). Add new ones there in the same style. No emoji, no filled glyph sets, no pictures of people, no mascot, no cartoon cat.
 - **Copy:** plain verbs, sentence case, no exclamation marks, numbers as digits. See the Write / Not table in the README.
 
 ## Spooky, but calm

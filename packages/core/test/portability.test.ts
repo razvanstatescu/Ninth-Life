@@ -24,6 +24,7 @@ describe('core-encoder: portability', () => {
       'KEYMAP', 'KEY_LETTERS', 'normalize', 'encodeWord', 'encodeSentence', 'tokenize',
       'validate', 'proof', 'Lexicon', 'unigramModel', 'bigramModel',
       'lattice', 'beam', 'decodeGhost', 'formatSentence', 'initialScan', 'scanReducer',
+      'rankByIntent', 'intentCue', 'isReplyIntent', 'REPLY_INTENTS', 'INTENT_WEIGHT',
     ]) {
       expect(core, name).toHaveProperty(name);
     }

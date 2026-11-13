@@ -11,12 +11,13 @@ describe('layout (web-ui Req 15)', () => {
     expect(col!.indexOf('pad')).toBe(1);
     expect(col!.indexOf('cands')).toBeGreaterThan(col!.indexOf('pad'));
     expect(col!.indexOf('proof')).toBeGreaterThan(col!.indexOf('cands'));
-    expect(col).toEqual(['speak', 'pad', 'scan', 'cands', 'proof', 'partner', 'hint']);
+    // 27: the conversation panel takes the old They said card's place.
+    expect(col).toEqual(['speak', 'pad', 'scan', 'cands', 'proof', 'thread', 'hint']);
   });
 
   it('Req 15.6: wide keeps the artboard: talk column beside the keypad column', () => {
     expect(sectionOrder('wide').columns).toEqual([
-      ['partner', 'speak', 'cands', 'proof'],
+      ['thread', 'speak', 'cands', 'proof'],
       ['pad', 'scan', 'hint'],
     ]);
   });
@@ -32,7 +33,8 @@ describe('layout (web-ui Req 15)', () => {
 
   it('split (tablet in landscape, web-ui Req 25): card, suggestions and action bar on the left, the keypad alone on the right', () => {
     const [left, pad] = sectionOrder('split').columns;
-    expect(left).toEqual(['speak', 'cands', 'actions']);
+    // 27.5: the conversation strip sits above the card.
+    expect(left).toEqual(['thread', 'speak', 'cands', 'actions']);
     expect(pad).toEqual(['pad']);
     expect(isTwoColumn('split')).toBe(true);
     expect(isTwoColumn('wide')).toBe(true);

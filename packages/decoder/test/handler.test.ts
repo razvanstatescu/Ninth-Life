@@ -238,6 +238,54 @@ describe('handleDecode: rejected words for the proof panel (F7, DS-1.7)', () => 
   });
 });
 
+describe('handleDecode: reply type (DS-9)', () => {
+  const body = (intent?: string) =>
+    requestFor('on my way', {
+      lattice: [['no', 'on'], ['my'], ['way', 'wax']],
+      beams: [['on', 'my', 'way'], ['no', 'my', 'way']], // the client re-ranked them for Agree
+      k: 3,
+      context: { partner: 'Are you coming?', ...(intent ? { intent } : {}) },
+    });
+
+  it('passes context.intent to the model as <reply_type>, with the same system prompt (DS-9.2)', async () => {
+    const seen: { system: string; user: string }[] = [];
+    const deps = makeDeps({ reply: (p) => (seen.push(p), '{"c":[["on","my","way"]]}') });
+    const res = ok(await handleDecode(body('agree'), META, deps));
+    expect(seen[0]!.user).toContain('<reply_type>agree</reply_type>');
+    expect(res.candidates[0]!.words).toEqual(['on', 'my', 'way']);
+    const plain: { system: string; user: string }[] = [];
+    await handleDecode(body(), META, makeDeps({ reply: (p) => (plain.push(p), '{"c":[]}') }));
+    expect(plain[0]!.user).not.toContain('reply_type');
+    expect(plain[0]!.system).toBe(seen[0]!.system);
+  });
+
+  it('the reply type never lets an invalid word through (DS-9.3)', async () => {
+    const deps = makeDeps({ reply: '{"c":[["yes","my","way"],["no","my","way"]]}' });
+    const res = ok(await handleDecode(body('agree'), META, deps));
+    expect(res.candidates.map((c) => c.words.join(' '))).toEqual(['no my way', 'on my way']);
+    expect(res.rejected).toBe(1);
+    expect(res.rejectedWords).toEqual([{ slot: 0, word: 'yes', expectedCode: '66' }]);
+  });
+
+  it('degraded replies keep the client beam order, which the client already re-ranked (nothing server-side)', async () => {
+    for (const reply of [{ error: new Error('x') }, 'junk', '{"c":[["yes","my","way"]]}'] as const) {
+      const res = ok(await handleDecode(body('agree'), META, makeDeps({ reply })));
+      expect(res.degraded).toBe(true);
+      expect(res.candidates.map((c) => c.words.join(' '))).toEqual(['on my way', 'no my way']);
+    }
+  });
+
+  it('an unknown reply type is a 400 without the value, and the model is not called (DS-9.1)', async () => {
+    const deps = makeDeps({ reply: '{"c":[]}' });
+    const spy = vi.spyOn(deps.fake!, 'complete');
+    const r = await handleDecode(body('zqsupersecret'), META, deps);
+    expect(r.status).toBe(400);
+    expect(JSON.stringify(r.json)).not.toContain('zqsupersecret');
+    expect((r.json as { issues: string[] }).issues.some((i) => i.startsWith('context.intent'))).toBe(true);
+    expect(spy).not.toHaveBeenCalled();
+  });
+});
+
 describe('maxTokensFor', () => {
   it('is 120 for short inputs and capped at 400', () => {
     expect(maxTokensFor(3, 5)).toBe(120);
@@ -251,6 +299,8 @@ describe('maxTokensFor', () => {
 const digit = fc.constantFrom<Digit>('2', '3', '4', '5', '6', '7', '8', '9');
 const codeArb = fc.array(digit, { minLength: 1, maxLength: 7 }).map((d) => d.join(''));
 const codesArb = fc.array(codeArb, { minLength: 1, maxLength: 6 });
+/** No reply type, or one of the three (DS-9). */
+const intentArb = fc.option(fc.constantFrom('agree', 'disagree', 'ask'), { nil: undefined });
 
 /** A word that really encodes to `code` (a letter chosen per key), possibly with case/accents. */
 const wordFor = (code: string) =>
@@ -315,11 +365,12 @@ describe('properties', () => {
             text: llmTextFor(codes),
             beams: fc.array(candidateFor(codes), { maxLength: 4 }),
             k: fc.integer({ min: 1, max: 5 }),
+            intent: intentArb,
           }),
         ),
-        async ({ codes, text, beams, k }) => {
+        async ({ codes, text, beams, k, intent }) => {
           const deps = makeDeps({ reply: text });
-          const body = { v: 1, lang: 'en', mode: 'letter', codes, lattice: codes.map(() => []), beams, k };
+          const body = { v: 1, lang: 'en', mode: 'letter', codes, lattice: codes.map(() => []), beams, k, ...(intent ? { context: { intent } } : {}) };
           const r = await handleDecode(body, META, deps);
           runs++;
           if (r.status === 400) return void refused++; // e.g. an empty beam word: refused before the LLM
@@ -423,8 +474,9 @@ describe('properties', () => {
       fc.asyncProperty(
         marker,
         marker,
-        fc.constantFrom<('ok' | 'rejected' | 'timeout' | 'error' | 'garbage' | 'disabled' | 'bad')[]>('ok', 'rejected', 'timeout', 'error', 'garbage', 'disabled', 'bad'),
-        async (partner, word, path) => {
+        fc.constantFrom<('ok' | 'rejected' | 'timeout' | 'error' | 'garbage' | 'disabled' | 'bad' | 'badIntent')[]>('ok', 'rejected', 'timeout', 'error', 'garbage', 'disabled', 'bad', 'badIntent'),
+        fc.constantFrom('agree', 'disagree', 'ask'),
+        async (partner, word, path, intent) => {
           printed.length = 0;
           const replies = {
             ok: `{"c":[["${word}"]]}`,
@@ -434,14 +486,20 @@ describe('properties', () => {
             garbage: `${partner} ${word}`,
             disabled: '{"c":[]}',
             bad: '{"c":[]}',
+            badIntent: '{"c":[]}',
           } as const;
           const deps = makeDeps({ reply: replies[path], enabled: path !== 'disabled', timeoutMs: 10 });
           deps.options = { timeoutMs: 10 }; // default console logger, captured above
+          // Every path carries a reply type (DS-9.4); badIntent sends a value the schema refuses.
           const body =
             path === 'bad'
-              ? { v: 1, lang: 'en', codes: [word], lattice: [[partner]] }
-              : { v: 1, lang: 'en', codes: ['2'], lattice: [[word]], beams: [[word]], context: { partner, recent: [partner] } };
+              ? { v: 1, lang: 'en', codes: [word], lattice: [[partner]], context: { intent } }
+              : { v: 1, lang: 'en', codes: ['2'], lattice: [[word]], beams: [[word]], context: { partner, recent: [partner], intent: path === 'badIntent' ? word : intent } };
           const r = await handleDecode(body, META, deps);
+          if (path === 'badIntent') {
+            expect(r.status).toBe(400);
+            expect(JSON.stringify(r.json)).not.toContain(word);
+          }
           // The rejected word does reach the response (so the panel can strike it through) ...
           if (path === 'rejected') expect((r.json as DecodeResponse).rejectedWords).toEqual([{ slot: 0, word: `${word}x`, expectedCode: '2' }]);
           // ... but never the logs.
@@ -450,6 +508,9 @@ describe('properties', () => {
             expect(line).not.toContain(partner);
             expect(line).not.toContain(word);
             expect(line).not.toContain(META.ipHash);
+            // No reply type: no key for it and none of its values (DS-6.1, DS-9.4).
+            expect(line).not.toMatch(/intent|reply_type/i);
+            expect(line).not.toMatch(/\b(agree|disagree|ask)\b/i);
             // Only the fixed metrics vocabulary.
             const obj = JSON.parse(line) as Record<string, unknown>;
             for (const [k, v] of Object.entries(obj)) {
