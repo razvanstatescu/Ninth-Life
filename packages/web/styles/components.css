@@ -18,6 +18,22 @@
 
 .nl-icon { width: 24px; height: 24px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 
+/* Brand lockup: the one way the icon and the wordmark sit together (website bar and footer, /about, the app
+   header). The favicon variant below 48px (brand book, Logo), its corners at a quarter of its size like the
+   icon tile, the name in `brand` type. As a link it is a 56px target. --small is the footer's 32px lockup. */
+.nl-brand {
+  display: inline-flex; align-items: center; gap: var(--space-3);
+  color: var(--ink); text-decoration: none; border-radius: var(--radius-chip);
+}
+a.nl-brand { min-height: var(--target-min); }
+.nl-brand img { display: block; flex: none; width: calc(var(--space-12) - var(--space-1)); height: calc(var(--space-12) - var(--space-1)); border-radius: 25%; }
+.nl-brand__name {
+  font-size: var(--type-brand-size); line-height: var(--type-brand-line);
+  font-weight: var(--type-brand-weight); letter-spacing: var(--type-brand-tracking);
+}
+.nl-brand--small img { width: var(--space-8); height: var(--space-8); }
+.nl-brand--small .nl-brand__name { font-size: var(--type-body-lg-size); line-height: var(--type-body-lg-line); }
+
 /* Button */
 .nl-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
@@ -29,6 +45,8 @@
 .nl-btn:focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: 3px; }
 .nl-btn--primary { background: var(--ember); color: var(--on-ember); border: 0; box-shadow: var(--ember-edge); } /* app: border 0 as in the artboards, so the Day plum ring sits on the edge */
 .nl-btn--primary:active { background: var(--ember-deep); }
+/* Forced colours drop the ember fill; a transparent border is painted in the system colour, so the button keeps its edge. */
+@media (forced-colors: active) { .nl-btn--primary { border: var(--line-width) solid transparent; } }
 .nl-btn--secondary { background: transparent; color: var(--ink); border-color: var(--line-strong); }
 .nl-btn--secondary:active { background: var(--surface-sunken); }
 .nl-btn--quiet { background: var(--surface-sunken); color: var(--ink); }

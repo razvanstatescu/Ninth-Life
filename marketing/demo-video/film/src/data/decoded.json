@@ -1,0 +1,1454 @@
+{
+  "generatedBy": "scripts/build-data.ts",
+  "source": "@ninth/core decodeGhost on data/lexicon/en.v1.json + en.bigram.v1.json",
+  "generatedAt": "2026-11-11",
+  "keypad": {
+    "keys": [
+      {
+        "id": "1",
+        "digit": "1",
+        "letters": ".,?!"
+      },
+      {
+        "id": "2",
+        "digit": "2",
+        "letters": "ABC"
+      },
+      {
+        "id": "3",
+        "digit": "3",
+        "letters": "DEF"
+      },
+      {
+        "id": "4",
+        "digit": "4",
+        "letters": "GHI"
+      },
+      {
+        "id": "5",
+        "digit": "5",
+        "letters": "JKL"
+      },
+      {
+        "id": "6",
+        "digit": "6",
+        "letters": "MNO"
+      },
+      {
+        "id": "7",
+        "digit": "7",
+        "letters": "PQRS"
+      },
+      {
+        "id": "8",
+        "digit": "8",
+        "letters": "TUV"
+      },
+      {
+        "id": "9",
+        "digit": "9",
+        "letters": "WXYZ"
+      },
+      {
+        "id": "star",
+        "digit": "*",
+        "letters": "Back"
+      },
+      {
+        "id": "0",
+        "digit": "0",
+        "letters": "Space"
+      },
+      {
+        "id": "hash",
+        "digit": "#",
+        "letters": "Next"
+      }
+    ]
+  },
+  "sentences": {
+    "hello": {
+      "id": "hello",
+      "words": [
+        "hello"
+      ],
+      "codes": [
+        "43556"
+      ],
+      "presses": [
+        "4",
+        "3",
+        "5",
+        "5",
+        "6"
+      ],
+      "steps": [
+        {
+          "key": "4",
+          "codes": [
+            "4"
+          ],
+          "words": [
+            "i"
+          ],
+          "text": "I"
+        },
+        {
+          "key": "3",
+          "codes": [
+            "43"
+          ],
+          "words": [
+            "he"
+          ],
+          "text": "He"
+        },
+        {
+          "key": "5",
+          "codes": [
+            "435"
+          ],
+          "words": [
+            "gel"
+          ],
+          "text": "Gel"
+        },
+        {
+          "key": "5",
+          "codes": [
+            "4355"
+          ],
+          "words": [
+            "hell"
+          ],
+          "text": "Hell"
+        },
+        {
+          "key": "6",
+          "codes": [
+            "43556"
+          ],
+          "words": [
+            "hello"
+          ],
+          "text": "Hello"
+        }
+      ],
+      "candidates": [
+        "Hello"
+      ],
+      "text": "Hello",
+      "proof": [
+        {
+          "word": "hello",
+          "code": "43556"
+        }
+      ]
+    },
+    "good": {
+      "id": "good",
+      "words": [
+        "good"
+      ],
+      "codes": [
+        "4663"
+      ],
+      "presses": [
+        "4",
+        "6",
+        "6",
+        "3"
+      ],
+      "steps": [
+        {
+          "key": "4",
+          "codes": [
+            "4"
+          ],
+          "words": [
+            "i"
+          ],
+          "text": "I"
+        },
+        {
+          "key": "6",
+          "codes": [
+            "46"
+          ],
+          "words": [
+            "i'm"
+          ],
+          "text": "I'm"
+        },
+        {
+          "key": "6",
+          "codes": [
+            "466"
+          ],
+          "words": [
+            "hmm"
+          ],
+          "text": "Hmm"
+        },
+        {
+          "key": "3",
+          "codes": [
+            "4663"
+          ],
+          "words": [
+            "good"
+          ],
+          "text": "Good"
+        }
+      ],
+      "candidates": [
+        "Good",
+        "Home",
+        "Gone"
+      ],
+      "text": "Good",
+      "proof": [
+        {
+          "word": "good",
+          "code": "4663"
+        }
+      ]
+    },
+    "hello-again": {
+      "id": "hello-again",
+      "words": [
+        "hello",
+        "again"
+      ],
+      "codes": [
+        "43556",
+        "24246"
+      ],
+      "presses": [
+        "4",
+        "3",
+        "5",
+        "5",
+        "6",
+        "0",
+        "2",
+        "4",
+        "2",
+        "4",
+        "6"
+      ],
+      "steps": [
+        {
+          "key": "4",
+          "codes": [
+            "4"
+          ],
+          "words": [
+            "i"
+          ],
+          "text": "I"
+        },
+        {
+          "key": "3",
+          "codes": [
+            "43"
+          ],
+          "words": [
+            "he"
+          ],
+          "text": "He"
+        },
+        {
+          "key": "5",
+          "codes": [
+            "435"
+          ],
+          "words": [
+            "gel"
+          ],
+          "text": "Gel"
+        },
+        {
+          "key": "5",
+          "codes": [
+            "4355"
+          ],
+          "words": [
+            "hell"
+          ],
+          "text": "Hell"
+        },
+        {
+          "key": "6",
+          "codes": [
+            "43556"
+          ],
+          "words": [
+            "hello"
+          ],
+          "text": "Hello"
+        },
+        {
+          "key": "0",
+          "codes": [
+            "43556"
+          ],
+          "words": [
+            "hello"
+          ],
+          "text": "Hello"
+        },
+        {
+          "key": "2",
+          "codes": [
+            "43556",
+            "2"
+          ],
+          "words": [
+            "hello",
+            "a"
+          ],
+          "text": "Hello a"
+        },
+        {
+          "key": "4",
+          "codes": [
+            "43556",
+            "24"
+          ],
+          "words": [
+            "hello",
+            "ah"
+          ],
+          "text": "Hello ah"
+        },
+        {
+          "key": "2",
+          "codes": [
+            "43556",
+            "242"
+          ],
+          "words": [
+            "hello",
+            "cia"
+          ],
+          "text": "Hello cia"
+        },
+        {
+          "key": "4",
+          "codes": [
+            "43556",
+            "2424"
+          ],
+          "words": [
+            "hello",
+            "chai"
+          ],
+          "text": "Hello chai"
+        },
+        {
+          "key": "6",
+          "codes": [
+            "43556",
+            "24246"
+          ],
+          "words": [
+            "hello",
+            "again"
+          ],
+          "text": "Hello again"
+        }
+      ],
+      "candidates": [
+        "Hello again",
+        "Hello chain",
+        "Hello chaim"
+      ],
+      "text": "Hello again",
+      "proof": [
+        {
+          "word": "hello",
+          "code": "43556"
+        },
+        {
+          "word": "again",
+          "code": "24246"
+        }
+      ]
+    },
+    "i-need-water": {
+      "id": "i-need-water",
+      "words": [
+        "i",
+        "need",
+        "water"
+      ],
+      "codes": [
+        "4",
+        "6333",
+        "92837"
+      ],
+      "presses": [
+        "4",
+        "0",
+        "6",
+        "3",
+        "3",
+        "3",
+        "0",
+        "9",
+        "2",
+        "8",
+        "3",
+        "7"
+      ],
+      "steps": [
+        {
+          "key": "4",
+          "codes": [
+            "4"
+          ],
+          "words": [
+            "i"
+          ],
+          "text": "I"
+        },
+        {
+          "key": "0",
+          "codes": [
+            "4"
+          ],
+          "words": [
+            "i"
+          ],
+          "text": "I"
+        },
+        {
+          "key": "6",
+          "codes": [
+            "4",
+            "6"
+          ],
+          "words": [
+            "i",
+            "m"
+          ],
+          "text": "I m"
+        },
+        {
+          "key": "3",
+          "codes": [
+            "4",
+            "63"
+          ],
+          "words": [
+            "i",
+            "of"
+          ],
+          "text": "I of"
+        },
+        {
+          "key": "3",
+          "codes": [
+            "4",
+            "633"
+          ],
+          "words": [
+            "i",
+            "off"
+          ],
+          "text": "I off"
+        },
+        {
+          "key": "3",
+          "codes": [
+            "4",
+            "6333"
+          ],
+          "words": [
+            "i",
+            "need"
+          ],
+          "text": "I need"
+        },
+        {
+          "key": "0",
+          "codes": [
+            "4",
+            "6333"
+          ],
+          "words": [
+            "i",
+            "need"
+          ],
+          "text": "I need"
+        },
+        {
+          "key": "9",
+          "codes": [
+            "4",
+            "6333",
+            "9"
+          ],
+          "words": [
+            "i",
+            "need",
+            "w"
+          ],
+          "text": "I need w"
+        },
+        {
+          "key": "2",
+          "codes": [
+            "4",
+            "6333",
+            "92"
+          ],
+          "words": [
+            "i",
+            "need",
+            "ya"
+          ],
+          "text": "I need ya"
+        },
+        {
+          "key": "8",
+          "codes": [
+            "4",
+            "6333",
+            "928"
+          ],
+          "words": [
+            "i",
+            "need",
+            "wat"
+          ],
+          "text": "I need wat"
+        },
+        {
+          "key": "3",
+          "codes": [
+            "4",
+            "6333",
+            "9283"
+          ],
+          "words": [
+            "i",
+            "need",
+            "wave"
+          ],
+          "text": "I need wave"
+        },
+        {
+          "key": "7",
+          "codes": [
+            "4",
+            "6333",
+            "92837"
+          ],
+          "words": [
+            "i",
+            "need",
+            "water"
+          ],
+          "text": "I need water"
+        }
+      ],
+      "candidates": [
+        "I need water",
+        "I need waves",
+        "I need yates"
+      ],
+      "text": "I need water",
+      "proof": [
+        {
+          "word": "i",
+          "code": "4"
+        },
+        {
+          "word": "need",
+          "code": "6333"
+        },
+        {
+          "word": "water",
+          "code": "92837"
+        }
+      ]
+    },
+    "good-to-be-back": {
+      "id": "good-to-be-back",
+      "words": [
+        "it",
+        "is",
+        "good",
+        "to",
+        "be",
+        "back"
+      ],
+      "codes": [
+        "48",
+        "47",
+        "4663",
+        "86",
+        "23",
+        "2225"
+      ],
+      "presses": [
+        "4",
+        "8",
+        "0",
+        "4",
+        "7",
+        "0",
+        "4",
+        "6",
+        "6",
+        "3",
+        "0",
+        "8",
+        "6",
+        "0",
+        "2",
+        "3",
+        "0",
+        "2",
+        "2",
+        "2",
+        "5"
+      ],
+      "steps": [
+        {
+          "key": "4",
+          "codes": [
+            "4"
+          ],
+          "words": [
+            "i"
+          ],
+          "text": "I"
+        },
+        {
+          "key": "8",
+          "codes": [
+            "48"
+          ],
+          "words": [
+            "it"
+          ],
+          "text": "It"
+        },
+        {
+          "key": "0",
+          "codes": [
+            "48"
+          ],
+          "words": [
+            "it"
+          ],
+          "text": "It"
+        },
+        {
+          "key": "4",
+          "codes": [
+            "48",
+            "4"
+          ],
+          "words": [
+            "it",
+            "i"
+          ],
+          "text": "It I"
+        },
+        {
+          "key": "7",
+          "codes": [
+            "48",
+            "47"
+          ],
+          "words": [
+            "it",
+            "is"
+          ],
+          "text": "It is"
+        },
+        {
+          "key": "0",
+          "codes": [
+            "48",
+            "47"
+          ],
+          "words": [
+            "it",
+            "is"
+          ],
+          "text": "It is"
+        },
+        {
+          "key": "4",
+          "codes": [
+            "48",
+            "47",
+            "4"
+          ],
+          "words": [
+            "it",
+            "is",
+            "i"
+          ],
+          "text": "It is I"
+        },
+        {
+          "key": "6",
+          "codes": [
+            "48",
+            "47",
+            "46"
+          ],
+          "words": [
+            "it",
+            "is",
+            "in"
+          ],
+          "text": "It is in"
+        },
+        {
+          "key": "6",
+          "codes": [
+            "48",
+            "47",
+            "466"
+          ],
+          "words": [
+            "it",
+            "is",
+            "ion"
+          ],
+          "text": "It is ion"
+        },
+        {
+          "key": "3",
+          "codes": [
+            "48",
+            "47",
+            "4663"
+          ],
+          "words": [
+            "it",
+            "is",
+            "good"
+          ],
+          "text": "It is good"
+        },
+        {
+          "key": "0",
+          "codes": [
+            "48",
+            "47",
+            "4663"
+          ],
+          "words": [
+            "it",
+            "is",
+            "good"
+          ],
+          "text": "It is good"
+        },
+        {
+          "key": "8",
+          "codes": [
+            "48",
+            "47",
+            "4663",
+            "8"
+          ],
+          "words": [
+            "it",
+            "is",
+            "good",
+            "t"
+          ],
+          "text": "It is good t"
+        },
+        {
+          "key": "6",
+          "codes": [
+            "48",
+            "47",
+            "4663",
+            "86"
+          ],
+          "words": [
+            "it",
+            "is",
+            "good",
+            "to"
+          ],
+          "text": "It is good to"
+        },
+        {
+          "key": "0",
+          "codes": [
+            "48",
+            "47",
+            "4663",
+            "86"
+          ],
+          "words": [
+            "it",
+            "is",
+            "good",
+            "to"
+          ],
+          "text": "It is good to"
+        },
+        {
+          "key": "2",
+          "codes": [
+            "48",
+            "47",
+            "4663",
+            "86",
+            "2"
+          ],
+          "words": [
+            "it",
+            "is",
+            "good",
+            "to",
+            "a"
+          ],
+          "text": "It is good to a"
+        },
+        {
+          "key": "3",
+          "codes": [
+            "48",
+            "47",
+            "4663",
+            "86",
+            "23"
+          ],
+          "words": [
+            "it",
+            "is",
+            "good",
+            "to",
+            "be"
+          ],
+          "text": "It is good to be"
+        },
+        {
+          "key": "0",
+          "codes": [
+            "48",
+            "47",
+            "4663",
+            "86",
+            "23"
+          ],
+          "words": [
+            "it",
+            "is",
+            "good",
+            "to",
+            "be"
+          ],
+          "text": "It is good to be"
+        },
+        {
+          "key": "2",
+          "codes": [
+            "48",
+            "47",
+            "4663",
+            "86",
+            "23",
+            "2"
+          ],
+          "words": [
+            "it",
+            "is",
+            "good",
+            "to",
+            "be",
+            "a"
+          ],
+          "text": "It is good to be a"
+        },
+        {
+          "key": "2",
+          "codes": [
+            "48",
+            "47",
+            "4663",
+            "86",
+            "23",
+            "22"
+          ],
+          "words": [
+            "it",
+            "is",
+            "good",
+            "to",
+            "be",
+            "ca"
+          ],
+          "text": "It is good to be ca"
+        },
+        {
+          "key": "2",
+          "codes": [
+            "48",
+            "47",
+            "4663",
+            "86",
+            "23",
+            "222"
+          ],
+          "words": [
+            "it",
+            "is",
+            "good",
+            "to",
+            "be",
+            "abc"
+          ],
+          "text": "It is good to be abc"
+        },
+        {
+          "key": "5",
+          "codes": [
+            "48",
+            "47",
+            "4663",
+            "86",
+            "23",
+            "2225"
+          ],
+          "words": [
+            "it",
+            "is",
+            "good",
+            "to",
+            "be",
+            "back"
+          ],
+          "text": "It is good to be back"
+        }
+      ],
+      "candidates": [
+        "It is good to be back",
+        "It is home to be back",
+        "It is gone to be back"
+      ],
+      "text": "It is good to be back",
+      "proof": [
+        {
+          "word": "it",
+          "code": "48"
+        },
+        {
+          "word": "is",
+          "code": "47"
+        },
+        {
+          "word": "good",
+          "code": "4663"
+        },
+        {
+          "word": "to",
+          "code": "86"
+        },
+        {
+          "word": "be",
+          "code": "23"
+        },
+        {
+          "word": "back",
+          "code": "2225"
+        }
+      ]
+    },
+    "something-to-say": {
+      "id": "something-to-say",
+      "words": [
+        "i",
+        "have",
+        "something",
+        "to",
+        "say"
+      ],
+      "codes": [
+        "4",
+        "4283",
+        "766384464",
+        "86",
+        "729"
+      ],
+      "presses": [
+        "4",
+        "0",
+        "4",
+        "2",
+        "8",
+        "3",
+        "0",
+        "7",
+        "6",
+        "6",
+        "3",
+        "8",
+        "4",
+        "4",
+        "6",
+        "4",
+        "0",
+        "8",
+        "6",
+        "0",
+        "7",
+        "2",
+        "9"
+      ],
+      "steps": [
+        {
+          "key": "4",
+          "codes": [
+            "4"
+          ],
+          "words": [
+            "i"
+          ],
+          "text": "I"
+        },
+        {
+          "key": "0",
+          "codes": [
+            "4"
+          ],
+          "words": [
+            "i"
+          ],
+          "text": "I"
+        },
+        {
+          "key": "4",
+          "codes": [
+            "4",
+            "4"
+          ],
+          "words": [
+            "i",
+            "i"
+          ],
+          "text": "I I"
+        },
+        {
+          "key": "2",
+          "codes": [
+            "4",
+            "42"
+          ],
+          "words": [
+            "i",
+            "ha"
+          ],
+          "text": "I ha"
+        },
+        {
+          "key": "8",
+          "codes": [
+            "4",
+            "428"
+          ],
+          "words": [
+            "i",
+            "hat"
+          ],
+          "text": "I hat"
+        },
+        {
+          "key": "3",
+          "codes": [
+            "4",
+            "4283"
+          ],
+          "words": [
+            "i",
+            "have"
+          ],
+          "text": "I have"
+        },
+        {
+          "key": "0",
+          "codes": [
+            "4",
+            "4283"
+          ],
+          "words": [
+            "i",
+            "have"
+          ],
+          "text": "I have"
+        },
+        {
+          "key": "7",
+          "codes": [
+            "4",
+            "4283",
+            "7"
+          ],
+          "words": [
+            "i",
+            "have",
+            "s"
+          ],
+          "text": "I have s"
+        },
+        {
+          "key": "6",
+          "codes": [
+            "4",
+            "4283",
+            "76"
+          ],
+          "words": [
+            "i",
+            "have",
+            "so"
+          ],
+          "text": "I have so"
+        },
+        {
+          "key": "6",
+          "codes": [
+            "4",
+            "4283",
+            "766"
+          ],
+          "words": [
+            "i",
+            "have",
+            "son"
+          ],
+          "text": "I have son"
+        },
+        {
+          "key": "3",
+          "codes": [
+            "4",
+            "4283",
+            "7663"
+          ],
+          "words": [
+            "i",
+            "have",
+            "some"
+          ],
+          "text": "I have some"
+        },
+        {
+          "key": "8",
+          "codes": [
+            "4",
+            "4283",
+            "76638"
+          ],
+          "words": [
+            "i",
+            "have",
+            "something"
+          ],
+          "text": "I have something"
+        },
+        {
+          "key": "4",
+          "codes": [
+            "4",
+            "4283",
+            "766384"
+          ],
+          "words": [
+            "i",
+            "have",
+            "something"
+          ],
+          "text": "I have something"
+        },
+        {
+          "key": "4",
+          "codes": [
+            "4",
+            "4283",
+            "7663844"
+          ],
+          "words": [
+            "i",
+            "have",
+            "something"
+          ],
+          "text": "I have something"
+        },
+        {
+          "key": "6",
+          "codes": [
+            "4",
+            "4283",
+            "76638446"
+          ],
+          "words": [
+            "i",
+            "have",
+            "somethin"
+          ],
+          "text": "I have somethin"
+        },
+        {
+          "key": "4",
+          "codes": [
+            "4",
+            "4283",
+            "766384464"
+          ],
+          "words": [
+            "i",
+            "have",
+            "something"
+          ],
+          "text": "I have something"
+        },
+        {
+          "key": "0",
+          "codes": [
+            "4",
+            "4283",
+            "766384464"
+          ],
+          "words": [
+            "i",
+            "have",
+            "something"
+          ],
+          "text": "I have something"
+        },
+        {
+          "key": "8",
+          "codes": [
+            "4",
+            "4283",
+            "766384464",
+            "8"
+          ],
+          "words": [
+            "i",
+            "have",
+            "something",
+            "t"
+          ],
+          "text": "I have something t"
+        },
+        {
+          "key": "6",
+          "codes": [
+            "4",
+            "4283",
+            "766384464",
+            "86"
+          ],
+          "words": [
+            "i",
+            "have",
+            "something",
+            "to"
+          ],
+          "text": "I have something to"
+        },
+        {
+          "key": "0",
+          "codes": [
+            "4",
+            "4283",
+            "766384464",
+            "86"
+          ],
+          "words": [
+            "i",
+            "have",
+            "something",
+            "to"
+          ],
+          "text": "I have something to"
+        },
+        {
+          "key": "7",
+          "codes": [
+            "4",
+            "4283",
+            "766384464",
+            "86",
+            "7"
+          ],
+          "words": [
+            "i",
+            "have",
+            "something",
+            "to",
+            "s"
+          ],
+          "text": "I have something to s"
+        },
+        {
+          "key": "2",
+          "codes": [
+            "4",
+            "4283",
+            "766384464",
+            "86",
+            "72"
+          ],
+          "words": [
+            "i",
+            "have",
+            "something",
+            "to",
+            "pc"
+          ],
+          "text": "I have something to pc"
+        },
+        {
+          "key": "9",
+          "codes": [
+            "4",
+            "4283",
+            "766384464",
+            "86",
+            "729"
+          ],
+          "words": [
+            "i",
+            "have",
+            "something",
+            "to",
+            "say"
+          ],
+          "text": "I have something to say"
+        }
+      ],
+      "candidates": [
+        "I have something to say",
+        "I have something to pay",
+        "I have something to saw"
+      ],
+      "text": "I have something to say",
+      "proof": [
+        {
+          "word": "i",
+          "code": "4"
+        },
+        {
+          "word": "have",
+          "code": "4283"
+        },
+        {
+          "word": "something",
+          "code": "766384464"
+        },
+        {
+          "word": "to",
+          "code": "86"
+        },
+        {
+          "word": "say",
+          "code": "729"
+        }
+      ]
+    }
+  },
+  "matches": {
+    "4": [
+      "i",
+      "h",
+      "g"
+    ],
+    "86": [
+      "to",
+      "un",
+      "tm",
+      "um",
+      "tn",
+      "vo",
+      "vm",
+      "uo"
+    ],
+    "729": [
+      "say",
+      "pay",
+      "saw",
+      "ray",
+      "raw",
+      "paw",
+      "pax",
+      "sax"
+    ],
+    "4283": [
+      "have",
+      "gave",
+      "hate",
+      "gate"
+    ],
+    "6333": [
+      "need"
+    ],
+    "24246": [
+      "again",
+      "chain",
+      "chaim"
+    ],
+    "43556": [
+      "hello"
+    ],
+    "92837": [
+      "water",
+      "waves",
+      "yates",
+      "waver"
+    ],
+    "766384464": [
+      "something"
+    ]
+  },
+  "cycle4663": [
+    "good",
+    "home",
+    "gone",
+    "hood",
+    "hone",
+    "hoof"
+  ],
+  "proof": {
+    "keys": "92837",
+    "words": [
+      {
+        "word": "water",
+        "code": "92837"
+      },
+      {
+        "word": "waves",
+        "code": "92837"
+      },
+      {
+        "word": "wafer",
+        "code": "92337"
+      }
+    ],
+    "matches": [
+      "water",
+      "waves"
+    ],
+    "reject": {
+      "word": "wafer",
+      "code": "92337",
+      "diffAt": 2
+    }
+  }
+}

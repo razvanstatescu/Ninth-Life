@@ -78,10 +78,17 @@ a:hover { color: var(--ink); }
   position: absolute; left: var(--space-4); top: -200px; z-index: 10;
   display: inline-flex; align-items: center; min-height: var(--target-min); padding: 0 var(--space-6);
   border-radius: var(--radius-key); background: var(--surface); color: var(--ink);
-  font-size: 18px; font-weight: 700; text-decoration: none;
+  font-size: var(--type-body-lg-size); line-height: var(--type-body-lg-line); font-weight: var(--type-heading-weight); text-decoration: none;
 }
 .nl-skip:focus { top: var(--space-4); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+
+/* A6: a short cross-fade between /, /app and /about where the browser supports cross-document view
+   transitions (marketing-site MS-8.6, web-ui Req 11.3). Never under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+  ::view-transition-group(root) { animation-duration: var(--motion-crossfade); }
 }

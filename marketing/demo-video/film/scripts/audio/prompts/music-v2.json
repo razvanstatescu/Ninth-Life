@@ -1,0 +1,337 @@
+{
+  "id": "act2-v2",
+  "doc": "Music v2 for the second cut: one 90.000 s track, 45 bars at 120 BPM, bar 1 beat 1 at 0.000 (film 0:28). Bar map from the lead, 2026-11-10. Chunk boundaries sit on the bar map; the short silences (bar 5, bar 17 beat 4, 53.5-54.5 s, bars 39-40) are cut in music_v2_conform.py, not asked of the model. Lessons from v1 (music.json plan_notes): name absences, use 'just', lower context_adherence for contrasting chunks.",
+  "model_id": "music_v2_5",
+  "output_format": "pcm_48000",
+  "bpm": 120,
+  "key": "A minor",
+  "duration_ms": 90000,
+  "takes": [
+    {
+      "take": "v2a",
+      "seed": 9028
+    },
+    {
+      "take": "v2b",
+      "seed": 4566
+    },
+    {
+      "take": "v2c",
+      "seed": 24246
+    }
+  ],
+  "first_chunk_styles": [
+    "warm modern electronic",
+    "minimal",
+    "cinematic",
+    "clean mix",
+    "warm analog synths",
+    "soft pads",
+    "soft plucks",
+    "soft kick",
+    "deep sub bass",
+    "light percussion",
+    "restrained",
+    "120 BPM",
+    "A minor",
+    "instrumental",
+    "4/4 time"
+  ],
+  "core_styles": [
+    "warm modern electronic",
+    "120 BPM",
+    "A minor",
+    "instrumental",
+    "warm analog synths",
+    "clean mix"
+  ],
+  "global_negative_styles": [
+    "vocals",
+    "lyrics",
+    "spoken word",
+    "choir",
+    "vocal chops",
+    "guitar",
+    "orchestra",
+    "horror stings",
+    "distortion",
+    "lo-fi",
+    "harsh cymbals"
+  ],
+  "narrated_negative_styles": [
+    "busy lead melody",
+    "bright lead synth",
+    "arpeggios in the middle register"
+  ],
+  "chunks": [
+    {
+      "name": "rebirth",
+      "bars": "1-5",
+      "duration_ms": 10000,
+      "narrated": false,
+      "context_adherence": "high",
+      "text": "[Rebirth]\n{start on the very first beat with a deep sub-bass hit and the first soft kick; the bass enters on A; just a sparse pulse that slowly rises; a short riser at the end of the fourth bar that stops dead}\n{then one bar of silence}",
+      "positive": [
+        "starts on the first beat with a deep sub-bass hit",
+        "just a soft kick and a warm sub bass on A",
+        "a sparse pulse that slowly rises",
+        "the high register left empty",
+        "a short riser that stops dead",
+        "silence in the last bar"
+      ],
+      "negative": [
+        "hi-hats",
+        "snare",
+        "claps",
+        "cymbals",
+        "lead melody",
+        "noise sweep"
+      ]
+    },
+    {
+      "name": "drop",
+      "bars": "6-8",
+      "duration_ms": 6000,
+      "narrated": true,
+      "context_adherence": "low",
+      "text": "[Drop]\n{everything comes in on the first beat: a soft punchy kick, a warm bass line, warm pads and a short plucked theme high up; a short lift on the last beat}",
+      "positive": [
+        "the drop",
+        "full groove from the first beat",
+        "soft punchy kick",
+        "warm analog bass line",
+        "warm pads",
+        "a short plucked synth theme in a high register",
+        "hopeful and a little mysterious",
+        "a short lift on the last beat"
+      ],
+      "negative": [
+        "big cymbal crash",
+        "snare roll"
+      ]
+    },
+    {
+      "name": "problem",
+      "bars": "9-17",
+      "duration_ms": 18000,
+      "narrated": true,
+      "context_adherence": "low",
+      "text": "[Breakdown]\n{just a quiet ticking pulse on every beat like a clock, a deep sub and a low dark pad; no melody and no kick; the tension rises very slowly; it stops dead on the last beat}",
+      "positive": [
+        "dark and sparse",
+        "just a quiet ticking pulse on every beat like a clock",
+        "deep sub bass",
+        "low dark pad",
+        "no melody",
+        "tension rising very slowly",
+        "minimal",
+        "lots of space",
+        "stops dead on the last beat"
+      ],
+      "negative": [
+        "melody",
+        "kick drum",
+        "hi-hats",
+        "snare",
+        "claps",
+        "bright synths",
+        "drop"
+      ]
+    },
+    {
+      "name": "solution",
+      "bars": "18-21",
+      "duration_ms": 8000,
+      "narrated": true,
+      "context_adherence": "low",
+      "text": "[Groove returns]\n{the groove comes back on the first beat, brighter and warmer: soft kick, warm bass, warm chords A minor, F, C, G, soft plucks}",
+      "positive": [
+        "the groove returns on the first beat",
+        "brighter and warmer",
+        "chords A minor F C G",
+        "soft punchy kick",
+        "warm bass",
+        "soft plucks",
+        "hopeful",
+        "the middle register left open"
+      ],
+      "negative": []
+    },
+    {
+      "name": "breath",
+      "bars": "22-23",
+      "duration_ms": 4000,
+      "narrated": false,
+      "context_adherence": "medium",
+      "text": "[Breath]\n{just a soft pad and a soft kick for one bar; then the groove comes back lightly with a small lift}",
+      "positive": [
+        "just a soft pad and a soft kick",
+        "then a light groove",
+        "a small lift at the end"
+      ],
+      "negative": [
+        "melody",
+        "hi-hats",
+        "bass line"
+      ]
+    },
+    {
+      "name": "proof",
+      "bars": "24-27",
+      "duration_ms": 8500,
+      "narrated": true,
+      "context_adherence": "medium",
+      "text": "[Proof]\n{a focused, minimal pulse with a little suspense: a soft kick, a deep sub, a ticking pulse and a low pad; it stops dead near the end}",
+      "positive": [
+        "focused and minimal",
+        "a little suspense",
+        "soft kick",
+        "deep sub bass",
+        "ticking pulse",
+        "low pad",
+        "no melody",
+        "stops dead near the end"
+      ],
+      "negative": [
+        "melody",
+        "bright synths",
+        "busy drums"
+      ]
+    },
+    {
+      "name": "resolve",
+      "bars": "28b2-29",
+      "duration_ms": 3500,
+      "narrated": true,
+      "context_adherence": "medium",
+      "text": "[Resolve]\n{a warm resolving chord on the first beat, then the soft minimal pulse goes on}",
+      "positive": [
+        "a warm resolving chord on the first beat",
+        "warm pad",
+        "soft pulse",
+        "calm"
+      ],
+      "negative": [
+        "drum fill",
+        "melody"
+      ]
+    },
+    {
+      "name": "ghost",
+      "bars": "30-32",
+      "duration_ms": 6000,
+      "narrated": true,
+      "context_adherence": "medium",
+      "text": "[Ghost mode]\n{the first bar thins to just a soft pad and a low pulse; then the groove rebuilds over two bars with an airy shimmer}",
+      "positive": [
+        "first bar just a soft pad and a low pulse",
+        "then the groove rebuilds",
+        "an airy shimmer texture",
+        "warm",
+        "light"
+      ],
+      "negative": [
+        "melody",
+        "hard drums"
+      ]
+    },
+    {
+      "name": "access",
+      "bars": "33-34",
+      "duration_ms": 4000,
+      "narrated": true,
+      "context_adherence": "medium",
+      "text": "[Access]\n{the groove with a clear soft kick on every beat, steady like a clock}",
+      "positive": [
+        "groove",
+        "a clear soft kick on every beat",
+        "steady",
+        "warm bass",
+        "soft plucks"
+      ],
+      "negative": [
+        "drum fills",
+        "melody"
+      ]
+    },
+    {
+      "name": "lift",
+      "bars": "35-36",
+      "duration_ms": 4000,
+      "narrated": false,
+      "context_adherence": "low",
+      "text": "[Lift]\n{the biggest moment: the full theme and wide warm chords opening up like a sunrise}",
+      "positive": [
+        "the lift",
+        "the biggest moment of the track",
+        "the full theme",
+        "wide warm chords opening up",
+        "bright and warm",
+        "full soft drums"
+      ],
+      "negative": []
+    },
+    {
+      "name": "strip",
+      "bars": "37-40",
+      "duration_ms": 8000,
+      "narrated": true,
+      "context_adherence": "medium",
+      "text": "[Strip back]\n{just a soft pad and the theme played softly for two bars, no drums; then it stops dead; then silence}",
+      "positive": [
+        "strip back",
+        "just a soft pad and the theme played softly",
+        "quiet",
+        "no drums",
+        "stops dead after two bars",
+        "silence"
+      ],
+      "negative": [
+        "drums",
+        "percussion",
+        "bass line"
+      ]
+    },
+    {
+      "name": "end",
+      "bars": "41-45",
+      "duration_ms": 10000,
+      "narrated": true,
+      "context_adherence": "low",
+      "text": "[Final chord]\n{one warm resolving A minor chord with an added ninth on the first beat, sustained and slowly fading to nothing}",
+      "positive": [
+        "one warm resolving chord on the first beat",
+        "A minor with an added ninth",
+        "soft synth pad",
+        "a low sub note",
+        "sustained",
+        "slowly fading to nothing",
+        "no rhythm"
+      ],
+      "negative": [
+        "drums",
+        "percussion",
+        "melody"
+      ]
+    }
+  ],
+  "mutes_s": [
+    [
+      7.6,
+      10.0
+    ],
+    [
+      33.5,
+      34.0
+    ],
+    [
+      53.5,
+      54.5
+    ],
+    [
+      76.0,
+      80.0
+    ]
+  ],
+  "silent_by_s": 90.0
+}

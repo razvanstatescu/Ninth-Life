@@ -43,3 +43,4 @@ must be stated in the accessibility statement on the About page before release.
   stack shell drops its suggestion rows and Menu offers Sentences.
 - Keys are sized from the measured keypad area (a ResizeObserver), not container query units, which
   Chrome resolved to 0 in this layout.
+- Scope: the app at `/app`; the website at `/` rotates freely (ADR-006).

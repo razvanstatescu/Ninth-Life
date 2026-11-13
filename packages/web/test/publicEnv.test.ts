@@ -47,6 +47,8 @@ describe('ranking provider copy', () => {
       expect(c.service, id).toContain(c.company);
       expect(c.retention, id).toContain(c.company);
       expect(c.retention.toLowerCase(), id).not.toContain('nothing is kept');
+      // privacy.md: never claim EU-only processing for either provider.
+      expect(c.region, id).not.toMatch(/only in the EU|EU only|EU-only/i);
     }
   });
 });

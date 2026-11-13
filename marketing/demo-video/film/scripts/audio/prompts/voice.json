@@ -1,0 +1,166 @@
+{
+  "model_id": "eleven_v4",
+  "fallback_model_id": "eleven_multilingual_v2",
+  "output_format": "wav_48000",
+  "fallback_output_formats": [
+    "pcm_24000",
+    "mp3_44100_128"
+  ],
+  "voice_settings": {
+    "stability": 0.7,
+    "similarity_boost": 0.75
+  },
+  "stt_model_id": "scribe_v3",
+  "stt_fallback_model_id": "scribe_v2",
+  "takes": 3,
+  "lines": [
+    {
+      "id": "hello-again",
+      "text": "Hello again.",
+      "target_s": [
+        0.9,
+        1.4
+      ]
+    },
+    {
+      "id": "i-need-water",
+      "text": "I need water.",
+      "target_s": [
+        0.9,
+        1.5
+      ]
+    },
+    {
+      "id": "good-to-be-back",
+      "text": "It is good to be back.",
+      "target_s": [
+        1.2,
+        1.9
+      ]
+    },
+    {
+      "id": "something-to-say",
+      "text": "I have something to say.",
+      "target_s": [
+        1.2,
+        1.9
+      ],
+      "note": "Added 2026-11-10 for the second cut (prompts/narration.json app_voice_new). Six syllables like 'It is good to be back.', so the same target range."
+    }
+  ],
+  "candidates": [
+    {
+      "voice_id": "PT4nqlKZfc06VW1BuClj",
+      "label": "angela",
+      "why": "library voice on this account; middle-aged, relaxed, described as friendly and warm, made for apps; verified for eleven_v4; paid users only; notice period 730 days"
+    },
+    {
+      "voice_id": "aMSt68OGf4xUZAnLpTU8",
+      "label": "juniper",
+      "why": "library voice; middle-aged, grounded, professional; verified for eleven_v4; notice period 4015 days"
+    },
+    {
+      "voice_id": "n8kTUi6dVrplENT9Un56",
+      "label": "brian",
+      "why": "library voice; middle-aged male, natural and warm, natural pacing; verified for eleven_v4; notice period 730 days"
+    }
+  ],
+  "notes": "Premade voices on this account are not verified for eleven_v4 and expire on 31 December 2026, so only library voices verified for v4 are candidates. eleven_v4 takes stability and similarity only (no speed or style). Audition: one take of the first line per candidate; the chosen voice's audition take counts as take 1 of that line.",
+  "variants": {
+    "v4": {
+      "model_id": "eleven_v4",
+      "voice_settings": {
+        "stability": 0.7,
+        "similarity_boost": 0.75
+      },
+      "prefix": "",
+      "note": "audition: speech too fast for the targets (0.70-0.74 s for 'Hello again.')"
+    },
+    "v4calm": {
+      "model_id": "eleven_v4",
+      "voice_settings": {
+        "stability": 0.7,
+        "similarity_boost": 0.75
+      },
+      "prefix": "[slowly and calmly] ",
+      "note": "speech 1.60 s for 'Hello again.' (too slow) and darker, softer (centroid 238 Hz, peak -6 dBFS)"
+    },
+    "v2s85": {
+      "model_id": "eleven_multilingual_v2",
+      "voice_settings": {
+        "stability": 0.7,
+        "similarity_boost": 0.75,
+        "style": 0,
+        "use_speaker_boost": true,
+        "speed": 0.85
+      },
+      "prefix": "",
+      "note": "speech 0.80 s for 'Hello again.' (just under 0.9 s); pitch range 5.5 semitones"
+    },
+    "v2s90": {
+      "model_id": "eleven_multilingual_v2",
+      "voice_settings": {
+        "stability": 0.7,
+        "similarity_boost": 0.75,
+        "style": 0,
+        "use_speaker_boost": true,
+        "speed": 0.9
+      },
+      "prefix": "",
+      "note": "speech 0.72 s (too fast)"
+    },
+    "v4c": {
+      "model_id": "eleven_v4",
+      "voice_settings": {
+        "stability": 0.7,
+        "similarity_boost": 0.75
+      },
+      "prefix": "[calmly] ",
+      "note": "speech 0.83 s (short) and darker, softer (centroid 269 Hz); character alignment is uniform (48 ms per character), not real"
+    },
+    "v2s75": {
+      "model_id": "eleven_multilingual_v2",
+      "voice_settings": {
+        "stability": 0.7,
+        "similarity_boost": 0.75,
+        "style": 0,
+        "use_speaker_boost": true,
+        "speed": 0.75
+      },
+      "prefix": "",
+      "note": "'Hello again.' 0.87-0.92 s depending on the threshold (-30 to -50 dB): on the 0.9 s minimum, so too fragile"
+    },
+    "v2s80": {
+      "model_id": "eleven_multilingual_v2",
+      "voice_settings": {
+        "stability": 0.7,
+        "similarity_boost": 0.75,
+        "style": 0,
+        "use_speaker_boost": true,
+        "speed": 0.8
+      },
+      "prefix": "",
+      "note": "speech 0.87 s (just short)"
+    },
+    "v2s70": {
+      "model_id": "eleven_multilingual_v2",
+      "voice_settings": {
+        "stability": 0.7,
+        "similarity_boost": 0.75,
+        "style": 0,
+        "use_speaker_boost": true,
+        "speed": 0.7
+      },
+      "prefix": "",
+      "note": "the model's slowest speed, for a margin above the minimum lengths"
+    }
+  },
+  "chosen": {
+    "voice": "angela",
+    "variants": [
+      "v2s70",
+      "v2s75"
+    ],
+    "why": "eleven_v4 has no speed control: plain v4 speaks 'Hello again.' in 0.74 s (target 0.9-1.4 s); delivery tags change the timbre (darker, softer) and pace unpredictably (0.83-1.60 s), and v4's character times are uniform estimates. The steady fallback eleven_multilingual_v2 (stability 0.7, similarity 0.75, style 0) at speed 0.70 or 0.75 meets the targets with an even pitch and real alignment; per line the take is chosen from both speeds by scripts/audio/voice_finalize.py."
+  }
+}

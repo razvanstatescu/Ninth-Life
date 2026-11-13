@@ -1,0 +1,73 @@
+{
+  "doc": "Narrator voice test (research-v2/14-narrator-voice-and-mix.md). Same two lines for every candidate.",
+  "output_format": "wav_48000",
+  "budget": {
+    "start_character_count": 7027,
+    "max_spend": 2000,
+    "note": "character_count read from GET /v1/user/subscription before the first generation, 2026-11-10"
+  },
+  "lines": {
+    "A": {
+      "text": "Nine keys. One press per letter. And the phone guessed the word.",
+      "act": 1,
+      "brief": "hushed, intimate, a little mysterious (Act 1, old TV at night)"
+    },
+    "B": {
+      "text": "Some people type to talk. For an afternoon, or for good.",
+      "act": 2,
+      "brief": "clear and warm (Act 2)"
+    }
+  },
+  "variants": {
+    "v4": {
+      "model_id": "eleven_v4",
+      "voice_settings": { "stability": 0.6, "similarity_boost": 0.8 },
+      "tags": { "A": "[quiet, measured narration] ", "B": "" },
+      "note": "eleven_v4 takes stability and similarity only (no style, no speed, no SSML). Line A carries a delivery tag in the form of the docs' own audiobook example; line B is untagged, so it shows the voice's own read."
+    },
+    "v4s35": {
+      "model_id": "eleven_v4",
+      "voice_settings": { "stability": 0.35, "similarity_boost": 0.8 },
+      "tags": { "A": "[quiet, measured narration] ", "B": "" },
+      "note": "stability test, low"
+    },
+    "v4s85": {
+      "model_id": "eleven_v4",
+      "voice_settings": { "stability": 0.85, "similarity_boost": 0.8 },
+      "tags": { "A": "[quiet, measured narration] ", "B": "" },
+      "note": "stability test, high"
+    },
+    "v4warm": {
+      "model_id": "eleven_v4",
+      "voice_settings": { "stability": 0.6, "similarity_boost": 0.8 },
+      "tags": { "A": "[quiet, measured narration] ", "B": "[warm, clear narration] " },
+      "note": "Act 2 tag test (line B tagged)"
+    },
+    "v4plain": {
+      "model_id": "eleven_v4",
+      "voice_settings": { "stability": 0.6, "similarity_boost": 0.8 },
+      "tags": { "A": "", "B": "" },
+      "note": "Act 1 tag test: line A untagged"
+    },
+    "v4soft": {
+      "model_id": "eleven_v4",
+      "voice_settings": { "stability": 0.6, "similarity_boost": 0.8 },
+      "tags": { "A": "[softly] ", "B": "" },
+      "note": "Act 1 tag test: line A with a lighter tag"
+    },
+    "v2": {
+      "model_id": "eleven_multilingual_v2",
+      "voice_settings": { "stability": 0.5, "similarity_boost": 0.8, "style": 0, "use_speaker_boost": true, "speed": 1.0 },
+      "tags": { "A": "", "B": "" },
+      "note": "The steady fallback. No audio tags (it would read them aloud)."
+    }
+  },
+  "candidates": [
+    { "label": "frederick", "voice_id": "j9jfwdrw7BRfcR43Qohk", "name": "Frederick Surrey - Smooth and Velvety", "gender": "male", "accent": "british" },
+    { "label": "nathaniel", "voice_id": "AeRdCCKzvd23BpJoofzx", "name": "Nathaniel - Engaging, British and Calm", "gender": "male", "accent": "british" },
+    { "label": "james", "voice_id": "EkK5I93UQWFDigLMpZcX", "name": "James - Husky, Engaging and Bold", "gender": "male", "accent": "american" },
+    { "label": "brian", "voice_id": "n8kTUi6dVrplENT9Un56", "name": "Brian", "gender": "male", "accent": "american" },
+    { "label": "jane", "voice_id": "RILOU7YmBhvwJGDGjNmP", "name": "Jane - Professional Audiobook Reader", "gender": "female", "accent": "british" },
+    { "label": "verity", "voice_id": "1hlpeD1ydbI2ow0Tt3EW", "name": "Verity X - Calm British Narration", "gender": "female", "accent": "british" }
+  ]
+}

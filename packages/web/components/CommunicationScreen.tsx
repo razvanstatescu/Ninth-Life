@@ -622,11 +622,20 @@ export function CommunicationScreen({
   useLayoutEffect(() => {
     const el = padRef.current;
     if (!el || !phone || typeof ResizeObserver === 'undefined') return;
+    const setPad = (width: number, height: number) => {
+      el.style.setProperty('--pad-w', `${Math.round(width)}px`);
+      el.style.setProperty('--pad-h', `${Math.round(height)}px`);
+    };
+    // Measure once now, before the first paint: the observer's first callback comes a frame later, and
+    // painting the keys at the fallback size first made the keypad jump (Lighthouse CLS, Round 3).
+    const cs = getComputedStyle(el);
+    const px = (v: string) => parseFloat(v) || 0;
+    const w = el.clientWidth - px(cs.paddingLeft) - px(cs.paddingRight);
+    const h = el.clientHeight - px(cs.paddingTop) - px(cs.paddingBottom);
+    if (w > 0 && h > 0) setPad(w, h);
     const ro = new ResizeObserver((entries) => {
       const r = entries[0]?.contentRect;
-      if (!r) return;
-      el.style.setProperty('--pad-w', `${Math.round(r.width)}px`);
-      el.style.setProperty('--pad-h', `${Math.round(r.height)}px`);
+      if (r) setPad(r.width, r.height);
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -1170,6 +1179,10 @@ export function CommunicationScreen({
 
   if (layout === 'rotate') return <RotateNotice />;
 
+  // The page's one h1, for screen readers and search (the brand in the header is a link, not a heading).
+  // Visually hidden and absolutely positioned, so it takes no room in any layout.
+  const pageHeading = <h1 className="nl-sr-only">Ninth Life</h1>;
+
   return (
     <div className={phone ? `app app--${layout} app--shell` : `app app--${layout}`} onPointerDown={onBackgroundPointer}>
       <a className="nl-skip" href="#keypad">
@@ -1196,15 +1209,20 @@ export function CommunicationScreen({
 
         {phone ? (
           <main className={`app-main app-main--${layout}`}>
+            {pageHeading}
             <div className="shell-screen">{order.flat().filter((k) => !(noSugRow && k === 'cands') && !(k === 'thread' && threadView !== 2)).map((k) => sections[k])}</div>
           </main>
         ) : isTwoColumn(layout) ? (
           <main className="app-main">
+            {pageHeading}
             <div className="app-main__talk">{order[0]!.map((k) => sections[k])}</div>
             <div className="app-main__pad">{order[1]!.map((k) => sections[k])}</div>
           </main>
         ) : (
-          <main className="app-main app-main--compact">{order[0]!.map((k) => sections[k])}</main>
+          <main className="app-main app-main--compact">
+            {pageHeading}
+            {order[0]!.map((k) => sections[k])}
+          </main>
         )}
 
         {phone ? null : <Footer />}

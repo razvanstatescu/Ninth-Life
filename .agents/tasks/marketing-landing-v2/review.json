@@ -1,0 +1,132 @@
+{
+  "verdict": "APPROVED",
+  "findings": [
+    {
+      "id": "R4-N1",
+      "severity": "nit",
+      "blocking": false,
+      "sources": ["pr-reviewer", "semantic_reviewer"],
+      "where": "packages/web/components/site/site.css:90 (.site-demo__bar .nl-btn--quiet[aria-disabled=\"true\"]), packages/web/styles/components.css:37; .site-listen > .site-drawn-btn",
+      "finding": "While the demo plays, Hear it is aria-disabled but .nl-btn--quiet:active still draws the pressed ring, so a press that does nothing looks like it worked (MS-6.7). The disabled look is a site-only copy of the components.css :disabled values and can drift. The drawn Listen button uses --target-cta only for a 64px height.",
+      "fix": "Add .nl-btn[aria-disabled=\"true\"] beside :disabled in components.css, including box-shadow: none on :active, and drop the site.css copy. Use a spacing sum for the drawn Listen button's height."
+    },
+    {
+      "id": "R4-N2",
+      "severity": "non-blocking",
+      "blocking": false,
+      "sources": ["semantic_reviewer"],
+      "where": "packages/web/components/site/Pictures.tsx ProofCheck; site.css .site-proof__slot",
+      "finding": "The hidden check icon and code slots make the dashed typing chip as wide as the real chip, so for about 2.5 s of each play the word sits behind an empty icon gap and is followed by an empty tail (r4-proof3-1280x800-2560ms.png).",
+      "fix": "Keep the icon slot (it alone aligns the words) and drop the code slot, or accept the look and record it in design.md 4.2. Recheck with the MS-7.9 edge check and timed screenshots."
+    },
+    {
+      "id": "R4-N3",
+      "severity": "non-blocking",
+      "blocking": false,
+      "sources": ["pr-reviewer", "semantic_reviewer", "task-landing-round2/verification.md"],
+      "where": "docs/testing/performance.md; marketing-site task 44",
+      "finding": "Production build and Lighthouse were not re-run on the iteration 3 tree (about 30 CSS rules and hidden markup added). The 100 scores and the 208 of 250 KB transfer are from the iteration 2 tree (MS-11.1, MS-11.2).",
+      "fix": "Before quoting scores or committing, re-run task 44 (build, next start -p 3202, node scripts/lighthouse.mjs --write) once the person agrees to stop the dev server."
+    },
+    {
+      "id": "R4-N4",
+      "severity": "nit",
+      "blocking": false,
+      "sources": ["pr-reviewer"],
+      "where": ".kiro/specs/marketing-site/design.md:992-993 (test table)",
+      "finding": "Row 993 still says 'MS-6.7 Hear it disabled while playing' and row 992 'MS-7.4 getHowData() sentences each encode to 44'; both contradict MS-6.7, MS-7.8 and the current tests (tech rule 7).",
+      "fix": "Change the cells to 'aria-disabled while playing, stays focusable, ignores presses' and 'MS-7.8 getHowData for 4663 with home chosen'."
+    },
+    {
+      "id": "R4-N5",
+      "severity": "low",
+      "blocking": false,
+      "sources": ["semantic_reviewer"],
+      "where": "docs/KIRO_LOG.md, 2026-11-12 iteration 3 row",
+      "finding": "The prompt cell says 'answers on P1, P2, N6' but means R3-P1, R3-P2 and R3-N6; plain N6 is the iteration 2 Privacy alignment fix.",
+      "fix": "Write the R3 prefixes; the log feeds the write-up."
+    },
+    {
+      "id": "R4-A1",
+      "severity": "moderate",
+      "blocking": false,
+      "sources": ["a11y-auditor"],
+      "where": "packages/web/components/site/SiteMotion.tsx play leads; Access and Conversation grids",
+      "finding": "On tall viewports, drawings in different rows show ember rings at the same time during a slow scroll (about 400 px/s): 1,044 ms in total with 2 or more drawings ringing at 1024 x 1366, up to 3 at once, and 250 ms at 1920 x 1080. This touches accessibility rule 3. MS-7.3 and MS-8.11 hold. The V39 note covers only a fast scroll.",
+      "fix": "Keep a page-wide 'ember busy until' time in SiteMotion and add the remaining time to --play-after; or the product owner accepts it and the V39 note is corrected."
+    },
+    {
+      "id": "R4-A2",
+      "severity": "minor",
+      "blocking": false,
+      "sources": ["a11y-auditor"],
+      "where": ".site-press-ring on .site-drawn-btn, .site-kbd, .site-kbd-pair (Day theme)",
+      "finding": "Ember press ring is 1.49:1 to 1.81:1 on light surfaces in Day (8.5:1 to 9.5:1 in Night); accessibility rule 8. WCAG 1.4.11 does not apply (aria-hidden pictures).",
+      "fix": "In Day, pair the press ring with a 2px plum inner line as the scan ring does; record it in design/system/README.md 'Website drawings' first."
+    },
+    {
+      "id": "R4-A3",
+      "severity": "minor",
+      "blocking": false,
+      "sources": ["a11y-auditor"],
+      "where": "KeypadPicture at KEY_DRAWING_SIZE 64px (How picture, How step 1 stage, switch drawing)",
+      "finding": "The digit box and the letters box overlap by 10 x 9px, so the glyphs touch ('2' sits on 'A') (mlv2-how-keypad-64px-zoom.png).",
+      "fix": "For 64px drawn keys only, add about 4px of top padding to .nl-key__letters inside .site .nl-keypad; keys stay 64px (MS-10.8)."
+    },
+    {
+      "id": "R4-A4",
+      "severity": "minor",
+      "blocking": false,
+      "sources": ["a11y-auditor"],
+      "where": "lib/motion.ts shouldPlay for drawings taller than the play area (How step 1 stage, proof figure)",
+      "finding": "At 874 x 330, How step 1 plays with its well at -28..54 and the proof plays with its last row and closing lines below the fold; at 375 x 549 the proof caption starts 15px above the viewport. The finished state remains.",
+      "fix": "Play a drawing taller than the viewport only when its top is at or below 0, or show How step 1 finished under about 420px tall, or accept it for the sideways phone."
+    },
+    {
+      "id": "R4-A5",
+      "severity": "minor",
+      "blocking": false,
+      "sources": ["a11y-auditor"],
+      "where": ".nl-key in KeypadPicture and KeypadDemo",
+      "finding": "Keys lose their shapes in forced-colors: active (carried over); the Touch drawing shows two bare '2 ABC' labels with no visible size difference.",
+      "fix": "@media (forced-colors: active) { .nl-key { border: var(--line-width) solid transparent; } } and check /app, or scope it to .site .nl-key."
+    },
+    {
+      "id": "R4-P1",
+      "severity": "product-owner",
+      "blocking": false,
+      "sources": ["semantic_reviewer", "verification.md"],
+      "where": "site.css, R3-P1 scale-up only in @media (min-width: 1024px)",
+      "finding": "Below 1024px the drawings stay small in large stages: at 768 the layouts drawing is 221 x 92 in a 672 x 216 stage and Your view 216 x 188 in a 384px stage; at 768 and 390 Listen fills only the top part of its 288px stage. Phones are the first target.",
+      "fix": "Ask the product owner whether to extend the scale-up to 648px or center these drawings below 1024px."
+    },
+    {
+      "id": "R4-C1",
+      "severity": "cosmetic",
+      "blocking": false,
+      "sources": ["semantic_reviewer", "verification.md", "task-landing-round2/verification.md"],
+      "where": "site.css .site-boundary__pill; pictures/Privacy.tsx drawing text",
+      "finding": "'Offline. Using your dictionary.' still wraps at 320 (one line at 390, 768, 1280). At 768 and 390 'The dictionary words that match them' and 'Sends the text to the browser maker' wrap their last word. Nothing is cut off.",
+      "fix": "Leave it or wrap it on purpose, and record which in design.md 4.4."
+    },
+    {
+      "id": "R4-H1",
+      "severity": "low",
+      "blocking": false,
+      "sources": ["pr-reviewer", "task-landing-round2/verification.md"],
+      "where": ".kiro/ (check-kiro-not-ignored.mjs output)",
+      "finding": "4 untracked files under .kiro/ (R3-H1, still open). .kiro/ must be committed before submission (hackathon rule).",
+      "fix": "Commit them only when the person asks (tech rule 3)."
+    },
+    {
+      "id": "R4-N6",
+      "severity": "minor",
+      "blocking": false,
+      "sources": ["a11y-auditor"],
+      "where": "packages/web/components/site/sections/Access.tsx, 'Open an issue on GitHub'",
+      "finding": "Inline link 187 x 22px, exempt under WCAG 2.5.8; the product owner declined to change it (R3-N5).",
+      "fix": "None required."
+    }
+  ],
+  "reviewDoc": "/Users/razvanstatescu/Documents/Work/Ninth-Life/.agents/tasks/marketing-landing-v2/review.md"
+}

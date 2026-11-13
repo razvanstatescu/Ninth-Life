@@ -7,20 +7,20 @@ afterEach(cleanup);
 const footerLinks = () => within(screen.getByRole('navigation', { name: 'Footer' })).getAllByRole('link');
 
 describe('Footer (plan F12)', () => {
-  it('on the keypad links to About and to the /welcome page, as real links', () => {
+  it('MS-1.5 on the keypad links to About and to the website at /, as real links', () => {
     render(<Footer />);
     expect(screen.getByText(NOT_A_MEDICAL_DEVICE)).toBeTruthy();
     expect(footerLinks().map((a) => [a.textContent, a.getAttribute('href')])).toEqual([
       ['About Ninth Life', '/about'],
-      ['How Ninth Life works', '/welcome'],
+      ['How Ninth Life works', '/'],
     ]);
   });
 
-  it('on /about links back to the keypad and to /welcome', () => {
+  it('MS-1.5 on /about links back to the keypad at /app and to the website at /', () => {
     render(<Footer about={false} />);
     expect(footerLinks().map((a) => [a.textContent, a.getAttribute('href')])).toEqual([
-      ['Back to the keypad', '/'],
-      ['How Ninth Life works', '/welcome'],
+      ['Back to the keypad', '/app'],
+      ['How Ninth Life works', '/'],
     ]);
   });
 

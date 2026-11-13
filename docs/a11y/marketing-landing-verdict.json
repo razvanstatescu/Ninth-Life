@@ -1,0 +1,38 @@
+{
+  "approved": true,
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "blocking": false,
+      "criterion": "accessibility.md rule 1; WCAG 2.5.8 and MS-10.4 inline exception applies",
+      "where": "packages/web/components/site/sections/Access.tsx, 'Open an issue on GitHub'",
+      "evidence": "Inline link in a sentence, 187x22px at 1280x800 (203x48px at 320 wide).",
+      "fix": "Optional: move it into a .site-links row (a copy and layout decision)."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "blocking": false,
+      "criterion": "Forced-colors good practice (no WCAG 2.2 AA failure; drawings are aria-hidden)",
+      "where": ".nl-key in KeypadDemo, KeypadPicture and the section drawings",
+      "evidence": "With forced-colors: active the keys lose fill and have no edge; the keypad picture reads as loose letters. Screenshot docs/a11y/screens/ml2-desk-1280x800-forced-colors.png.",
+      "fix": "In components.css add @media (forced-colors: active) { .nl-key { border: var(--line-width) solid transparent; } } and re-check /app."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "blocking": false,
+      "criterion": "WCAG 2.1.1 / 2.4.3 pass; usability. MS-6.7 requires Hear it disabled while the demo plays",
+      "where": "packages/web/components/site/KeypadDemo.tsx, 'Hear it'",
+      "evidence": "With motion on, Tab had 34 stops instead of 35 at 1280x800 and 1133x658: 'Hear it' is disabled during the ~6 s automatic play, so Tab skips it.",
+      "fix": "Optional: use aria-disabled=\"true\" and ignore presses while playing, so it stays focusable; confirm with the spec owner first."
+    }
+  ],
+  "resolvedSincePreviousAudit": [
+    "FAQ summaries now 10px apart (was 2px; MS-10.4), measured at 14 configurations.",
+    "Focus rings no longer clipped at the viewport bottom: 0px clipped over 184 Tab stops in 6 configurations.",
+    "Primary buttons keep a 2px border in forced colors."
+  ],
+  "reviewDoc": "/Users/razvanstatescu/Documents/Work/Ninth-Life/docs/a11y/marketing-landing.md"
+}

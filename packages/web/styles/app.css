@@ -17,9 +17,7 @@
 .app-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .app-header__start { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
 .app-header__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); padding: 6px; margin: -6px; border-radius: calc(var(--radius-key) + 6px); }
-.brand { display: inline-flex; align-items: center; gap: var(--space-3); color: var(--ink); text-decoration: none; border-radius: var(--radius-chip); }
-.brand img { display: block; width: 44px; height: 44px; border-radius: 11px; }
-.brand__name { font-size: 24px; line-height: 28px; font-weight: 800; letter-spacing: -0.01em; }
+/* The brand lockup is .nl-brand in components.css (shared with the website). */
 
 .pill {
   display: inline-flex; align-items: center; gap: 6px;
@@ -72,8 +70,8 @@
   .app-header .pill { min-width: 0; padding: var(--space-1) 10px; white-space: normal; line-height: 20px; }
   .app-header__actions { flex: none; }
   .app-header__actions .nl-btn { padding: 0 var(--space-3); font-size: var(--type-label-size); }
-  .brand { flex: none; gap: var(--space-2); }
-  .brand__name { font-size: 20px; line-height: 24px; }
+  .nl-brand { flex: none; gap: var(--space-2); }
+  .nl-brand__name { font-size: var(--type-body-lg-size); line-height: var(--type-body-lg-line); }
 
   .app-main, .app-main--compact { display: flex; flex-direction: column; align-items: stretch; gap: var(--space-4); }
   .app-main__talk, .app-main__pad { display: contents; }
@@ -201,9 +199,10 @@
 .hint kbd { font-family: var(--font-mono); font-size: var(--type-label-size); padding: 0 6px; border: 2px solid var(--line-strong); border-radius: 8px; color: var(--ink); }
 
 /* Footer */
-.app-footer { display: flex; flex-direction: column; gap: var(--space-3); padding-top: var(--space-6); border-top: 2px solid var(--line); font-size: var(--type-label-size); line-height: 24px; color: var(--ink-muted); font-weight: 400; }
+.app-footer { display: flex; flex-direction: column; gap: var(--space-3); padding-top: var(--space-6); border-top: var(--line-width) solid var(--line); font-size: var(--type-label-size); line-height: var(--space-6); color: var(--ink-muted); font-weight: 400; }
 .app-footer nav { display: flex; flex-wrap: wrap; gap: var(--space-4); }
-.app-footer a { display: inline-flex; align-items: center; min-height: var(--target-min); font-weight: 600; }
+/* Footer links as on the website (one link style per role): body size, label weight, 56px targets. */
+.app-footer a { display: inline-flex; align-items: center; min-height: var(--target-min); font-size: var(--type-body-size); line-height: var(--type-body-line); font-weight: var(--type-label-weight); }
 
 /* Sheets (settings, phrases) on a native <dialog> */
 .sheet {
@@ -364,14 +363,7 @@
 .show__message.is-flipped { transform: rotate(180deg); }
 .show__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
 
-/* About page */
-.page { max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8); }
-.page h1 { font-size: var(--type-title-size); line-height: var(--type-title-line); font-weight: 700; }
-.page h2 { font-size: var(--type-heading-size); line-height: var(--type-heading-line); font-weight: 700; }
-.page section { display: flex; flex-direction: column; gap: var(--space-3); }
-.page p, .page li { font-size: var(--type-body-lg-size); line-height: var(--type-body-lg-line); }
-.page ul { margin: 0; padding-left: var(--space-6); display: flex; flex-direction: column; gap: var(--space-2); }
-.statement { padding: var(--space-6); border-radius: var(--radius-card); border: 2px solid var(--line-strong); background: var(--surface); }
+/* /about now uses the website's stylesheet (components/site/site.css, W3 2026-11-12), not this file. */
 
 @media (prefers-reduced-motion: no-preference) {
   .scan-cluster, .seg__opt, .app-header__actions, .proof__offers, .spell__letter, .thread-strip, .thread-panel, .thread-row { transition: box-shadow 120ms linear; }
@@ -405,7 +397,7 @@
 body:has(.app--shell) { min-height: 0; }
 .app--shell .app__inner { gap: var(--space-2); }
 .app--shell .app-header { height: 56px; flex-wrap: nowrap; gap: var(--space-2); }
-.app--shell .brand__name { display: none; } /* the icon is the logo; the room goes to They said */
+.app--shell .nl-brand__name { display: none; } /* the icon is the logo; the room goes to They said */
 .app--shell .app-main { display: block; }
 /* Always the short header (one summary pill), whatever the width: tablets in landscape are >= 960px. */
 .app--shell .app-header .app-header--wide { display: none; }
@@ -638,7 +630,7 @@ body:has(.app--shell) { min-height: 0; }
 /* A phone on its side is short: icon beside the words, so the notice fits without scrolling. */
 @media (max-height: 500px) {
   .rotate { flex-direction: row; gap: var(--space-6); text-align: left; }
-  .rotate .brand { display: none; }
+  .rotate .nl-brand { display: none; }
   .rotate__words { align-items: flex-start; }
   .rotate__icon { width: 72px; height: 72px; flex: none; }
   .rotate__title { font-size: 26px; line-height: 32px; }
@@ -759,4 +751,18 @@ body:has(.app--shell) { min-height: 0; }
 @media (max-width: 599px) {
   .sheet__head { padding: max(var(--space-4), env(safe-area-inset-top)) max(var(--space-4), env(safe-area-inset-right)) var(--space-4) max(var(--space-4), env(safe-area-inset-left)); }
   .sheet__body { padding-right: max(var(--space-4), env(safe-area-inset-right)); padding-left: max(var(--space-4), env(safe-area-inset-left)); }
+}
+
+/* First paint (Round 3, 2026-11-12). The static HTML is the wide layout (useLayout's server snapshot), and
+   lib/layout.ts chooses wide only for a fine pointer at 960px or wider. Anywhere else hydration swaps in a
+   different DOM; painting the wide one first made the whole screen jump (Lighthouse mobile CLS 0.90 on /app).
+   So where the layout cannot be wide, the static wide HTML stays invisible until the real layout replaces it.
+   After hydration .app--wide only exists where this query is false, so no final layout changes.
+   The inner query is TOUCH_QUERY or not WIDE_QUERY, exactly chooseLayout's "not wide" (test/layout.test.ts).
+   Screen only: a printout is laid out at the paper's width (under 960px) while the layout chosen for the
+   window can still be wide (Firefox prints a static copy where no script runs), so print never hides it. */
+@media screen {
+  @media (pointer: coarse), not all and (min-width: 960px) {
+    .app--wide { visibility: hidden; }
+  }
 }

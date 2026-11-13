@@ -1,0 +1,39 @@
+{
+  "about": "The narrator's lines for the second cut (07-revision-v2.md). Locked by the lead on 2026-11-10. One file per line; place by frame. Act 1 lines carry the quiet tag; Act 2 lines are untagged. Never stitch across the act boundary.",
+  "voice_id": "j9jfwdrw7BRfcR43Qohk",
+  "voice_label": "Frederick Surrey - Smooth and Velvety",
+  "model_id": "eleven_v4",
+  "output_format": "wav_48000",
+  "voice_settings": { "stability": 0.6, "similarity_boost": 0.8 },
+  "act1_tag": "[quiet, measured narration]",
+  "takes": 3,
+  "lines": [
+    { "id": "n01-ghost-story", "act": 1, "text": "A ghost story... about a keypad that learned to talk.", "note": "Opens the film over the static. The pause at the ellipsis may be used to split the line." },
+    { "id": "n02-nine-keys", "act": 1, "text": "Nine keys. One press per letter.", "note": "Over the keys pressing themselves." },
+    { "id": "n03-worked-out", "act": 1, "text": "And the phone worked out the word.", "note": "Hello is on the screen." },
+    { "id": "n04-glass", "act": 1, "text": "Then glass replaced the keys... and the keypad went quiet.", "note": "The dark drawer. May be split at the pause." },
+    { "id": "n05-not-bad", "act": 1, "text": "But old is not the same as bad.", "note": "Black, the pale dot; the line appears in pixel type." },
+    { "id": "n06-something", "act": 1, "text": "It still has something to say.", "note": "The dot warms to ember. Must end by 27.0 s." },
+
+    { "id": "n07-this-is", "act": 2, "text": "This is Ninth Life. The old phone keypad, back as a way to talk.", "note": "After the drop, over the title." },
+    { "id": "n08-type-to-talk", "act": 2, "text": "Some people type to talk, for an afternoon, or for good.", "note": "The problem starts: the other person's bubble." },
+    { "id": "n09-small-keys", "act": 2, "text": "But small keys are hard to hit.", "note": "A fingertip ring misses a small key." },
+    { "id": "n10-one-switch", "act": 2, "text": "With one switch, every letter is a wait.", "note": "The scan highlight crawls letter by letter." },
+    { "id": "n11-moves-on", "act": 2, "text": "The conversation moves on.", "note": "Their next bubbles arrive." },
+    { "id": "n12-words-mouth", "act": 2, "text": "And a language model can put words in your mouth.", "note": "A grey suggestion offers words nobody typed." },
+    { "id": "n13-nine-big-keys", "act": 2, "text": "So, nine big keys. One press per letter.", "note": "Right after the fold lands." },
+    { "id": "n14-finds", "act": 2, "text": "It finds the sentence. You press Speak.", "note": "Before the app says I need water." },
+    { "id": "n15-model", "act": 2, "text": "A language model can help sort the guesses, if you turn it on.", "note": "The opt-in model card offers wafer." },
+    { "id": "n16-must-match", "act": 2, "text": "But every word must match your keys.", "note": "The digits are compared." },
+    { "id": "n17-never", "act": 2, "text": "So it can never put words in your mouth.", "note": "Wafer is dropped; water keeps its check." },
+    { "id": "n18-ghost-mode", "act": 2, "text": "No signal? It still works. We call it ghost mode.", "note": "The phone offline." },
+    { "id": "n19-access", "act": 2, "text": "Use touch, a keyboard, or one switch.", "note": "Three ways in." },
+    { "id": "n20-same-keys", "act": 2, "text": "Same keys. A ninth life.", "note": "Then and now." },
+    { "id": "n21-free", "act": 2, "text": "Ninth Life. Free, in your browser.", "note": "End card." }
+  ],
+  "app_voice_new": {
+    "id": "something-to-say",
+    "text": "I have something to say.",
+    "note": "The app's last line (Angela, the same model and settings as the three existing app lines). Replaces 'It is good to be back.' in the film."
+  }
+}

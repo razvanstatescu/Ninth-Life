@@ -97,6 +97,10 @@ before). One run in three was at 51 ms, so treat 50 ms as met at the median, not
    Since F12 (2026-11-09) the worker also precaches `/welcome`: one more entry, its HTML, 40 KB raw
    and 8 KB gzip (27 to 28 entries, upper bound 537 to 545 KB gzip, measured from `public/sw.js` after
    `pnpm -F @ninth/web build`). Its JS chunk, CSS, fonts and icons were already precached.
+   Since ADR-006 (2026-11-10) the precached documents are `/` (the website), `/app` (the app) and
+   `/about`; `/welcome` is a redirect and is no longer precached, and an uncached document offline
+   falls back to `/app`. The entry count is unchanged; the byte figures above predate the move and are
+   measured again after the next production build.
 3. **The dictionary is ready about 2.4 s sooner on Slow 4G** (5.7 s): one round trip instead of
    three, and 173 KB less to download.
 4. **No key press waits for an index.** The slow 5th press of "kitchen" (578 ms) is now 27 ms. In
@@ -203,3 +207,115 @@ For the core owner (`packages/core`):
   `codes: { "4663": "good:61 home:58 ..." }` cuts both bytes and parse time. Contract change.
 
 Re-run `node scripts/perf-check.mjs` after any change to loading, the data files or the service worker, and update the before/after table.
+
+## Landing page (Lighthouse)
+
+Lighthouse 13.6.0 (a root dev dependency, not shipped, not in CI) on `/` of a production build,
+driven by `scripts/lighthouse.mjs` (marketing-site MS-11). Per preset it runs 3 times, each in a new
+Chromium from Playwright with a fresh profile (so every run is a first visit and the service worker
+installs as it would for a visitor), and reports the medians. Mobile is Lighthouse's default
+(simulated throttling: Slow 4G, 4x CPU) with the targets Performance 95 or more and Accessibility,
+Best Practices and SEO 100; desktop uses Lighthouse's desktop config and has no target. The run with
+the median Performance score supplies the metrics, the LCP element (must be text), CLS (at most
+0.02) and the byte budgets: the page's own requests (`network-requests` items with
+`sessionTargetType` `page`) at most 125 KB of script, 16 KB of CSS, 32 KB for the document, 60 KB of
+fonts, 16 KB of images and 250 KB in total; the service worker's requests on their own line with no
+budget; no request to another origin. Raw reports go to `packages/web/test-results/lighthouse/`
+(git-ignored).
+
+How to run it. The build overwrites the dev server's files (`.kiro/steering/tech.md` rule 1), so stop
+`pnpm dev` first:
+
+```sh
+# 1. stop the dev server on :3000
+pnpm -F @ninth/web build
+pnpm -F @ninth/web exec next start -p 3202     # leave running in another shell
+node scripts/lighthouse.mjs --write            # --runs 1-9, --preset mobile|desktop|both, --url
+# 2. stop next start, then start pnpm dev again
+```
+
+The script refuses a development server (exit 2) and never builds anything itself. It exits 1 when a
+mobile target or budget is missed. `--write` replaces the block between the markers below.
+
+Agentic Browsing (Round 3, 2026-11-12, Claude Code). Lighthouse 13.3+ has an "Agentic Browsing" category
+(accessibility tree, layout shift, and `/llms.txt` when it exists). The script reports it on its own line as
+a fraction, with no target; it would have caught the `/app` layout shift below.
+
+Site origin when measuring. Canonical links, `og:url`, the social card, JSON-LD, the `Sitemap:` line and
+`/sitemap.xml` exist only when the build knows the origin (`lib/site-url.ts`: `SITE_URL`, else
+`VERCEL_PROJECT_PRODUCTION_URL`, else none, and then `/sitemap.xml` is a 404). Build with
+`SITE_URL=http://localhost:3202 pnpm -F @ninth/web build` (the port you serve on) so Lighthouse's `canonical`
+audit runs and the document bytes include the JSON-LD. Never point `SITE_URL` at localhost in a deployed build.
+
+`/app` first paint (Round 3). The static HTML of `/app` is the wide layout (lib/layout.ts' server snapshot),
+and phones, tablets and narrow windows get a different layout after hydration. Painting the wide HTML first
+made the whole screen jump: Lighthouse mobile on `/app` measured CLS 0.903, Performance 61, LCP 4.3 s and
+Agentic Browsing 0.52 (commit `5354f0d`). Two changes, neither alters any layout's final result:
+`styles/app.css` keeps `.app--wide` invisible where the layout cannot be wide (`(pointer: coarse)` or
+narrower than 960px, on screen only, so a printout is never blank; `test/layout.test.ts` checks it hides exactly
+where `chooseLayout()` picks another layout), and `CommunicationScreen.tsx` measures the keypad box once before the first paint
+instead of waiting a frame for the ResizeObserver (the keys were painted at the 324px fallback, then grew:
+CLS 0.059). After: `/app` mobile Performance 100, CLS 0.000, LCP 0.9 s, Agentic Browsing 1.00. `/app` still
+misses the landing page's script and total byte budgets by design (the dictionary and the app's own code);
+those budgets are for `/`.
+
+<!-- lighthouse:start -->
+Measured 2026-11-13 on http://localhost:3402/, commit `5354f0d-dirty`, Lighthouse 13.6.0, Chromium 153.0.8010.12. Median of 3 runs per preset, a fresh browser profile for each run.
+
+### Mobile (simulated throttling: Slow 4G, 4x CPU)
+
+| | Performance | Accessibility | Best Practices | SEO |
+|---|---|---|---|---|
+| Run 1 | 100 | 100 | 100 | 100 |
+| Run 2 | 100 | 100 | 100 | 100 |
+| Run 3 | 100 | 100 | 100 | 100 |
+| **Median** | **100** | **100** | **100** | **100** |
+| Target | 95 or more | 100 | 100 | 100 |
+
+Agentic Browsing (reported, no target): median 1.00 (runs 1.00, 1.00, 1.00).
+
+Run with the median Performance score: FCP 1,053 ms, LCP 1,053 ms (element: `p`), TBT 0 ms, CLS 0.000, Speed Index 1,053 ms.
+
+| Page requests, transferred | Bytes | Budget | Result |
+|---|---|---|---|
+| Script | 120.1 KB | 125.0 KB | pass |
+| Stylesheet | 14.7 KB | 16.0 KB | pass |
+| Document | 30.2 KB | 32.0 KB | pass |
+| Font | 51.1 KB | 60.0 KB | pass |
+| Image | 4.4 KB | 16.0 KB | pass |
+| Manifest | 1.2 KB | none |  |
+| Other | 0.5 KB | none |  |
+| Total | 222.3 KB | 250.0 KB | pass |
+
+Service worker: 2 requests, 0.7 KB (reported, no budget).
+Other origins: none.
+
+### Desktop (no target)
+
+| | Performance | Accessibility | Best Practices | SEO |
+|---|---|---|---|---|
+| Run 1 | 100 | 100 | 100 | 100 |
+| Run 2 | 100 | 100 | 100 | 100 |
+| Run 3 | 100 | 100 | 100 | 100 |
+| **Median** | **100** | **100** | **100** | **100** |
+
+Agentic Browsing (reported, no target): median 1.00 (runs 1.00, 1.00, 1.00).
+
+Run with the median Performance score: FCP 283 ms, LCP 283 ms (element: `span`), TBT 0 ms, CLS 0.000, Speed Index 283 ms.
+
+| Page requests, transferred | Bytes | Budget | Result |
+|---|---|---|---|
+| Script | 120.1 KB | none |  |
+| Stylesheet | 14.7 KB | none |  |
+| Document | 30.2 KB | none |  |
+| Font | 51.1 KB | none |  |
+| Image | 4.4 KB | none |  |
+| Manifest | 1.2 KB | none |  |
+| Other | 0.5 KB | none |  |
+| Total | 222.3 KB | none |  |
+
+Service worker: 2 requests, 0.7 KB (reported, no budget).
+Other origins: none.
+
+Result: every mobile target and budget met.
+<!-- lighthouse:end -->

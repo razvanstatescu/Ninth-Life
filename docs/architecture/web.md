@@ -8,7 +8,10 @@ Spec: `.kiro/specs/web-ui/` (requirements, design, tasks). Contracts: `docs/arch
 
 | Route | File | What it is |
 |---|---|---|
-| `/` | `app/page.tsx` → `components/CommunicationScreen.tsx` | The communication screen (static shell, client component) |
+| `/` | `app/page.tsx` → `components/site/` | The website (static, spec `marketing-site`, ADR-006) |
+| `/app` | `app/app/page.tsx` → `components/CommunicationScreen.tsx` | The communication screen (static shell, client component); the PWA `start_url` |
+| `/welcome` | `next.config.mjs` `redirects()` | 308 to `/` (the old website address) |
+| `/robots.txt` | `app/robots.ts` | Static; every page may be crawled |
 | `/about` | `app/about/page.tsx` | What it does, proof, privacy, the not-a-medical-device statement |
 | `POST /api/decode` | `app/api/decode/route.ts` | Production decode endpoint: `@ninth/decoder` `createFetchHandler` (Anthropic API); 503 `llm_disabled` unless `LLM_ENABLED=true` and `ANTHROPIC_API_KEY` is set |
 | `/sw.js` | built from `app/sw.ts` | Serwist service worker |
@@ -176,7 +179,7 @@ Loading (plan F9, web-ui Req 23; numbers in `docs/testing/performance.md`):
 Offline:
 
 - `pnpm prebuild` copies `data/lexicon` and `data/packs` into `public/data` (missing files are fine).
-- `next.config.mjs` passes `/`, `/about`, the Next static chunks and the public files the app needs to Serwist:
+- `next.config.mjs` passes `/`, `/app`, `/about` (an uncached document offline falls back to `/app`), the Next static chunks and the public files the app needs to Serwist:
   the latin fonts, `favicon.svg`, `favicon-32.png`, `icon.svg`, the web manifest, and the three dictionary files at
   their `?v=` URL with `revision: null`. Serwist fetches revision-null entries with the normal HTTP cache, so the
   install reuses the copy the page just downloaded (revisioned entries are fetched with `cache: 'reload'`, which is

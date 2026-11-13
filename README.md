@@ -2,11 +2,11 @@
 
 **The old keypad, back as your voice.**
 
-Ninth Life is a free web app that brings back 9-key predictive text as a way to talk. Press keys 2
-to 9, one press per letter, and Ninth Life speaks the sentence you meant. A proof check makes sure
-every spoken word matches the keys pressed, so a language model can help rank sentences but can
-never put words in someone's mouth. It works offline, in any modern browser, with a keyboard, touch
-or a single switch.
+Ninth Life brings back 9-key predictive text as a free web app for typing to talk. Press one key per
+letter on keys 2 to 9 and hear the sentence you meant: every spoken word matches the keys you
+pressed. A proof check makes sure of that, so a language model can help rank sentences but can never
+put words in someone's mouth. It works offline, in any modern browser, with a keyboard, touch or a
+single switch.
 
 > Ninth Life is a general-purpose text entry and text-to-speech tool. It is not a medical device and
 > is not intended to diagnose, treat or replace a clinical AAC assessment.
@@ -64,3 +64,5 @@ Requires Node 22 and pnpm 10. Ghost mode needs no key. For model ranking, copy
 
 Code: MIT ([LICENSE](LICENSE)). Data under `data/`: CC BY-SA 4.0 ([data/LICENSE](data/LICENSE),
 [data/NOTICE.md](data/NOTICE.md)). Fonts: Atkinson Hyperlegible Next and Mono, SIL Open Font License.
+
+Development only: Lighthouse 13.6.0 (Apache-2.0), with Sentry CLI 0.49.0 (FSL-1.1-Apache-2.0) and oxc-parser 0.152.0 (MIT) pulled in through it, not shipped.

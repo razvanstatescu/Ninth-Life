@@ -13,9 +13,11 @@ and the brand book `design/system/README.md`.
 | Unit | Pure logic and components behave as specified | `packages/*/test/*.test.ts(x)`, Vitest (jsdom + Testing Library in `packages/web`) | `ci / build` | `pnpm -r test` (or `pnpm -F @ninth/web test --run`) |
 | Property | Invariants hold for any input: every candidate `decodeGhost` returns passes `validate()` against the keys pressed, any scan cell is reachable in rows + longest row steps with exactly 2 selects, scanning pauses after the set loops | fast-check inside the Vitest files of `packages/core` (shared generators in `test/arbitraries.ts`), plus some in `decoder` and `eval` | `ci / build` | `pnpm -F @ninth/core test --run` |
 | Build | Next.js production build, service worker and precache manifest | `pnpm -F @ninth/web build` | `ci / build` and `ci / e2e` | same |
-| Accessibility (axe) | No serious or critical axe violations of the WCAG 2.0/2.1/2.2 A and AA rules on `/`, `/welcome`, `/about` and the open Settings sheet, Night and Day, at 1280 and 390 px | `packages/web/test/e2e/axe.mjs` (`@axe-core/playwright` 4.14.0) | `ci / e2e` | see below |
+| Accessibility (axe) | No serious or critical axe violations of the WCAG 2.0/2.1/2.2 A and AA rules on `/`, `/app`, `/about` and the open Settings sheet on `/app`, Night and Day, at 1280 and 390 px | `packages/web/test/e2e/axe.mjs` (`@axe-core/playwright` 4.14.0) | `ci / e2e` | see below |
 | Keyboard walkthrough | Keyboard only: type "i need water" with digits, choose a sentence (Alt+2, ArrowUp), Tab to Settings, Enter opens it, focus moves in, Escape closes it, focus returns; focus ring 4 px | `packages/web/test/e2e/keyboard.mjs` | `ci / e2e` | see below |
 | Phones and tablets | 10 devices (344-440px phones, 744-820px tablets) in portrait and landscape: whole keypad and Speak on screen, no sideways scroll, keys >= 72px, targets >= 56px, text >= 16px, keypad does not move while a long sentence is typed (touch taps) | `packages/web/test/e2e/responsive.mjs` (`ENGINE=webkit` for Safari's engine) | `ci / e2e` (Chromium) | see below |
+| Landing page | `/` at 14 phone, tablet and desktop sizes (no sideways scroll, h1 and header CTA above the fold, targets >= 56px with 8px gaps, text >= 16px, drawn keys 64-84px and the Touch keys exactly 72 and 128px also with XL keys, no drawing larger than its stage and equal stage heights per section, one ember fill per viewport), the box grids (2 cards per row, the tall switch card, no CSS order), round-2 motion (How step sync, played sequences in view, finished drawings; listed below), motion on and off (once-only autoplay, Stop, reveals, focus inside a hidden block, opacity and transform only, reduce at runtime, layout shift and LCP), no JavaScript, privacy (same-origin requests, no cookies or storage writes, no dialog), `/welcome` 308, keyboard (skip link, bar Tab order, 4px focus rings, questions, demo buttons), and with `OFFLINE=1` the offline `/app` and `/` after one visit to `/` | `packages/web/test/e2e/site.mjs` (`ENGINE=webkit` for Safari's engine; `OFFLINE=1` needs a production build) | `ci / e2e` (Chromium, `OFFLINE=1`) | see below |
+| Lighthouse | Mobile (target Performance 95 or more, the other categories 100) and desktop scores on `/`, median of 3 runs, and the byte budgets of marketing-site MS-11.2 | `scripts/lighthouse.mjs` (Lighthouse 13.6.0, dev dependency), results in [performance.md](performance.md#landing-page-lighthouse) | no (D9) | see [performance.md](performance.md#landing-page-lighthouse) |
 | Single-switch walkthrough | Space as the only switch: one-switch scanning types "hi" (4 4) in 5 presses; no second ember fill while a key is lit; the accept delay filters presses closer than 150 ms | `packages/web/test/e2e/switch.mjs` | `ci / e2e` | see below |
 | Performance | First load bytes, dictionary ready time, key-press latency, parse (v2 and v1), completion index build, decode latency, heap, offline reload, what the service worker really downloads and any dictionary file downloaded twice, on a Moto G-class profile and on desktop | `scripts/perf-check.mjs`, results in [performance.md](performance.md) | `ci / e2e`, report only (table in the job summary) | see below |
 | Eval | Decoding accuracy on the frozen 866-item test set (the only numbers the website may quote) | `packages/eval`, results `packages/eval/RESULTS.md`, method `docs/architecture/data-and-eval.md` | `eval` workflow (weekly and by hand), not on PRs | `pnpm -F @ninth/eval quick` / `eval` |
@@ -41,11 +43,14 @@ node packages/web/test/e2e/axe.mjs             # AXE_STRICT=1 also fails on mode
 node packages/web/test/e2e/keyboard.mjs
 node packages/web/test/e2e/switch.mjs
 node packages/web/test/e2e/responsive.mjs      # ENGINE=webkit for Safari's engine
+OFFLINE=1 node packages/web/test/e2e/site.mjs  # the landing page; ENGINE=webkit too
 node scripts/perf-check.mjs                    # --runs 5, --json out.json, PERF_STRICT=1 to gate
 ```
 
 All scripts read `BASE_URL` (default `http://localhost:3202`). They need a production build:
 `next dev` has no service worker, and its dev overlay adds its own elements to the page.
+`site.mjs` without `OFFLINE=1` also runs against `pnpm dev` (`BASE_URL=http://localhost:3000`) and
+prints a note that the offline runs were skipped.
 axe writes its full report to `packages/web/test-results/axe.json` (git-ignored); CI keeps
 `packages/web/test-results/` as the `e2e-reports` artifact.
 
@@ -62,9 +67,31 @@ axe writes its full report to `packages/web/test-results/axe.json` (git-ignored)
 
 ## The website
 
-`/welcome` is the landing page (`packages/web/app/welcome/page.tsx`, components in
-`packages/web/components/site/`). The app stays at `/` because it is the PWA start URL. The page
-is rendered at build time: its keypad demo is real output of `decodeGhost` on the shipped
+`/` is the landing page (`packages/web/app/page.tsx`, components in `packages/web/components/site/`,
+spec `.kiro/specs/marketing-site/`). The app is at `/app`, which is also the PWA start URL, because
+of ADR-006; `/welcome` redirects (308) to `/`. The page is rendered at build time: its keypad demo is real output of `decodeGhost` on the shipped
 dictionary, and its numbers are read from `packages/eval/RESULTS.json`, so it cannot quote a number
 the eval did not measure. If the eval changes, rebuild the site; the copy around the numbers says
 what was measured (a simulated typist, offline dictionary) and links to the method.
+
+The website's motion (ADR-006 A7 played sequences and A8 How step sync, marketing-site MS-8.11 to
+MS-8.13) is checked in `site.mjs` against a running server; each check names its requirement:
+
+- How step sync at 1280x800, 1920x1080 and 1024x768, scrolling down and up in 40px steps:
+  `data-how-step` is the number of step cards whose top is at or above the middle line, and only the
+  active card shows its outline (MS-8.12).
+- `MS-8.12 How plays every step from the top on tall viewports` (1024x1366, 1920x1200) and
+  `MS-8.12 step 1 plays with the whole How picture in view` (1366x650, 1024x768, 1280x800).
+- `MS-8.11 tall drawings play in view` (320x568, 375x667: the How stages and the proof figure; one
+  taller than the viewport is checked by its top only, as `shouldPlay` plays it with its top at the
+  top) and `MS-8.11 drawings entered from above play in view` (375x667, 1280x800: load at the top,
+  go to `#faq`, scroll up).
+- A reload at `#access` shows the drawings in view finished with no animation (MS-8.13); every
+  drawing is finished with no animation 4.5 s after it played, and nothing shifts while they play
+  (MS-8.11, MS-11.2, layout shift in Chromium only); reduced motion, or turning it on at runtime,
+  marks every drawing finished and leaves `document.getAnimations()` empty (MS-8.7, MS-8.8).
+- Layout: no drawing larger than its stage and nothing outside the desktop How picture or the
+  proof figure at the 14 sizes and with XL keys, `MS-7.7 stages in a section have equal heights`,
+  "Press a key to start" on one line at 320 and 1024px, 2 cards per row in Conversation and
+  Privacy at 1280 and 1920px, the tall switch card's last child within 24px of its inner bottom
+  (MS-7.7, MS-10.9).

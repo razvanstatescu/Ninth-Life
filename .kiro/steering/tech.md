@@ -10,10 +10,12 @@ Checked against the repo on 2026-11-09. If a version or command here disagrees w
 
 - pnpm 10 workspace (`packageManager: pnpm@10.28.0`), Node 22 or later, TypeScript 5.6, Vitest 2.1, fast-check 3.
 - `packages/web`: Next.js **15.1.12** App Router, React 19, Serwist service worker (offline), IndexedDB through `idb`. Deployed on Vercel (not yet live).
+- Site URL: none decided yet. `packages/web/lib/site-url.ts` reads `SITE_URL` (set it when a custom domain exists; server-only), else Vercel's `VERCEL_PROJECT_PRODUCTION_URL` (set on every Vercel deployment, previews included, so previews canonicalise to production), else nothing. With no origin the site emits no absolute URL: no canonical, `og:url`, `og:image` or JSON-LD, no `Sitemap:` line in robots.txt, and `/sitemap.xml` answers 404 (a sitemap needs absolute `<loc>` URLs; an empty or localhost one would be invalid or wrong). Read at build time (the pages are static). Record the URL here once it is live.
 - `packages/core`: pure TypeScript (keymap, validator, lexicon, bigram model, ghost decoder, scanning). No DOM, no network.
 - `packages/decoder`: the `/api/decode` handler. One provider-aware `AnthropicLlmClient` over plain `fetch` that speaks the Anthropic Messages protocol to Anthropic or to MiniMax's compatible endpoint (ADR-001, ADR-002). Default model `MiniMax-M3` when only `MINIMAX_API_KEY` is set, otherwise `claude-haiku-5-5`.
 - `packages/eval`: offline baselines B0/B1 and model runs B2-B4; Python 3 only for rebuilding `data/`.
 - End-to-end checks are plain Node scripts on Playwright 1.63, installed globally (Chromium and WebKit); `test/e2e/lib.mjs` finds it.
+- Lighthouse 13.6.0 is a root dev dependency, driven by `scripts/lighthouse.mjs` against a production server; not shipped, not in CI.
 - No Prettier and no ESLint config in the repo. Do not run a formatter over files: it rewrites the whole file (quotes, wrapping) and buries the real change.
 
 ## Commands
@@ -25,7 +27,8 @@ Checked against the repo on 2026-11-09. If a version or command here disagrees w
 | Unit tests, one package | `pnpm -F @ninth/core test --run` (also `@ninth/decoder`, `@ninth/web`, `@ninth/eval`) |
 | All unit tests | `pnpm -r test` (Vitest exits after one run in CI; add `--run` locally) |
 | Types | `pnpm -r typecheck` (also the `typecheck-on-stop` hook) |
-| E2E (needs a running server) | from `packages/web`: `BASE_URL=http://localhost:3000 node test/e2e/<axe\|keyboard\|switch\|spell\|responsive>.mjs`; add `ENGINE=webkit` for Safari's engine |
+| E2E (needs a running server) | from `packages/web`: `BASE_URL=http://localhost:3000 node test/e2e/<axe\|keyboard\|switch\|spell\|responsive\|site>.mjs`; add `ENGINE=webkit` for Safari's engine |
+| Lighthouse (production server on :3202 only) | `node scripts/lighthouse.mjs --write` |
 | Eval, quick | `pnpm -F @ninth/eval quick` (offline, seconds; see the `ninth-life-eval` power) |
 | Repo rules | `node scripts/tm-lint.mjs`, `node scripts/validate-kiro-config.mjs`, `node scripts/check-kiro-not-ignored.mjs` |
 

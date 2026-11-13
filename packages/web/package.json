@@ -12,7 +12,8 @@
     "test": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "tokens": "node scripts/gen-tokens.mjs",
-    "icons": "node scripts/gen-icons.mjs"
+    "icons": "node scripts/gen-icons.mjs",
+    "og": "node scripts/gen-og.mjs"
   },
   "dependencies": {
     "@ninth/core": "workspace:*",

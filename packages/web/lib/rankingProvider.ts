@@ -16,6 +16,8 @@ export interface ProviderCopy {
   company: string;
   /** What the provider says about keeping and training on API data. Facts with sources only. */
   retention: string;
+  /** Where the provider processes the data, per provider so a new one never inherits it. Never claim EU-only. */
+  region: string;
 }
 
 // Sources: docs/research/anthropic-models.md (Anthropic) and docs/research/minimax-models.md (MiniMax).
@@ -25,12 +27,14 @@ export const PROVIDER_COPY: Readonly<Record<RankingProvider, ProviderCopy>> = {
     company: 'Anthropic',
     retention:
       'Anthropic says it deletes API inputs and outputs within 30 days, keeps them longer only for policy enforcement or legal reasons, and does not use them to train its models by default.',
+    region: 'Processing is not limited to the EU.',
   },
   minimax: {
     service: "MiniMax's API",
     company: 'MiniMax',
     retention:
       'MiniMax does not publish a fixed deletion period for API data or a promise not to use it to improve its services. Its privacy policy says data is stored in the United States.',
+    region: 'Processing is not limited to the EU.',
   },
 };
 
@@ -45,6 +49,34 @@ export const SENT_FOR_RANKING =
 export const REPLY_TYPES_HELP = 'Agree, Disagree and Ask change the order of the sentences for your keys. They never change the words. Ask also adds a question mark.';
 export const RECENT_SENDS = 'the last 3 things you said in this conversation';
 export const RECENT_SETTING = 'Include what you said';
+
+/**
+ * What model ranking sends, in the order of the request fields buildRequest (lib/decodeClient.ts) fills:
+ * `codes`, `lattice`, `beams`, `context.partner`. `v`, `lang`, `mode` and `k` are protocol fields with no
+ * typed data. The website's ranking drawing lists these words (MS-7.10).
+ */
+export const RANKING_SENT = [
+  'Your keys',
+  'The dictionary words that match them',
+  "Ninth Life's own best guesses",
+  "The other person's last line",
+] as const;
+
+/**
+ * RANKING_SENT as one clause for running text: "your keys, the dictionary words that match them, Ninth Life's own
+ * best guesses and the other person's last line". Use it wherever a page says what ranking sends (/about, Limits,
+ * llms.txt), so every place lists the same four things.
+ */
+export function rankingSentText(items: readonly string[] = RANKING_SENT): string {
+  const lower = items.map((s) => (s.startsWith('Ninth Life') ? s : s.charAt(0).toLowerCase() + s.slice(1)));
+  return lower.length < 2 ? (lower[0] ?? '') : `${lower.slice(0, -1).join(', ')} and ${lower[lower.length - 1]}`;
+}
+
+/**
+ * What ranking sends only sometimes (ADR-007, ADR-008), as one sentence for the website, said right after
+ * rankingSentText() wherever a page lists what ranking sends (Privacy, Limits, the FAQ, /about, llms.txt).
+ */
+export const RANKING_SENT_ALSO = `It also sends the reply type you picked (Agree, Disagree or Ask) while one is picked, and ${RECENT_SENDS} only if you turn on "${RECENT_SETTING}", which is off by default.`;
 
 export function providerCopy(p: RankingProvider = rankingProvider()): ProviderCopy {
   return PROVIDER_COPY[p];

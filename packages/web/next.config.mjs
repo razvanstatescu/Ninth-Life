@@ -25,6 +25,7 @@ const md5 = (/** @type {string} */ file) => createHash('md5').update(readFileSyn
  * - latin-ext font subsets: CSS loads them only for text that needs them (unicode-range);
  * - the data licence and notice (attribution pages, not needed to talk offline);
  * - en.v1.json: the eval's lexicon. The app ships the compact en.v2.json (ADR-data-003).
+ * - social-card.png: the link-preview image (components/site/seo.ts); only link-preview crawlers fetch it.
  */
 const NOT_PRECACHED = [
   /^icons\/icon(-maskable)?-(192|512)\.png$/,
@@ -32,6 +33,7 @@ const NOT_PRECACHED = [
   /^fonts\/.*-latin-ext\.woff2$/,
   /^data\/(LICENSE|NOTICE\.md)$/,
   /^data\/lexicon\/en\.v1\.json$/,
+  /^social-card\.png$/,
 ];
 
 /**
@@ -99,7 +101,8 @@ const withSerwist = withSerwistInit({
   disable: process.env.NODE_ENV === 'development',
   cacheOnNavigation: true,
   reloadOnOnline: false, // never reload under someone mid-sentence
-  additionalPrecacheEntries: [{ url: '/', revision: rev }, { url: '/about', revision: rev }, { url: '/welcome', revision: rev }, ...publicEntries()],
+  // The website at /, the app at /app and /about (ADR-006). /welcome is a redirect, never cached.
+  additionalPrecacheEntries: [{ url: '/', revision: rev }, { url: '/app', revision: rev }, { url: '/about', revision: rev }, ...publicEntries()],
   manifestTransforms: [async (entries) => ({ manifest: entries.filter((e) => !UNUSED_CHUNK.test(e.url)), warnings: [] })],
   // The lexicon is about 0.5 MB; precache it whole so ghost mode works offline from the first visit.
   maximumFileSizeToCacheInBytes: 16 * 1024 * 1024,
@@ -124,6 +127,9 @@ const nextConfig = {
       { source: '/sw.js', headers: [{ key: 'Cache-Control', value: 'no-cache' }] },
       { source: '/data/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=3600' }] },
     ];
+  },
+  async redirects() {
+    return [{ source: '/welcome', destination: '/', permanent: true }]; // 308 (ADR-006, marketing-site MS-1.3)
   },
 };
 

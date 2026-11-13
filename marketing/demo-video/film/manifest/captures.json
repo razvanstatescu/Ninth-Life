@@ -1,0 +1,202 @@
+[
+  {
+    "id": "phone-empty",
+    "path": "public/captures/phone-empty.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [390, 700],
+    "dpr": 3,
+    "state": "Fresh app, nothing typed: the sentence card shows the hint \"Press a key to start\" and the suggestion row \"Sentences for your keys appear here.\". Status pill: \"On device\". Speak is disabled (outlined).",
+    "date": "2026-11-10T17:22:13.189Z",
+    "sha256": "1767a3e844ef4c4cdaece38ea58c95a48bff8eee3540b10c3ba847d8f0e7f696"
+  },
+  {
+    "id": "phone-water",
+    "path": "public/captures/phone-water.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [390, 700],
+    "dpr": 3,
+    "state": "Typed \"I need water\" with the keyboard (keys 4 0 6 3 3 3 0 9 2 8 3 7; 0 is space). The sentence card reads \"I need water\" with its keys \"4 6333 92837\" under it. Suggestion row: \"I need waves\" and More. Status pill: \"On device\". Speak is the ember button.",
+    "date": "2026-11-10T17:22:16.004Z",
+    "sha256": "001ecdb59109c17d4d7c468a561a1aa517d8bb10d0dd92290485a7cf3f52a8ea"
+  },
+  {
+    "id": "phone-hello",
+    "path": "public/captures/phone-hello.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [390, 700],
+    "dpr": 3,
+    "state": "Typed \"Hello again\" with the keyboard (keys 4 3 5 5 6 0 2 4 2 4 6; 0 is space). The sentence card reads \"Hello again\" with its keys \"43556 24246\" under it. Suggestion row: \"Hello chain\" and More. Status pill: \"On device\". Speak is the ember button.",
+    "date": "2026-11-10T17:22:18.604Z",
+    "sha256": "ff4ac87ec7908c3195705e4611351d5307e6004f582b3a5dcb0cc19c54bb2908"
+  },
+  {
+    "id": "phone-offline",
+    "path": "public/captures/phone-offline.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [390, 700],
+    "dpr": 3,
+    "state": "Loaded online once, then the browser context was set offline (context.setOffline(true)); the status pill changed from \"On device\" to \"Offline\". Typed \"I need water\" with the keyboard (keys 4 0 6 3 3 3 0 9 2 8 3 7; 0 is space). The sentence card reads \"I need water\" with its keys \"4 6333 92837\" under it. Suggestion row: \"I need waves\" and More. Status pill: \"Offline\". Speak is the ember button.",
+    "date": "2026-11-10T17:22:21.423Z",
+    "sha256": "82e3a7eaa0a64ff2ba7410b9012f836183cb255900e15ef4c3c8d45904dc5055"
+  },
+  {
+    "id": "tablet-water",
+    "path": "public/captures/tablet-water.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [1133, 658],
+    "dpr": 2,
+    "state": "Tablet in landscape (split layout, keypad on the right). Typed \"I need water\" (keys 4 0 6 3 3 3 0 9 2 8 3 7). Sentence card \"I need water\" over \"4 6333 92837\"; suggestion rows: \"I need waves\", \"I need yates\" and More. Status pill: \"On device\". Action bar: Menu, Speak, Show.",
+    "date": "2026-11-10T17:22:24.209Z",
+    "sha256": "3ec00a82114a778f5aadff34983bfc41c9c1247e17150593af4695a7aea1d148"
+  },
+  {
+    "id": "laptop-water",
+    "path": "public/captures/laptop-water.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [1440, 900],
+    "dpr": 2,
+    "state": "Laptop window 1440x900 (wide layout). Typed \"I need water\" (keys 4 0 6 3 3 3 0 9 2 8 3 7) with the keyboard. Sentence bar \"I need water\" over \"4 6333 92837\" with Speak; sentences for your keys: \"I need water\", \"I need waves\", \"I need yates\", \"I need waver\", \"I neff water\"; proof chips: \"I\", \"need\", \"water\". Pills: \"undefined\", \"undefined\". The window is scrolled down 184px so the sentences list and the proof panel are both in view (at the top of the page they do not both fit in 900px; the header and the keypad's top row are cut at the top edge).",
+    "date": "2026-11-10T17:24:54.081Z",
+    "sha256": "c1c16ac94e9c1a6bab22649451556015a89ca5a75bd77c9af8af908265777a47"
+  },
+  {
+    "id": "laptop-water-full",
+    "path": "public/captures/laptop-water-full.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [1440, 900],
+    "dpr": 2,
+    "state": "The same page as laptop-water, as one tall image of the whole page (1440 CSS px wide, scrolled to the top): header with pills, They said, sentence bar \"I need water\", the 5 sentences, the proof panel, the keypad, scan control, keyboard hint and footer. Boxes are in this image's pixels (document coordinates x 2).",
+    "date": "2026-11-10T17:24:54.510Z",
+    "sha256": "053f594603afa5442b854768199bbf4c2f37bbc0d8cf10c39f26fbd55fc7adfc"
+  },
+  {
+    "id": "laptop-hello",
+    "path": "public/captures/laptop-hello.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [1440, 900],
+    "dpr": 2,
+    "state": "Laptop window 1440x900 (wide layout). Typed \"Hello again\" (keys 4 3 5 5 6 0 2 4 2 4 6) with the keyboard. Sentence bar \"Hello again\" over \"43556 24246\" with Speak; sentences for your keys: \"Hello again\", \"Hello chain\", \"Hello chaim\"; proof chips: \"Hello\", \"again\". Pills: \"Offline dictionary ready\", \"Model ranking off\".",
+    "date": "2026-11-10T17:24:57.501Z",
+    "sha256": "7a1841273379ac3012c653842429a44b51c8b845d97af552e1b6c11408a17482"
+  },
+  {
+    "id": "scan-01",
+    "path": "public/captures/scan-01.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [390, 700],
+    "dpr": 3,
+    "state": "One-switch scanning is on and \"I need\" is typed. The switch was pressed once (scanning starts): the highlight is on row 1 (keys 1 .,?!, 2 ABC, 3 DEF), ringed in ember. Speak turns quiet so the highlight is the one ember thing. Sentence card: \"I need\" (keys \"4 6333\"). Pills: \"On device\", \"Scanning\".",
+    "date": "2026-11-10T17:22:34.156Z",
+    "sha256": "d7b6b391fbec88a02816d535eb453f295accda80b25074e507247c3afbf54bca"
+  },
+  {
+    "id": "scan-02",
+    "path": "public/captures/scan-02.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [390, 700],
+    "dpr": 3,
+    "state": "One scan step later (1.2 s): the highlight moves down to row 2 (keys 4 GHI, 5 JKL, 6 MNO). Sentence card: \"I need\" (keys \"4 6333\"). Pills: \"On device\", \"Scanning\".",
+    "date": "2026-11-10T17:22:34.523Z",
+    "sha256": "db805d4bc9ec2e5d732ef3e7ddcaba0fa03d71eb55072904d25e158a75dbdfbf"
+  },
+  {
+    "id": "scan-03",
+    "path": "public/captures/scan-03.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [390, 700],
+    "dpr": 3,
+    "state": "One scan step later (1.2 s): the highlight moves down to row 3 (keys 7 PQRS, 8 TUV, 9 WXYZ). Sentence card: \"I need\" (keys \"4 6333\"). Pills: \"On device\", \"Scanning\".",
+    "date": "2026-11-10T17:22:34.898Z",
+    "sha256": "aa1e08aac8dc37d47e5288c0a6b78e5147774fab81d27f7be1acb3688932c2ee"
+  },
+  {
+    "id": "scan-04",
+    "path": "public/captures/scan-04.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [390, 700],
+    "dpr": 3,
+    "state": "Switch pressed while row 3 (keys 7 PQRS, 8 TUV, 9 WXYZ) was highlighted: the row is chosen and the highlight moves along its keys, starting with key 7 PQRS (lit ember; the row keeps its ring). Sentence card: \"I need\" (keys \"4 6333\"). Pills: \"On device\", \"Scanning\".",
+    "date": "2026-11-10T17:22:35.289Z",
+    "sha256": "078e92ab2342b885b337153e65a61d5f378691dbf715a2e28cc4ba8a86e66c9c"
+  },
+  {
+    "id": "scan-05",
+    "path": "public/captures/scan-05.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [390, 700],
+    "dpr": 3,
+    "state": "One scan step later: key 8 TUV is lit. Sentence card: \"I need\" (keys \"4 6333\"). Pills: \"On device\", \"Scanning\".",
+    "date": "2026-11-10T17:22:35.670Z",
+    "sha256": "a1c8614e4d436dc7368be3db95241a1119d1451e76993d2f78f6f4e2ac2a8f00"
+  },
+  {
+    "id": "scan-06",
+    "path": "public/captures/scan-06.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [390, 700],
+    "dpr": 3,
+    "state": "One scan step later: key 9 WXYZ is lit. Sentence card: \"I need\" (keys \"4 6333\"). Pills: \"On device\", \"Scanning\".",
+    "date": "2026-11-10T17:22:36.052Z",
+    "sha256": "12b2c0a6d701f0bd0f2c7bb4acb4eb59f019641450e21849e0e108c911e3b8a5"
+  },
+  {
+    "id": "scan-07",
+    "path": "public/captures/scan-07.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [390, 700],
+    "dpr": 3,
+    "state": "Switch pressed while key 9 WXYZ was lit: key 9 is typed, so \"w\" appears in the sentence card (\"I need w\", keys \"4 6333 9\"), the suggestion row changes, and the highlight starts again on row 1 (keys 1 .,?!, 2 ABC, 3 DEF) for the next letter. Sentence card: \"I need w\" (keys \"4 6333 9\"). Pills: \"On device\", \"Scanning\".",
+    "date": "2026-11-10T17:22:36.436Z",
+    "sha256": "d85d316bf920cb419705f90865c773201431fa3e39d730c900776ad298c30def"
+  },
+  {
+    "id": "scan-08",
+    "path": "public/captures/scan-08.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [390, 700],
+    "dpr": 3,
+    "state": "One scan step later: the highlight moves on to row 2 (keys 4 GHI, 5 JKL, 6 MNO), ready for the next letter. Sentence card: \"I need w\" (keys \"4 6333 9\"). Pills: \"On device\", \"Scanning\".",
+    "date": "2026-11-10T17:22:36.816Z",
+    "sha256": "345d87aba765551f61498ce1e816b63878743655ad7297562f6087df1eb607dd"
+  },
+  {
+    "id": "settings-speed-a",
+    "path": "public/captures/settings-speed-a.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [390, 700],
+    "dpr": 3,
+    "state": "Settings sheet (phone), scrolled to Ways to type. Access: One switch chosen (tapped). Before: the default. Scan speed reads \"1.2 s a step\"; help: \"How long the highlight stays on each row or key. There is no time limit to finish a sentence.\". The Voice section is scrolled out of view (no voice names on screen).",
+    "date": "2026-11-10T17:23:40.614Z",
+    "sha256": "08d35d21148945ad1e127c4bd83c61d2a36b96539f800ae62316e38c4c376b30"
+  },
+  {
+    "id": "settings-speed-b",
+    "path": "public/captures/settings-speed-b.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [390, 700],
+    "dpr": 3,
+    "state": "Settings sheet (phone), scrolled to Ways to type. Access: One switch chosen (tapped). After four taps on Slower (0.2 s each): Scan speed reads \"2 s a step\"; help: \"How long the highlight stays on each row or key. There is no time limit to finish a sentence.\". The Voice section is scrolled out of view (no voice names on screen).",
+    "date": "2026-11-10T17:23:42.196Z",
+    "sha256": "f61ebe70325d723c9041f2a60fd58a1aa1ba1db91f3bcb6d4a94a0e2c30da97b"
+  },
+  {
+    "id": "show-upright",
+    "path": "public/captures/show-upright.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [390, 700],
+    "dpr": 3,
+    "state": "Typed \"It is good to be back\" (keys 4 8 0 4 7 0 4 6 6 3 0 8 6 0 2 3 0 2 2 2 5); the sentence card read \"It is good to be back\". Show tapped: big text for the other person. Label \"Show this to the other person\", text \"It is good to be back\", buttons Done and Flip.",
+    "date": "2026-11-10T17:22:45.144Z",
+    "sha256": "cf8d12a1bfece5d54e6ff6f9bc2741a66b170ca23dafb4bc1dfe23b045a5abe0"
+  },
+  {
+    "id": "show-flipped",
+    "path": "public/captures/show-flipped.png",
+    "url": "http://localhost:3000/app",
+    "viewport": [390, 700],
+    "dpr": 3,
+    "state": "Typed \"It is good to be back\" (keys 4 8 0 4 7 0 4 6 6 3 0 8 6 0 2 3 0 2 2 2 5); the sentence card read \"It is good to be back\". Show, then Flip tapped: the label and \"It is good to be back\" are turned 180 degrees for the person across the table; Done and Flip stay upright.",
+    "date": "2026-11-10T17:22:45.572Z",
+    "sha256": "4bf13ac15cb7ba3ec810de31ba9b04c85f1644d834736fa109438f66cec68b2f"
+  }
+]

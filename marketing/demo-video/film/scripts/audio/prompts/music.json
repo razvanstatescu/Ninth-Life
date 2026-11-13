@@ -1,0 +1,373 @@
+{
+  "id": "act2",
+  "model_id": "music_v2_5",
+  "output_format": "pcm_48000",
+  "fallback_output_format": "mp3_48000_320",
+  "bpm": 120,
+  "key": "A minor",
+  "duration_ms": 86000,
+  "takes": [
+    {
+      "take": "t1",
+      "seed": 4356,
+      "plan": "v1"
+    },
+    {
+      "take": "t2",
+      "seed": 24246,
+      "plan": "v1"
+    },
+    {
+      "take": "t3",
+      "seed": 92837,
+      "plan": "v2"
+    }
+  ],
+  "global_positive_styles": [
+    "electronic",
+    "minimal",
+    "cinematic",
+    "clean mix",
+    "warm analog synths",
+    "120 BPM",
+    "A minor",
+    "instrumental",
+    "4/4 time"
+  ],
+  "global_negative_styles": [
+    "vocals",
+    "lyrics",
+    "spoken word",
+    "choir",
+    "guitar",
+    "orchestra",
+    "horror stings",
+    "distortion",
+    "lo-fi"
+  ],
+  "sections": [
+    {
+      "bars": "1-5",
+      "name": "build",
+      "text": "[Build]\n{soft kick on every beat, warm sub bass, a filtered synth rising, hard stop at the end}",
+      "duration_ms": 10000,
+      "positive_styles": [
+        "starts almost empty",
+        "soft kick drum on every beat",
+        "warm analog sub bass",
+        "a filtered synth rises through the whole section",
+        "tension without noise",
+        "ends with a hard stop on the last beat, no tail"
+      ],
+      "negative_styles": [
+        "noise riser",
+        "snare roll",
+        "cymbal crash"
+      ]
+    },
+    {
+      "bars": "6-8",
+      "name": "drop",
+      "text": "[Drop]\n{full drums, bass and plucked synth from the first beat}",
+      "duration_ms": 6000,
+      "positive_styles": [
+        "the drop",
+        "full and confident from the first beat",
+        "tight punchy electronic drums",
+        "warm analog bass line",
+        "a short plucked synth figure",
+        "modern, clean, hopeful, a little mysterious"
+      ],
+      "negative_styles": []
+    },
+    {
+      "bars": "9-11",
+      "name": "breakdown",
+      "text": "[Breakdown]\n{light hi-hats and rim clicks, long bass notes, full drums return in the last second}",
+      "duration_ms": 6000,
+      "positive_styles": [
+        "drums fall back to light hi-hats and rim clicks",
+        "bass holds long notes",
+        "space for thought",
+        "full drums return in the last second"
+      ],
+      "negative_styles": [
+        "heavy kick",
+        "lead melody"
+      ]
+    },
+    {
+      "bars": "12-17",
+      "name": "groove",
+      "text": "[Main groove]\n{steady driving groove, no lead melody}",
+      "duration_ms": 12000,
+      "positive_styles": [
+        "main groove",
+        "steady, driving, bright",
+        "tight punchy electronic drums",
+        "warm analog bass line",
+        "leave the middle and high register open",
+        "no lead melody"
+      ],
+      "negative_styles": [
+        "lead melody",
+        "busy arpeggio"
+      ]
+    },
+    {
+      "bars": "18-22",
+      "name": "groove-b",
+      "text": "[Groove, new bass]\n{new bass pattern, drums drop out for one second near the end, then return}",
+      "duration_ms": 10000,
+      "positive_styles": [
+        "the same groove with a new bass pattern",
+        "tight punchy electronic drums",
+        "drums drop out for one second near the end, then return",
+        "leave the middle and high register open"
+      ],
+      "negative_styles": [
+        "lead melody"
+      ]
+    },
+    {
+      "bars": "23-26",
+      "name": "peak",
+      "text": "[Peak]\n{fullest groove, strong accents on every beat}",
+      "duration_ms": 8000,
+      "positive_styles": [
+        "the groove at its fullest",
+        "strong accents on every beat",
+        "tight punchy electronic drums",
+        "warm analog bass line"
+      ],
+      "negative_styles": [
+        "lead melody"
+      ]
+    },
+    {
+      "bars": "27-31",
+      "name": "groove-c",
+      "text": "[Groove, half-time turn]\n{groove continues, two seconds at half time near the end, then back to full time}",
+      "duration_ms": 10000,
+      "positive_styles": [
+        "the groove continues",
+        "near the end, two seconds at half time, then back to full time",
+        "tight punchy electronic drums",
+        "warm analog bass line"
+      ],
+      "negative_styles": [
+        "lead melody"
+      ]
+    },
+    {
+      "bars": "32-34",
+      "name": "lift",
+      "text": "[Lift]\n{chords open up, brighter and wider}",
+      "duration_ms": 6000,
+      "positive_styles": [
+        "a lift",
+        "the chords open up, brighter and wider, like a sunrise",
+        "warm analog synth chords",
+        "steady drums"
+      ],
+      "negative_styles": []
+    },
+    {
+      "bars": "35-38",
+      "name": "strip",
+      "text": "[Strip back]\n{soft pad and a single bass note only}",
+      "duration_ms": 8000,
+      "positive_styles": [
+        "everything strips back to a soft pad and a single bass note",
+        "quiet",
+        "no drums"
+      ],
+      "negative_styles": [
+        "drums",
+        "percussion"
+      ]
+    },
+    {
+      "bars": "39-43",
+      "name": "chord",
+      "text": "[Final chord]\n{one warm wide A minor add 9 chord, held, fading to nothing}",
+      "duration_ms": 10000,
+      "positive_styles": [
+        "one warm, wide A minor add 9 chord on a soft synth pad",
+        "a low sub note",
+        "held and slowly fading to nothing",
+        "no rhythm"
+      ],
+      "negative_styles": [
+        "drums",
+        "percussion",
+        "melody"
+      ]
+    }
+  ],
+  "plan_notes": {
+    "v1": "The brief's sections as written; context_adherence high on every chunk. Takes t1 and t2: tempo perfect, but the arrangement barely changes (kick on every beat throughout, no breakdown at 16 s, no strip-back at 68 s).",
+    "v2": "Same sections and durations. Contrasting chunks get lower context_adherence, the arrangement is narrated with 'just ...', and absences are named (no kick in the breakdown, no drums in the strip-back and the final chord)."
+  },
+  "plan_v2_overrides": [
+    {
+      "name": "build",
+      "context_adherence": "high",
+      "text": "[Build]\n{start with just a soft kick on every beat and a warm sub bass, then bring in a filtered synth that slowly rises; stop dead on the last beat}",
+      "positive_styles": [
+        "sparse intro",
+        "just a soft kick on every beat",
+        "warm analog sub bass",
+        "a filtered synth slowly rising",
+        "tension without noise",
+        "ends with a hard stop, no tail"
+      ],
+      "negative_styles": [
+        "hi-hats",
+        "snare",
+        "claps",
+        "cymbals",
+        "noise riser"
+      ]
+    },
+    {
+      "name": "drop",
+      "context_adherence": "low",
+      "text": "[Drop]\n{everything comes in on the first beat: punchy drums with hi-hats and snare, bass line, plucked synth}",
+      "positive_styles": [
+        "the drop",
+        "full and confident from the first beat",
+        "tight punchy electronic drums with hi-hats and snare",
+        "warm analog bass line",
+        "a short plucked synth figure",
+        "modern, clean, hopeful, a little mysterious"
+      ],
+      "negative_styles": []
+    },
+    {
+      "name": "breakdown",
+      "context_adherence": "low",
+      "text": "[Breakdown]\n{no kick: just light hi-hats and rim clicks over long bass notes, quieter; the full drums come back in the last second}",
+      "positive_styles": [
+        "breakdown",
+        "no kick drum",
+        "just light hi-hats and rim clicks",
+        "long held bass notes",
+        "quieter, space for thought",
+        "full drums return in the last second"
+      ],
+      "negative_styles": [
+        "kick drum",
+        "four on the floor",
+        "lead melody"
+      ]
+    },
+    {
+      "name": "groove",
+      "context_adherence": "medium",
+      "text": "[Main groove]\n{full drums and bass, steady and driving, no lead melody}",
+      "positive_styles": [
+        "main groove",
+        "steady, driving, bright",
+        "tight punchy electronic drums",
+        "warm analog bass line",
+        "leave the middle and high register open",
+        "no lead melody"
+      ],
+      "negative_styles": [
+        "lead melody",
+        "busy arpeggio"
+      ]
+    },
+    {
+      "name": "groove-b",
+      "context_adherence": "high",
+      "text": "[Groove B]\n{the same groove with a new bass pattern; near the end the drums stop for one second, then return}",
+      "positive_styles": [
+        "the same groove with a new bass pattern",
+        "tight punchy electronic drums",
+        "drums stop for one second near the end, then return",
+        "leave the middle and high register open"
+      ],
+      "negative_styles": [
+        "lead melody"
+      ]
+    },
+    {
+      "name": "peak",
+      "context_adherence": "high",
+      "text": "[Peak]\n{the groove at its fullest, strong accents on every beat}",
+      "positive_styles": [
+        "the groove at its fullest",
+        "strong accents on every beat",
+        "tight punchy electronic drums",
+        "warm analog bass line"
+      ],
+      "negative_styles": [
+        "lead melody"
+      ]
+    },
+    {
+      "name": "groove-c",
+      "context_adherence": "high",
+      "text": "[Groove C]\n{the groove continues; near the end two seconds of half-time drums, then back to full time}",
+      "positive_styles": [
+        "the groove continues",
+        "near the end, two seconds of half-time drums, then back to full time",
+        "tight punchy electronic drums",
+        "warm analog bass line"
+      ],
+      "negative_styles": [
+        "lead melody"
+      ]
+    },
+    {
+      "name": "lift",
+      "context_adherence": "medium",
+      "text": "[Lift]\n{the chords open up, brighter and wider, like a sunrise}",
+      "positive_styles": [
+        "a lift",
+        "the chords open up, brighter and wider, like a sunrise",
+        "warm analog synth chords",
+        "steady drums"
+      ],
+      "negative_styles": []
+    },
+    {
+      "name": "strip",
+      "context_adherence": "low",
+      "text": "[Strip back]\n{the drums stop: just a soft pad and one held bass note, quiet}",
+      "positive_styles": [
+        "no drums",
+        "just a soft synth pad and one held bass note",
+        "quiet and calm",
+        "ambient"
+      ],
+      "negative_styles": [
+        "drums",
+        "kick drum",
+        "hi-hats",
+        "percussion",
+        "beat"
+      ]
+    },
+    {
+      "name": "chord",
+      "context_adherence": "low",
+      "text": "[Final chord]\n{just one held A minor add 9 chord on a soft warm pad with a low sub note, fading slowly to silence}",
+      "positive_styles": [
+        "one warm, wide A minor add 9 chord on a soft synth pad",
+        "a low sub note",
+        "held and slowly fading to nothing",
+        "no rhythm",
+        "no drums"
+      ],
+      "negative_styles": [
+        "drums",
+        "percussion",
+        "melody",
+        "beat"
+      ]
+    }
+  ]
+}

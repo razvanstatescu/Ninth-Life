@@ -1,6 +1,8 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { chunk } from '@/components/PhrasesSheet';
-import { chooseLayout, COMPACT_SENTENCES, isShell, isTwoColumn, sectionOrder, SPLIT_QUERY, STACK_SHORT_QUERY, stackSuggestionRows, splitSuggestionRows, visibleSentences } from '@/lib/layout';
+import { chooseLayout, COMPACT_SENTENCES, isShell, isTwoColumn, LANDSCAPE_QUERY, PHONE_QUERY, sectionOrder, SPLIT_QUERY, TOUCH_QUERY, WIDE_QUERY, STACK_SHORT_QUERY, stackSuggestionRows, splitSuggestionRows, visibleSentences } from '@/lib/layout';
 import { statusLines, statusSummary } from '@/lib/status';
 
 describe('layout (web-ui Req 15)', () => {
@@ -113,5 +115,99 @@ describe('quick phrase rows (web-ui Req 17.3)', () => {
       ['a', 'b', 'c', 'd'],
       ['e', 'f'],
     ]);
+  });
+});
+
+/**
+ * /app first paint (Round 3; verifier 2026-11-13). styles/app.css hides the static wide HTML wherever chooseLayout
+ * cannot pick wide. A tiny evaluator for the media features these queries use checks, on a grid of devices, that the
+ * rule hides .app--wide exactly when chooseLayout picks something else, on screen, and never in print.
+ */
+describe('/app first-paint rule matches chooseLayout', () => {
+  const appCss = readFileSync(resolve(__dirname, '../styles/app.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  type Env = { type: 'screen' | 'print'; coarse: boolean; width: number; height: number };
+
+  /** One media query list ("a, b"), with the features used in lib/layout.ts and app.css. */
+  function matches(list: string, env: Env): boolean {
+    return list.split(',').some((raw) => {
+      let q = raw.trim();
+      const negate = /^not\s/.test(q);
+      if (negate) q = q.replace(/^not\s+/, '');
+      const ok = q.split(/\s+and\s+/).every((part) => {
+        if (part === 'all') return true;
+        if (part === 'screen' || part === 'print') return env.type === part;
+        const f = /^\(\s*([a-z-]+)\s*:\s*([a-z0-9.]+?)(px)?\s*\)$/.exec(part);
+        if (!f) throw new Error(`unknown media part: ${part}`);
+        const [, name, value] = f;
+        const n = Number(value);
+        switch (name) {
+          case 'pointer': return (env.coarse ? 'coarse' : 'fine') === value;
+          case 'min-width': return env.width >= n;
+          case 'max-width': return env.width <= n;
+          case 'min-height': return env.height >= n;
+          case 'max-height': return env.height <= n;
+          case 'orientation': return (env.width > env.height ? 'landscape' : 'portrait') === value;
+          default: throw new Error(`unknown media feature: ${name}`);
+        }
+      });
+      return negate ? !ok : ok;
+    });
+  }
+
+  /** The chain of @media preludes around `.app--wide { visibility: hidden; }`, outermost first. */
+  function hidingPreludes(): string[] {
+    const at = appCss.search(/\.app--wide\s*\{\s*visibility:\s*hidden;?\s*\}/);
+    expect(at).toBeGreaterThan(-1);
+    const chain: string[] = [];
+    const re = /@media([^{]*)\{/g;
+    for (let m = re.exec(appCss); m && m.index < at; m = re.exec(appCss)) {
+      let depth = 1;
+      let i = re.lastIndex;
+      for (; i < appCss.length && depth > 0; i += 1) {
+        if (appCss[i] === '{') depth += 1;
+        else if (appCss[i] === '}') depth -= 1;
+      }
+      if (i > at) chain.push(m[1]!.trim());
+    }
+    return chain;
+  }
+
+  const hidden = (env: Env) => hidingPreludes().every((p) => matches(p, env));
+  const layoutFor = (env: Env, screenShort: number) =>
+    chooseLayout({
+      touch: matches(TOUCH_QUERY, env),
+      landscape: matches(LANDSCAPE_QUERY, env),
+      shortSide: screenShort,
+      wide: matches(WIDE_QUERY, env),
+      split: matches(SPLIT_QUERY, env),
+      narrow: matches(PHONE_QUERY, env),
+    });
+
+  it('the rule is screen-only and its query is TOUCH_QUERY or not WIDE_QUERY', () => {
+    expect(hidingPreludes()).toEqual(['screen', `${TOUCH_QUERY}, not all and ${WIDE_QUERY}`]);
+  });
+
+  it('on screen it hides .app--wide exactly when chooseLayout picks another layout', () => {
+    const sizes: [number, number][] = [[320, 568], [390, 844], [844, 390], [599, 800], [600, 800], [768, 1024], [1024, 768], [959, 700], [960, 700], [1133, 744], [1280, 800], [1440, 900], [2560, 1440]];
+    for (const coarse of [false, true]) {
+      for (const [width, height] of sizes) {
+        const env: Env = { type: 'screen', coarse, width, height };
+        const layout = layoutFor(env, Math.min(width, height));
+        expect(hidden(env), `${coarse ? 'coarse' : 'fine'} ${width}x${height} -> ${layout}`).toBe(layout !== 'wide');
+      }
+    }
+  });
+
+  it('a touchscreen laptop at 1440px: fine primary pointer gets wide and sees it; coarse gets a shell and the wide HTML stays hidden', () => {
+    const fine: Env = { type: 'screen', coarse: false, width: 1440, height: 900 };
+    const coarse: Env = { ...fine, coarse: true };
+    expect(layoutFor(fine, 900)).toBe('wide');
+    expect(hidden(fine)).toBe(false);
+    expect(layoutFor(coarse, 900)).toBe('split');
+    expect(hidden(coarse)).toBe(true);
+  });
+
+  it('print never hides it (paper is narrower than 960px while the window layout can stay wide)', () => {
+    for (const coarse of [false, true]) expect(hidden({ type: 'print', coarse, width: 794, height: 1123 })).toBe(false);
   });
 });

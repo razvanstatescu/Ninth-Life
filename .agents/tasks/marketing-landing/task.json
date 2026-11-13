@@ -1,0 +1,7 @@
+{
+  "task_id": "task-marketing-landing",
+  "task_description": "One-page marketing website for Ninth Life at / (grown from /welcome, with drawings and a bounded motion tier), the app moved to /app, /welcome 308 to /, manifest start_url /app, worker precache /, /app, /about; spec .kiro/specs/marketing-site (MS-1..MS-13, tasks 1-28) with tests naming the IDs; e2e site.mjs at phone, tablet and desktop sizes; axe; Lighthouse measured on a production build after the person allows stopping the dev server. Plan: .agents/tasks/marketing-landing/plan.md (steps 1-31).",
+  "status": "pending",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004", "FEAT-005"],
+  "blocked_reason": null
+}

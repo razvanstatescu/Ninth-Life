@@ -54,7 +54,7 @@
           "id": "a11y",
           "agent": "a11y-auditor",
           "modelId": "claude-sonnet-5.5",
-          "prompt": "Audit the Ninth Life app at http://localhost:3000/ for spec task {{task}}. Focus on the screens and components this task changed: read /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/status.json (changedFiles, untrackedFiles) and the plan at {{artifacts.plan}}. Write your report under /Users/razvanstatescu/Documents/Work/Ninth-Life/docs/a11y/ as your instructions say.\n\nFinal message: the report path, then every finding with its severity (blocker, serious, moderate, minor), WCAG criterion or design rule, where, and the smallest fix. Say which checks you could not run."
+          "prompt": "Audit the Ninth Life app at http://localhost:3000/app for spec task {{task}}. Focus on the screens and components this task changed: read /Users/razvanstatescu/Documents/Work/Ninth-Life/.kiro/workflow-output/status.json (changedFiles, untrackedFiles) and the plan at {{artifacts.plan}}. Write your report under /Users/razvanstatescu/Documents/Work/Ninth-Life/docs/a11y/ as your instructions say.\n\nFinal message: the report path, then every finding with its severity (blocker, serious, moderate, minor), WCAG criterion or design rule, where, and the smallest fix. Say which checks you could not run."
         },
         {
           "type": "step",

@@ -19,3 +19,5 @@ test-results/
 .claude/worktrees/
 
 .playwright-mcp
+# Workflow scratch screenshots (local only); the reports and verdicts next to them are committed
+.agents/**/*.png

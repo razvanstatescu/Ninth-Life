@@ -132,7 +132,7 @@ export function MenuSheet({
             About
           </h3>
           <div className="menu scan-cluster" data-scan-row="about">
-            <a className="nl-btn nl-btn--secondary" href="/welcome">
+            <a className="nl-btn nl-btn--secondary" href="/">
               How Ninth Life works
             </a>
             <a className="nl-btn nl-btn--secondary" href="/about">

@@ -56,10 +56,10 @@ jobs:
         run: pnpm -F @ninth/web build
 
   # Browser checks against a production build: axe (WCAG 2.2 AA rules), the keyboard-only and
-  # single-switch walkthroughs, and the device performance report. Plain node scripts with
+  # single-switch walkthroughs, phones and tablets, the landing page, and the device performance report. Plain node scripts with
   # Playwright (installed globally, as in the dev image); see docs/testing/README.md.
   e2e:
-    name: e2e (axe, keyboard, switch, perf report)
+    name: e2e (axe, keyboard, switch, phones and tablets, landing page, perf report)
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -87,7 +87,7 @@ jobs:
         run: |
           (pnpm -F @ninth/web exec next start -p 3202 > "$RUNNER_TEMP/next.log" 2>&1 &)
           for i in $(seq 1 60); do
-            curl -sf -o /dev/null "$BASE_URL/welcome" && exit 0
+            curl -sf -o /dev/null "$BASE_URL/app" && exit 0
             sleep 1
           done
           cat "$RUNNER_TEMP/next.log"
@@ -103,6 +103,9 @@ jobs:
       - name: Phones and tablets (portrait and landscape)
         if: ${{ !cancelled() }}
         run: node packages/web/test/e2e/responsive.mjs
+      - name: Landing page (sizes, motion, privacy, keyboard, offline)
+        if: ${{ !cancelled() }}
+        run: OFFLINE=1 node packages/web/test/e2e/site.mjs
       - name: Device performance report (report only)
         if: ${{ !cancelled() }}
         run: node scripts/perf-check.mjs --runs 3 --json packages/web/test-results/perf.json | tee -a "$GITHUB_STEP_SUMMARY"

@@ -18,11 +18,39 @@
   --key-xl: 128px;
   --focus-width: 4px;
   --scan-width: 6px;
+  --ring-width: 3px;
+  --line-width: 2px;
+  --target-cta: 64px;
+  --container: 1200px;
+  --measure: 760px;
+  --stage-s: 216px;
+  --stage-m: 288px;
+  --stage-l: 384px;
   --radius-chip: 14px;
   --radius-key: 24px;
   --radius-card: 28px;
   --radius-panel: 44px;
   --radius-pill: 999px;
+  --motion-jump: 120ms;
+  --motion-crossfade: 250ms;
+  --motion-fade: 600ms;
+  --motion-fade-slow: 900ms;
+  --motion-delay-arrival: 300ms;
+  --motion-stagger: 80ms;
+  --motion-autoplay-delay: 1200ms;
+  --motion-demo-step: 520ms;
+  --motion-reveal-distance: 16px;
+  --motion-state: 200ms;
+  --motion-nudge: 8px;
+  --motion-play-lead: 300ms;
+  --motion-frame: 600ms;
+  --motion-frame-quick: 400ms;
+  --motion-sweep: 240ms;
+  --motion-hint: 4px;
+  --motion-grow: 600ms;
+  --motion-ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-linear: linear;
+  --state-hover: 0.08;
   --type-display-xl-size: 96px;
   --type-display-xl-line: 0.95;
   --type-display-xl-weight: 800;
@@ -34,6 +62,9 @@
   --type-title-size: 32px;
   --type-title-line: 38px;
   --type-title-weight: 700;
+  --type-title-sm-size: 28px;
+  --type-title-sm-line: 34px;
+  --type-title-sm-weight: 700;
   --type-utterance-size: 40px;
   --type-utterance-line: 48px;
   --type-utterance-weight: 600;
@@ -47,6 +78,10 @@
   --type-heading-size: 22px;
   --type-heading-line: 28px;
   --type-heading-weight: 700;
+  --type-brand-size: 22px;
+  --type-brand-line: 28px;
+  --type-brand-weight: 800;
+  --type-brand-tracking: -0.01em;
   --type-body-lg-size: 20px;
   --type-body-lg-line: 30px;
   --type-body-lg-weight: 400;
@@ -164,10 +199,12 @@
 .nl-type-display-xl { font-family: var(--font-sans); font-size: var(--type-display-xl-size); line-height: var(--type-display-xl-line); font-weight: var(--type-display-xl-weight); letter-spacing: var(--type-display-xl-tracking); }
 .nl-type-display { font-family: var(--font-sans); font-size: var(--type-display-size); line-height: var(--type-display-line); font-weight: var(--type-display-weight); letter-spacing: var(--type-display-tracking); }
 .nl-type-title { font-family: var(--font-sans); font-size: var(--type-title-size); line-height: var(--type-title-line); font-weight: var(--type-title-weight); }
+.nl-type-title-sm { font-family: var(--font-sans); font-size: var(--type-title-sm-size); line-height: var(--type-title-sm-line); font-weight: var(--type-title-sm-weight); }
 .nl-type-utterance { font-family: var(--font-sans); font-size: var(--type-utterance-size); line-height: var(--type-utterance-line); font-weight: var(--type-utterance-weight); }
 .nl-type-candidate { font-family: var(--font-sans); font-size: var(--type-candidate-size); line-height: var(--type-candidate-line); font-weight: var(--type-candidate-weight); }
 .nl-type-key-letters { font-family: var(--font-sans); font-size: var(--type-key-letters-size); line-height: var(--type-key-letters-line); font-weight: var(--type-key-letters-weight); letter-spacing: var(--type-key-letters-tracking); }
 .nl-type-heading { font-family: var(--font-sans); font-size: var(--type-heading-size); line-height: var(--type-heading-line); font-weight: var(--type-heading-weight); }
+.nl-type-brand { font-family: var(--font-sans); font-size: var(--type-brand-size); line-height: var(--type-brand-line); font-weight: var(--type-brand-weight); letter-spacing: var(--type-brand-tracking); }
 .nl-type-body-lg { font-family: var(--font-sans); font-size: var(--type-body-lg-size); line-height: var(--type-body-lg-line); font-weight: var(--type-body-lg-weight); }
 .nl-type-body { font-family: var(--font-sans); font-size: var(--type-body-size); line-height: var(--type-body-line); font-weight: var(--type-body-weight); }
 .nl-type-label { font-family: var(--font-sans); font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); }

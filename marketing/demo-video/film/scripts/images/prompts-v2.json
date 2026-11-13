@@ -1,0 +1,95 @@
+{
+ "about": "Prompts for the second cut's Act 1 plates (research-v2/10-act1-old-world.md, sections 4.7 and 4.8). Blocks in [BRACKETS] are expanded from 'blocks' by gen-v2.mjs. '@id' in refs means the chosen final of that id in public/img/v2/. No maker or model is named anywhere; tm-lint scans this file.",
+ "blocks": {
+  "NIGHT": "A real photograph, not a render or an illustration. Night in a dark room; the only light is cool, soft moonlight from a window at the upper left, with deep blue-violet shadows and natural falloff. Full-frame camera, 100 mm macro lens, ISO 3200, fine natural grain, subtle lens vignette. Muted, slightly desaturated colour. No studio lighting, no rim lights, no lens flare.",
+  "PHONE": "The phone: an ordinary keypad mobile phone from about 2004, an invented design that copies no real model and carries no brand. A slim bar 106 mm tall, 46 mm wide and 19 mm thick: a softly rounded rectangle with 8 mm corner radii, gently rounded side edges and a smooth top edge with no aerial. Front cover in satin pewter-grey painted plastic with a faint metallic fleck; a thin seam runs around the sides where it meets the darker charcoal back cover. On the front, from top to bottom: a short horizontal earpiece slot; a clear acrylic lens with a thin black printed border around a small monochrome display, 34 mm wide and 26 mm tall, switched off, dark olive-grey glass showing no image; a row with a small pill-shaped key at each side and, between them, a round four-way navigation key with a separate round centre button; a second pill-shaped key at each side below the first; then twelve identical keys in three columns and four rows, each a wide rounded rectangle about 12.5 by 6.5 mm, in dark charcoal translucent rubber with a satin coating, evenly spaced in a straight grid; a tiny microphone hole near the bottom edge.",
+  "WEAR": "Used for years: hairline scratches and fine swirl marks on the acrylic lens, a few deeper scratches, paint worn through to darker plastic on the corners, the most-used keys polished smooth and slightly glossy in the middle, a little grime in the seams.",
+  "NO-TEXT": "Every key and the whole body are completely unprinted: no digits, no letters, no symbols, no icons, no logo, no brand name, no sticker, no text anywhere in the picture. No hands, no people. No curved or tilted key rows, no oval or teardrop keys, no joystick, no aerial, no patterned or coloured cover.",
+  "LIT": "Change only the light: switch on the phone's backlights. The display glows evenly in soft pale yellow-green, a little brighter along its lower edge, and shows no image, text or pixels. All keys are lit from beneath with the same light, which leaks softly around each key's edge and glows faintly through the rubber; the glow spills a little onto the surfaces around the phone and catches the dust. Keep everything else exactly as it is: framing, phone geometry and position, every key, scratches, dust, moonlight and shadows."
+ },
+ "ids": {
+  "v2-p1-master": {
+   "name": "v2-p1-master",
+   "shots": "identity reference for every other plate; the 'same keys' handover",
+   "refs": [
+    "scripts/images/guides/phone-v2.png"
+   ],
+   "size": "1440x2560",
+   "complexity": "high",
+   "prompt": "Image 1 is a line drawing of a product. Turn it into a photorealistic photograph of that product. Preserve the exact layout, proportions and perspective of the drawing; do not add new elements or text. [PHONE] [WEAR] Scene: the phone lies face up on a dark matte surface, photographed from directly above with the lens axis exactly perpendicular to its face, from far away with a long lens so its edges stay parallel; centred, long side vertical, filling 90% of the frame height. Soft moonlight from the upper left grazes the keys and the lens; its reflection falls outside the display window. [NIGHT] [NO-TEXT]"
+  },
+  "v2-p5-drawer": {
+   "name": "v2-p5-drawer",
+   "shots": "Act 1 shots 1, 2, 3, 6, 7",
+   "refs": [
+    "@v2-p1-master"
+   ],
+   "size": "2560x1440",
+   "complexity": "high",
+   "prompt": "Image 1 shows a phone: keep its exact design, proportions, materials and colours. [PHONE] New photograph. [NIGHT] Looking straight down into an open wooden drawer of forgotten things; a soft band of moonlight from the upper left falls across it. Inside, the phone from image 1 lies face up, switched off, near the centre, long side vertical, filling about 55% of the frame height, its face parallel to the picture, among a loose tangle of old charger cables, a cassette tape with a blank label, a wristwatch with a plain dial and no numerals whose hands stand at midnight, a few coins, rubber bands, a small key on a ring and two unlabelled batteries. Everything lies under a fine, even layer of grey dust; the phone's lens and keys are dusty too. [WEAR] [NO-TEXT] No labels, logos or printing on any object."
+  },
+  "v2-p5-lit": {
+   "name": "v2-p5-lit",
+   "shots": "Act 1 shot 3 (the wake): light pass",
+   "refs": [
+    "@v2-p5-drawer"
+   ],
+   "size": "2560x1440",
+   "complexity": "low",
+   "prompt": "Image 1 is the approved photograph. [LIT] The moonlight is unchanged. [NO-TEXT]"
+  },
+  "v2-p2-macro": {
+   "name": "v2-p2-macro",
+   "shots": "Act 1 shots 4, 5",
+   "refs": [
+    "@v2-p1-master",
+    "@v2-p5-drawer"
+   ],
+   "size": "2560x1440",
+   "complexity": "high",
+   "prompt": "Image 1 is the phone: keep its exact design. [PHONE] Image 2 is the scene: keep its light, dust and drawer. New photograph: an extreme macro of the same dusty phone lying in the drawer, taken from the keypad end with the camera tilted 35 degrees off the phone's face. The display window is sharp in the upper middle of the frame and fills about 60% of the frame width; the navigation key and the top row of keys are large and softly out of focus across the bottom of the frame. 100 mm macro lens at f/8. The display is switched off: dark olive-grey glass behind the acrylic lens, fine dust and hairline scratches on the lens, a faint cool reflection of the window along its upper edge. [NIGHT] [NO-TEXT]"
+  },
+  "v2-p2-lit": {
+   "name": "v2-p2-lit",
+   "shots": "Act 1 shots 4, 5: light pass",
+   "refs": [
+    "@v2-p2-macro"
+   ],
+   "size": "2560x1440",
+   "complexity": "low",
+   "prompt": "Image 1 is the approved photograph. [LIT] [NO-TEXT]"
+  },
+  "v2-p3-keypad": {
+   "name": "v2-p3-keypad",
+   "shots": "the 'same keys' handover into Act 2; optional Act 1 insert",
+   "refs": [
+    "@v2-p1-master",
+    "@v2-p5-drawer"
+   ],
+   "size": "2560x1440",
+   "complexity": "high",
+   "prompt": "Image 1 is the phone, image 2 the scene. [PHONE] New photograph: straight down onto the keypad of the same dusty phone in the drawer, the lens axis perpendicular to the keys; the twelve keys fill the frame height and are sharp; the navigation key is cut off at the top edge. 100 mm macro lens at f/11. Keys unlit. [WEAR] [NIGHT] [NO-TEXT]"
+  },
+  "v2-p3-fix": {
+   "name": "v2-p3-keypad",
+   "shots": "the 'same keys' handover: v2-p3-keypad-02 with stray marks removed and the drawer's dust",
+   "refs": [
+    "out/act1-v2/takes/v2-p3-keypad/v2-p3-keypad-02.png",
+    "@v2-p5-drawer"
+   ],
+   "size": "3840x2160",
+   "complexity": "low",
+   "prompt": "Image 1 is the approved photograph. Change only two things. First, remove the small scratched marks in the lower middle of the left key in the third row, so that key is as plain as the others. Second, give the phone and its keys the same fine, even layer of grey dust as the phone in image 2, settled in the seams and around the keys, with the polished centres of the keys still faintly visible. Keep everything else exactly as it is: framing, the phone's geometry and position, every key's shape and place, the scratches, the light and the shadows. [NO-TEXT]"
+  },
+  "v2-p3-lit": {
+   "name": "v2-p3-lit",
+   "shots": "the 'same keys' handover: light pass",
+   "refs": [
+    "@v2-p3-keypad"
+   ],
+   "size": "3840x2160",
+   "complexity": "low",
+   "prompt": "Image 1 is the approved photograph. [LIT] [NO-TEXT]"
+  }
+ }
+}

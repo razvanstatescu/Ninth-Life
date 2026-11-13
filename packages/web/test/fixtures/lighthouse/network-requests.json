@@ -1,0 +1,16 @@
+{
+  "note": "Items in the shape of Lighthouse's network-requests audit (details.items), trimmed to the fields scripts/lighthouse-lib.mjs reads. Made up for the test; not a measurement.",
+  "pageUrl": "http://localhost:3202/",
+  "items": [
+    { "url": "http://localhost:3202/", "resourceType": "Document", "transferSize": 20480, "sessionTargetType": "page" },
+    { "url": "http://localhost:3202/_next/static/css/5e6f7a8b9c0d1e2f.css", "resourceType": "Stylesheet", "transferSize": 8192, "sessionTargetType": "page" },
+    { "url": "http://localhost:3202/_next/static/chunks/webpack-0f1e2d3c4b5a6978.js", "resourceType": "Script", "transferSize": 2048, "sessionTargetType": "page" },
+    { "url": "http://localhost:3202/_next/static/chunks/main-app-9a8b7c6d5e4f3a2b.js", "resourceType": "Script", "transferSize": 40960, "sessionTargetType": "page" },
+    { "url": "http://localhost:3202/fonts/atkinson-hyperlegible-next-latin-400.woff2", "resourceType": "Font", "transferSize": 25600, "sessionTargetType": "page" },
+    { "url": "http://localhost:3202/icons/icon.svg", "resourceType": "Image", "transferSize": 2048 },
+    { "url": "data:image/svg+xml;base64,PHN2Zy8+", "resourceType": "Image", "transferSize": 0, "sessionTargetType": "page" },
+    { "url": "blob:http://localhost:3202/6f1c2d3e-4b5a-4978-8a1b-2c3d4e5f6a7b", "resourceType": "Other", "transferSize": 0, "sessionTargetType": "page" },
+    { "url": "http://localhost:3202/sw.js", "resourceType": "Other", "transferSize": 15360, "sessionTargetType": "worker" },
+    { "url": "http://localhost:3202/app", "resourceType": "Fetch", "transferSize": 10240, "sessionTargetType": "worker" }
+  ]
+}

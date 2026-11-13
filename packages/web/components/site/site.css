@@ -1,167 +1,1460 @@
 /*
- * Website (/welcome) styles, from design/artboards/In-context-web.dc.html.
- * A separate file so the app's stylesheets stay untouched. Every color is a token from
- * styles/tokens.css; spacing is on the 4px grid. Website-only differences from the artboard:
- *   - the hero carries the icon and the display-xl name (brand book, Surfaces: Website);
- *   - the header CTA is secondary, so the hero CTA is the one ember thing on screen;
- *   - the hero stays Night in the Day theme; body sections follow the theme.
+ * The website at / (.kiro/specs/marketing-site/design.md). A separate file so the app's stylesheets
+ * stay untouched; the landing page never loads styles/app.css (MS-11.3).
+ *
+ * - Layouts: phone under 600px, tablet 600 to 1023px, desktop 1024px and wider (MS-10.1).
+ * - Tokens only: every colour is a token (MS-9.2). Raw lengths appear only where no token exists: the
+ *   container and text measures, grid minmax() widths, clamp() minimums and the type sizes the design
+ *   names.
+ * - Ember is never a background here (MS-7.3, MS-9.1): the only ember fills are the hero's and the
+ *   closing section's primary buttons, styled by components.css. Drawings use ember only as rings.
+ * - The bar keeps its DOM order (brand, nav, CTA) at every width and never reorders it (R2, MS-13.2).
+ * - Static only: the base styles are the finished, still page. Motion rules come later, all inside
+ *   prefers-reduced-motion: no-preference (design "Motion system").
+ * - /about uses this file too (W3, 2026-11-12): one stylesheet for the whole website, cached across its pages.
+ *
+ * SHARED PRIMITIVES (round 3, 2026-11-12). Build every section from these; add a section-only rule only for what
+ * they do not cover, and never a second version of one of them.
+ *
+ *   Layout   .site-band (+ --surface)   a full-width section band: ground, or surface for alternation; padding
+ *                                       48 / 64 / 96 at phone / tablet / desktop.
+ *            .site-night                a Night band with the hero's night sky (plum glow + moon glow). Put
+ *                                       data-theme="night" on the same element. Used by the banner (.site-top),
+ *                                       the closing #start band and the /about header. Night in both themes.
+ *            .site-wrap                 the container: --container (1200px) with the safe-area side padding.
+ *            .site-stack                the column of blocks in a section: 32px apart, 48px from 600px.
+ *                                       (.site-split, the round-1 two-column wrap, is gone: unused since Source
+ *                                       dissolved in round 4.)
+ *   Heads    .site-head (+ --center)    h2 .site-h2 and an optional p .site-lead, 16px apart, left (or centred).
+ *            .site-h2 / .site-h3        section title (display, 36-56px) / card or prose title (heading, 22px).
+ *            .site-lead                 the section's one-paragraph lead: body-lg, ink-muted, --measure.
+ *   Text     .site-prose                running text after a grid or on its own: body (17/26), ink, --measure
+ *                                       wide, 16px between paragraphs; ul inside gets disc markers; a .site-links
+ *                                       row as its last child sits 8px under its sentence.
+ *            .site-links                a row of standalone links (56px targets, 8px apart), content-link style.
+ *            .site-caveat               a limit beside its claim (round 4): the info icon, then one sentence or more,
+ *                                       in ink also inside a card, --measure wide.
+ *            .site-step                 a numbered step (round 4; How, Proof): li or div > span.site-step__num.site-cell
+ *                                       [aria-hidden] (the digit, then span.site-step__lit with a 'during' role) +
+ *                                       .site-step__title (any element; heading type) + optional p.site-step__line
+ *                                       (ink-muted). Tile 48px (--site-step-num). The number lights while its play
+ *                                       root plays: by A7 inside the root, by [data-play-scope] + :has() beside it.
+ *   Cards    .site-card                 a feature card: fill (surface, or surface-sunken on a --surface band), a
+ *                                       2px --line edge, 24px in (padding counts the edge), radius 28, 12px gap.
+ *                                       Optional .site-stage first. Card text (p) is ink-muted, --measure wide.
+ *            .site-card--note           a note: the same edge and padding, no fill (Accessibility note, Limits,
+ *                                       Credits, the /about statement). Its text is ink.
+ *            .site-stage (+ --m, --lead) the drawing box at the top of a feature card: --stage-s
+ *                                       216px by default, --stage-m 288px, --stage-l 384px (tokens).
+ *            .site-card--lead (+ --end) a box section's first card, across its grid (.site-bento, round 4): its
+ *                                       stage beside its words from 1024px (--end: on the right).
+ *   Actions  .site-cta (+ --center)     a row of call-to-action buttons: nl-btn--xl primary and/or secondary,
+ *                                       all --target-cta (64px), full width on phones. The ember primary only in
+ *                                       the hero and #start (MS-9.1); mid-page rows use nl-btn--secondary.
+ *   Brand    .nl-brand (+ --small)      the logo lockup, in components.css (bar, footer, /about, /app).
+ *
+ * SHARED PRIMITIVES, round 4 (2026-11-13, Claude Code; design.md "Round 4: shared language"; built by r4-language
+ * unless noted). Every section follows the language: one stage, depth from fills, ember only for a press.
+ *
+ *   Feedback the hover layer (A9)       every real .nl-btn and the try-it keys: their own text colour over their
+ *                                       fill at --state-hover, on pointer devices. Press is the design system's own,
+ *                                       focus the 4px ring; nothing a person presses moves. Drawn buttons: none.
+ *   Links    .site-go (+ --out)         a standalone link that goes somewhere: words, then a trailing arrow
+ *                                       (SiteIcon `turn` for up, down, left) or, with --out, external for a page off
+ *                                       the site. 56px tall. The icon points --motion-hint further on hover/focus.
+ *   Facts    .site-tile                 a 24px icon on a 48px tile; its fill follows the surface under it.
+ *            .site-fact                 a tile and one short line beside it.
+ *   Drawings .site-key-panel            the panel under keys drawn outside a keypad: a key never sits on a stage.
+ *            .site-press-ring (v2)      on a drawn button or computer key: covers its edge, a plum line inside.
+ *   Icons    components/site/icons.tsx  website icons, <SiteIcon d={…} /> (+ `turn`, + `label`); the app's icons
+ *                                       come from components/Icon.tsx, never copied.
+ *   Buttons  .site-icon-btn (+ --filled) an icon-only nl-btn (built by r4-hero): a 56px target drawn as a 48px
+ *            .site-tip (+ --start, --end, --up)  circle, 2px line-strong ring (--filled: key fill, the main action).
+ *                                       Its name is its own text in a .site-tip, shown on hover and keyboard focus;
+ *                                       an ancestor's data-tips-off hides it (Escape). Hero toolbar (MS-6.15).
+ *
+ *   Links    Nav links (.site-nav in the bar, .site-footer__nav): ink, label weight, underline on hover only.
+ *            Content links (in text and .site-links): --link, underlined, regular weight.
+ *   Ink      ink for primary content: section paragraphs, .site-prose, FAQ answers, list items in notes.
+ *            ink-muted only for the lead, card supporting text, captions and drawing labels.
  */
 
 .site { min-height: 100vh; background: var(--ground); color: var(--ink); }
 .site a:not(.nl-btn) { color: var(--link); }
 .site a:not(.nl-btn):hover { color: var(--ink); }
 .site main:focus { outline: none; }
+/* A focus ring reaches 7px outside its control (4px ring, 3px offset): when Tab scrolls the page, keep
+   it clear of the viewport's bottom edge (MS-9.4). Bottom only, so the section links land as before. */
+html:has(> body .site) { scroll-padding-bottom: var(--space-2); }
 /* Resets with no specificity, so component rules below always win. */
 :where(.site) :where(ul, ol, dl, dd, figure) { margin: 0; padding: 0; }
 :where(.site) :where(ul, ol) { list-style: none; }
 
-.site-wrap { max-width: 1200px; margin: 0 auto; padding-left: var(--space-6); padding-right: var(--space-6); }
-
-/* ---- hero (always Night) ------------------------------------------------------------------- */
-.site-hero { background: var(--ground); color: var(--ink); }
-
-.site-header {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4);
-  padding-top: var(--space-6); padding-bottom: var(--space-6);
+/* Container with the safe areas (MS-10.6). */
+.site-wrap {
+  max-width: var(--container); margin: 0 auto;
+  padding-left: max(var(--space-4), env(safe-area-inset-left));
+  padding-right: max(var(--space-4), env(safe-area-inset-right));
 }
-.site-brand { display: inline-flex; align-items: center; gap: var(--space-3); min-height: var(--target-min); border-radius: var(--radius-chip); text-decoration: none; }
-.site a.site-brand, .site a.site-brand:hover { color: var(--moon); }
-.site-brand img { display: block; width: 44px; height: 44px; border-radius: 11px; }
-.site-brand span { font-size: 24px; line-height: 28px; font-weight: 800; letter-spacing: -0.01em; }
 
-.site-nav { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-6); }
-.site-header__cta { order: 3; }
-.site-header .site-nav { margin-left: auto; }
-.site .site-nav a:not(.nl-btn) {
-  display: inline-flex; align-items: center; min-height: var(--target-min);
-  font-size: var(--type-body-size); line-height: var(--type-body-line); font-weight: 600;
+/* Standalone links and link groups (R3, MS-10.4): 56px targets, 8px or more apart. */
+.site-nav, .site-footer__nav, .site-links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-6); }
+.site .site-nav a, .site .site-footer__nav a, .site .site-links a {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: var(--target-min); min-width: var(--target-min);
+}
+/* Nav links (bar and footer): ink, label weight, underlined on hover only. Content links keep --link and the
+   underline (the .site a rule above), at regular weight. */
+.site .site-nav a, .site .site-footer__nav a {
+  font-size: var(--type-body-size); line-height: var(--type-body-line); font-weight: var(--type-label-weight);
   color: var(--ink); text-decoration: none; border-radius: var(--radius-chip);
 }
-.site .site-nav a:not(.nl-btn):hover { text-decoration: underline; text-decoration-thickness: 2px; }
+.site .site-nav a:hover, .site .site-footer__nav a:hover { color: var(--ink); text-decoration: underline; text-decoration-thickness: var(--line-width); }
+.site .site-links a { font-weight: var(--type-body-weight); }
+/* The brand lockup (.nl-brand, components.css) keeps ink, not the content link colour. */
+.site a.nl-brand, .site a.nl-brand:hover { color: var(--ink); }
 
-.site-hero__body {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 56px;
-  padding-top: var(--space-16); padding-bottom: 112px;
+/* ---- shared primitives, round 4 (2026-11-13, Claude Code; r4-language; design.md "Round 4: shared language") ----
+ * A9 control feedback. Hovering a real control lays its own text colour over its fill at --state-hover: one opacity
+ * layer for ember, transparent, sunken and plum fills alike, so no ember background is ever set here (MS-9.1). Press
+ * is the design system's own; focus is the 4px ring, never animated; nothing a person presses moves. Drawn buttons
+ * are pictures and get no layer. The layer's fade is in the motion block. */
+.site .nl-btn { position: relative; -webkit-tap-highlight-color: transparent; }
+/* An ember link-button keeps its on-ember label on hover: globals.css's a:hover (0,1,1) would turn it ink, about
+   1.6:1 on ember, and the hover layer, which is the label's own colour, would lighten the fill with it. */
+.site a.nl-btn--primary:hover { color: var(--on-ember); }
+.site .nl-btn:not(.site-drawn-btn)::after, .site .site-key--try::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: currentColor; opacity: 0;
 }
-.site-hero__copy { flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-6); }
-.site-hero__icon { display: block; width: 112px; height: 112px; border-radius: 28px; }
-.site-hero__name {
-  font-size: clamp(64px, 14vw, var(--type-display-xl-size)); line-height: var(--type-display-xl-line);
-  font-weight: var(--type-display-xl-weight); letter-spacing: var(--type-display-xl-tracking); color: var(--moon);
+@media (hover: hover) {
+  .site .nl-btn:not(.site-drawn-btn, :disabled, [aria-disabled="true"]):hover::after,
+  .site .site-key--try:hover::before { opacity: var(--state-hover); }
+  .site .nl-btn--secondary:not(.site-drawn-btn, :disabled, [aria-disabled="true"]):hover { border-color: var(--ink); }
+  .site a:not(.nl-btn, .nl-brand):hover, .site .site-faq summary:hover { text-decoration: underline; text-decoration-thickness: var(--line-width); }
 }
-.site-hero__line { font-size: var(--type-title-size); line-height: var(--type-title-line); font-weight: 700; color: var(--ink); }
-.site-hero__lead { max-width: 620px; font-size: 22px; line-height: 32px; color: var(--ink-muted); }
+/* A link that goes somewhere (.site-go): its words, then a trailing icon that points the way: arrow (turned with
+   SiteIcon's `turn`) or, with .site-go--out, external for a page off the site. A standalone link, so 56px tall
+   (MS-10.4). With motion on, the icon moves --motion-hint further that way on hover and keyboard focus. */
+.site-go { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--target-min); border-radius: var(--radius-chip); }
+.site-go > .nl-icon { flex: none; --site-go-hint: translateX(var(--motion-hint)); }
+.site-go > .site-icon--up { --site-go-hint: translateY(calc(var(--motion-hint) * -1)); }
+.site-go > .site-icon--down { --site-go-hint: translateY(var(--motion-hint)); }
+.site-go > .site-icon--left { --site-go-hint: translateX(calc(var(--motion-hint) * -1)); }
+.site-go--out > .nl-icon { --site-go-hint: translate(var(--motion-hint), calc(var(--motion-hint) * -1)); }
+/* A fact tile: a 24px icon on a 48px tile whose fill follows the surface under it (sunken on a card or band, the
+   card's colour inside a sunken card, the piece colour in a stage). .site-fact is a tile and one short line. */
+.site-tile {
+  display: grid; place-items: center; flex: none; inline-size: var(--space-12); block-size: var(--space-12);
+  border-radius: var(--radius-chip); background: var(--surface-sunken); color: var(--ink);
+}
+.site-band--surface .site-card:not(.site-card--note) .site-tile { background: var(--surface); }
+.site-stage .site-tile { background: var(--site-piece); }
+.site-fact { display: flex; align-items: center; gap: var(--space-4); }
+/* A key drawn outside a keypad sits on its panel, never straight on a stage: in Night the stage is plum, the key's
+   own fill. One panel may hold several keys, bottom-aligned (Touch). The panel's lift is the drawings' one shadow. */
+.site-key-panel {
+  display: inline-flex; align-items: flex-end; gap: var(--space-2); padding: var(--space-2);
+  border-radius: calc(var(--radius-key) + var(--space-2)); background: var(--panel); box-shadow: var(--lift);
+}
+
+/* ---- banner: bar and hero, always Night (MS-6.1); the night sky itself is .site-night below ------ */
+.site-top { position: relative; isolation: isolate; color: var(--ink); }
+
+.site-bar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-3);
+  padding-top: var(--space-3); padding-bottom: var(--space-3);
+}
+
+/* Round 3 (2026-11-12, Claude Code): the h1 is the promise at the display scale (36-56px); "Ninth Life" is the small
+   brand line with the icon above it (icon 48px on phones, 64px from 600px, MS-6.1). Phones keep the copy short and
+   the gaps tight, so the demo's sentence and chips reach the first screen at 390x844 (W1). */
+.site-hero { display: flex; flex-direction: column; gap: var(--space-8); padding-top: var(--space-4); padding-bottom: var(--space-12); }
+.site-hero__copy { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); }
+.site-hero__brand {
+  display: inline-flex; align-items: center; gap: var(--space-3);
+  font-size: var(--type-brand-size); line-height: var(--type-brand-line); font-weight: var(--type-brand-weight);
+  letter-spacing: var(--type-brand-tracking); color: var(--ink);
+}
+.site-hero__icon { display: block; flex: none; width: var(--space-12); height: var(--space-12); border-radius: var(--radius-chip); }
+.site-hero__title {
+  font-size: clamp(36px, 9.4vw, var(--type-display-size)); line-height: 1.08;
+  font-weight: var(--type-display-weight); letter-spacing: var(--type-display-tracking); color: var(--moon);
+}
+.site-hero__title > span { display: inline-block; }
+.site-hero__lead { max-width: 620px; font-size: var(--type-body-lg-size); line-height: var(--type-body-lg-line); color: var(--ink-muted); }
 .site-hero__note { font-size: var(--type-body-size); line-height: var(--type-body-line); color: var(--ink-muted); }
-.site-hero__demo { flex: 1 1 400px; min-width: 0; display: flex; justify-content: center; }
-.site-actions { display: flex; flex-wrap: wrap; gap: var(--space-4); }
-.site-actions .nl-btn--xl { min-height: 64px; padding: 0 28px; font-size: 20px; }
-
-/* ---- keypad demo ----------------------------------------------------------------------------- */
-.site-demo { width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
-.site-demo__bar {
-  width: 100%; display: flex; align-items: center; gap: var(--space-3);
-  padding: var(--space-3) var(--space-3) var(--space-3) 20px; border-radius: var(--radius-card); background: var(--surface-sunken);
+.site-hero .site-cta { margin-top: var(--space-2); align-items: center; }
+/* "See how it works": a standalone link beside the primary (56px target, MS-10.4), ink and underlined. */
+.site a.site-hero__how {
+  display: inline-flex; align-items: center; min-height: var(--target-min); padding: 0 var(--space-2);
+  font-size: var(--type-body-lg-size); line-height: var(--type-body-lg-line); font-weight: var(--type-label-weight);
+  color: var(--ink); text-decoration-thickness: var(--line-width); text-underline-offset: var(--space-1); border-radius: var(--radius-chip);
 }
-.site-demo__said { flex: 1; min-width: 0; }
-.site-demo__text { font-size: 30px; line-height: 38px; font-weight: 600; overflow-wrap: anywhere; }
-.site-demo__keys {
-  min-height: var(--type-digits-line);
-  font-family: var(--font-mono); font-size: var(--type-label-size); line-height: var(--type-digits-line);
-  letter-spacing: var(--type-digits-tracking); color: var(--ink-muted);
+/* Round 4 (2026-11-13, Claude Code): the demo is one 284px column (three 84px keys and the panel's gaps), centred. */
+.site-hero {
+  --site-key-w: calc(var(--key-min) + var(--space-3));
+  --site-demo-w: calc(var(--site-key-w) * 3 + var(--space-2) * 4);
 }
-.site-demo__pad { --nl-key: clamp(64px, calc((100vw - 120px) / 3), 84px); gap: 10px; padding: 20px; border-radius: 40px; }
-.site-demo__pad .nl-keypad__row { gap: 10px; }
-.site-demo__key { cursor: default; border-radius: 20px; }
-.site-demo__key:active { box-shadow: none; }
-/* The key being pressed: a moon ring and a lighter key. Not ember: the CTA is this screen's ember. */
-.site-demo__key.is-pressed { background: var(--line); box-shadow: inset 0 0 0 4px var(--moon); }
-.site-demo__foot { width: 100%; display: flex; flex-direction: column; align-items: center; gap: var(--space-4); }
-.site-demo__chips { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); min-height: 48px; }
+.site-hero__demo { min-width: 0; display: flex; justify-content: center; }
+/* Tablets (600 to 1023px): the demo sits under the copy, so it starts at the copy's left edge too (R3-P8). From 720px
+   it sits beside the copy instead (round 4, option T: see the tablets block). */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .site-hero__demo { justify-content: flex-start; }
+}
 
-/* ---- bands and blocks ------------------------------------------------------------------------ */
-.site-band { padding-top: var(--space-24); padding-bottom: var(--space-24); background: var(--ground); }
+/* ---- icon buttons and their names (a shared primitive; round 4, 2026-11-13, Claude Code; MS-6.15) ------------
+ * .site-icon-btn: an icon-only button on .nl-btn (the design system's focus ring and 120ms transitions). A 56px target
+ * drawn as a 48px circle: its 4px transparent border is target, not drawing. Ring: 2px --line-strong, as a secondary
+ * button; press: the --surface-sunken fill. --filled (the main action): a --key fill; press: an inner 3px --line-strong
+ * ring. Never ember. aria-disabled: a --line ring and an --ink-muted icon. The hover layer is A9's (::after).
+ * .site-tip: the button's name as its own text, so the accessible name is the word on screen (WCAG 2.5.3); it shows
+ * under the button on hover (pointer devices only) and on keyboard focus. --start / --end hang it from the button's
+ * left or right edge (the first or last of a row), --up puts it above. An ancestor with data-tips-off hides it (the
+ * user pressed Escape, WCAG 1.4.13). Place a row of them where a name never covers a key or another control. */
+.site-icon-btn {
+  position: relative; inline-size: var(--target-min); block-size: var(--target-min); padding: 0;
+  border: var(--space-1) solid transparent; border-radius: var(--radius-pill); background-clip: padding-box;
+  background-color: transparent; color: var(--ink); box-shadow: inset 0 0 0 var(--line-width) var(--line-strong);
+  -webkit-tap-highlight-color: transparent;
+}
+.site-icon-btn > .nl-icon { inline-size: var(--space-6); block-size: var(--space-6); }
+.site-icon-btn:active { background-color: var(--surface-sunken); }
+.site-icon-btn--filled { background-color: var(--key); color: var(--on-key); }
+.site-icon-btn--filled:active { background-color: var(--key); box-shadow: inset 0 0 0 var(--ring-width) var(--line-strong); }
+.site-icon-btn[aria-disabled="true"] { cursor: not-allowed; color: var(--ink-muted); background-color: transparent; box-shadow: inset 0 0 0 var(--line-width) var(--line); }
+.site-tip {
+  position: absolute; z-index: 2; inset-block-start: calc(100% + var(--space-2)); inset-inline-start: 50%; transform: translateX(-50%);
+  padding: var(--space-1) var(--space-2); border-radius: var(--space-2); background: var(--ink); color: var(--ground);
+  font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight);
+  white-space: nowrap; opacity: 0; pointer-events: none;
+}
+.site-tip--start { inset-inline-start: 0; transform: none; }
+.site-tip--end { inset-inline-start: auto; inset-inline-end: 0; transform: none; }
+.site-tip--up { inset-block-start: auto; inset-block-end: calc(100% + var(--space-2)); }
+.site-icon-btn:focus-visible > .site-tip { opacity: 1; }
+@media (hover: hover) {
+  .site-icon-btn:hover > .site-tip { opacity: 1; pointer-events: auto; }
+}
+[data-tips-off] .site-icon-btn > .site-tip { opacity: 0; pointer-events: none; }
+
+/* ---- keypad demo (round 4, 2026-11-13, Claude Code; design.md "Round 4: the hero demo") -------------------------
+ * A small app screen: the sentence card (the sentence as proof chips, each word over its keys), one status line, the
+ * keypad (the app's keys, 64px tall, set inline) and the toolbar (three .site-icon-btn, one under each key column).
+ * Every part keeps one size in every state, so the keypad and the toolbar never move (MS-6.10). */
+.site-demo { width: 100%; max-width: var(--site-demo-w); display: flex; flex-direction: column; }
+.site-demo__card { padding: var(--space-3); border-radius: var(--radius-card); background: var(--surface-sunken); }
+/* One height in every state: two chip lines, or up to three lines of the card's hints. A minimum, so the WCAG 1.4.12
+   text-spacing overrides grow the card instead of cutting its text. */
+.site-demo__said { display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; min-block-size: calc(var(--type-label-line) * 3 + var(--space-1)); }
+.site-demo__chips { display: flex; flex-wrap: nowrap; gap: var(--space-2); }
+/* The app's ProofChip, stacked: its icon and word on the first line, its keys under the word, so the sentence and its
+   digits show once, together, and "need" over "6333" shows one press per letter. Each state keeps its icon, edge and
+   text treatment (MS-9.3). */
+.site-demo .nl-chip {
+  display: inline-grid; grid-template-columns: auto auto; align-items: center; column-gap: var(--space-1);
+  min-height: 0; padding: var(--space-1) var(--space-2);
+  font-size: var(--type-body-lg-size); line-height: var(--type-heading-line);
+}
+.site-demo .nl-chip > .nl-icon { grid-row: 1; }
+.site-demo .nl-chip__word, .site-demo .nl-chip__code { grid-column: 2; }
+.site-demo .nl-chip__code { grid-row: 2; margin-left: 0; line-height: var(--type-label-line); letter-spacing: var(--type-digits-tracking); }
+.site-demo :is(.nl-chip--typing, .nl-chip--unspelled) > * { grid-column: 1; }
+.site-demo .nl-chip__note { grid-row: 2; font-size: var(--type-label-size); line-height: var(--type-label-line); }
+/* Each chip slot is sized by its hidden finished chip; the live chip grows from the slot's left edge. */
+.site-demo__slot > .nl-chip { justify-self: start; }
+/* The card's hints while no word is typed (label type, at most 3 lines); the keyboard line only with a fine pointer. */
+.site-demo__hint { font-size: var(--type-label-size); line-height: var(--type-label-line); color: var(--ink-muted); }
+.site-demo__kbd { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .site-demo__kbd { display: block; }
+}
+/* Try it (R3-P1): the chips are one line that shows its end, where the visitor is typing. The block runs right to left
+   only to put the overflow on the left; the content inside reads left to right. A clipped line fades out on the left
+   (KeypadDemo sets data-clipped). */
+.site-demo__line { white-space: nowrap; overflow: hidden; direction: rtl; text-align: left; }
+.site-demo__end { display: inline-block; direction: ltr; unicode-bidi: isolate; vertical-align: top; }
+.site-demo__line > .site-demo__chips { display: inline-flex; }
+.site-demo__line[data-clipped] {
+  -webkit-mask-image: linear-gradient(to right, transparent, var(--ink) var(--space-6));
+  mask-image: linear-gradient(to right, transparent, var(--ink) var(--space-6));
+}
+/* The status line: one reserved line in every state (the invitation, "Next: Home, Gone", the decoder's state). */
+.site-demo__status {
+  min-block-size: calc(var(--type-label-line) + var(--space-1) * 2); padding-block: var(--space-1);
+  text-align: center; font-size: var(--type-label-size); line-height: var(--type-label-line); color: var(--ink-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.site-demo__status b { color: var(--ink); font-weight: var(--type-label-weight); }
+/* The toolbar: one cell per key column, each button centred under its column (a dialer's row). Hear it keeps the middle
+   cell, so Play and Clear stay put where the browser has no speech. */
+.site-demo__tools {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); justify-items: center;
+  column-gap: var(--space-2); margin-top: var(--space-2); padding-inline: var(--space-2);
+}
+.site-demo__play { grid-column: 1; }
+.site-demo__hear { grid-column: 2; }
+.site-demo__clear { grid-column: 3; }
+/* Hidden copies of the finished frame and of every button label share one grid cell with what is
+   shown, so the demo keeps its size while it plays (MS-6.10). */
+.site-sizer { display: grid; }
+.site-sizer > * { grid-area: 1 / 1; }
+.site-sizer__ghost { visibility: hidden; }
+
+/* ---- key drawings (KeypadPicture sets the key size inline, MS-10.8) ------------------------------ */
+.nl-keypad.site-pad { display: flex; width: max-content; max-width: 100%; padding: var(--space-4); gap: var(--space-2); }
+.site-pad .nl-keypad__row { gap: var(--space-2); }
+/* Drawn keys are not controls: no pointer, no :active ring from components.css. */
+.site-key { cursor: default; }
+.site-key:active { box-shadow: none; }
+/* The Key's pressed ring, on a pseudo-element so the key keeps its plum fill. */
+.site-key::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 0 0 var(--ring-width) var(--ember); opacity: 0;
+}
+.site-key.is-pressed::after, .site-key--ninth::after { opacity: 1; }
+/* While the demo plays, and while the visitor types (round 4), only the pressed key shows a ring, so the hero never
+   shows two ember rings. visibility does not restart an animation. */
+.site-demo:is(.is-playing, .is-trying) .site-key--ninth:not(.is-pressed)::after { visibility: hidden; }
+/* The hero's keys are real buttons since W4 (try it): a pointer, the pressed ring while held. Focus keeps the design
+   system's ring (.nl-key:focus-visible). Round 4: a slim panel (8px) as wide as the demo; each key takes a third of
+   its row, 64 to 84px wide (MS-10.8), 64px tall (set inline). */
+.site-demo__keypad.nl-keypad.site-pad { width: 100%; padding: var(--space-2); border-radius: calc(var(--radius-key) + var(--space-2)); }
+.site-demo__keypad .nl-key { flex: 1 1 0; width: auto; min-width: var(--space-16); max-width: var(--site-key-w); }
+.site-key.site-key--try { cursor: pointer; }
+.site-key--try:active::after { opacity: 1; }
+
+/* Drawn buttons are pictures, not controls (MS-7.2); a pressed ring sits inside them as an overlay. */
+.site-drawn-btn { position: relative; cursor: default; }
+
+/* ---- played drawings: the finished state (round 2, design R2.2; MS-7.5, MS-8.11) ------------------
+ * Every animated part carries a role class. These base rules are the finished state, so reduced
+ * motion, no JavaScript and no IntersectionObserver show it; the motion block below only adds the
+ * before-play state and the animations. .site-in, .site-rise and .site-mark keep the default opacity 1.
+ */
+.site-out, .site-during, .site-ring { opacity: 0; }
+/* Parts that replace each other share one grid cell, sized by the largest, so no change moves anything. */
+.site-cell { display: grid; }
+.site-cell > * { grid-area: 1 / 1; }
+.site-drawing .nl-candidate { cursor: default; }
+/* A pressed ring on a drawn key or a drawn button: an overlay inside it (both are position: relative). */
+.site-press-ring, .site-key-ring {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 0 0 var(--ring-width) var(--ember);
+}
+/* Press ring v2 (round 4, r4-language): on a drawn button or computer key, the ring covers the control's 2px edge
+   and carries a plum line inside it, so ember always sits on plum, as on the lit key, the Day primary button and the
+   scan ring (in Day the ring would otherwise be ember on white, 1.7:1). Keys keep the plain ring: they are plum. */
+.site-press-ring { box-shadow: inset 0 0 0 var(--ring-width) var(--ember), inset 0 0 0 calc(var(--ring-width) + var(--line-width)) var(--plum); }
+:is(.site-drawn-btn, .site-kbd) > .site-press-ring { inset: calc(var(--line-width) * -1); }
+/* One drawn key outside a keypad (KeyPicture sets its size inline on this wrapper). */
+.site-key-picture { display: inline-grid; }
+
+/* The stage: the fixed-height box at the top of a feature card that holds its drawing (MS-7.7). */
+.site-stage {
+  display: grid; place-items: center; overflow: clip; min-width: 0;
+  /* A minimum, not a fixed height: under the WCAG 1.4.12 text-spacing overrides the stage grows instead of
+     cutting its drawing off (at normal spacing every drawing fits, so the stage keeps this height). */
+  min-block-size: var(--stage-s);
+  border-radius: calc(var(--radius-card) - var(--space-2)); background: var(--surface-sunken);
+  /* The fill of a drawn panel inside the stage: the card's own surface, so it stands off the stage. */
+  --site-piece: var(--surface);
+}
+.site-band--surface .site-stage { background: var(--surface); --site-piece: var(--surface-sunken); }
+/* The box sections (round 4, r4-boxes): a 288px stage in a row of cards (Conversation, Privacy), and the lead card's
+   stage, at least 384px from 600px. A row's stages share one height (.site-bento subgrid rows); phones hug. */
+.site-stage--m { min-block-size: var(--stage-m); }
+.site-stage--lead { min-block-size: var(--stage-m); }
+@media (min-width: 600px) { .site-stage--lead { min-block-size: var(--stage-l); } }
+
+/* The sentence well and the sentence rows, drawn (How it works and Conversation). */
+.site-well {
+  width: 100%; display: flex; flex-direction: column; gap: var(--space-1);
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-card); background: var(--surface-sunken);
+}
+/* A well with its button on the same line (the sentence, then Speak or Save phrase). */
+.site-well--row { flex-direction: row; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.site-well__body { min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+/* The text cell is one candidate line tall whatever it holds. */
+.site-well__text { font-size: var(--type-candidate-size); line-height: var(--type-candidate-line); font-weight: var(--type-candidate-weight); color: var(--ink); }
+.site-well__keys { font-family: var(--font-mono); font-size: var(--type-label-size); line-height: var(--type-label-line); letter-spacing: var(--type-digits-tracking); color: var(--ink-muted); }
+.site-cands { width: 100%; display: flex; flex-direction: column; gap: var(--space-2); }
+/* Drawn rows: 56px (rank 40, 6 above and below, the 2px border), so three fit in How step 2's stage. */
+.site-cand { position: relative; min-height: var(--target-min); padding-block: calc(var(--space-2) - var(--line-width)); }
+.site-cand > :not(.site-cand__mark) { position: relative; }
+/* The chosen marker: a stronger edge, a sunken fill behind the text and a check, never ember (MS-7.3, MS-9.3). */
+.site-cand__mark {
+  position: absolute; inset: calc(var(--line-width) * -1); display: flex; align-items: center; justify-content: flex-end;
+  padding-inline-end: var(--space-4); border: var(--line-width) solid var(--line-strong); border-radius: inherit;
+  background: var(--surface-sunken); color: var(--ink); pointer-events: none;
+}
+/* Roomier 64px keys (round 3, P3-4): the letters sit under the digit instead of on it, at a size that clears the
+   key's edges ("MNO", "PQRS"). The key size is unchanged (MS-10.8). Round 3 (R3-P2): one rule for every key face
+   under 80px: How's keypad crop, the switch drawing, the Touch drawing's 72px key and the hero's try-it keys under
+   360px wide (about 67px there), so the corner digit never meets the letters and "MNO", "Space" and "Next" clear
+   the key's edges. */
+:is(.site-how__press, .site-scan, .site-key--min) .nl-key__letters { margin-top: var(--space-3); font-size: calc(var(--type-label-size) * 1.2); line-height: var(--type-label-line); }
+:is(.site-how__press, .site-scan, .site-key--min) .nl-key__letters--4 { font-size: var(--type-label-size); }
+:is(.site-how__press, .site-scan, .site-key--min) .nl-key__word { margin-top: var(--space-3); font-size: var(--type-label-size); line-height: var(--type-label-line); }
+/* The hero's try-it keys are 64px tall at every width since round 4, so they always take the same face. */
+.site-demo__keypad .nl-key__letters { margin-top: var(--space-3); font-size: calc(var(--type-label-size) * 1.2); line-height: var(--type-label-line); }
+.site-demo__keypad .nl-key__letters--4 { font-size: var(--type-label-size); }
+.site-demo__keypad .nl-key__word { margin-top: var(--space-3); font-size: var(--type-label-size); line-height: var(--type-label-line); }
+
+/* Proof figure (pictures/ProofCheck.tsx; round 4, 2026-11-13, Claude Code; MS-7.9): one grid, so a word's letters always
+   sit under the key that types them. Phones: five key columns, each chip on its own line above its letters. From
+   600px: the chips' column, then the five key columns, with "Your keys" in the chips' column. subgrid keeps every
+   line on the figure's columns. The column box and the keys' outline are overlays and never cover a chip. */
+.site-proof {
+  --proof-col: calc(var(--space-12) + var(--space-1)); --site-piece: var(--surface);
+  min-width: 0; display: grid; grid-template-columns: repeat(5, minmax(0, var(--space-16))); column-gap: var(--space-2); row-gap: var(--space-4);
+  justify-content: start; padding: var(--space-4); border-radius: var(--radius-card); background: var(--surface);
+}
+.site-proof > *, .site-proof__keyrow, .site-proof__row, .site-proof__line, .site-proof__label, .site-proof__chip { grid-column: 1 / -1; }
+.site-proof__keys, .site-proof__keyrow, .site-proof__rows, .site-proof__row, .site-proof__line { display: grid; grid-template-columns: subgrid; row-gap: var(--space-2); }
+.site-proof__keys { margin-bottom: var(--space-2); }
+.site-proof__rows { row-gap: var(--space-4); }
+.site-proof__line { position: relative; }
+.site-proof__line > * { grid-row: 1; }
+.site-proof__line > :is(:nth-child(1), :nth-child(6)) { grid-column: 1; }
+.site-proof__line > :is(:nth-child(2), :nth-child(7)) { grid-column: 2; }
+.site-proof__line > :is(:nth-child(3), :nth-child(8)) { grid-column: 3; }
+.site-proof__line > :is(:nth-child(4), :nth-child(9)) { grid-column: 4; }
+.site-proof__line > :is(:nth-child(5), :nth-child(10)) { grid-column: 5; }
+.site-proof__label { align-self: center; font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink); }
+.site-proof__chip { justify-items: start; }
+/* The typing chip keeps the real chip's icon and code as hidden slots, so both words start at the same x (R3-B1). */
+.site-proof__slot { visibility: hidden; }
+@media (min-width: 600px) {
+  .site-proof { grid-template-columns: max-content repeat(5, var(--proof-col)); justify-self: start; padding: var(--space-6); }
+  .site-proof__label, .site-proof__chip { grid-column: 1; padding-inline-end: var(--space-2); }
+  .site-proof__line { grid-column: 2 / -1; }
+  .site-proof__keyrow { align-items: center; }
+  .site-proof__row { align-items: start; }
+}
+/* "Your keys": five drawn keys at 52px (the round-4 exception to 64px: five fit in a row at 320px), the digit in the
+   corner and the letters in label type (MS-10.5), on one keypad panel (--panel and --lift), never plum on plum. */
+.site-keycap {
+  position: relative; display: grid; place-items: end center; block-size: var(--target-min); padding-bottom: var(--space-2);
+  border-radius: var(--radius-chip); background: var(--key); color: var(--on-key);
+}
+.site-keycap__digit {
+  position: absolute; top: var(--space-1); left: var(--space-2);
+  font-family: var(--font-mono); font-size: var(--type-label-size); line-height: var(--type-label-size); font-weight: var(--type-digits-weight);
+}
+.site-keycap__letters { font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-heading-weight); letter-spacing: 0; }
+.site-proof__keyline::before {
+  content: ''; grid-column: 1 / -1; grid-row: 1; margin: calc(var(--space-2) * -1);
+  border-radius: calc(var(--radius-chip) + var(--space-2)); background: var(--panel); box-shadow: var(--lift);
+}
+/* A word's letters: one 48px slot per key, the letter at the chip word's size. */
+.site-letter {
+  position: relative; display: grid; place-items: center; block-size: var(--space-12); border-radius: var(--space-3); background: var(--site-piece);
+  font-size: var(--type-heading-size); line-height: var(--type-heading-line); font-weight: var(--type-candidate-weight); color: var(--ink);
+}
+/* The letter that is not on its key: a reject edge and a reject copy of the letter over the plain one, at its column's
+   step, and an x under it: shape, not only colour (MS-9.3). It never gives the answer away before the sweep gets there. */
+.site-letter__box {
+  position: absolute; inset: 0; display: grid; place-items: center; border-radius: inherit;
+  background: var(--site-piece); color: var(--proof-reject); box-shadow: inset 0 0 0 var(--line-width) var(--proof-reject);
+}
+.site-letter__box::before { content: attr(data-l); }
+.site-proof__line > .site-proof__x { grid-row: 2; display: grid; place-items: center; color: var(--proof-reject); }
+/* The column box: around one key or letter of every line, jumping column to column (never ember, MS-7.3). The keys'
+   outline lights step 1. */
+.site-proof__box { margin: calc(var(--space-1) * -1); border-radius: calc(var(--radius-chip) + var(--space-1)); box-shadow: inset 0 0 0 var(--line-width) var(--line-strong); pointer-events: none; }
+.site-proof__line > .site-proof__spot {
+  grid-column: 1 / -1; margin: calc(var(--space-2) * -1); border-radius: calc(var(--radius-chip) + var(--space-2));
+  box-shadow: inset 0 0 0 var(--line-width) var(--line-strong); pointer-events: none;
+}
+@media (max-width: 359px) {
+  .site-proof { column-gap: var(--space-1); padding: var(--space-2); }
+  .site-keycap__letters { font-weight: var(--type-label-weight); }
+  .site-proof__keyline::before, .site-proof__line > .site-proof__spot { margin: calc(var(--space-1) * -1); border-radius: calc(var(--radius-chip) + var(--space-1)); }
+}
+/* The two closing lines, real text, each led by its chip's icon: they are the chips' legend (round 4). */
+.site-proof__closing { display: flex; flex-direction: column; gap: var(--space-2); padding-top: var(--space-4); border-top: var(--line-width) solid var(--line); }
+.site-proof__said { display: flex; align-items: flex-start; gap: var(--space-2); color: var(--ink); }
+.site-proof__said > .nl-icon { margin-top: calc((var(--type-body-line) - var(--space-6)) / 2); }
+.site-proof__said--can > .nl-icon { color: var(--proof-match); }
+.site-proof__said--never > .nl-icon { color: var(--proof-reject); }
+
+/* ---- box drawings (pictures/Conversation.tsx, Access.tsx, Privacy.tsx; design 4.4) ---------------
+ * Round 4 (2026-11-13, Claude Code; decisions §2 "Boxes", design.md "Round 4: the box sections"), in the shared
+ * language: one scale (the sentence in candidate type, words in label type), depth from fills (stage, the card's fill
+ * for pieces, the key panel), a still arrow from each cause to its result, ember only for a press. A drawing keeps
+ * space-4 clear of its stage's sides (space-2 under 360px); the two lead drawings may grow wider.
+ */
+.site-turn, .site-table, .site-save, .site-spell, .site-map, .site-door-voices, .site-door-listen {
+  inline-size: calc(100% - var(--space-8)); max-inline-size: calc(var(--space-24) * 3 + var(--space-12));
+}
+.site-turn, .site-map { max-inline-size: calc(var(--space-24) * 5 + var(--space-12)); }
+@media (max-width: 359px) {
+  .site-turn, .site-table, .site-save, .site-spell, .site-map, .site-door-voices, .site-door-listen { inline-size: calc(100% - var(--space-4)); }
+}
+/* The stage's own fill, for words set on a line that crosses it (the device's name). */
+.site-stage { --site-stage-fill: var(--surface-sunken); }
+.site-band--surface .site-stage { --site-stage-fill: var(--surface); }
+.site-bento .site-drawn-btn { padding-inline: var(--space-3); }
+/* A drawing keeps space-4 clear of its stage's top and bottom too (phones hug with space-3 instead, below). */
+.site-bento .site-stage { padding-block: var(--space-4); }
+.site-stage .site-well { background: var(--site-piece); }
+.site-well__hint { align-self: center; font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink-muted); }
+/* An arrow from a cause to its result (a still SiteIcon turn), line-strong like any drawn edge, with its label. */
+.site-arrow { display: flex; align-items: center; justify-content: center; gap: var(--space-2); color: var(--line-strong); }
+.site-arrow__label { font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink); }
+.site-arrows { display: flex; justify-content: center; gap: var(--space-6); }
+
+/* The They said strip (They said, Listen): the app's read view, shortened; Listen wraps under it on narrow stages. */
+.site-strip {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-chip); background: var(--site-piece); color: var(--ink);
+}
+.site-strip > .nl-icon { align-self: flex-start; }
+.site-strip__body { flex: 1 1 calc(var(--space-24) + var(--space-16)); min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.site-strip__label { font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink-muted); }
+.site-strip__line { font-weight: var(--type-label-weight); }
+.site-strip__empty, .site-strip__status { font-weight: var(--type-body-weight); color: var(--ink-muted); }
+.site-listen > .site-cell { justify-items: center; }
+.site-listen__label { display: inline-flex; align-items: center; gap: var(--space-2); }
+.site-turn { display: flex; flex-direction: column; gap: var(--space-2); }
+.site-turn > .site-well { padding: var(--space-4) var(--space-6); }
+
+/* Show and Flip on a table: the far edge is the person opposite, the near edge is you. The turned message is a
+   still frame (a transform at rest, never a rotation in motion). */
+.site-table { display: flex; flex-direction: column; gap: var(--space-2); }
+.site-edge {
+  display: flex; align-items: center; gap: var(--space-2); color: var(--ink);
+  font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight);
+}
+.site-edge::before, .site-edge::after { content: ''; flex: 1; block-size: var(--line-width); background: var(--line-strong); }
+.site-show {
+  width: 100%; display: flex; flex-direction: column; gap: var(--space-3);
+  padding: var(--space-3); border-radius: var(--radius-card); background: var(--site-piece); border: var(--line-width) solid var(--line-strong);
+}
+.site-show__msg { display: flex; flex-direction: column; gap: var(--space-1); }
+.site-show__msg--flipped { transform: rotate(180deg); }
+.site-show__label { font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink-muted); }
+.site-show__text { font-size: var(--type-candidate-size); line-height: var(--type-candidate-line); font-weight: var(--type-candidate-weight); color: var(--ink); overflow-wrap: anywhere; }
+.site-show__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+/* Saved phrases: the sentence card with Save phrase, then the app's Phrases sheet (its title over a 2px rule). */
+.site-save { display: flex; flex-direction: column; gap: var(--space-2); }
+.site-save > .site-well { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-3); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4); }
+.site-sheet { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-4) var(--space-4); border-radius: var(--radius-card); background: var(--site-piece); color: var(--ink); }
+.site-sheet__title {
+  padding-bottom: var(--space-2); border-bottom: var(--line-width) solid var(--line);
+  font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink-muted);
+}
+.site-sheet__rows { display: flex; flex-direction: column; gap: var(--space-1); }
+.site-sheet__rows li { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-3); border-radius: var(--radius-chip); font-weight: var(--type-label-weight); }
+/* The phrase just saved: a line-strong outline, never ember (MS-7.3). */
+.site-sheet__rows .site-sheet__new { box-shadow: inset 0 0 0 var(--line-width) var(--line-strong); }
+
+/* Spell and My words: the New step, Add to my words, then the Matches step. */
+.site-spell { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); text-align: center; color: var(--ink); }
+.site-spell__row { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
+.site-spell__line { font-size: var(--type-label-size); line-height: var(--type-label-line); }
+
+/* Keyboard: the drawn computer key (design/system/README.md "Website drawings"). */
+.site-keylegend { display: grid; grid-template-columns: auto auto; align-items: center; justify-items: start; gap: var(--space-2) var(--space-3); }
+.site-kbd {
+  position: relative; display: inline-grid; place-items: center;
+  min-inline-size: calc(var(--space-8) + var(--space-2)); block-size: calc(var(--space-8) + var(--space-2)); padding-inline: var(--space-2);
+  border: var(--line-width) solid var(--line-strong); border-radius: var(--radius-chip); background: var(--surface-sunken); color: var(--ink);
+  font-family: var(--font-mono); font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-digits-weight);
+}
+/* Up and Down, the keys that pick a sentence in the app (lib/keyboard.ts): the back icon, turned (a still transform). */
+.site-kbd--up .nl-icon { transform: rotate(90deg); }
+.site-kbd--down .nl-icon { transform: rotate(-90deg); }
+.site-kbd-pair { position: relative; display: inline-flex; gap: var(--space-2); border-radius: var(--radius-chip); }
+.site-keylegend__what { font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink); }
+
+/* Touch: the app's true key sizes on one key panel (.site-key-panel: 8px in, 8px apart), each size under its key. */
+.site-touch { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.site-touch__sizes {
+  display: grid; grid-template-columns: var(--key-min) var(--key-xl); column-gap: var(--space-2); padding-inline: var(--space-2); justify-items: center;
+  font-family: var(--font-mono); font-size: var(--type-label-size); line-height: var(--type-label-line); color: var(--ink-muted);
+}
+
+/* One or two switches (the Access lead): the sentence card, the keypad with its scan highlights on its own grid, and
+   the switch with the scan speed range. A ring jumps from target to target (row 1, row 2, key 4). */
+.site-scan { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); max-width: 100%; }
+.site-scan__main { display: flex; flex-direction: column; gap: var(--space-2); max-width: 100%; }
+.site-scan__well { display: flex; padding: var(--space-2) var(--space-4); border-radius: var(--radius-chip); background: var(--site-piece); }
+.site-scan__well > .site-cell { flex: 1; }
+.site-scan__typed { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+.site-scan__pad { position: relative; max-width: 100%; }
+.site-scan__rings {
+  position: absolute; inset: 0; display: grid; pointer-events: none;
+  grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2); padding: var(--space-2);
+}
+/* The drawn panel pads its keys by 8px, as in the How stage (review R3-N1): 224px wide at 64px keys, so it fits
+   the 225px stage at 320px with a classic scrollbar. The ring grid keeps the same padding. */
+.site-scan .nl-keypad.site-pad { padding: var(--space-2); }
+/* Round 3 (R3-P2): the scan ring reaches 9px outside its key (6px ember, 3px plum), so the tray pads its keys by 12px
+   where the stage has room for it; the ring grid keeps the same padding. */
+@media (min-width: 321px), (pointer: coarse) {
+  .site-scan .nl-keypad.site-pad, .site-scan__rings { padding: var(--space-3); }
+}
+.site-scan__ring { border-radius: calc(var(--radius-key) + var(--scan-width)); box-shadow: 0 0 0 var(--scan-width) var(--ember), 0 0 0 calc(var(--scan-width) + var(--ring-width)) var(--plum); }
+.site-scan__rings > .site-scan__ring--row1 { grid-area: 1 / 1 / 2 / 4; }
+.site-scan__rings > .site-scan__ring--row2 { grid-area: 2 / 1 / 3 / 4; }
+.site-scan__rings > .site-scan__ring--key4 { grid-area: 2 / 1 / 3 / 2; border-radius: var(--radius-key); }
+.site-scan__side { display: flex; align-items: center; gap: var(--space-4); }
+/* The drawn switch: an 80px round button, as a real switch is; its press is a line-strong ring, so ember stays on
+   the keypad. */
+.site-scan__button {
+  position: relative; display: grid; place-items: center; flex: none;
+  inline-size: calc(var(--space-16) + var(--space-4)); block-size: calc(var(--space-16) + var(--space-4));
+  border: var(--line-width) solid var(--line-strong); border-radius: var(--radius-pill); background: var(--site-piece); color: var(--ink);
+}
+.site-scan__button > .nl-icon { inline-size: var(--space-8); block-size: var(--space-8); }
+.site-scan__press { position: absolute; inset: calc(var(--line-width) * -1); border-radius: inherit; box-shadow: inset 0 0 0 var(--ring-width) var(--line-strong); pointer-events: none; }
+.site-scan__words { display: flex; flex-direction: column; gap: var(--space-1); }
+.site-scan__label { font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink); }
+/* The scan speed range the card states (0.4 to 5 seconds a step): a line and a mark, no number of its own. */
+.site-speed { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--type-label-size); line-height: var(--type-label-line); color: var(--ink-muted); }
+.site-speed__track { position: relative; inline-size: var(--space-16); block-size: var(--line-width); background: var(--line-strong); }
+.site-speed__track::after {
+  content: ''; position: absolute; top: 50%; left: 17%; inline-size: var(--space-3); block-size: var(--space-3);
+  margin: calc(var(--space-3) / -2); border-radius: var(--radius-pill); background: var(--ink);
+}
+@media (min-width: 1024px) {
+  .site-scan { flex-direction: row; gap: var(--space-8); }
+  .site-scan__side { flex-direction: column; align-items: flex-start; }
+}
+
+/* Your view: each half sets its own theme, so its tokens are that theme's; the key sits on its panel in both (a plum
+   key never meets a plum Night surface). */
+.site-themes { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.site-themes__halves { display: grid; grid-template-columns: repeat(2, auto); gap: var(--space-2); }
+.site-themes__half {
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-1); padding: var(--space-2) var(--space-3) var(--space-3);
+  border: var(--line-width) solid var(--line); border-radius: var(--radius-card); color: var(--ink); background: var(--surface);
+}
+.site-themes__label { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink-muted); }
+.site-themes__hi { font-size: var(--type-heading-size); line-height: var(--type-heading-line); font-weight: var(--type-heading-weight); }
+.site-themes__key { place-items: end center; }
+/* The halves fit a 240px stage at 320px (225px with a classic scrollbar) with their 84px keys: a 4px key panel and,
+   under 360px, 4px halves 4px apart (MS-7.7: boxes and gaps narrow, never text). */
+.site-themes .site-key-panel { padding: var(--space-1); }
+@media (max-width: 359px) {
+  .site-themes__halves { gap: var(--space-1); }
+  .site-themes__half { padding: var(--space-1) var(--space-1) var(--space-2); }
+}
+.site-themes__size { justify-items: center; font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink); }
+
+/* Phones, tablets and laptops: bare layout boxes, no device body (MS-4.3). Sizes from tokens: 36 x 64, 64 x 48 and
+   96 x 60px, bottom-aligned, with 16px labels (V31, R3-P2); one size at every width since round 4 (the card is half
+   the grid's width). The keys block is a key panel with plum keys on it, so it reads in Night too. */
+.site-layouts { display: grid; grid-template-columns: repeat(3, auto); align-items: end; column-gap: var(--space-2); }
+.site-layouts__col { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.site-layouts__box {
+  display: grid; grid-template-rows: auto auto auto minmax(0, 1fr) auto; gap: var(--line-width); padding: var(--space-1);
+  border: var(--line-width) solid var(--line-strong); border-radius: var(--space-2); background: var(--ground);
+}
+.site-layouts__box--upright { inline-size: calc(var(--space-8) + var(--space-1)); block-size: var(--space-16); }
+.site-layouts__box--landscape { inline-size: var(--space-16); block-size: var(--space-12); }
+.site-layouts__box--wide { inline-size: var(--space-24); block-size: calc(var(--space-12) + var(--space-3)); }
+/* Landscape and wide: the keys block on the right, the rest on the left. */
+.site-layouts__box:not(.site-layouts__box--upright) {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto auto auto minmax(0, 1fr); column-gap: var(--space-1);
+}
+.site-layouts__box:not(.site-layouts__box--upright) .site-layouts__keys { grid-column: 2; grid-row: 1 / -1; }
+.site-layouts__box:not(.site-layouts__box--upright) .site-layouts__pills { align-self: end; }
+.site-layouts__bar { block-size: calc(var(--space-1) + var(--line-width)); border-radius: var(--line-width); background: var(--line-strong); }
+.site-layouts__line { block-size: var(--line-width); inline-size: 75%; background: var(--line); }
+.site-layouts__keys {
+  border-radius: var(--line-width);
+  background: radial-gradient(circle closest-side, var(--key) 60%, transparent 66%) 0 0 / calc(100% / 3) 25%, var(--panel);
+}
+.site-layouts__pills { display: flex; justify-content: center; gap: var(--line-width); }
+.site-layouts__pills > span { inline-size: var(--space-2); block-size: var(--space-1); border-radius: var(--radius-pill); background: var(--line-strong); }
+/* The middle pill (Speak) is outlined. */
+.site-layouts__pills > span:nth-child(2) { background: transparent; box-shadow: inset 0 0 0 var(--line-width) var(--line-strong); }
+.site-layouts__label { font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink); }
+
+/* Privacy: this device is a dashed line (a boundary); a feature drawn on its top edge is one way out; an arrow
+   leaving it is data leaving; a cloud marks where it goes; the device's name sits on its bottom edge. */
+.site-bound { position: relative; display: flex; flex-direction: column; gap: var(--space-3); padding: 0 var(--space-4) var(--space-6); }
+.site-bound::before {
+  content: ''; position: absolute; inset: var(--space-6) 0 calc((var(--type-label-line) - var(--line-width)) / 2) 0; pointer-events: none;
+  border: var(--line-width) dashed var(--line-strong); border-radius: var(--radius-card);
+}
+.site-bound > * { position: relative; }
+.site-bound__doors { display: flex; justify-content: center; align-items: center; min-block-size: var(--space-12); }
+.site-bound__ways { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); }
+.site-bound__label {
+  position: absolute; left: var(--space-6); bottom: 0; padding-inline: var(--space-2); background: var(--site-stage-fill);
+  font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink-muted);
+}
+.site-door {
+  position: relative; display: inline-flex; align-items: center; gap: var(--space-2); min-block-size: var(--space-12); padding: 0 var(--space-3);
+  border-radius: var(--radius-pill); background: var(--site-piece); color: var(--ink);
+  font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight);
+}
+.site-bound__doors > .site-drawn-btn { background: var(--site-piece); }
+.site-door__row { display: inline-flex; align-items: center; gap: var(--space-2); }
+.site-door__state { color: var(--ink-muted); }
+.site-bound__note { align-self: center; font-size: var(--type-label-size); line-height: var(--type-label-line); color: var(--ink-muted); }
+.site-bound__inside { display: grid; gap: var(--space-3); }
+.site-bound__kept { display: flex; flex-direction: column; gap: var(--space-1); }
+.site-bound__kept li { display: flex; align-items: center; gap: var(--space-2); color: var(--ink); font-weight: var(--type-label-weight); }
+.site-bound__pill {
+  display: inline-flex; align-items: center; gap: var(--space-1); justify-self: start; padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-chip); background: var(--site-piece); color: var(--ink);
+  font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight);
+}
+@media (max-width: 599px) {
+  /* The lead's three ways out are their icons alone on phones; the cards that follow name them. */
+  .site-map .site-door { inline-size: var(--space-12); justify-content: center; padding: 0; }
+  .site-map .site-door__name { display: none; }
+}
+@media (min-width: 600px) {
+  .site-bound__inside { grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--space-6); }
+  .site-bound__inside > .site-bound__pill { grid-column: 1 / -1; }
+}
+.site-dest, .site-sent {
+  display: flex; align-items: flex-start; gap: var(--space-2); padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-chip); background: var(--site-piece); color: var(--ink);
+  font-size: var(--type-label-size); line-height: var(--type-label-line);
+}
+.site-dest { align-self: center; font-weight: var(--type-label-weight); }
+.site-sent__label { font-weight: var(--type-label-weight); }
+.site-door-voices, .site-door-listen { display: flex; flex-direction: column; gap: var(--space-2); }
+.site-voice {
+  display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-chip); background: var(--site-piece); color: var(--ink);
+}
+.site-voice__name { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-2); font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); }
+.site-voice__check { flex: none; display: grid; }
+.site-voice__line { font-size: var(--type-label-size); line-height: var(--type-label-line); color: var(--ink-muted); }
+.site-bound__doors > .site-voice--out { flex: 1; box-shadow: inset 0 0 0 var(--line-width) var(--line-strong); }
+/* Model ranking: what it sends is real text (after the card's h3 in the DOM; MS-7.2 exception) drawn at the top of
+   the stage, over the drawing's invisible copy of it, which keeps its room at every width. */
+.site-door-ranking { display: flex; flex-direction: column; gap: var(--space-2); }
+.site-sent--room { visibility: hidden; }
+.site-bento > .site-card--sent { --site-sent-pad: var(--space-4); display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; }
+.site-card--sent > * { grid-column: 1; }
+.site-card--sent > .site-stage, .site-card--sent > .site-sent { grid-row: 1; }
+.site-card--sent > .site-h3 { grid-row: 2; }
+.site-card--sent > p:last-child { grid-row: 3; }
+.site-bento > .site-card--sent > .site-stage { place-items: start stretch; padding: var(--site-sent-pad) var(--space-4); }
+.site-card--sent > .site-sent { align-self: start; z-index: 1; max-width: none; margin: var(--site-sent-pad) var(--space-4) 0; background: var(--surface-sunken); color: var(--ink); }
+.site-toggle {
+  position: relative; flex: none; inline-size: var(--space-12); block-size: calc(var(--space-6) + var(--space-1));
+  border: var(--line-width) solid var(--line-strong); border-radius: var(--radius-pill);
+}
+.site-toggle__knob {
+  position: absolute; top: var(--line-width); left: var(--line-width);
+  inline-size: calc(var(--space-4) + var(--space-1)); block-size: calc(var(--space-4) + var(--space-1));
+  border-radius: var(--radius-pill); background: var(--ink-muted);
+}
+.site-toggle--on { border-color: var(--ink); background: var(--ink); }
+.site-toggle--on .site-toggle__knob { left: auto; right: var(--line-width); background: var(--surface); }
+/* A press on something that is not a drawn button (the ranking switch's row): line-strong, never ember. */
+.site-outline { position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 var(--ring-width) var(--line-strong); pointer-events: none; }
+/* The privacy facts (region, retention, logs): fact rows in a note card. */
+.site-privacy-facts { gap: var(--space-4); }
+.site-privacy-facts > .site-facts { display: grid; gap: var(--space-3); }
+.site-privacy-facts .site-fact { color: var(--ink); }
+/* Forced colours drop the pieces' fills, so each piece keeps a thin system-colour edge and the dashed line still
+   stops at a door (the shared forced-colours block below covers rings, outlines and the toggle). */
+@media (forced-colors: active) {
+  :is(.site-door, .site-dest, .site-sent, .site-voice, .site-sheet, .site-strip, .site-bound__pill, .site-scan__well) {
+    outline: var(--line-width) solid CanvasText; outline-offset: calc(var(--line-width) * -1);
+  }
+}
+
+/* ---- bands and blocks ---------------------------------------------------------------------------- */
+.site-band {
+  padding-top: var(--space-12); padding-bottom: var(--space-12); background: var(--ground);
+  font-size: var(--type-body-size); line-height: var(--type-body-line);
+}
 .site-band--surface { background: var(--surface); }
-.site-stack { display: flex; flex-direction: column; gap: 40px; }
-.site-stack--tight { gap: 20px; }
+/* The night sky (the banner, #start, the /about header): Night in both themes, with data-theme="night" on the
+   same element. A plum glow low left and the moon glow high right; the lightest point behind text is --night
+   with 8% --moon (MS-9.2). The banner's moon glow fades in once (A1, motion block); elsewhere it is still. */
+.site-night {
+  position: relative; isolation: isolate; color: var(--ink);
+  background: var(--night);
+  background: radial-gradient(80% 60% at 10% 100%, color-mix(in srgb, var(--plum) 70%, transparent), transparent 70%), var(--night);
+}
+.site-night::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(60% 50% at 78% 18%, color-mix(in srgb, var(--moon) 8%, transparent), transparent 70%);
+}
+.site-stack { display: flex; flex-direction: column; gap: var(--space-8); }
+.site-head { display: flex; flex-direction: column; gap: var(--space-4); }
+.site-head--center { align-items: center; text-align: center; }
 .site-h2 {
-  font-size: clamp(36px, 8vw, var(--type-display-size)); line-height: 1.08;
+  /* The display token's leading (60px at 56px) as an offset, so it holds at every size of the clamp. */
+  font-size: clamp(36px, 8vw, var(--type-display-size)); line-height: calc(1em + var(--type-display-line) - var(--type-display-size));
   font-weight: var(--type-display-weight); letter-spacing: var(--type-display-tracking); color: var(--ink);
 }
-.site-h3 { display: flex; align-items: center; gap: var(--space-2); font-size: 24px; line-height: 30px; font-weight: 700; color: var(--ink); }
-.site-lead { max-width: 760px; font-size: var(--type-body-lg-size); line-height: var(--type-body-lg-line); color: var(--ink-muted); }
-.site-band p { font-size: 18px; line-height: 28px; }
-.site-band .site-lead { font-size: var(--type-body-lg-size); line-height: var(--type-body-lg-line); }
+.site-h3 { display: flex; align-items: center; gap: var(--space-2); font-size: var(--type-heading-size); line-height: var(--type-heading-line); font-weight: var(--type-heading-weight); color: var(--ink); }
+.site-lead { max-width: var(--measure); font-size: var(--type-body-lg-size); line-height: var(--type-body-lg-line); color: var(--ink-muted); }
 
-.site-grid { display: grid; gap: var(--space-6); }
-.site-grid--2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-.site-grid--3 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-.site-grid--4 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.site-grid { display: grid; gap: var(--space-6); grid-template-columns: minmax(0, 1fr); }
+/* The box grids (round 4, r4-boxes; MS-10.9): one lead card across the grid, then rows of cards (.site-bento--3:
+   Conversation, Privacy; .site-bento--4: Access). Layouts by width in "box grids from 648px" and "desktop". */
+.site-bento { align-items: stretch; }
+/* Feature card: fill + a 2px --line edge on every card, so a card holds its shape in Day (a borderless white card
+   on the Day ground is 1.09:1). The padding counts the edge, so the content box (and every stage) is as wide as
+   on a borderless card. Note card: the same edge, no fill. */
+.site-card {
+  min-width: 0; display: flex; flex-direction: column; gap: var(--space-3);
+  padding: calc(var(--space-6) - var(--line-width)); border: var(--line-width) solid var(--line);
+  border-radius: var(--radius-card); background: var(--surface);
+}
+.site-band--surface .site-card, .site-band--surface .site-proof { background: var(--surface-sunken); }
+.site-card > p { max-width: var(--measure); color: var(--ink-muted); }
+.site-card.site-card--note { background: transparent; }
+.site-card--note > p { color: var(--ink); }
+/* A card title with the app's feature name as a small label above it (Conversation, round 3, P2-9). */
+.site-card__titles { display: flex; flex-direction: column; gap: var(--space-1); }
+.site-card__feature { font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink-muted); }
+/* Round 4 (r4-boxes): a box card's name carries its icon (24px, beside its word, ink-muted); the lead card's title is
+   one size up (title-sm) and its line body-lg. */
+.site-card__feature { display: flex; align-items: center; gap: var(--space-2); }
+.site-bento .site-h3 > .nl-icon, .site-card__feature > .nl-icon { color: var(--ink-muted); }
+.site-card--lead .site-h3 { font-size: var(--type-title-sm-size); line-height: var(--type-title-sm-line); }
+.site-card--lead > p { font-size: var(--type-body-lg-size); line-height: var(--type-body-lg-line); }
 
-.site-card { display: flex; flex-direction: column; gap: 14px; padding: 28px; border-radius: var(--radius-card); background: var(--surface); }
-.site-band--surface .site-card { background: var(--surface-sunken); }
-.site-card p, .site-card li, .site-card dd { color: var(--ink-muted); }
-.site-card--line { border: 2px solid var(--line); }
+/* Running text (P1-1): body type in ink, one measure, paragraphs 16px apart, a link row 8px under its sentence.
+   Loose paragraphs straight in a .site-stack get the measure too. */
+.site-prose { max-width: var(--measure); display: flex; flex-direction: column; gap: var(--space-4); color: var(--ink); }
+.site-prose > .site-links { margin-top: calc(var(--space-2) - var(--space-4)); }
+.site-prose ul { display: flex; flex-direction: column; gap: var(--space-2); padding-left: var(--space-6); list-style: disc; }
+.site-stack > p { max-width: var(--measure); }
+/* A limit beside the claim it qualifies (round 4, 2026-11-13, r4-close): the info icon, then the sentence, in ink even
+   inside a card whose own text is ink-muted (.site-card > p), so a limit is never fainter than its claim. Any element
+   (p or div); its first child is the icon (24px, centred on the first line of body text), the rest is the text. */
+.site .site-caveat { display: flex; align-items: flex-start; gap: var(--space-3); max-width: var(--measure); color: var(--ink); }
+.site-caveat > .nl-icon:first-child { margin-top: calc((var(--type-body-line) - var(--space-6)) / 2); }
 
-.site-step {
-  display: grid; place-items: center; width: var(--target-min); height: var(--target-min); border-radius: 16px;
-  background: var(--panel); color: var(--plum); box-shadow: inset 0 0 0 2px var(--line-strong);
-  font-family: var(--font-mono); font-size: 24px; font-weight: 700;
+/* Call-to-action row: every nl-btn--xl on the website is --target-cta (64px), never the app's 80px Speak. */
+.site-cta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
+.site-cta--center { justify-content: center; }
+.site .nl-btn--xl { min-height: var(--target-cta); }
+
+/* A step (shared, round 4, 2026-11-13, r4-how; How it works and Proof): the number tile, then a title and an
+   optional line, in a grid [tile | text]. Any element (li or div); the title any element (h3, p or span), in heading
+   type unless a section sets its own. The title's first line sits centred on the tile (its padding is half the tile
+   minus one line, 1lh, so any type size centres) and the line follows the title, not the tile; a title with no line
+   is as tall as the tile. The tile's size is --site-step-num (48px; a list may set another). The lit layer carries a
+   'during' role: inside a data-play root the A7 rules light it while that root plays; beside one, a
+   [data-play-scope] holding both lights it (the motion block, :has()). At rest (the finished state) it is off. */
+.site-step { display: grid; grid-template-columns: var(--site-step-num, var(--space-12)) minmax(0, 1fr); align-items: start; gap: var(--space-1) var(--space-4); }
+.site-step__num {
+  grid-column: 1; grid-row: 1 / span 2; display: grid; place-items: center; width: var(--site-step-num, var(--space-12)); height: var(--site-step-num, var(--space-12));
+  border-radius: var(--radius-chip); background: var(--panel); color: var(--plum); box-shadow: inset 0 0 0 var(--line-width) var(--line-strong);
+  font-family: var(--font-mono); font-size: var(--type-digits-size); line-height: var(--type-digits-line); font-weight: var(--type-heading-weight);
+}
+.site-step__lit {
+  align-self: stretch; justify-self: stretch; display: grid; place-items: center; border-radius: inherit;
+  background: var(--key); color: var(--on-key);
+}
+.site-step__title {
+  grid-column: 2; grid-row: 1; min-width: 0; margin: 0; padding-top: max(0px, calc((var(--site-step-num, var(--space-12)) - 1lh) / 2));
+  font-size: var(--type-heading-size); line-height: var(--type-heading-line); font-weight: var(--type-heading-weight); color: var(--ink);
+}
+.site-step__line { grid-column: 2; grid-row: 2; max-width: var(--measure); color: var(--ink-muted); text-wrap: pretty; }
+
+/* How it works (round 4, 2026-11-13, Claude Code): three steps, each a stage (its scene is the data-play root) and
+   a .site-step. One column under 1024px; the next step's chevron sits in the gap (static, --line-strong). Each stage
+   hugs its scene, 12px above and below (W1); the scene fills the stage, so the stages in the row reach the play line
+   together. */
+.site-how__steps { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-12); }
+.site-how__step { position: relative; display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+.site-how__step:not(:last-child)::after {
+  content: ''; position: absolute; left: 50%; bottom: calc(var(--space-12) / -2 - var(--space-2));
+  width: var(--space-3); height: var(--space-3); pointer-events: none;
+  border-right: var(--ring-width) solid var(--line-strong); border-bottom: var(--ring-width) solid var(--line-strong);
+  transform: translateX(-50%) rotate(45deg);
+}
+.site-how__stage { min-block-size: 0; padding: var(--space-3) var(--space-2); }
+.site-how__scene { place-self: stretch; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-3); }
+/* 1 Press: keypad rows 1 and 2 on their panel (8px around the 64px keys, 224px wide), then the digits typed so far. */
+.site-how__press .nl-keypad.site-pad { padding: var(--space-2); }
+.site-how__digits {
+  display: flex; gap: var(--space-3); color: var(--ink);
+  font-family: var(--font-mono); font-size: var(--type-digits-size); line-height: var(--type-digits-line); font-weight: var(--type-digits-weight);
+}
+/* 2 Pick: the app's status pill, then three drawn rows on the stage's piece fill. */
+.site-how__pick { align-items: stretch; justify-content: center; }
+.site-how__pill {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: var(--space-2);
+  min-height: var(--space-8); padding: 0 var(--space-4) 0 var(--space-3);
+  border: var(--line-width) solid var(--line-strong); border-radius: var(--radius-pill);
+  font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink);
+}
+.site-how__pill .nl-icon { width: var(--space-4); height: var(--space-4); color: var(--proof-match); }
+.site-how__pick .nl-candidate { background: var(--site-piece); }
+/* 3 Speak: the sentence card, then Speak and Show (drawn secondary buttons, side by side while they fit). */
+.site-how__speak { align-items: stretch; }
+.site-how__speak .site-well { background: var(--site-piece); }
+.site-how__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.site-how__actions > .nl-btn { flex: none; padding-inline: var(--space-3); }
+
+.site-proof__more { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); }
+/* Proof (round 4, 2026-11-13, Claude Code): the head, then the layout, which is the section's one data-play root
+   (MS-8.11): in DOM order the figure, the four steps, then the note and the button. One column under 1024px, so phones
+   meet the figure right after the lead; from 1024px grid areas put the steps and the note on the left and the figure
+   on the right across both rows (no order, MS-10.9). The steps are the shared .site-step; their numbers light on the
+   figure's clock. */
+.site-proof-layout { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: var(--space-8); }
+/* The steps: the shared .site-step with a 40px tile and one body-lg sentence in the title slot (no line, no heading). */
+.site-proof-steps { --site-step-num: calc(var(--space-8) + var(--space-2)); display: flex; flex-direction: column; gap: var(--space-3); }
+.site-proof-steps .site-step__title { font-size: var(--type-body-lg-size); line-height: var(--type-body-lg-line); font-weight: var(--type-body-lg-weight); }
+#proof .site-h2 { text-wrap: balance; }
+
+/* Results (round 4, 2026-11-13, Claude Code; design.md §7): the caveat first (.site-caveat), the measures as paired
+   bars in one card, then the by-source and presses cards (side by side from 600px), the model-ranking status rows and
+   the links. Numbers are static text (MS-5.5). A bar is a drawn piece (aria-hidden): a track from 0 to the whole in
+   --site-piece and a fill as long as its printed value (--v); ours --ink, the comparison --line-strong, 16px with 4px
+   corners (decisions 1.3). The fill grows once from its start edge (PO-1, the block after this one). */
+.site-results__grid { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr); --site-piece: var(--surface-sunken); }
+@media (min-width: 600px) {
+  .site-results__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+  .site-results__chart { grid-column: 1 / -1; }
+}
+/* The chart: a dl with one group per measure, stacked with a hairline between; from 648px three across, each group a
+   subgrid of the dl's four rows, so titles, bars and captions line up even where a title wraps. */
+.site-stats { display: grid; grid-template-columns: minmax(0, 1fr); }
+.site-stats__group { min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); padding-block: var(--space-3); border-top: var(--line-width) solid var(--line); }
+.site-stats__group:first-child { padding-top: 0; border-top: 0; }
+.site-stats__group:last-child { padding-bottom: 0; }
+@media (min-width: 648px) {
+  .site-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(4, auto); gap: var(--space-2) var(--space-6); }
+  .site-stats__group { display: grid; grid-row: span 4; grid-template-rows: subgrid; align-items: end; padding-block: 0; border-top: 0; }
+  .site-stats__group > :is(dt, .site-stats__of) { align-self: start; }
+}
+@media (min-width: 1024px) { .site-stats { column-gap: var(--space-8); } }
+.site-stats dt { font-size: var(--type-heading-size); line-height: var(--type-heading-line); font-weight: var(--type-heading-weight); color: var(--ink); }
+.site-stats dd, .site-results__rows li { display: flex; flex-direction: column; gap: var(--space-1); color: var(--ink-muted); }
+.site-stats__of, .site-results__key { font-size: var(--type-label-size); line-height: var(--type-label-line); }
+/* A value and its label on one line (the label wraps under it when narrow). Static text, never counted up (MS-5.5). */
+.site-stats__line { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: var(--space-2); color: var(--ink-muted); }
+.site .site-stats__value { font-size: var(--type-title-sm-size); line-height: var(--type-title-sm-line); font-weight: var(--type-title-sm-weight); color: var(--ink); }
+.site .site-stats__row--base .site-stats__value { font-size: var(--type-heading-size); line-height: var(--type-heading-line); font-weight: var(--type-heading-weight); }
+.site-meter { display: block; block-size: var(--space-4); border-radius: var(--space-1); background: var(--site-piece); }
+.site-meter__fill { display: block; block-size: 100%; inline-size: calc(var(--v) * 100%); border-radius: inherit; background: var(--ink); transform-origin: left center; }
+:dir(rtl) .site-meter__fill { transform-origin: right center; }
+.site-meter--base > .site-meter__fill { background: var(--line-strong); }
+.site-results__card { gap: var(--space-3); }
+.site-results__rows { display: flex; flex-direction: column; gap: var(--space-3); }
+/* Presses and scan steps: the How example's letters over the keys that type them, one press each (mono digits, as in
+   the proof's digit lines), then the scan steps as marks, whole and part (scanMarks). */
+.site-effort { display: flex; flex-direction: column; gap: var(--space-1); }
+.site-effort + .site-effort { padding-top: var(--space-3); border-top: var(--line-width) solid var(--line); }
+.site-effort__word { display: flex; gap: var(--space-2); }
+.site-effort__word > span { display: grid; justify-items: center; inline-size: var(--space-8); line-height: var(--space-6); }
+.site-effort__word > span > :first-child { font-size: var(--type-label-size); font-weight: var(--type-label-weight); color: var(--ink); }
+.site-effort__word > span > :last-child { font-family: var(--font-mono); font-size: var(--type-label-size); color: var(--ink-muted); }
+.site-effort__marks { display: flex; gap: var(--space-2); padding-block: var(--space-1); }
+.site-effort__mark { display: block; inline-size: var(--space-4); block-size: var(--space-4); border-radius: var(--space-1); background: var(--site-piece); overflow: hidden; }
+.site-effort__mark > span { display: block; block-size: 100%; inline-size: calc(var(--v) * 100%); background: var(--ink); }
+/* Model ranking's status: an icon and a status word on each row, never colour alone. */
+.site-results__models { display: flex; flex-direction: column; gap: var(--space-3); max-width: var(--measure); }
+.site-status { display: flex; flex-direction: column; gap: var(--space-3); }
+.site-status li { display: flex; align-items: flex-start; gap: var(--space-3); }
+.site-status .nl-icon { margin-top: calc((var(--type-body-line) - var(--space-6)) / 2); color: var(--ink-muted); }
+.site-status strong { font-weight: var(--type-label-weight); }
+.site-nowrap { white-space: nowrap; }
+/* Forced colours drop backgrounds: the tracks and fills keep system colours, the comparison in GrayText. */
+@media (forced-colors: active) {
+  .site-meter, .site-effort__mark { forced-color-adjust: none; background: Canvas; box-shadow: inset 0 0 0 1px CanvasText; }
+  .site-meter__fill, .site-effort__mark > span { forced-color-adjust: none; background: CanvasText; }
+  .site-meter--base > .site-meter__fill { background: GrayText; }
+}
+/* Results bars grow once (round 4, PO-1; MS-8.11 round-4 amendment; A7 timing): each fill scales from its start edge
+   at t(k) over motion-grow, ours (k0) then the comparison (k1), the last ending 1,140 ms after the trigger (at most
+   1,600). Fill backwards only: the finished, full bar is the base style, so reduced motion and no JavaScript show it. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-site-motion="on"] [data-play]:not([data-played]) .site-grow { transform: scaleX(0); }
+  [data-site-motion="on"] [data-play][data-played="1"] .site-grow {
+    animation: site-grow var(--motion-grow) var(--motion-ease-out) calc(var(--play-lead) + var(--k) * var(--play-step)) backwards;
+  }
+  @keyframes site-grow { from { transform: scaleX(0); } to { transform: none; } }
 }
 
-.site-split { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-12); }
-.site-split__main { flex: 999 1 480px; min-width: 0; }
-
-.site-proof { flex: 1 1 380px; display: flex; flex-direction: column; gap: var(--space-4); padding: 28px; border-radius: var(--radius-card); background: var(--surface); }
-.site-proof__keys { font-family: var(--font-mono); font-size: var(--type-digits-size); line-height: var(--type-digits-line); letter-spacing: var(--type-digits-tracking); color: var(--ink-muted); }
-.site-proof__chips { display: flex; flex-wrap: wrap; gap: var(--space-3); }
-.site-proof p { color: var(--ink); }
-
-.site-stats dt { font-size: var(--type-heading-size); line-height: var(--type-heading-line); font-weight: 700; color: var(--ink); }
-.site-card dd.site-stat {
-  font-size: var(--type-display-size); line-height: var(--type-display-line); font-weight: var(--type-display-weight);
-  letter-spacing: var(--type-display-tracking); color: var(--ink);
+/* Good to know (round 4, 2026-11-13): the lead, then two cards in the app's settings-row look, one column, side by
+   side from 1024px (a grid, so the reading order is the DOM order). "Before you start" rows: the icon tile, the key
+   and the approved sentence, 2px rules between rows; on phones the tile and key share a line and the sentence runs
+   under both; from 600px tile, key and sentence are three columns, the key and the sentence's first line centred on
+   the tile. "Testing so far": each check, then its state in words and border style (Done: solid edge and a check;
+   Not yet: dashed), never colour alone. */
+.site-limits { display: grid; gap: var(--space-6); grid-template-columns: minmax(0, 1fr); align-items: start; }
+.site-limits__card { gap: var(--space-2); }
+.site-limits__rows > li {
+  display: grid; grid-template-columns: var(--space-12) minmax(0, 1fr); align-items: center; gap: var(--space-2) var(--space-4);
+  padding-block: var(--space-3);
 }
-.site-stats dd { font-size: 18px; line-height: 28px; }
+.site-limits__rows > li + li, .site-limits__status > li + li { border-top: var(--line-width) solid var(--line); }
+.site-limits__key { font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink); }
+.site-limits__text { grid-column: 1 / -1; color: var(--ink); }
+.site-limits__status > li {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--space-4); padding-block: var(--space-3);
+}
+.site-limits__state {
+  display: inline-flex; align-items: center; gap: var(--space-1); min-block-size: calc(var(--space-8) + var(--space-2));
+  padding-inline: var(--space-3); border: var(--line-width) solid var(--line-strong); border-radius: var(--radius-pill);
+  font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink); white-space: nowrap;
+}
+.site-limits__state--not { border-style: dashed; padding-inline: var(--space-4); }
+.site .site-limits__help { column-gap: var(--space-2); color: var(--ink); }
+@media (min-width: 600px) {
+  .site-limits__rows > li { grid-template-columns: var(--space-12) calc(var(--space-24) + var(--space-12)) minmax(0, 1fr); align-items: start; }
+  .site-limits__key { padding-top: calc((var(--space-12) - var(--type-label-line)) / 2); }
+  .site-limits__text { grid-column: auto; padding-top: calc((var(--space-12) - var(--type-body-line)) / 2); }
+}
+@media (min-width: 1024px) {
+  .site-limits { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+}
+/* Phones: 8px row padding and 16px card padding, so the two cards stay close to the old note's height. */
+@media (max-width: 599px) {
+  .site-limits__rows > li, .site-limits__status > li { padding-block: var(--space-2); }
+  .site-card.site-limits__card { padding-block: calc(var(--space-4) - var(--line-width)); }
+}
 
-.site-links { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); }
-.site .site-links a { display: inline-flex; align-items: center; min-height: var(--target-min); font-size: 18px; font-weight: 700; }
+/* Questions */
+.site-faq-wrap { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-8) var(--space-12); }
+.site-faq-wrap > .site-head { flex: 1 1 320px; }
+.site-faq-list { flex: 999 1 560px; min-width: 0; }
+/* 4px above and below each item's rule: closed summaries stay 10px apart (MS-10.4 asks for 8px). */
+.site-faq { padding-block: var(--space-1); }
+.site-faq + .site-faq { border-top: var(--line-width) solid var(--line); }
+.site-faq summary {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+  min-height: var(--target-min); padding: var(--space-3) 0; list-style: none; cursor: pointer; border-radius: var(--radius-chip);
+  font-size: var(--type-heading-size); line-height: var(--type-heading-line); font-weight: var(--type-heading-weight); color: var(--ink);
+}
+.site-faq summary::-webkit-details-marker { display: none; }
+.site-faq__x { display: none; }
+.site-faq[open] .site-faq__x { display: block; }
+.site-faq[open] .site-faq__plus { display: none; }
+.site-faq p { max-width: var(--measure); padding-bottom: var(--space-4); color: var(--ink); }
+/* The way out for an unanswered question (round 3), under the last item's answer. */
+.site-faq__more { margin-top: var(--space-4); column-gap: var(--space-2); color: var(--ink); }
 
-.site-limits { flex: 1 1 380px; }
-.site-limits ul { display: flex; flex-direction: column; gap: var(--space-2); padding-left: var(--space-6); list-style: disc; }
+/* The box sections on phones (round 3, W1; round 4: all three): one card per row, so no row to line up; each stage
+   hugs its drawing with 12px above and below (24px in all, the MS-10.9 limit for the switch stage) instead of the
+   shared stage height. Played drawings keep one size (the parts that replace each other share a cell), so the stage
+   never changes height while they play. The ranking card's stage keeps the same 12px (its real text sits at that
+   offset, .site-card--sent). */
+@media (max-width: 599px) {
+  .site-bento .site-stage { min-block-size: 0; padding-block: var(--space-3); }
+  .site-bento > .site-card--sent { --site-sent-pad: var(--space-3); }
+}
 
-/* ---- footer ---------------------------------------------------------------------------------- */
-.site-footer { display: flex; flex-direction: column; gap: 20px; padding-top: 56px; padding-bottom: var(--space-16); border-top: 2px solid var(--line); }
-.site-footer__row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); }
-.site-footer__brand { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); font-size: var(--type-body-size); line-height: var(--type-body-line); color: var(--ink-muted); }
-.site-footer__brand img { display: block; width: 32px; height: 32px; border-radius: 8px; }
-.site-footer__name { font-size: 18px; font-weight: 700; color: var(--ink); }
-.site-footer__nav { display: flex; flex-wrap: wrap; gap: 0 20px; }
-.site .site-footer__nav a { display: inline-flex; align-items: center; min-height: var(--target-min); font-size: var(--type-body-size); font-weight: 600; }
-/* caption: the website is the one place the 14px caption size is allowed (brand book, Type). */
-.site-footer__statement {
-  max-width: 820px; font-size: var(--type-caption-size); line-height: var(--type-caption-line);
+/* Closing call to action: a Night band (.site-night), so the page ends the way it opens (W2). */
+.site-start__inner { display: flex; flex-direction: column; align-items: center; gap: var(--space-6); text-align: center; }
+.site-start__icon { display: block; width: var(--space-24); height: var(--space-24); border-radius: var(--radius-card); }
+.site-start__note { color: var(--ink-muted); }
+/* The facts row (round 4): the dissolved Free and open source section's facts, typographic with 2px rules between
+   the items, never badges. 2 x 2 under 768px (a cross of rules), one row of four from 768px. */
+.site-start__facts {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); inline-size: 100%;
+  max-inline-size: calc(var(--measure) + var(--space-24) * 2);
+}
+.site-start__facts > li { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-4) var(--space-3); }
+.site-start__facts > li:nth-child(odd) { border-right: var(--line-width) solid var(--line); }
+.site-start__facts > li:nth-child(-n + 2) { border-bottom: var(--line-width) solid var(--line); }
+.site-start__fact { font-size: var(--type-heading-size); line-height: var(--type-heading-line); font-weight: var(--type-heading-weight); color: var(--ink); }
+.site-start__fact-line { color: var(--ink-muted); }
+@media (min-width: 768px) {
+  .site-start__facts { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .site-start__facts > li:nth-child(n) { padding-block: var(--space-2); border-right: 0; border-bottom: 0; }
+  .site-start__facts > li + li { border-left: var(--line-width) solid var(--line); }
+}
+
+/* ---- /about (W3): the bar and the page head in a Night band, then prose in one ground band ------------ */
+.site-about__head { padding-top: var(--space-6); padding-bottom: var(--space-12); }
+
+/* ---- footer -------------------------------------------------------------------------------------- */
+/* The rule runs the full width of the window; the content sits in .site-wrap. Night in both themes (R3-P6): the
+   footer carries data-theme="night", so its tokens are Night's and it reads as part of the Night close. */
+.site-footer { border-top: var(--line-width) solid var(--line); background: var(--ground); color: var(--ink); }
+.site-footer__inner { display: flex; flex-direction: column; gap: var(--space-8); padding-top: var(--space-12); padding-bottom: var(--space-16); }
+/* Round 4 (2026-11-13): the brand, its promise and "Open the app", then the Footer navigation as labelled groups
+   (Product, Trust, Project; an h2 and a list each), then the legal block. Phones: Product and Trust side by side,
+   Project across both columns with its links in two columns; from 600px three columns; from 1024px the brand
+   column beside the groups and the statement beside the history line. The links keep the shared nav-link rules
+   (56px targets, 8px or more apart). */
+.site-footer__top { display: grid; gap: var(--space-8); grid-template-columns: minmax(0, 1fr); }
+.site-footer__lead { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); }
+.site-footer__promise { color: var(--ink-muted); }
+.site-footer__lead > .nl-btn { margin-top: var(--space-1); }
+.site-footer .site-footer__nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: var(--space-6) var(--space-4); }
+.site-footer__group { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.site-footer__title { font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink-muted); }
+.site-footer__group ul { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+.site .site-footer__nav a { justify-content: flex-start; gap: var(--space-2); text-align: left; }
+.site-footer__group--wide { grid-column: 1 / -1; }
+.site-footer__group--wide ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: var(--space-2) var(--space-4); }
+.site-footer__legal { display: grid; gap: var(--space-4); padding-top: var(--space-8); border-top: var(--line-width) solid var(--line); }
+.site-footer__history { max-width: var(--measure); font-size: var(--type-body-size); line-height: var(--type-body-line); color: var(--ink-muted); }
+.site-footer__end { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-6); }
+/* A link that leaves the site: its last word and the external icon never part (SiteFooter's AwayLabel). */
+.site-footer__tail { white-space: nowrap; }
+.site-footer__tail > .nl-icon { display: inline-block; margin-inline-start: var(--space-2); vertical-align: middle; }
+@media (min-width: 600px) {
+  .site-footer .site-footer__nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .site-footer__group--wide { grid-column: auto; }
+  .site-footer__group--wide ul { display: flex; }
+}
+@media (min-width: 1024px) {
+  .site-footer__top { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: var(--space-12); }
+  .site-footer__legal { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-12); }
+}
+/* caption: the website footer is the one place the 14px size is allowed (brand book, Type). */
+.site-footer__caption {
+  max-width: var(--measure); font-size: var(--type-caption-size); line-height: var(--type-caption-line);
   font-weight: var(--type-caption-weight); color: var(--ink-muted);
 }
+/* The intended-purpose statement: body type (17/26), the page's one legal statement (R3-P8). */
+.site-footer__statement { max-width: var(--measure); font-size: var(--type-body-size); line-height: var(--type-body-line); color: var(--ink-muted); }
 
-/* ---- phones ---------------------------------------------------------------------------------- */
+/* ---- phones -------------------------------------------------------------------------------------- */
 @media (max-width: 599px) {
-  .site-wrap { padding-left: var(--space-4); padding-right: var(--space-4); }
-  .site-header { padding-top: var(--space-4); padding-bottom: var(--space-2); }
-  .site-header { gap: 0 var(--space-3); }
-  .site-header__cta { order: 2; }
-  .site-header__cta.nl-btn { padding: 0 var(--space-4); font-size: var(--type-label-size); }
-  .site-nav { order: 3; flex: 1 1 100%; gap: 0 var(--space-4); }
-  .site-hero__icon { border-radius: 22px; }
-  .site-hero__body { gap: var(--space-12); padding-top: var(--space-6); padding-bottom: var(--space-16); }
-  .site-hero__copy { gap: 20px; }
-  .site-hero__icon { width: 88px; height: 88px; }
-  .site-hero__line { font-size: 28px; line-height: 34px; }
-  .site-hero__lead { font-size: var(--type-body-lg-size); line-height: var(--type-body-lg-line); }
-  .site-actions { width: 100%; }
-  .site-actions .nl-btn--xl { flex: 1 1 100%; }
+  /* The compact header button keeps the bar on one row from about 352px wide. */
+  .site-bar .nl-btn { padding: 0 var(--space-4); font-size: var(--type-label-size); }
+  .site-cta { width: 100%; }
+  .site-cta .nl-btn--xl { flex: 1 1 100%; }
+  /* The hero on phones (W1): tighter gaps, so the demo's sentence and chips are on the first screen. */
+  .site-hero { gap: var(--space-6); }
+  .site-hero__copy { gap: var(--space-3); }
+  .site-hero .site-cta { margin-top: 0; row-gap: var(--space-2); }
+  /* The bar right above already shows the brand on phones (round 3, R3-P8): the hero's brand line goes, so the h1
+     comes first and the demo rises by about 60px. Under 352px the bar shows the icon only, so the line stays there,
+     as the name alone. */
+  .site-hero__icon { display: none; }
+}
+
+/* The Main navigation shows from 960px only (the bar needs about 921px for brand, nav and CTA in one row), so the
+   bar is one row at every width and "Open the app" never sits alone on a row (W1, 2026-11-12; was 720px). The
+   header CTA stays (MS-3.3). */
+@media (max-width: 959px) {
+  .site-bar nav { display: none; }
+}
+/* Under 352px the brand is its icon only, so brand and button share one row at 320px. The name stays in the
+   link's accessible name, visually hidden (W1). */
+@media (max-width: 351px) {
+  .site-bar .nl-brand__name {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+    clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+  }
+  /* The icon alone (44px) still gets a 56px target (MS-10.4). */
+  .site-bar .nl-brand { min-width: var(--target-min); }
+}
+@media (min-width: 352px) and (max-width: 599px) {
+  .site-hero__brand { display: none; }
+}
+
+/* ---- tablets and wider --------------------------------------------------------------------------- */
+@media (min-width: 600px) {
+  .site-wrap {
+    padding-left: max(var(--space-6), env(safe-area-inset-left));
+    padding-right: max(var(--space-6), env(safe-area-inset-right));
+  }
   .site-band { padding-top: var(--space-16); padding-bottom: var(--space-16); }
-  .site-stack { gap: var(--space-8); }
-  .site-card, .site-proof { padding: var(--space-6); }
-  .site-grid--2, .site-grid--3, .site-grid--4 { grid-template-columns: 1fr; }
-  .site-demo__text { font-size: 26px; line-height: 34px; }
+  .site-stack { gap: var(--space-12); }
+  .site-proof-layout { gap: var(--space-12); }
+  .site-hero { padding-top: var(--space-12); padding-bottom: var(--space-16); }
+  .site-about__head { padding-top: var(--space-12); padding-bottom: var(--space-16); }
+  .site-hero { gap: var(--space-12); }
+  .site-hero__icon { width: var(--space-16); height: var(--space-16); }
+}
+/* Round 4 (option T): from 720px the 284px demo sits beside the copy, whose column stays 364px or wider, so the h1
+   wraps only between words; the whole hero is on a portrait tablet's first screen. Not on short screens (a phone held
+   sideways keeps the stacked hero, so its h1 stays at the top of the first screen, MS-10.7). */
+@media (min-width: 720px) and (max-width: 1023px) and (min-height: 600px) {
+  .site-hero { flex-direction: row; align-items: center; gap: var(--space-6); }
+  .site-hero__copy { flex: 1 1 0; }
+  .site-hero__demo { flex: none; width: var(--site-demo-w); }
+}
+
+/* ---- box grids from 648px (round 4, r4-boxes; MS-10.9): every card at least 288px wide ------------
+ * The lead card spans the grid; the other cards go two to a row. A card in a row shares the row's lines (subgrid):
+ * its stage, its title and its words line up with its neighbour's, and the stages in a row are one height (MS-7.7).
+ * Conversation and Privacy have three cards after the lead: below 1024px the third spans the row with its stage
+ * beside its words. Reading order stays the DOM order (no order property).
+ */
+@media (min-width: 648px) {
+  .site-bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .site-bento > .site-card--lead { grid-column: 1 / -1; }
+  .site-bento--3 > .site-card:not(.site-card--lead) { display: grid; grid-row: span 3; grid-template-rows: subgrid; row-gap: var(--space-3); }
+  .site-bento--4 > .site-card:not(.site-card--lead) { display: grid; grid-row: span 4; grid-template-rows: subgrid; row-gap: var(--space-3); }
+  .site-bento--3 > .site-card--sent > :is(.site-stage, .site-sent) { grid-row: 1; }
+}
+@media (min-width: 648px) and (max-width: 1023px) {
+  .site-bento--3 > :last-child {
+    grid-column: 1 / -1; grid-row: auto; grid-template-rows: 1fr auto auto 1fr; grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-6); row-gap: var(--space-2);
+  }
+  .site-bento--3 > :last-child > .site-stage { grid-column: 1; grid-row: 1 / -1; }
+  .site-bento--3 > :last-child > :not(.site-stage) { grid-column: 2; }
+  .site-bento--3 > :last-child > :nth-child(2) { grid-row: 2; }
+  .site-bento--3 > :last-child > :nth-child(3) { grid-row: 3; }
+}
+
+/* How it works on tablets (round 4): still one column; each step puts its 320px stage beside its text (DOM order,
+   the stage first), and the chevron sits under the stage. */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .site-how__step {
+    display: grid; grid-template-columns: calc(var(--space-24) * 3 + var(--space-8)) minmax(0, 1fr);
+    align-items: center; column-gap: var(--space-6);
+  }
+  .site-how__step:not(:last-child)::after { left: calc((var(--space-24) * 3 + var(--space-8)) / 2); }
+}
+
+/* ---- desktop ------------------------------------------------------------------------------------- */
+@media (min-width: 1024px) {
+  .site-band { padding-top: var(--space-24); padding-bottom: var(--space-24); }
+  .site-hero {
+    flex-direction: row; align-items: center; gap: var(--space-12);
+    padding-top: var(--space-16); padding-bottom: calc(var(--space-16) + var(--space-12));
+  }
+  .site-hero__copy { flex: 6 1 0; }
+  .site-hero__demo { flex: 5 1 0; }
+  /* How it works (round 4): the three steps in one row; one stage height (--stage-m), so the three scenes reach the
+     play line together; the chevrons point right in the gaps, level with the stages' middles. */
+  .site-how__steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .site-how__stage { min-block-size: var(--stage-m); padding: var(--space-4); }
+  .site-how__step:not(:last-child)::after {
+    left: auto; bottom: auto; right: calc(var(--space-12) / -2 - var(--space-2)); top: calc(var(--stage-m) / 2 - var(--space-2));
+    transform: rotate(-45deg);
+  }
+  /* Proof (round 4): the steps and the note left, the figure right across both rows at its own width (about 534px);
+     the extra height goes under the note. */
+  .site-proof-layout {
+    grid-template-columns: minmax(0, 1fr) max-content; grid-template-rows: auto 1fr;
+    grid-template-areas: "steps figure" "more figure"; gap: var(--space-8) var(--space-12);
+  }
+  .site-proof-layout > .site-proof-steps { grid-area: steps; }
+  .site-proof-layout > .site-proof { grid-area: figure; }
+  .site-proof-layout > .site-proof__more { grid-area: more; }
+
+  /* The box sections (round 4, r4-boxes): the lead card puts its stage (7fr) beside its words (5fr), vertically
+     centred; Access's lead puts the stage on the right (.site-card--end), so the three leads alternate left, right,
+     left down the page. Conversation and Privacy show their three cards in one row. */
+  .site-bento--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .site-card--lead {
+    display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); grid-template-rows: 1fr auto auto 1fr;
+    column-gap: var(--space-8); row-gap: var(--space-3);
+  }
+  .site-card--lead > .site-stage { grid-column: 1; grid-row: 1 / -1; }
+  .site-card--lead > :not(.site-stage) { grid-column: 2; }
+  .site-card--lead > :nth-child(2) { grid-row: 2; }
+  .site-card--lead > :nth-child(3) { grid-row: 3; }
+  .site-card--lead.site-card--end { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+  .site-card--end > .site-stage { grid-column: 2; }
+  .site-card--end > :not(.site-stage) { grid-column: 1; }
+}
+/* Access from 1200px: its half-width cards keep the stage over the words (text one card wide, never a narrow
+   column); the layout boxes take R3-P1's doubled sizes (72 x 128, 128 x 96, 192 x 120), which fit the 516px stage, so
+   they fill their row's stage beside Your view. Token multiples only; drawn keys keep 64 or 84px (MS-10.8). */
+@media (min-width: 1200px) {
+  .site-bento--4 .site-layouts { column-gap: var(--space-6); }
+  .site-bento--4 .site-layouts__box { gap: var(--space-1); padding: var(--space-2); border-radius: var(--space-4); }
+  .site-bento--4 .site-layouts__box:not(.site-layouts__box--upright) { column-gap: var(--space-2); }
+  .site-bento--4 .site-layouts__box--upright { inline-size: calc(var(--space-16) + var(--space-2)); block-size: calc(var(--space-24) + var(--space-8)); }
+  .site-bento--4 .site-layouts__box--landscape { inline-size: calc(var(--space-24) + var(--space-8)); block-size: var(--space-24); }
+  .site-bento--4 .site-layouts__box--wide { inline-size: calc(var(--space-24) * 2); block-size: calc(var(--space-24) + var(--space-6)); }
+  .site-bento--4 .site-layouts__bar { block-size: var(--space-3); border-radius: var(--space-1); }
+  .site-bento--4 .site-layouts__line { block-size: var(--space-1); }
+  .site-bento--4 .site-layouts__pills { gap: var(--space-1); }
+  .site-bento--4 .site-layouts__pills > span { inline-size: var(--space-4); block-size: var(--space-2); }
+}
+/* ---- motion: the website tier (ADR-006, design "Motion system", MS-8) ----------------------------
+ * Every animation and transition sits in this block, under a [data-site-motion]
+ * selector (set by the boot script and SiteMotion only when the visitor has no reduced-motion
+ * preference). Every duration, delay, distance and easing is a --motion-* token (MS-8.2). Only
+ * opacity and transform change (MS-8.10). Nothing loops (MS-8.3).
+ */
+@media (prefers-reduced-motion: no-preference) {
+  /* A1: the moon glow fades in once per page view (MS-6.9). */
+  [data-site-motion]:not([data-site-arrived]) .site-top::before {
+    animation: site-fade-in var(--motion-fade-slow) var(--motion-ease-out) both;
+  }
+  /* A2: the ninth key's ember ring fades in once, after a short delay; hero only (MS-6.9). */
+  [data-site-motion]:not([data-site-arrived]) .site-top .site-key--ninth::after {
+    animation: site-fade-in var(--motion-fade-slow) var(--motion-ease-out) var(--motion-delay-arrival) both;
+  }
+  @keyframes site-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+  /* A3: the demo's pressed ring changes in a short linear jump (MS-6.5). */
+  [data-site-motion] .site-demo .site-key::after { transition: opacity var(--motion-jump) var(--motion-ease-linear); }
+  /* An icon button's name (round 4, MS-6.15): fades in over motion-jump, after motion-delay-arrival on hover (so a
+     pointer passing by shows nothing) and at once on keyboard focus; it hides at once. Opacity only. */
+  [data-site-motion] .site-icon-btn:is(:hover, :focus-visible) > .site-tip { transition: opacity var(--motion-jump) var(--motion-ease-out); }
+  [data-site-motion] .site-icon-btn:hover:not(:focus-visible) > .site-tip { transition-delay: var(--motion-delay-arrival); }
+
+  /* A4: one-time reveals (MS-8.4). A block with focus inside is always visible. */
+  [data-site-motion="on"] [data-reveal]:not([data-revealed]) { opacity: 0; transform: translateY(var(--motion-reveal-distance)); }
+  [data-site-motion="on"] [data-reveal]:not([data-revealed]):focus-within { opacity: 1; transform: none; }
+  [data-site-motion="on"] [data-reveal][data-revealed="1"] {
+    animation: site-reveal var(--motion-fade) var(--motion-ease-out) calc(var(--reveal-i, 0) * var(--motion-stagger)) both;
+  }
+  @keyframes site-reveal {
+    from { opacity: 0; transform: translateY(var(--motion-reveal-distance)); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* A9 control feedback (round 4, r4-language; MS-8.14): the hover layer fades over motion-jump; a link's icon moves
+     motion-hint the way it points on hover and keyboard focus, over motion-state. Nothing else on a control animates. */
+  [data-site-motion] .site .nl-btn:not(.site-drawn-btn)::after,
+  [data-site-motion] .site .site-key--try::before { transition: opacity var(--motion-jump) var(--motion-ease-linear); }
+  [data-site-motion] .site-go > .nl-icon { transition: transform var(--motion-state) var(--motion-ease-out); }
+  [data-site-motion] .site-go:focus-visible > .nl-icon { transform: var(--site-go-hint); }
+  @media (hover: hover) {
+    [data-site-motion] .site-go:hover > .nl-icon { transform: var(--site-go-hint); }
+  }
+
+  /* A10 live part entry (round 4; MS-8.15): a try-it chip, and the check that lands on it, fade in over motion-jump as
+     they mount (opacity only, so the row never moves, MS-6.10); a question's answer rises in over motion-state as it
+     opens. @starting-style applies to a new element only, never to the server-rendered page. */
+  [data-site-motion="on"] .site-demo:is(.is-playing, .is-trying) .site-demo__chips:not(.site-sizer__ghost) .nl-chip,
+  [data-site-motion="on"] .site-demo:is(.is-playing, .is-trying) .site-demo__chips:not(.site-sizer__ghost) .nl-chip > .nl-icon {
+    transition: opacity var(--motion-jump) var(--motion-ease-linear);
+  }
+  @starting-style {
+    [data-site-motion="on"] .site-demo:is(.is-playing, .is-trying) .site-demo__chips:not(.site-sizer__ghost) .nl-chip,
+    [data-site-motion="on"] .site-demo:is(.is-playing, .is-trying) .site-demo__chips:not(.site-sizer__ghost) .nl-chip > .nl-icon { opacity: 0; }
+  }
+  [data-site-motion="on"] .site-faq[open] > :not(summary) { animation: site-rise var(--motion-state) var(--motion-ease-out) backwards; }
+
+  /* A7: played drawings (design R2.2; MS-8.11). A data-play root plays once when SiteMotion sets
+   * data-played="1"; "instant" matches no rule, so it is the finished state. Each part changes at
+   * t(k) = --play-lead + k x --play-step. Fill backwards only: after its change a part falls back to
+   * the base (finished) style and keeps no animation. */
+  [data-site-motion="on"] .site-k0 { --k: 0; }
+  [data-site-motion="on"] .site-k1 { --k: 1; }
+  [data-site-motion="on"] .site-k2 { --k: 2; }
+  [data-site-motion="on"] .site-k3 { --k: 3; }
+  [data-site-motion="on"] .site-k4 { --k: 4; }
+  [data-site-motion="on"] .site-k5 { --k: 5; }
+  [data-site-motion="on"] .site-k6 { --k: 6; }
+  [data-site-motion="on"] .site-k7 { --k: 7; }
+  [data-site-motion="on"] .site-k8 { --k: 8; }
+  [data-site-motion="on"] .site-k9 { --k: 9; }
+  [data-site-motion="on"] .site-k10 { --k: 10; }
+  [data-site-motion="on"] .site-k11 { --k: 11; }
+  [data-site-motion="on"] .site-k12 { --k: 12; }
+  [data-site-motion="on"] .site-u0 { --u: 0; }
+  [data-site-motion="on"] .site-u1 { --u: 1; }
+  [data-site-motion="on"] .site-u2 { --u: 2; }
+  [data-site-motion="on"] .site-u3 { --u: 3; }
+  [data-site-motion="on"] .site-u4 { --u: 4; }
+  [data-site-motion="on"] .site-u5 { --u: 5; }
+  [data-site-motion="on"] .site-u6 { --u: 6; }
+  [data-site-motion="on"] .site-u7 { --u: 7; }
+  [data-site-motion="on"] .site-u8 { --u: 8; }
+  [data-site-motion="on"] .site-u9 { --u: 9; }
+  [data-site-motion="on"] .site-u10 { --u: 10; }
+  [data-site-motion="on"] .site-u11 { --u: 11; }
+  [data-site-motion="on"] .site-u12 { --u: 12; }
+  [data-site-motion="on"] .site-u13 { --u: 13; }
+  [data-site-motion="on"] .site-play--frame { --play-step: var(--motion-frame); }
+  [data-site-motion="on"] .site-play--quick { --play-step: var(--motion-frame-quick); }
+  [data-site-motion="on"] .site-play--sweep { --play-step: var(--motion-sweep); }
+  [data-site-motion="on"] .site-play--type { --play-step: var(--motion-demo-step); }
+  /* The lead waits motion-play-lead plus motion-frame for each column before the card's, plus --play-after
+     where a neighbour's rings last longer (V28, review N7): one ember ring at a time in a row (MS-7.3). */
+  [data-site-motion="on"] :is([data-play], [data-play-scope]) { --play-lead: calc(var(--motion-play-lead) + var(--play-i, 0) * var(--motion-frame) + var(--play-after, calc(var(--motion-jump) * 0))); }
+  /* A repeated press: the second ring fades in motion-jump after its step (V29). */
+  [data-site-motion="on"] .site-ring { --late: calc(var(--motion-jump) * 0); }
+  [data-site-motion="on"] .site-ring.site-late { --late: var(--motion-jump); }
+  /* --play-i: the card's column in its row, following the box grids above (round 4: a lead card first, then two or
+     three cards a row; at most 2 columns before a card, MS-8.11). Touch waits for the Keyboard drawing's four rings
+     (4 x motion-frame-quick) instead, so their rings never show together. */
+  @media (min-width: 648px) {
+    [data-site-motion="on"] .site-bento > :nth-child(2n + 3) { --play-i: 1; }
+    [data-site-motion="on"] .site-bento--4 > :nth-child(3) { --play-i: 0; --play-after: calc(4 * var(--motion-frame-quick)); }
+  }
+  @media (min-width: 1024px) {
+    [data-site-motion="on"] .site-bento--3 > :nth-child(4) { --play-i: 2; }
+  }
+
+  /* Before play: the start of the sequence. */
+  [data-site-motion="on"] [data-play]:not([data-played]) :is(.site-in, .site-mark) { opacity: 0; }
+  [data-site-motion="on"] [data-play]:not([data-played]) .site-rise { opacity: 0; transform: translateY(var(--motion-nudge)); }
+  [data-site-motion="on"] [data-play]:not([data-played]) .site-out { opacity: 1; }
+  /* Play. For .site-during and .site-ring the later site-in wins while it holds 0 before t(k). */
+  [data-site-motion="on"] [data-play][data-played="1"] .site-in {
+    animation: site-in var(--motion-state) var(--motion-ease-out) calc(var(--play-lead) + var(--k) * var(--play-step)) backwards;
+  }
+  [data-site-motion="on"] [data-play][data-played="1"] .site-rise {
+    animation: site-rise var(--motion-state) var(--motion-ease-out) calc(var(--play-lead) + var(--k) * var(--play-step)) backwards;
+  }
+  [data-site-motion="on"] [data-play][data-played="1"] .site-out {
+    animation: site-out var(--motion-state) var(--motion-ease-out) calc(var(--play-lead) + var(--u) * var(--play-step)) backwards;
+  }
+  [data-site-motion="on"] [data-play][data-played="1"] .site-during {
+    animation:
+      site-out var(--motion-state) var(--motion-ease-out) calc(var(--play-lead) + var(--u) * var(--play-step)) backwards,
+      site-in var(--motion-state) var(--motion-ease-out) calc(var(--play-lead) + var(--k) * var(--play-step)) backwards;
+  }
+  [data-site-motion="on"] [data-play][data-played="1"] .site-ring {
+    animation:
+      site-out var(--motion-jump) var(--motion-ease-linear) calc(var(--play-lead) + var(--u) * var(--play-step)) backwards,
+      site-in var(--motion-jump) var(--motion-ease-linear) calc(var(--play-lead) + var(--k) * var(--play-step) + var(--late)) backwards;
+  }
+  [data-site-motion="on"] [data-play][data-played="1"] .site-mark {
+    animation: site-in var(--motion-jump) var(--motion-ease-linear) calc(var(--play-lead) + var(--k) * var(--play-step)) backwards;
+  }
+  @keyframes site-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes site-out { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes site-rise {
+    from { opacity: 0; transform: translateY(var(--motion-nudge)); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* How it works (round 4, 2026-11-13, Claude Code; MS-8.11 amended, MS-8.12 removed): A8, the step sync with its
+   * sticky picture and runway, is gone. The three scenes are data-play drawings (A7). From 1024px they sit in one row
+   * and play in story order: step 2 waits for step 1's four presses, step 3 for steps 1 and 2, so the row's last
+   * change comes 3,780 ms after the trigger. Below 1024px each scene plays on its own. */
+  @media (min-width: 1024px) {
+    [data-site-motion="on"] .site-how__step:nth-child(2) { --play-after: calc(4 * var(--motion-frame-quick)); }
+    [data-site-motion="on"] .site-how__step:nth-child(3) { --play-after: calc(4 * var(--motion-frame-quick) + 5 * var(--motion-sweep)); }
+  }
+  /* .site-step beside its play root (round 4): a [data-play-scope] holds both, and the number's lit layer plays on
+   * the root's clock (the scope carries the play class and gets the lead). Inside a root the A7 .site-during rule
+   * lights it instead. */
+  [data-site-motion="on"] [data-play-scope]:has([data-play][data-played="1"]) .site-step__lit {
+    animation:
+      site-out var(--motion-state) var(--motion-ease-out) calc(var(--play-lead) + var(--u) * var(--play-step)) backwards,
+      site-in var(--motion-state) var(--motion-ease-out) calc(var(--play-lead) + var(--k) * var(--play-step)) backwards;
+  }
+}
+
+/* ---- forced colours (Windows contrast themes) ------------------------------------------------------
+ * box-shadow is dropped in forced colours, so every drawn ring and box gets an inset outline in a system
+ * colour instead; the scan ring uses Highlight. The drawn toggle keeps its own two system colours so the
+ * knob stays visible on its track. Opacity still steps, so the drawings keep their sequence. */
+@media (forced-colors: active) {
+  .site-press-ring, .site-key-ring, .site-key::after, .site-scan__press, .site-outline {
+    outline: var(--ring-width) solid CanvasText; outline-offset: calc(-1 * var(--ring-width));
+  }
+  .site-proof__box, .site-proof__spot, .site-letter__box, .site-keycap, .site-layouts__keys, .site-layouts__pills > span:nth-child(2), .site-step__num {
+    outline: var(--line-width) solid CanvasText; outline-offset: calc(-1 * var(--line-width));
+  }
+  .site-scan__ring { outline: var(--scan-width) solid Highlight; }
+  .site-toggle, .site-toggle__knob { forced-color-adjust: none; }
+  .site-toggle { border-color: CanvasText; background: Canvas; }
+  .site-toggle__knob, .site-toggle--on { background: CanvasText; }
+  .site-toggle--on .site-toggle__knob { background: Canvas; }
+  /* An icon button's name keeps an edge when its fill is dropped (round 4). */
+  .site-tip { border: var(--line-width) solid CanvasText; }
+}
+
+/* ---- short landscape (phones held sideways, MS-3.3, MS-10.7); keep this rule last ----------------- */
+@media (orientation: landscape) and (max-height: 500px) {
+  .site-bar nav { display: none; }
+  .site-hero { padding-top: var(--space-4); padding-bottom: var(--space-12); }
+  .site-hero__icon { width: var(--space-12); height: var(--space-12); }
+  .site-hero__title { font-size: clamp(36px, 11svh, var(--type-display-size)); }
 }

@@ -26,6 +26,7 @@ Start here. Every page below is kept in the repo, so the knowledge base is versi
 - [ADR-003: One screen on phones and tablets; phones portrait only](decisions/ADR-003-one-screen-portrait-phones.md)
 - [ADR-004: Voice to text for "They said" uses the browser's speech service](decisions/ADR-004-voice-to-text-they-said.md)
 - [ADR-005: Short phones drop the suggestion rows](decisions/ADR-005-short-phones-drop-suggestions.md)
+- [ADR-006: The website at `/`, the app at `/app`](decisions/ADR-006-landing-page-at-root.md)
 - [ADR-007: The conversation thread is memory only; sending what you said is a second opt-in](decisions/ADR-007-conversation-thread-memory-only.md)
 - [ADR-008: Reply types steer ranking only](decisions/ADR-008-reply-types-steer-ranking.md)
 - [ADR-core-001: core contract clarifications](decisions/ADR-core-001-contract-clarifications.md)
