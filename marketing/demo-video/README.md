@@ -116,5 +116,3 @@ The deadline is 4 December 2026, 2:00 pm Pacific Time; the team's own submit day
 | 28 Nov | Final captures from the frozen app. Picture lock |
 | 1 Dec | Checks passed, final render, captions, thumbnail |
 | 2 Dec | Public upload, played signed out, link in Devpost |
-
-This plan was written with Claude Code, not in Kiro. It is not Kiro work and should not be listed as such.

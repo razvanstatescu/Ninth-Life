@@ -1,5 +1,5 @@
 /**
- * The proof check (#proof, content.md §3, design.md §3). Round 4 (2026-11-13, Claude Code): the head, then the layout,
+ * The proof check (#proof, content.md §3, design.md §3). Round 4 (2026-11-13): the head, then the layout,
  * which is the section's one data-play root (MS-8.11, lead ruling 1.2). In DOM order it holds the figure, the four
  * steps, then the note and the button. From 1024px grid areas put the steps and the note on the left and the figure on
  * the right across both rows (no order, MS-10.9). The steps are the shared .site-step. Their numbers are the only

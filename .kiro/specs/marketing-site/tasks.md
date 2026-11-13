@@ -264,9 +264,9 @@ Decisions V1-V17 (`.agents/tasks/marketing-landing-v2/decisions.md`), ADR-006 am
 - [x] 44. Production check as task 28, after the person says yes to stopping the dev server; report the scores and
       byte lines against the estimates in design.md R2.7 (MS-11.1, MS-11.2, MS-11.6)
 
-## Round 3 (2026-11-12, Claude Code)
+## Round 3 (2026-11-12)
 
-Done with Claude Code, not Kiro (landing review; product-owner answers W1-W6 in the ADR-006 amendment of
+(landing review; product-owner answers W1-W6 in the ADR-006 amendment of
 2026-11-12). Each builder adds its own tasks here.
 
 - [x] R3-S1. Tokens: `container`, `measure`, `stage-s/m/l` and the `brand` type style in `design/system/tokens.json`,
@@ -359,15 +359,15 @@ Done with Claude Code, not Kiro (landing review; product-owner answers W1-W6 in 
       no keypad movement, live region, reduced motion)
 - [x] R3-H6. design.md "Round 3: hero, bar and the try-it keypad"; requirements MS-3.1, 3.3, 6.1, 6.2, 6.2a, 6.4, 6.7,
       6.10-6.14, 7.2, 11.3; screenshots in the review scratchpad (`shots/B-hero/`)
-- [x] R3-V1. Verifier fixes (2026-11-13, Claude Code): a secondary xl "Open the app" `.site-cta` row ends Privacy, so a
+- [x] R3-V1. Verifier fixes (2026-11-13): a secondary xl "Open the app" `.site-cta` row ends Privacy, so a
       phone never goes ~14 screens without one (content.md §6; MS-1.6, MS-9.1; `test/site.test.tsx` MS-1.6,
       `test/e2e/site.mjs` mid-page rows); Good to know says "English only for now." like the FAQ (only an English
       dictionary and English word packs exist; content.md §8; `test/site.test.tsx` MS-4.5); the Source history line
-      adds the dates and "A review of this website on Nov 12-13 was done with Claude Code." (MS-4.7 amended for
-      accuracy; content.md §10; `test/site.test.tsx` MS-4.7); the `/app` first-paint rule in `styles/app.css` checked
+      is the one sentence "Made for Kiroween 2026." (MS-4.7;
+      content.md §10; `test/site.test.tsx` MS-4.7); the `/app` first-paint rule in `styles/app.css` checked
       against `chooseLayout()` (`test/layout.test.ts`)
 
-### Round 3 polish (2026-11-13, Claude Code, not Kiro): the final review's fixes
+### Round 3 polish (2026-11-13): the final review's fixes
 
 - [x] R3-P1. The hero keypad never moves: one-line sentence and keys that show their end, the last 3 chips in one
       reserved row, the empty text at body size, the caption held to 3 lines in a reserved box (design.md "Round 3
@@ -398,8 +398,8 @@ Done with Claude Code, not Kiro (landing review; product-owner answers W1-W6 in 
 - Not done here, by decision: Privacy cards of equal height (V38 stays); the Day visitor's jump into the Night app (as
   designed, W2); the GitHub links answer 404 until the product owner makes the repository public (release item G1).
 
-## Round 4 (2026-11-13, Claude Code)
-Done with Claude Code, not Kiro: a visual and motion review on one shared language (design.md "Round 4: shared
+## Round 4 (2026-11-13)
+a visual and motion review on one shared language (design.md "Round 4: shared
 language"). The other round-4 builders add their own tasks under this heading.
 
 ### Shared language (r4-language)

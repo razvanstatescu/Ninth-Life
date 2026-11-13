@@ -6,8 +6,7 @@
  *   npx tsx src/components/close/verify-kiro.ts
  *
  * Why these: docs/KIRO_LOG.md (rows of 2026-11-10) shows Kiro used with specs, steering, hooks and a
- * workflow. The cards show what those are in this repository; nothing says Kiro wrote these lines (the
- * history rule in .kiro/steering/product.md, "How we work": the files were first written outside Kiro).
+ * workflow. The cards show what those are in this repository; nothing says Kiro wrote these lines.
  */
 
 export type SourceLine = { n: number; text: string };

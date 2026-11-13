@@ -27,10 +27,10 @@ export const PRIVACY_RULES_URL = `${REPO_URL}/blob/main/.kiro/steering/privacy.m
 export const RANKING_REQUEST_URL = `${REPO_URL}/blob/main/packages/web/lib/decodeClient.ts`;
 /**
  * The history line (MS-4.7, D15; round 4: in the site footer of every page and in /llms.txt). One constant, so the
- * footer, /llms.txt and the tests can never differ. Stated plainly, as .kiro/steering/product.md's history note does.
+ * footer, /llms.txt and the tests can never differ.
  */
 export const HISTORY_LINE =
-  'Made for Kiroween 2026. The first version was written with Claude Code by Anthropic; from Nov 10, 2026 the work continued in Kiro. The conversation features (Nov 11) and the website review (Nov 12-13, 2026) were done with Claude Code.';
+  'Made for Kiroween 2026.';
 
 /** The fixed example the demo types: one press per letter, 0 between words. */
 export const DEMO_WORDS = ['i', 'need', 'water'] as const;
@@ -201,7 +201,7 @@ export interface HowData {
 const HOW_CODE = '4663';
 
 /**
- * The How it works drawing (MS-7.8; round 4, 2026-11-13, Claude Code: the well after each press is gone with the
+ * The How it works drawing (MS-7.8; round 4, 2026-11-13: the well after each press is gone with the
  * typing well): the keys 4663 and the top 3 sentences with "home" chosen. It throws when the dictionary is loaded
  * but the example stops being true, so the build fails rather than showing a false drawing. With no dictionary it
  * shows the digits only.
@@ -242,7 +242,7 @@ export interface ProofExample {
   keys: string;
   /**
    * The letters of each pressed key, upper case, from @ninth/core's KEY_LETTERS ("WXYZ", "ABC", ...). Round 4
-   * (2026-11-13, Claude Code): the figure draws them on its five keys, so a visitor sees that "f" is not on TUV.
+   * (2026-11-13): the figure draws them on its five keys, so a visitor sees that "f" is not on TUV.
    */
   keyLetters: string[];
   words: { word: string; code: string }[];
@@ -433,7 +433,7 @@ export function getResults(read: JsonReader = readJson): SiteResults | null {
 }
 
 /**
- * The length of a Results bar (round 4, 2026-11-13, Claude Code; MS-5.1): the printed percentage as a share of the
+ * The length of a Results bar (round 4, 2026-11-13; MS-5.1): the printed percentage as a share of the
  * whole track, so a bar can never disagree with its label ("85.6%" is 0.856). Clamped to 0..1.
  */
 export function barShare(printed: string): number {
@@ -484,7 +484,7 @@ export interface ModelStatus {
 }
 
 /**
- * The model-ranking status of content.md §7 (round 4, 2026-11-13, Claude Code; amends the round-3 model line on the
+ * The model-ranking status of content.md §7 (round 4, 2026-11-13; amends the round-3 model line on the
  * page): what was measured, and whether the provider this build uses (`current`, lib/rankingProvider.ts) is the one.
  * The page shows it as status rows; `/llms.txt` keeps the one-line form, `modelRunsLine`. No model-run number.
  */

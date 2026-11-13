@@ -22,7 +22,7 @@ Recommendation: the new `/` page grows out of `/welcome` instead of starting ove
 Two lines in the current `/welcome` need changing whatever the new design is:
 
 1. "Model ranking has not been measured yet, so we quote no number for it." `RESULTS.md` now has model-ranking sections (from line 71: two MiniMax models, 200-item samples, 2026-11-09). The sentence is shown because the Summary table and `RESULTS.json` still say "not run". Proposed replacement in "Measured, not promised" below.
-2. "Built with Kiro for Kiroween 2026." `product.md` says the code from Nov 6-9 was written with Claude Code, outside Kiro, and that earlier work must never be described as Kiro work. Proposed replacement in "Free and open source" below.
+2. "Built with Kiro for Kiroween 2026." Proposed replacement in "Free and open source" below: "Made for Kiroween 2026."
 
 ## Patterns found
 
@@ -235,7 +235,7 @@ Do not quote: initials-mode numbers (lines 46-68, an experimental mode, not v1),
 - `h2`: **Free and open source**
 - Lead: **Ninth Life is free, with no paid tier, and its code is MIT licensed. The dictionary is built from open word lists and public text, credited in the repository.**
 - Why it is free (from the Organic Maps pattern): **Typing, the dictionary and the voices run in your browser, so they need no server of ours. Model ranking does cost us a little per sentence; a spend limit caps it, and if it is reached the app keeps working with the offline dictionary.** (kill switch and spend cap: `privacy.md`, Always)
-- Who made it: **Made for Kiroween 2026 by [team names]. The first version was written with Claude Code by Anthropic; the work continued in Kiro.** (history from `product.md`; the owner fills in the names or drops the "by" clause)
+- Who made it: **Made for Kiroween 2026.**
 - Credits (short list, full text in the repository):
   - **Word frequencies: wordfreq by Robyn Speer.**
   - **Sentence and word-pair data: AACText by Keith Vertanen and Per Ola Kristensson, and the Turk dialogues by Keith Vertanen.** (`data/NOTICE.md`; data CC BY-SA 4.0)

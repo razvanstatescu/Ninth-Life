@@ -4,7 +4,7 @@
  * (A7); the base styles show the finished state (MS-7.5). Drawn buttons are secondary, and ember appears only as a
  * pressed ring (MS-7.3).
  *
- * Round 4 (2026-11-13, Claude Code; decisions §2 "Boxes"): one scale (the sentence in `candidate` type), a still
+ * Round 4 (2026-11-13; decisions §2 "Boxes"): one scale (the sentence in `candidate` type), a still
  * arrow from each cause to its result so a finished or reduced-motion frame tells the story, the Show card turned
  * between the two edges of the table (amends W1 for Show and Flip: the edges replace the small upright card), and
  * the saved phrases as the app's Phrases sheet. Cause leads, effect follows: a ring at step k, its result at k + 1.

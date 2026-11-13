@@ -283,7 +283,7 @@ describe('getHowData, getSpellExample and getProofExample (MS-7.6, MS-7.8, MS-7.
     for (const s of how.sentences) expect(s.split(' ').map((w) => encodeWord(w))).toEqual(['4663']);
     expect(how.sentences[how.chosen]).toBe('home');
     expect(how.sentences).toContain('good');
-    // Round 4 (2026-11-13, Claude Code): the labels are the same sentences in the app's sentence case; no well texts.
+    // Round 4 (2026-11-13): the labels are the same sentences in the app's sentence case; no well texts.
     expect(how.labels).toEqual(how.sentences.map((s) => s.replace(/^./, (c) => c.toUpperCase())));
     expect(how.labels[how.chosen]).toBe('Home');
     expect(Object.keys(how).sort()).toEqual(['chosen', 'code', 'labels', 'sentences']);

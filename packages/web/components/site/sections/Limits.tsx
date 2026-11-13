@@ -1,7 +1,7 @@
 /**
  * Good to know (#limits, content.md §8, design.md §8): every honest limit, visible, before the questions (MS-4.5).
  *
- * Round 4 (2026-11-13, Claude Code): the biggest limit is the section's lead; then two cards in the app's
+ * Round 4 (2026-11-13): the biggest limit is the section's lead; then two cards in the app's
  * settings-row look. "Before you start": a tile with the row's icon, a key and the approved sentence. "Testing so
  * far": each check with its state in words and border style (Done: solid edge and a check; Not yet: dashed edge),
  * never colour alone, and a visually hidden colon so it reads "Checked on real phones and tablets: Not yet". Each

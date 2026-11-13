@@ -1,7 +1,7 @@
 // The hero demo (marketing-site design.md "KeypadDemo changes", "Round 4: the hero demo", "Test plan"
 // keypad-demo.test.tsx): fake timers, a mocked matchMedia, IntersectionObserver and speech engine. The try-it tests
 // (W4) run on real timers with fetch stubbed to read the real files in public/data, so they exercise the app's own
-// decoder. Round 4 (2026-11-13, Claude Code): the sentence is the card's proof chips (each word over its keys), the
+// decoder. Round 4 (2026-11-13): the sentence is the card's proof chips (each word over its keys), the
 // result line is read from the live region, and the controls are three icon buttons whose names are their tooltips.
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -518,7 +518,7 @@ describe('KeypadDemo', () => {
   });
 });
 
-// ---- try it (W4, 2026-11-12, Claude Code; MS-6.11 to MS-6.16) -------------------------------------------
+// ---- try it (W4, 2026-11-12; MS-6.11 to MS-6.16) -------------------------------------------
 const DATA_DIR = resolve(__dirname, '../public/data');
 /** fetch for /data/... served from public/data (the files the app ships); `missing` answers 404 for everything. */
 function stubFetch({ missing = false } = {}) {

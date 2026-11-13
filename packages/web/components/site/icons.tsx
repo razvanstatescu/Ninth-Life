@@ -1,5 +1,5 @@
 /**
- * Website-only icons (round 4, 2026-11-13, Claude Code; decisions §1.5). The same style as the app's
+ * Website-only icons (round 4, 2026-11-13; decisions §1.5). The same style as the app's
  * components/Icon.tsx: a 24px grid, a 2.5px round stroke in currentColor, the nl-icon class (components.css). They
  * live here so the app's bundle does not carry them: each icon is a named export of its path data, so a client
  * component (KeypadDemo) bundles only the icons it imports, and server components cost markup only.

@@ -85,7 +85,7 @@ const $$ = (sel: string, root: ParentNode = document) => [...root.querySelectorA
 const follows = (a: Node, b: Node) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
 const FOCUSABLE = 'a[href], button, input, select, textarea, summary, [tabindex]';
 
-// Round 3 (2026-11-12, Claude Code): Results follows Proof (MS-3.1). Round 4 (2026-11-13): Free and open source
+// Round 3 (2026-11-12): Results follows Proof (MS-3.1). Round 4 (2026-11-13): Free and open source
 // (source) dissolved into the close, the footer and /about.
 const SECTION_IDS = ['how', 'proof', 'results', 'conversation', 'access', 'privacy', 'limits', 'faq', 'start'];
 
@@ -200,7 +200,7 @@ describe('copy and claims (MS-4, MS-5)', () => {
     const notInFirstRender = new Set([
       'Stop',
       'Hear it',
-      // Round 4 (2026-11-13, Claude Code): the hero's status line, shown once the keys work, and its try-it states.
+      // Round 4 (2026-11-13): the hero's status line, shown once the keys work, and its try-it states.
       'Press the keys to try it.',
       'Next: {readings}',
       'No sentence matches yet.',
@@ -290,7 +290,7 @@ describe('copy and claims (MS-4, MS-5)', () => {
     const limits = $('#limits')!;
     expect(follows(limits, $('#faq')!)).toBe(true);
     expect(follows(limits, $('#start')!)).toBe(true);
-    // Round 4 (2026-11-13, Claude Code): the not-a-replacement limit is the lead; then two cards. "Before you start":
+    // Round 4 (2026-11-13): the not-a-replacement limit is the lead; then two cards. "Before you start":
     // a key and the approved sentence per row; "Testing so far": each check and its state in words. content.md §8
     // lists both as "  - **key**: **value**" lines, in page order.
     const section8 = contentSections().get(8)!;
@@ -359,7 +359,7 @@ describe('copy and claims (MS-4, MS-5)', () => {
 
   it('MS-4.7 the history line is there; "Built with Kiro" and "not been measured yet" are not', () => {
     const text = pageText();
-    expect(text).toContain('Made for Kiroween 2026. The first version was written with Claude Code by Anthropic; from Nov 10, 2026 the work continued in Kiro. The conversation features (Nov 11) and the website review (Nov 12-13, 2026) were done with Claude Code.');
+    expect(text).toContain('Made for Kiroween 2026.');
     // Round 4: one constant, shown in the site footer (so on every page) and in /llms.txt (seo.test.tsx).
     expect($('footer .site-footer__history')!.textContent).toBe(HISTORY_LINE);
     expect(text.split(HISTORY_LINE)).toHaveLength(2);
@@ -427,7 +427,7 @@ describe('hero and demo (MS-6)', () => {
     const live = $$('.site-demo__slot > [data-state="match"]');
     expect(live.map((c) => c.querySelector('.nl-chip__word')!.textContent)).toEqual(['I', 'need', 'water']);
     expect(live.map((c) => c.querySelector('.nl-chip__code')!.textContent)).toEqual(['4', '6333', '92837']);
-    // Round 4 (2026-11-13, Claude Code): top to bottom the card (the chips), the status line, the keypad, the toolbar;
+    // Round 4 (2026-11-13): top to bottom the card (the chips), the status line, the keypad, the toolbar;
     // no caption, no check label (the proof check section explains the check).
     const demo = $('.site-demo')!;
     expect([...demo.children].map((c) => c.className.split(' ')[0]).slice(0, 4)).toEqual(['site-demo__card', 'site-demo__status', 'nl-keypad', 'site-demo__tools']);
@@ -474,12 +474,12 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
     // One drawing per box card, in card order, plus the three How scenes and the proof check.
     const boxes = (id: string) =>
       $$(`#${id} .site-bento > .site-card > .site-stage > [data-play]`).map((d) => [...d.classList].find((c) => c !== 'site-drawing' && !c.startsWith('site-play--')));
-    // Round 4 (2026-11-13, Claude Code, r4-boxes): each section starts with its lead card (They said; One or two
+    // Round 4 (2026-11-13, r4-boxes): each section starts with its lead card (They said; One or two
     // switches; On your device), then its other cards in their round-3 order.
     expect(boxes('conversation')).toEqual(['site-turn', 'site-table', 'site-save', 'site-spell']);
     expect(boxes('access')).toEqual(['site-scan', 'site-keylegend', 'site-touch', 'site-themes', 'site-layouts']);
     expect(boxes('privacy')).toEqual(['site-map', 'site-door-ranking', 'site-door-voices', 'site-door-listen']);
-    // Round 4 (2026-11-13, Claude Code): How is three scenes, one in each step's stage: Press, Pick, Speak.
+    // Round 4 (2026-11-13): How is three scenes, one in each step's stage: Press, Pick, Speak.
     expect(
       $$('#how .site-how__step > .site-how__stage > .site-how__scene[data-play]').map((d) => [...d.classList].find((c) => /^site-how__(press|pick|speak)$/.test(c))),
     ).toEqual(['site-how__press', 'site-how__pick', 'site-how__speak']);
@@ -902,7 +902,7 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
   });
 
   it('MS-9.3 the closing lines lead with the check and x icons; wafer is a struck-through reject chip; its letter that is not on its key is boxed with an x', () => {
-    // Round 4 (2026-11-13, Claude Code): the closing lines, each led by its chip's icon, replace round 3's legend.
+    // Round 4 (2026-11-13): the closing lines, each led by its chip's icon, replace round 3's legend.
     const proof = getProofExample();
     const said = $$('figure.site-proof p.site-proof__said');
     expect(said).toHaveLength(2);
@@ -993,7 +993,7 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
   });
 
   it('MS-10.9 MS-8.11 the proof is its head, then one play root holding the figure, the four steps and the note; the step numbers light on its clock', () => {
-    // Round 4 (2026-11-13, Claude Code; lead ruling 1.2): text outside the figure takes only marks (the numbers light)
+    // Round 4 (2026-11-13; lead ruling 1.2): text outside the figure takes only marks (the numbers light)
     // and never waits for the play.
     const wrap = $('#proof > .site-wrap')!;
     expect([...wrap.children].map((c) => c.className)).toEqual(['site-head', 'site-proof-layout site-play--sweep']);
@@ -1288,7 +1288,7 @@ describe('shared primitives and the Night close (round 3, 2026-11-12)', () => {
   });
 });
 
-describe('lower sections (round 3, 2026-11-12, Claude Code)', () => {
+describe('lower sections (round 3, 2026-11-12)', () => {
   it('MS-3.1 bands still alternate ground and surface with Results after Proof; #start is the Night close', () => {
     const bands = $$('main > section').map((s) => (s.classList.contains('site-night') ? 'night' : s.classList.contains('site-band--surface') ? 'surface' : 'ground'));
     const want = SECTION_IDS.map((_, i) => (i === SECTION_IDS.length - 1 ? 'night' : i % 2 === 0 ? 'ground' : 'surface'));

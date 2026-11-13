@@ -406,7 +406,7 @@ describe('site.css round 2 (played drawings, stages and grids)', () => {
 
   it('MS-8.11 the play lead uses --play-i, never --reveal-i', () => {
     const lead = motionRules.filter((r) => declsOf(r, '--play-lead').length > 0);
-    // Round 4 (2026-11-13, Claude Code): a [data-play-scope] (a How step beside its scene) gets the lead too.
+    // Round 4 (2026-11-13): a [data-play-scope] (a How step beside its scene) gets the lead too.
     expect(lead.map((r) => r.selector)).toEqual(['[data-site-motion="on"] :is([data-play], [data-play-scope])']);
     // motion-frame per column (review N7), so a neighbour's single ring has ended; --play-after for longer ones.
     expect(declsOf(lead[0]!, '--play-lead')).toEqual(['calc(var(--motion-play-lead) + var(--play-i, 0) * var(--motion-frame) + var(--play-after, calc(var(--motion-jump) * 0)))']);
@@ -470,7 +470,7 @@ describe('site.css round 2 (played drawings, stages and grids)', () => {
   });
 
   it('MS-7.9 MS-9.3 the differing letter turns reject only with its mark: the plain letter is ink, the box draws a reject copy', () => {
-    // Round 4 (2026-11-13, Claude Code): the letter under its key replaces round 3's digit. A colour on the plain letter
+    // Round 4 (2026-11-13): the letter under its key replaces round 3's digit. A colour on the plain letter
     // would single it out before the sweep reaches its column (review B3), so only the mark (.site-letter__box) has it.
     expect(css).toMatch(/\.site-letter \{[^}]*color: var\(--ink\);/);
     expect(css).not.toMatch(/\.site-letter\s*\{[^}]*--proof-reject/);

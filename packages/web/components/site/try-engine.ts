@@ -1,5 +1,5 @@
 /**
- * The hero keypad's "try it" engine (W4, 2026-11-12, Claude Code; marketing-site MS-6.11 to MS-6.14).
+ * The hero keypad's "try it" engine (W4, 2026-11-12; marketing-site MS-6.11 to MS-6.14).
  *
  * KeypadDemo loads this module with a dynamic import() on the visitor's first key press, never before, so
  * the landing page's first load carries none of it (MS-11.2) and requests nothing under /data/ (MS-2.5).
@@ -23,7 +23,7 @@ export type { ComposerState, DictState };
 
 /** How many sentences the hero lists for the keys (the app shows up to MAX_CANDIDATES). */
 export const TRY_MATCHES = 3;
-/** Round 4 (2026-11-13, Claude Code): how many readings the hero's "Next:" line lists after the word on show. */
+/** Round 4 (2026-11-13): how many readings the hero's "Next:" line lists after the word on show. */
 export const TRY_NEXT = 2;
 
 export interface TryWord {

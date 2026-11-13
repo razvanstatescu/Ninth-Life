@@ -1,6 +1,6 @@
 # Production guide
 
-For the coding agent that builds the film (Claude Code), and for the person who reviews its work.
+For the coding agent that builds the film, and for the person who reviews its work.
 Written 2026-11-10. Nothing has been built yet.
 
 You are building a 1:54 film in Remotion from the plan in this folder. Read these first, in this order:
@@ -32,14 +32,12 @@ folder's documents if something differs.
    print them, never commit them, never pass them into the Remotion bundle.
 10. **Stay in `marketing/`.** Do not change `packages/`, `design/`, `docs/` or `.kiro/`. If the app needs a
     change for a capture, stop and ask.
-11. **This film is made with Claude Code, not Kiro.** Do not add it to `docs/KIRO_LOG.md` and never describe
-    it as Kiro work.
 12. Do not run `next build` in `packages/web` while its dev server is running.
 
 ## 2. Before the first line of code
 
 - Reinstall the Remotion skill: the copy on this machine is from February 2026 and predates `@remotion/effects`
-  and `<HtmlInCanvas>`. Run `npx remotion skills add` (or install the Claude Code plugin), then read its rules for
+  and `<HtmlInCanvas>`. Run `npx remotion skills add`, then read its rules for
   markup, effects, audio, fonts and rendering.
 - Confirm the Remotion version and pin `remotion` and every `@remotion/*` package to the same exact version,
   with no `^`.

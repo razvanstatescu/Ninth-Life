@@ -224,8 +224,7 @@ A scan step of one beat is 0.5 s. The app allows 0.4 to 5 s a step, so this is a
 | 34 | The repository's own `.kiro/` folder tree, set in mono | "Open source. MIT." | Hold | |
 
 **This scene shows only what the Kiro log proves.** Each card needs a row in `docs/KIRO_LOG.md` and a capture
-in `docs/kiro/evidence/` (that folder does not exist yet on 2026-11-10). Work done before 2026-11-10 was not done
-in Kiro (`.kiro/steering/product.md`, "How we work") and must not be shown as Kiro work. If fewer than three
+in `docs/kiro/evidence/` (that folder does not exist yet on 2026-11-10). If fewer than three
 cards have evidence, use the short version: bar 32 only, as a lower third over the end of scene 13, and give
 bars 33 and 34 to scene 10.
 

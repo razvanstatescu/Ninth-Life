@@ -24,20 +24,20 @@
 //     shift while they play (MS-8.11-8.13, MS-11.2).
 //   - No JavaScript, privacy (requests, storage, cookies, no dialog), routes, keyboard (skip link, bar
 //     Tab order at 1280x900 and 820x1094, R2; focus rings; questions; demo buttons) and the offline runs.
-//   - Round 3 (2026-11-12, Claude Code): the bar is one row at every size (W1); the demo's sentence and chips on the
+//   - Round 3 (2026-11-12): the bar is one row at every size (W1); the demo's sentence and chips on the
 //     first phone screen at 390x844 and its sentence bar at least partly at 320x640; the try-it keypad (W4): nothing
 //     under /data/ and no new script before the first press, then the decoder chunk and the dictionary; 4663 shows
 //     good, home and gone; touch and keyboard (one Tab stop, arrows, digits, Backspace, Clear), a visible focus ring,
 //     the keypad does not move while typing, the polite announcement, reduced motion, Play goes back to the example.
-//   - R3-P1 (2026-11-13, Claude Code): at every size, key 1, Clear, 4663, #, Clear, "He need water" and an 8-word
+//   - R3-P1 (2026-11-13): at every size, key 1, Clear, 4663, #, Clear, "He need water" and an 8-word
 //     sentence never move the keypad, Clear or Play; the empty text, the sentence and the keys are one line each; at
 //     most 3 chips in one row; after # the line lists every match with the one on show marked.
-//   - Round 4 (2026-11-13, Claude Code), the hero demo: the card's chips are the sentence and the live region carries
+//   - Round 4 (2026-11-13), the hero demo: the card's chips are the sentence and the live region carries
 //     the result line; at 390x844 the card and the keypad's first three rows are on the first screen; the status line
 //     names the readings # gives next; Tab goes keypad, Play, Hear it, Clear; digits typed on Clear press the keys;
 //     the keypad and the toolbar never move, the card keeps one height, the status line is one line; with no
 //     JavaScript the status line is empty.
-//   - Round 4 (2026-11-13, Claude Code), the shared language: with motion on and off, the hover layer at --state-hover
+//   - Round 4 (2026-11-13), the shared language: with motion on and off, the hover layer at --state-hover
 //     on a key and the ember button, a secondary button's edge turning ink, no layer on drawn buttons, hover and press
 //     never moving a key or a button, a .site-go arrow moving at most 4px only with motion on, and a question's answer
 //     rising in only with motion on (MS-8.14, MS-8.15).
@@ -76,7 +76,7 @@ const SIZES = [
   ['desktop 1440x1000', 1440, 1000, 1440, 1000, false],
   ['desktop 1920x1080', 1920, 1080, 1920, 1080, false],
 ];
-// Round 4 (2026-11-13, Claude Code): the Play button is named "Play the example" before and after a play.
+// Round 4 (2026-11-13): the Play button is named "Play the example" before and after a play.
 const LABEL_FIRST = 'Play the example';
 const LABEL_AGAIN = LABEL_FIRST;
 const LABEL_STOP = 'Stop';
@@ -254,7 +254,7 @@ const stageFit = (page) =>
         if (spare < 23 || spare > 25) unequal.push(`${name(s)} hugs its drawing: ${Math.round(spare)}px spare (want 24)`);
       }
     }
-    // Round 4 (2026-11-13, Claude Code): How's three stages are equal in the row from 1024px (one play line for the
+    // Round 4 (2026-11-13): How's three stages are equal in the row from 1024px (one play line for the
     // row); below 1024px each hugs its scene, 12px above and below.
     const how = [...document.querySelectorAll('#how .site-how__stage')].filter(shown);
     if (innerWidth >= 1024) {
@@ -553,7 +553,7 @@ try {
       const ordered = grids.flatMap((g) => [...g.children].filter((c) => getComputedStyle(c).order !== '0').map((c) => String(c.className).split(' ')[0]));
       const dense = grids.filter((g) => getComputedStyle(g).gridAutoFlow.includes('dense')).length;
       const cards = [...document.querySelectorAll('#access .site-bento > .site-card')].map((c) => c.querySelector('h3')?.textContent ?? '');
-      // Round 4 (2026-11-13, Claude Code): How's three steps sit in one row from 1024px and in one column below, each
+      // Round 4 (2026-11-13): How's three steps sit in one row from 1024px and in one column below, each
       // stage before its step (DOM order and on screen), nothing sticky. Proof: see the r4-proof lines below.
       const howSteps = [...document.querySelectorAll('#how .site-how__step')];
       const how = {
@@ -1430,7 +1430,7 @@ try {
     await ctx.close();
   }
 
-  // ---- try it: the keypad never moves (round 3, R3-P1, 2026-11-13; MS-6.10; round 4, 2026-11-13, Claude Code) -----------
+  // ---- try it: the keypad never moves (round 3, R3-P1, 2026-11-13; MS-6.10; round 4, 2026-11-13) -----------
   // At every size: key 1 first, Clear, 4663, # (the line lists every match and marks the one on show), Clear again,
   // "He need water" (43 0 6333 0 92837) and then a much longer sentence. Through all of it the keypad and the toolbar
   // (Play, Hear it, Clear) stay where they were, the card keeps one height, the status line is one line and at most

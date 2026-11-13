@@ -23,7 +23,7 @@ export const metadata: Metadata = pageMetadata({
  * (the footer leaves it out here). What ranking sends comes from rankingSentText(), the same list as the
  * landing page; provider names, region and retention only from providerCopy() (MS-4.6).
  *
- * Round 4 (2026-11-13, Claude Code): "Free and open source" (the old landing Source lead and "Why it is free", word
+ * Round 4 (2026-11-13): "Free and open source" (the old landing Source lead and "Why it is free", word
  * for word) and "Credits" (#credits, the footer's Credits link) come before the statement; the header is #top, the
  * target of the footer's "Back to top" (MS-14.5).
  */
@@ -102,7 +102,7 @@ export default function AboutPage() {
             </ul>
           </section>
 
-          {/* Round 4 (2026-11-13, Claude Code): the landing page's Free and open source section dissolved (MS-3.1); its
+          {/* Round 4 (2026-11-13): the landing page's Free and open source section dissolved (MS-3.1); its
               lead and "Why it is free" live here word for word, and its credits below (the footer links to them). */}
           <section className="site-prose" aria-labelledby="free">
             <h2 id="free" className="site-h3">

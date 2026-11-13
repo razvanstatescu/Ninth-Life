@@ -1,8 +1,8 @@
 /**
  * In a conversation (#conversation, content.md §4, design.md §4; round 2: a stage first in each card, 4.3).
- * Round 3 (2026-11-12, Claude Code): a surface band (Results moved up, so the bands still alternate); each card's
+ * Round 3 (2026-11-12): a surface band (Results moved up, so the bands still alternate); each card's
  * title says what it does for you, with the app's feature name as a small label above it in one hgroup (P2-9).
- * Round 4 (2026-11-13, Claude Code; decisions §2 "Boxes"): a lead card first (They said, across the grid, its stage
+ * Round 4 (2026-11-13; decisions §2 "Boxes"): a lead card first (They said, across the grid, its stage
  * beside its words from 1024px), then three cards in one row from 1024px (.site-bento--3); every feature name carries
  * its icon; one short line per card.
  */

@@ -2,7 +2,7 @@
 /**
  * The live keypad demo in the website hero (marketing-site design.md "Round 4: the hero demo", MS-6).
  *
- * Round 4 (2026-11-13, Claude Code): a small app screen with no caption. Top to bottom: the sentence card, which shows
+ * Round 4 (2026-11-13): a small app screen with no caption. Top to bottom: the sentence card, which shows
  * the sentence as proof chips, each word over its keys; one reserved status line; the keypad (the app's keys, 64px tall);
  * a row of three icon buttons (.site-icon-btn): Play the example (Stop while it plays), Hear it and Clear, each with its
  * name as a tooltip (.site-tip) on hover and keyboard focus. Escape hides a tooltip (WCAG 1.4.13).
@@ -18,7 +18,7 @@
  * turned on; an automatic play also stops when its Stop leaves the screen. Each chip has a fixed slot and every
  * part keeps one size, so nothing in the demo moves while it plays or while the visitor types (MS-6.10).
  *
- * Try it (W4, 2026-11-12, Claude Code; MS-6.11 to MS-6.16). The keys are real buttons: a press (touch,
+ * Try it (W4, 2026-11-12; MS-6.11 to MS-6.16). The keys are real buttons: a press (touch,
  * mouse, Enter or Space on a key, or a digit, *, # or Backspace typed while focus is anywhere in the demo) stops the
  * example and its autoplay for good and types the visitor's own keys. After a pointer press in the demo, keys typed while
  * nothing has focus count too (Safari does not focus a clicked button). The first press loads try-engine.ts with a dynamic import,

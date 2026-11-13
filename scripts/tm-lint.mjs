@@ -52,7 +52,7 @@ const ALLOWED = [
   'packages/eval/.cache/',                  // downloaded eval-only datasets, never committed
 ];
 
-// Repo-relative path prefixes never scanned: other checkouts of this same repo (Claude Code agent
+// Repo-relative path prefixes never scanned: other checkouts of this same repo (agent
 // worktrees), which carry their own copies of the allowed files at different paths.
 const SKIP_PREFIXES = ['.claude/worktrees/'];
 

@@ -8,7 +8,7 @@ import '@/components/site/site.css';
  * The 404 page (marketing-site MS-3.9): one title, a way back to the website and the app. Next keeps the 404 status
  * and adds `noindex`.
  *
- * Round 3 (R3-P5, 2026-11-13, Claude Code): the last page outside the site look now uses it. The whole page is Night
+ * Round 3 (R3-P5, 2026-11-13): the last page outside the site look now uses it. The whole page is Night
  * in both themes (like the banner, the #start close and the footer): the site bar, the site type (.site-h2,
  * .site-lead), a .site-cta row with the website's 64px buttons (the ember primary on Night, as in the hero) and the
  * site footer with the intended-purpose statement. Its own title in the site's "Ninth Life: …" pattern and its own

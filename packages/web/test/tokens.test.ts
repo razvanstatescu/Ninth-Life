@@ -71,7 +71,7 @@ describe('gen-tokens', () => {
     expect(root).toContain('--motion-sweep: 240ms;');
   });
 
-  // Round 4 (2026-11-13, Claude Code): the shared language's tokens (decisions §1.1) and the Results bars' grow (PO-1).
+  // Round 4 (2026-11-13): the shared language's tokens (decisions §1.1) and the Results bars' grow (PO-1).
   it('MS-8.2 MS-8.14 the round-4 tokens: motion-hint, motion-grow and the state group on :root', () => {
     const root = block(':root');
     expect(root).toContain('--motion-hint: 4px;');

@@ -4,7 +4,7 @@
  * brand, nav, CTA at every width (R2, MS-13.2). Nothing here is marked for a reveal, and the logo never
  * moves (MS-8.3, MS-8.4).
  *
- * Round 3 (2026-11-12, Claude Code): the h1 is the promise and matches the <title>; "Ninth Life" is the bar's
+ * Round 3 (2026-11-12): the h1 is the promise and matches the <title>; "Ninth Life" is the bar's
  * brand and the small line with the icon above the h1. "See how it works" is a link beside the primary, so
  * the demo reaches the first phone screen.
  */

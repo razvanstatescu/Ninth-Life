@@ -34,7 +34,7 @@ Rules for this file:
 
 No `keywords` tag.
 
-Round 3 (2026-11-12, Claude Code, not Kiro; MS-3.6 to MS-3.9). The definition, used word for word in the layout
+Round 3 (2026-11-12; MS-3.6 to MS-3.9). The definition, used word for word in the layout
 `description`, `public/manifest.webmanifest`, the JSON-LD, `/llms.txt` and the README's first paragraph
 (`SITE_DEFINITION` in `components/site/seo.ts`):
 
@@ -60,7 +60,7 @@ touch, or with one or two switches**.
 
 404 page: `h1` **Page not found**; **There is no page at this address. It may have moved, or the link may be
 mistyped.**; buttons **Open the app** (to `/app`, primary) and **Go to the home page** (to `/`).
-R3-P5 (2026-11-13, Claude Code): the 404 page is in the site look, Night in both themes: the site bar, the `h1` at the
+R3-P5 (2026-11-13): the 404 page is in the site look, Night in both themes: the site bar, the `h1` at the
 section-title scale with the line as its lead, the two buttons as a `.site-cta` row of 64px buttons, and the site
 footer with the intended-purpose statement. Its title follows the site's "Ninth Life: …" pattern and it has its own
 description (it used to inherit the definition); Next still answers 404 with `noindex`.
@@ -74,7 +74,7 @@ description (it used to inherit the definition); Next still answers 404 with `no
 
 ## 1. Hero (`#top`)
 
-Round 3 (2026-11-12, Claude Code, not Kiro): the `h1` is the promise and matches the `<title>`; "Ninth Life" is the
+Round 3 (2026-11-12): the `h1` is the promise and matches the `<title>`; "Ninth Life" is the
 bar's brand and the small brand line above the `h1`; the lead starts with `product.md`'s one-line answer (what it is,
 for what, at what cost); "See how it works" is a link, so the demo reaches the first phone screen; the demo's chips
 sit under the sentence they check, the caption is visible and the keypad can be tried (W4).
@@ -88,7 +88,7 @@ sit under the sentence they check, the caption is visible and the keypad can be 
 - Link beside it: **See how it works** (to `#how`)
 - Note, under them: **Free. Works offline. No account.**
 
-Round 4 (2026-11-13, Claude Code): the demo is a small app screen with no caption (the product owner: "too crowded …
+Round 4 (2026-11-13): the demo is a small app screen with no caption (the product owner: "too crowded …
 find a way to remove the text from there"). The words "Checked against the keys. How the check works" leave the hero
 (the proof check section and the bar's "Proof check" explain the check; the ✓ chips stay); the visible caption becomes
 the keypad's description for screen readers, word for word; the buttons' words become their names, shown on hover and
@@ -117,7 +117,7 @@ The result is only what the app's offline decoder returns: sentences whose every
 at most 3. It never says the page understood anything.
 
 - Keys and their sentences (live region): **Keys {codes} match: {sentences}.** (for example `Keys 4663 match:
-  “Good”, “Home”, “Gone”.`) R3-P4 (2026-11-13, Claude Code): `{sentences}` are the matches for the keys alone, so after
+  “Good”, “Home”, “Gone”.`) R3-P4 (2026-11-13): `{sentences}` are the matches for the keys alone, so after
   # the list stays whole and the sentence on show is marked when it is not the first: `Keys 4663 match: “Good”, “Home”
   (shown), “Gone”.`; a reading # reached past the top three is added, marked, at the end. When the last match ends in
   punctuation from key 1 the line adds no second full stop (`… “Gone.”`).
@@ -141,7 +141,7 @@ at most 3. It never says the page understood anything.
 
 ## 2. How it works (`#how`)
 
-Round 4 (2026-11-13, Claude Code, not Kiro): three steps in a row, Press, Pick and Speak, each a picture cut from the
+Round 4 (2026-11-13): three steps in a row, Press, Pick and Speak, each a picture cut from the
 app with a short title and one line (design.md "Round 4: How it works"). Fewer words, the same facts.
 
 - `h2`: **How it works**
@@ -167,7 +167,7 @@ with the typing well: "Press a key to start", the well after each press and "Sen
 
 ## 3. The proof check (`#proof`)
 
-Round 4 (2026-11-13, Claude Code): the product owner asked for "a more visual and intuitive visual on the right,
+Round 4 (2026-11-13): the product owner asked for "a more visual and intuitive visual on the right,
 possibly animated and coordinated with the left section". The lead keeps its first two sentences. Its third becomes
 four steps that light up in time with the figure. The legend becomes the figure's closing lines. The claims are
 unchanged.
@@ -209,9 +209,9 @@ Drawing text (decorative, `aria-hidden`, round 4):
 
 - `h2`: **Made for both sides of a conversation**
 - Lead: **Ninth Life keeps the other person in view, so a conversation does not stop while a sentence is typed.**
-Round 3 (2026-11-12, Claude Code, P2-9): each card's `h3` says what it does for you; the app's feature name sits above
+Round 3 (2026-11-12, P2-9): each card's `h3` says what it does for you; the app's feature name sits above
 it as a small label (`label` type, `--ink-muted`, in an `hgroup` with the `h3`).
-Round 4 (2026-11-13, Claude Code; decisions §2 "Boxes"): They said is the lead card (across the grid); each feature
+Round 4 (2026-11-13; decisions §2 "Boxes"): They said is the lead card (across the grid); each feature
 name carries its icon (`said`, `flip`, `save`, `spell`); one short line per card, never fewer facts.
 
 - Label **They said**, `h3` **Answer what they just said**: **Type their last line, or press Listen to turn their speech into text. Listen is off until you allow it.**
@@ -247,7 +247,7 @@ above the Matches chip; Show and Flip shows the before and the after through the
 
 - `h2`: **Works the way you type**
 - Lead (round 3): **Keyboard, touch or one or two switches, on the screen you have.**
-Round 4 (2026-11-13, Claude Code): One or two switches is the lead card (first in the grid); each `h3` carries its
+Round 4 (2026-11-13): One or two switches is the lead card (first in the grid); each `h3` carries its
 icon (`switch`, `keyboard`, `key`, `view`, `screens`).
 - `h3` **One or two switches**: **Row and column scanning, from 0.4 to 5 seconds a step, with no time limits. Space or Enter is the switch.**
 - `h3` **Keyboard**: **Number keys or the numpad. Enter speaks, Backspace goes back, arrow keys pick a sentence.**
@@ -258,7 +258,7 @@ icon (`switch`, `keyboard`, `key`, `view`, `screens`).
   and keeps your sentence." The Accessibility note keeps the portrait-only exception and the FAQ says "Phones
   (upright)".)
 - Note, `h3` **Accessibility** (round 4: `id="accessibility"`, the footer's link): **We aim for WCAG 2.2 AA as a minimum and check the app with automated accessibility, keyboard and switch tests. One known exception: on phones the app works in portrait only. Found a problem?** link **Open an issue on GitHub** (to `{REPO_URL}/issues`).
-- Last in the section (R3-P10, 2026-11-13, Claude Code), a `.site-cta` row with the secondary button **Open the app** (to `/app`, `nl-btn--secondary nl-btn--xl`), as after Results and Privacy: Results to Privacy was still 9.4 phone screens at 390px and 13.7 at 320px.
+- Last in the section (R3-P10, 2026-11-13), a `.site-cta` row with the secondary button **Open the app** (to `/app`, `nl-btn--secondary nl-btn--xl`), as after Results and Privacy: Results to Privacy was still 9.4 phone screens at 390px and 13.7 at 320px.
 
 The numbers here are product settings, not eval results: 72 and 128 are the `key-min` and `key-xl` tokens;
 0.4 to 5 seconds is `accessibility.md` rule 9.
@@ -279,7 +279,7 @@ Drawing text (decorative, `aria-hidden`; round 4: every loose key sits on a key 
 
 - `h2`: **Offline unless you choose**
 - Lead: **Typing, the dictionary and the proof check run in your browser. After one visit the app works with no connection. No account, no cookies, no analytics, no ads.**
-Round 4 (2026-11-13, Claude Code; decisions §2 "Boxes"): On your device is the lead card (a map of this device and its
+Round 4 (2026-11-13; decisions §2 "Boxes"): On your device is the lead card (a map of this device and its
 three ways out), then one card per way out; each `h3` carries its icon (`offline`, `toggle`, `voice`, `mic`).
 - `h3` **On your device**: **Your saved phrases and My words are kept in your browser. Only three features send words or speech off this device: model ranking, online voices and Listen.**
   (The second sentence is the lead's approved wording. Checked against every network call in the app on 2026-11-13:
@@ -323,10 +323,10 @@ out, an arrow leaving it is data leaving, a cloud marks where it goes; no locks,
 
 ## 7. Measured, not promised (`#results`)
 
-Round 3 (2026-11-12, Claude Code): on the page this section comes right after §3, the proof check (MS-3.1). The
+Round 3 (2026-11-12): on the page this section comes right after §3, the proof check (MS-3.1). The
 section numbers here stay as they were.
 
-Round 4 (2026-11-13, Claude Code; decisions "Results", PO-1): the figures are graphics now, with far fewer sentences.
+Round 4 (2026-11-13; decisions "Results", PO-1): the figures are graphics now, with far fewer sentences.
 Every number still comes from `getResults()` (RESULTS.json, the harness output that RESULTS.md is written from); each
 item names the RESULTS.md line that prints it.
 
@@ -382,7 +382,7 @@ No accuracy, latency or cost number from a model run appears on the page (D14; m
   - **Tested with people who use AAC**: **Not yet**
 - Then, in that card: **Want to help test it?** link **Open an issue on GitHub** (to `{ISSUES_URL}`).
 
-Round 4 (2026-11-13, Claude Code; MS-4.5, MS-4.5a). The biggest limit is the lead: it was the "What it is not" item,
+Round 4 (2026-11-13; MS-4.5, MS-4.5a). The biggest limit is the lead: it was the "What it is not" item,
 with "It" spelled out as "Ninth Life". The two "Not tested yet" sentences ("It has not yet been tested with people who
 use AAC." and "It has been checked in phone and tablet simulators, not yet on real phones and tablets.") are the
 three Testing so far rows: the same facts, with each state in a word. The keys Spelling, Language, Voices and Model
@@ -418,7 +418,7 @@ real-device check (product.md, Honest limits).
 - **Is it a medical device?** No. {NOT_A_MEDICAL_DEVICE}
 - After the list (round 3): **Something else?** link **Ask on GitHub** (to `{ISSUES_URL}`).
 
-Round 3 (2026-11-12, Claude Code): every new answer names only what the app does (`SpellSheet` "Spell this word" and
+Round 3 (2026-11-12): every new answer names only what the app does (`SpellSheet` "Spell this word" and
 "Add to my words", `MyWordsSheet`, `PhrasesSheet` "Delete", IndexedDB in `lib/storage.ts`, the candidate list and
 its arrow keys in `lib/keyboard.ts`, the web manifest's `display: standalone`). "Which languages?" is folded into
 "Which devices and languages?" and the home screen into "Do I need to install anything?", so the list stays at 11.
@@ -427,7 +427,7 @@ The ranking answer starts with `rankingSentText()`, its first letter capitalised
 
 ## 10. Free and open source (`#source`): dissolved in round 4
 
-Round 4 (2026-11-13, Claude Code; MS-3.1, amends D12): the section is no longer on the page; the product owner asked to
+Round 4 (2026-11-13; MS-3.1, amends D12): the section is no longer on the page; the product owner asked to
 put its information across the site and make it more visual. No fact is lost; every sentence it had is now here, word
 for word (the copy is in the sections named, so it is written out there):
 
@@ -447,7 +447,7 @@ A Night band with the hero's night sky in both themes (round 3, W2).
 
 - Icon image (`/icons/icon.svg`, 96px, `alt=""`), still.
 - `h2`: **Type your first sentence**
-- Facts row (round 4, 2026-11-13, Claude Code; replaces the line "Free. Works offline. No account.", which the hero
+- Facts row (round 4, 2026-11-13; replaces the line "Free. Works offline. No account.", which the hero
   keeps): four items, a title and a line each, typographic with 2px rules between them, never badges ("badge-like
   marks" are banned below: they would read as certifications); each reads "Title: line" to a screen reader:
   **Free** / **No paid tier, no ads.** · **Works offline** / **After the first visit.** · **No account** / **No
@@ -457,7 +457,7 @@ A Night band with the hero's night sky in both themes (round 3, W2).
 
 ## 12. Footer
 
-Round 4 (2026-11-13, Claude Code): rebuilt as a brand column, the Footer navigation in three labelled groups and a
+Round 4 (2026-11-13): rebuilt as a brand column, the Footer navigation in three labelled groups and a
 legal block (NN/g's doormat navigation for long pages: under 960px the bar shows no navigation, so on phones these
 groups are the page's map; GOV.UK's footer: an `h2` and a list per group).
 
@@ -470,7 +470,7 @@ groups are the page's map; GOV.UK's footer: an `h2` and a list per group).
   - `h2` **Project**: **About** (`/about`) · **Source code** (`{REPO_URL}`) · **Data sources and licenses** (`{NOTICE_URL}`) · **Credits** (`/about#credits`) · **Report a problem** (`{ISSUES_URL}`)
   - Links that leave the site carry the external icon beside their word. On `/about` and the 404 the anchors are
     `/#how` and so on.
-- History line (MS-4.7, D15; moved from §10, `HISTORY_LINE`): **Made for Kiroween 2026. The first version was written with Claude Code by Anthropic; from Nov 10, 2026 the work continued in Kiro. The conversation features (Nov 11) and the website review (Nov 12-13, 2026) were done with Claude Code.**
+- History line (MS-4.7, D15; moved from §10, `HISTORY_LINE`): **Made for Kiroween 2026.**
 - Licence line (`caption`): **Code MIT. Data CC BY-SA 4.0. Fonts SIL Open Font License.**
 - Last: **Back to top** (to `#top`, the banner; on `/about` and the 404 their header): the page is about 23 phone
   screens long.
@@ -499,7 +499,7 @@ four `RANKING_SENT` items, the same list as Privacy and the FAQ); the Privacy li
 matches but is not in the dictionary or My words yet (add it to My words), and a struck-through word was suggested
 but does not match."
 
-Round 4 (2026-11-13, Claude Code; MS-14.5): two sections before What Ninth Life is not, from the dissolved §10, word
+Round 4 (2026-11-13; MS-14.5): two sections before What Ninth Life is not, from the dissolved §10, word
 for word: "Free and open source" (the old lead, then the "Why it is free" paragraph, then the links "Source code on
 GitHub" and "Data sources and licenses") and "Credits" (`#credits`, the target of the footer's Credits link: the four
 credit lines, the model line from `providerCopy()`). The header is `#top`, the target of the footer's "Back to top"

@@ -4,7 +4,7 @@
  * only ember fill in any viewport that shows it (MS-9.1), drawn exactly as the hero's (.site-cta, 64px, no Day
  * ring because the band is Night). Never marked for a reveal: it holds the logo (MS-8.4).
  *
- * Round 4 (2026-11-13, Claude Code): the Free and open source section dissolved (MS-3.1); its facts are this row of
+ * Round 4 (2026-11-13): the Free and open source section dissolved (MS-3.1); its facts are this row of
  * four, in words the page already uses (the FAQ, the Privacy lead, the old Source lead). Typographic, with rules
  * between the items: not badges, which content.md bans because they would read as certifications. Each item reads
  * "Free: No paid tier, no ads." (a visually hidden colon). It replaces the line "Free. Works offline. No account."

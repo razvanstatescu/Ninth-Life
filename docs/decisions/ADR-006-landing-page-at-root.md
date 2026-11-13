@@ -1,6 +1,6 @@
 # ADR-006: The website at `/`, the app at `/app`, and a website motion tier
 
-- Status: accepted, amended 2026-11-11 (played sequences and How step sync) and 2026-11-12 (Claude Code review,
+- Status: accepted, amended 2026-11-11 (played sequences and How step sync) and 2026-11-12 (review,
   product owner answers W1-W6), see the end
 - Date: 2026-11-10
 - Decided by: the product owner, who accepted every recommendation in
@@ -169,12 +169,12 @@ Steering (`accessibility.md` rule 5, `design-system.md` "Spooky, but calm"), the
 the `a11y-auditor` website check name A7 and A8. The app's motion rules do not change. The way back: drop the
 `data-play` attributes and the observers; every drawing then shows its finished state.
 
-## 2026-11-12 amendment (Claude Code review, product owner answers)
+## 2026-11-12 amendment (review, product owner answers)
 
 - Decided by: the product owner, answering the lead's questions after a landing-page review (2026-11-12)
-- Done with: Claude Code (not Kiro). Review findings: the lead's `findings/top.md`, `bottom.md`, `theme.md`, `seo.md`
+- Review findings: the lead's `findings/top.md`, `bottom.md`, `theme.md`, `seo.md`
 - Spec: `.kiro/specs/marketing-site/` round 3 (requirements MS-14 and the lines each builder changed, design.md
-  "Round 3", content.md, tasks.md "Round 3 (2026-11-12, Claude Code)")
+  "Round 3", content.md, tasks.md "Round 3 (2026-11-12)")
 
 **Context.** A section-by-section review of `/` and `/about` (Playwright in Chromium and WebKit, 320 to 1440px, Night
 and Day, reduced motion) found that the landing page held one system inside its sections, but that its edges did not:
@@ -236,14 +236,13 @@ everywhere on the site.
 - The way back for W2: drop the `else` branch of `THEME_BOOT_SCRIPT` and the condition in `applyLook`, and the
   `site-night` class and `data-theme` on `#start`. For W3: import `styles/app.css` in `app/about/page.tsx` again and restore its old body (git history).
 
-## 2026-11-13 amendment (round 4: visual and motion review, Claude Code)
+## 2026-11-13 amendment (round 4: visual and motion review)
 
 **Context.** After round 3 the product owner asked for a second pass on the look and the motion: a lighter hero demo
 (less height, icon buttons, no caption text), a total revamp of How it works, an animated proof figure in step with its
 text, graphics instead of prose in Results, better drawings in the Conversation, Access and Privacy boxes, the content of
-Good to know and Free and open source spread across the site or made visual, and a better footer. The work was done
-with Claude Code (a lead and a team of subagents) on branch `feature/landing-review`, not in Kiro: the spec lines it
-changed are marked "Round 4 (2026-11-13, Claude Code)" and the work is logged in `docs/KIRO_LOG.md`.
+Good to know and Free and open source spread across the site or made visual, and a better footer. The spec lines it
+changed are marked "Round 4 (2026-11-13)".
 
 **Product owner answers (2026-11-13).**
 

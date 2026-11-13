@@ -254,8 +254,8 @@ describe('SiteMotion (MS-8.4, MS-8.7, MS-8.8, MS-6.9)', () => {
 
 /**
  * Drawings for the round-2 triggers (A7). jsdom's innerHeight is 768: the play line is at 537.6px. data-top and
- * data-bottom stand in for the layout; data-nobox gives an element no box (display: none). Round 4 (2026-11-13,
- * Claude Code): the How step sync (A8, MS-8.12) is gone, so the fixture has no How picture or steps; the How steps'
+ * data-bottom stand in for the layout; data-nobox gives an element no box (display: none). Round 4 (2026-11-13
+ * ): the How step sync (A8, MS-8.12) is gone, so the fixture has no How picture or steps; the How steps'
  * number tiles (.site-step) sit in a [data-play-scope] beside a drawing, which SiteMotion treats like any other.
  */
 function Plays({ scope = false }: { scope?: boolean }) {

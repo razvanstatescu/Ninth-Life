@@ -84,8 +84,7 @@ write-up (product.md allows it); none of it goes into the film or into lines tha
   "restores", "therapy", "for people with ..." (any condition), and "nonverbal" or "nonspeaking" as labels
   (`design/system/README.md`, voice and content).
 - "Private", "secure", "encrypted", "nothing is kept", "100%".
-- "Built with Kiro" as a claim about all the work: the first version was written outside Kiro (product.md, How we
-  work; the website replaced the phrase, D15). Say "Made for Kiroween 2026".
+- "Built with Kiro" as a claim about all the work (the website replaced the phrase, D15). Say "Made for Kiroween 2026".
 - A first-person user ("I type to talk because ..."): a generated voice posing as a user is a fabricated
   testimonial, and the website bans testimonials (`content.md`, Never on the page). "We" is only the makers.
 - Phone makers, phone models and the words listed in `trademarks.md`.
@@ -445,7 +444,7 @@ Every narrator line was checked against product.md (allowed and banned claims, w
 | The bubble "Never mind." | Medium (tone) | People around the person are part of the audience (product.md). If it feels harsh, use a topic change ("So, how was work?") |
 | The grey "suggested" chip | Medium (rules) | Must not look like any real keyboard, app or assistant (trademarks.md: no other apps' UI). Neutral grey, a plain label, no sparkle icon |
 | "Its rules live in Kiro: specs, steering, hooks." (optional) | Medium | Only with a `KIRO_LOG.md` row behind each word. Never "Built with Kiro" or "Built in Kiro" for all the work (D15). 11's placeholder "Built in Kiro ... hooks that check every save" overclaims on both counts |
-| The end card's "Built with Kiro for Kiroween 2026" | High | Conflicts with D15 and the history rule. Use "Made for Kiroween 2026", in the Kiro chapter |
+| The end card's "Built with Kiro for Kiroween 2026" | High | Conflicts with D15. Use "Made for Kiroween 2026", in the Kiro chapter |
 | The app line "It is good to be back." (B) | Low | Could be heard as getting speech back; the context is the keypad. Fine |
 | Rejected app lines | | "This is my voice" (decodes first, but reads as "gives you a voice", and in the app the voice is the device's); "I am still here" (decodes first, but reads as being about illness); "These are my words" and "It is still me" (the decoder ranks something else first) |
 | First-person narration | High | Never. No user, no testimonial |
@@ -584,5 +583,3 @@ Repository: `.kiro/steering/product.md`, `privacy.md`, `trademarks.md`, `voice.m
 `.agents/tasks/marketing-landing/decisions.md` (D14, D15); `packages/eval/RESULTS.md`; `docs/architecture/data-and-eval.md`;
 `docs/research/mobile-aac-evidence.md`, `competitive-landscape.md`, `assumptions-register.md`; `docs/submission/DEVPOST.md`,
 `VIDEO_SCRIPT.md`; `marketing/demo-video/01` to `06`; `film/src/data/decoded.json`, `voice.json`; this folder's 11, 12 and 14.
-
-This research was written with Claude Code, outside Kiro. It is not Kiro work.

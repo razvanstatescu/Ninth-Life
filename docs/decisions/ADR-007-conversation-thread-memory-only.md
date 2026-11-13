@@ -2,7 +2,7 @@
 
 - Status: accepted, to be confirmed by the product owner
 - Date: 2026-11-11
-- Decided by: the team lead for features A-C (written with Claude Code)
+- Decided by: the team lead for features A-C
 - Spec: `web-ui` Req 27 (and 12.1, 12.2, 13.2, 25.3); code `packages/web/lib/conversation.ts`
 - Related: ADR-003 (one screen), ADR-004 (Listen), ADR-005 (short phones)
 

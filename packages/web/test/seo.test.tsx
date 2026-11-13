@@ -287,7 +287,7 @@ describe('/llms.txt (MS-3.8)', () => {
     expect(text.length).toBeGreaterThan(50);
   });
 
-  // Round 4 (2026-11-13, Claude Code; MS-3.8, MS-4.7): the limits of Good to know and the history line, from the
+  // Round 4 (2026-11-13; MS-3.8, MS-4.7): the limits of Good to know and the history line, from the
   // values the page uses (LIMITS in Limits.tsx, HISTORY_LINE in site-data.ts), so the machine copy cannot drift.
   it('lists every limit of Good to know, in page order, and states the history line', () => {
     const text = llmsText({ origin: ORIGIN });

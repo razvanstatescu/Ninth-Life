@@ -3,7 +3,7 @@
  * controls: aria-hidden, divs only, nothing focusable (MS-7.2). Each root is a data-play drawing that plays once
  * (A7); the base styles show the finished state (MS-7.5).
  *
- * Round 4 (2026-11-13, Claude Code; decisions §2 "Boxes"): one grammar for the section. A dashed outline is this
+ * Round 4 (2026-11-13; decisions §2 "Boxes"): one grammar for the section. A dashed outline is this
  * device (.site-bound, the boundary); a feature drawn on its edge is one way out; an arrow leaving it is data
  * leaving, labelled with what goes; a cloud marks where it goes. Nothing else crosses the line, and there are no
  * locks, shields or badges. The lead map shows what stays inside and the three ways out; each card opens one.

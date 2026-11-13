@@ -259,7 +259,7 @@ What this means:
 | Animate only from `useCurrentFrame()`. CSS transitions and animations "will not render correctly". Use `random(seed)`, never `Math.random()`. Avoid `background-image` and `mask-image` (flicker) | https://www.remotion.dev/docs/flickering , https://www.remotion.dev/docs/using-randomness |
 | Render defaults: H.264, CRF 18, audio 320 kbit/s. Options: `--pixel-format`, `--color-space bt709`, `--concurrency`, `npx remotion benchmark` | https://www.remotion.dev/docs/encoding , https://www.remotion.dev/docs/cli/render |
 | Slow without a graphics card: `box-shadow`, `text-shadow`, gradients, blur filters, canvas and WebGL. The `angle` renderer leaks memory on long renders, so render in parts | https://www.remotion.dev/docs/gpu , https://www.remotion.dev/docs/gl-options |
-| Official skills for coding agents: `npx remotion skills add`. A Claude Code plugin exists. **The copy of the skill on this machine dates from February 2026 and knows nothing of effects or `<HtmlInCanvas>`: reinstall it first** | https://www.remotion.dev/docs/ai/skills , https://www.remotion.dev/docs/ai/claude-code-plugin |
+| Official skills for coding agents: `npx remotion skills add`. **The copy of the skill on this machine dates from February 2026 and knows nothing of effects or `<HtmlInCanvas>`: reinstall it first** | https://www.remotion.dev/docs/ai/skills , https://www.remotion.dev/docs/ai/claude-code-plugin |
 
 Not verified: an official guide for a pnpm monorepo, an official recipe for cutting to the beat, and any figure
 for render time. `@remotion/sfx` offers hosted sounds, each under its own licence; this film does not use them.

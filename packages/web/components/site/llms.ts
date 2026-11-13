@@ -4,7 +4,7 @@
  * nothing the page does not: the definition, the intended-purpose sentence, links, the measured numbers
  * from getResults() with the results and the method linked, what model ranking sends (RANKING_SENT) and
  * the FAQ from faqItems(), the list Faq.tsx renders. Built from those values, so it cannot drift. Round 4
- * (2026-11-13, Claude Code): also the limits of Good to know (LIMITS) and the history line (HISTORY_LINE).
+ * (2026-11-13): also the limits of Good to know (LIMITS) and the history line (HISTORY_LINE).
  * Lighthouse's llms-txt audit needs an H1, at least one [text](url) link and 50+ characters.
  */
 import { NOT_A_MEDICAL_DEVICE } from '@/components/Footer';
@@ -74,7 +74,7 @@ export function llmsText({ origin = siteOrigin(), results = getResults(), faq = 
     '',
     `It cannot add words: every word is checked against your keys, and nothing is spoken until you press Speak. ${provider.retention}`,
     '',
-    // Round 4 (2026-11-13, Claude Code; MS-3.8): the limits of Good to know, from the list Limits.tsx renders.
+    // Round 4 (2026-11-13; MS-3.8): the limits of Good to know, from the list Limits.tsx renders.
     '## Good to know',
     '',
     ...LIMITS.map((l) => `- ${l}`),

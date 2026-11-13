@@ -1,5 +1,5 @@
 /**
- * How it works (#how, content.md §2, design.md "Round 4: How it works"). Round 4 (2026-11-13, Claude Code): three
+ * How it works (#how, content.md §2, design.md "Round 4: How it works"). Round 4 (2026-11-13): three
  * steps, Press, Pick and Speak, each a stage holding its scene (pictures/HowScenes.tsx, a data-play root) and then a
  * .site-step (number, title, one line). One column under 1024px, the stage beside its text from 600px, one row from
  * 1024px, where site.css plays the scenes once in story order (MS-8.11). Each step is a [data-play-scope], so its

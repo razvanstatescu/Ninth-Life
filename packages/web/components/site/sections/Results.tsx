@@ -4,7 +4,7 @@
  * Numbers are static text: the cards may reveal, the digits never move (MS-5.5). No number from a model run appears
  * here (MS-5.3, D14); round 3 (R3-P7, lead decision) names the provider and models that were measured.
  *
- * Round 4 (2026-11-13, Claude Code; decisions "Results", PO-1): the caveat first, as a compact note; then the measures
+ * Round 4 (2026-11-13; decisions "Results", PO-1): the caveat first, as a compact note; then the measures
  * as paired bars (Ninth Life offline against word frequency alone), the by-source chart, presses and scan steps, the
  * model-ranking status rows and the links. A bar is a drawn piece (aria-hidden) whose length is its printed value
  * (barShare) on a full track from 0; the value and its label are real text beside it. The bars grow once from their

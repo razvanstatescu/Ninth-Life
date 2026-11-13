@@ -1,5 +1,5 @@
 /**
- * How it works, round 4 (2026-11-13, Claude Code; design.md "Round 4: How it works"; MS-7.4, MS-8.11): three scenes
+ * How it works, round 4 (2026-11-13; design.md "Round 4: How it works"; MS-7.4, MS-8.11): three scenes
  * cut from the app's own screen, one per step. Each is the data-play root inside its stage; the stage is
  * aria-hidden, the parts are divs and nothing is focusable (MS-7.2). The base styles show the finished frames
  * (MS-7.5); site.css plays each once (A7), and from 1024px in story order along the row.

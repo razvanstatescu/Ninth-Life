@@ -1,4 +1,4 @@
-// Website icons (round 4, 2026-11-13, Claude Code; MS-7.1; design.md "Round 4: shared language", Icons).
+// Website icons (round 4, 2026-11-13; MS-7.1; design.md "Round 4: shared language", Icons).
 // components/site/icons.tsx: SiteIcon and one named export of path data per icon, drawn on the app's grid (24px box,
 // 2.5px round stroke), kept out of the app's bundle.
 import { readdirSync, readFileSync, statSync } from 'node:fs';

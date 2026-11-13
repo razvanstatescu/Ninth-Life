@@ -1,6 +1,6 @@
 # Act 1, the old world: research and build spec
 
-Research v2, field 10. Written 2026-11-10 with Claude Code (not Kiro) for the second cut of "Hello again".
+Research v2, field 10. Written 2026-11-10 for the second cut of "Hello again".
 It answers the owner's review of Act 1: a more real, more detailed phone (still generic), a screen that looks like a
 real old phone's interface, a narrator in a different voice from the app's, and more "wow".
 

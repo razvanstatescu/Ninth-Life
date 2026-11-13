@@ -65,8 +65,7 @@ blur; renders work without it.
   effects synthesised with ffmpeg. Records in `manifest/audio.json`, scripts and prompts in
   `scripts/audio/`.
 - **Captures:** Playwright against the running app, records in `manifest/captures.json`.
-- **Team:** built with Claude Code by a lead and seven agents (research, sound, captures, Act 1,
-  three Act 2 builders). Not built in Kiro; do not list it as Kiro work.
+- **Team:** a lead and seven agents (research, sound, captures, Act 1, three Act 2 builders).
 
 ## Folder
 

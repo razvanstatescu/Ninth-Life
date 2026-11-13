@@ -2,10 +2,10 @@
  * Ways to type (#access, content.md §5, design.md §5). The numbers are product settings, not eval
  * results: 72 and 128 are the key-min and key-xl tokens; 0.4 to 5 seconds is accessibility rule 9.
  * Round 2: a stage first in each box card; the switch card is a normal card in a 2-column grid (design 4.3).
- * Round 3 (Claude Code): a one-line lead; a ground band (Results moved up); on phones each stage hugs its drawing (W1).
+ * Round 3: a one-line lead; a ground band (Results moved up); on phones each stage hugs its drawing (W1).
  * R3-P10 (2026-11-13): a secondary "Open the app" row closes the section, as after Results and Privacy, so a phone
  * reader is never ~9 screens from a way into the app (MS-1.6, MS-9.1: secondary, not an ember fill).
- * Round 4 (2026-11-13, Claude Code; decisions §2 "Boxes"): the switch card leads (across the grid, its stage on the
+ * Round 4 (2026-11-13; decisions §2 "Boxes"): the switch card leads (across the grid, its stage on the
  * right of its words from 1024px), then Keyboard, Touch, Your view and Phones, tablets and laptops two by two
  * (.site-bento--4); the simulator limit sits by its claim (.site-caveat); the note carries id="accessibility" for the
  * footer's link.

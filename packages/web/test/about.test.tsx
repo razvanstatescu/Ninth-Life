@@ -1,4 +1,4 @@
-// /about in the website's look (W3, ADR-006 amendment 2026-11-12; landing review round 3, done with Claude Code).
+// /about in the website's look (W3, ADR-006 amendment 2026-11-12; landing review round 3).
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import AboutPage from '@/app/about/page';
@@ -56,7 +56,7 @@ describe('/about (W3)', () => {
     expect(q('.site-footer__statement')).toBeNull();
   });
 
-  // Round 4 (2026-11-13, Claude Code): the landing page's Free and open source section dissolved (MS-3.1, MS-14.5).
+  // Round 4 (2026-11-13): the landing page's Free and open source section dissolved (MS-3.1, MS-14.5).
   it('carries the old Source lead, "Why it is free" and the credits word for word, before the statement', () => {
     const sections = qa('main section').map((s) => s.querySelector('h2')!.textContent);
     expect(sections).toEqual(['What it does', 'Every word is checked against your keys', 'Privacy', 'Free and open source', 'Credits', 'What Ninth Life is not']);

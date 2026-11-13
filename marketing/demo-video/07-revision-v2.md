@@ -364,8 +364,7 @@ voices, music and pictures".
 > Try it: <address>
 > Code: https://github.com/razvanstatescu/Ninth-Life
 >
-> Made for Kiroween 2026. The first version was written with Claude Code by Anthropic; the work continued in
-> Kiro.
+> Made for Kiroween 2026.
 >
 > Ninth Life is a general-purpose text entry and text-to-speech tool. It is not a medical device and is not
 > intended to diagnose, treat or replace a clinical AAC assessment.
@@ -380,5 +379,3 @@ voices, music and pictures".
 
 Captions: upload `film/out/ninth-life-hello-again.srt`. They name the speaker ("Narrator:", "App voice:") and
 describe the sounds.
-
-This plan was written with Claude Code, not in Kiro.

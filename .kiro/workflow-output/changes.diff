@@ -55,7 +55,7 @@ diff --git a/.kiro/specs/web-ui/tasks.md b/.kiro/specs/web-ui/tasks.md
 index 3ac6099..d77794c 100644
 --- a/.kiro/specs/web-ui/tasks.md
 +++ b/.kiro/specs/web-ui/tasks.md
-@@ -130,12 +130,12 @@ Built 2026-11-09 outside Kiro (Claude Code); see `docs/KIRO_LOG.md`. Research: `
+@@ -130,12 +130,12 @@ Built 2026-11-09. Research: `
        They said and sentences in sheets; Menu "This sentence" and About groups; Scanning pill (Req 25.1-25.7)
    - [x] 49.1 Tests: `test/layout.test.ts` (chooseLayout, split order, row counts), `test/mobile.test.tsx` (split shell,
          rotate), `test/phone.test.tsx` (Menu groups), `test/footer.test.tsx`
@@ -102,8 +102,6 @@ index 51e9eb4..abd00bc 100644
 +++ b/docs/KIRO_LOG.md
 @@ -16,3 +16,4 @@ The table must stay the last block in this file; the script appends to it.
  |---|---|---|---|---|---|---|---|
- | 2026-11-06 | Claude (lead session) | Claude Code, preparing Kiro config | Steering, Hook, Custom agent, MCP, Power, CLI headless (config only) | Verified the plan's Kiro assumptions against kiro.dev docs and wrote the first `.kiro/` steering, hooks, agents, MCP config, eval power, prompts, CI workflows and helper scripts | Scaffold prepared outside Kiro, so it is not Kiro usage and earns no Kiro credit. Kiro sessions start next: open the repo in the Kiro IDE, confirm hooks, agents and MCP servers load, then run the first spec | 0 (not Kiro) | docs/research/assumptions-register.md |
- | 2026-11-09 | Claude (Claude Code session) | Claude Code, preparing Kiro config | Steering, Hook, Spec, Custom agent, Power (config only) | Bring .kiro up to date before moving the work into Kiro: MiniMax (ADR-002), phone-first one-screen shell and portrait-only phones (ADR-003), Listen (ADR-004) | New steering tech.md and structure.md; product, accessibility, design-system, privacy, voice, trademarks updated; build-guard hook and .kiroignore; reviewer, auditor, review prompt and eval power updated; web-ui tasks 46-55, decoder DS-7.7-7.10 and task 15, eval Req 8 for MiniMax. Done outside Kiro, | 0 | docs/kiro/README.md |
 +| 2026-11-10 | Kiro (ship-feature workflow, coder step) | Kiro, workflow | Spec (Bugfix), Steering, Hook | web-ui task 51: iPhone SE in Safari with the Bottom tab bar (495px) scrolled 53px | Bugfix spec `iphone-se-bottom-bar-fit`, web-ui Req 24.9 (suggestion rows drop under 548px, Sentences in Menu), Req 24.6 and 25.1 edited, ADR-005 (to be confirmed by the product owner); tests in layout, phone, mobile and `responsive.mjs` (24 sizes) |  | .kiro/specs/iphone-se-bottom-bar-fit/bugfix.md |
 diff --git a/docs/README.md b/docs/README.md
 index d5ae58f..97f2939 100644

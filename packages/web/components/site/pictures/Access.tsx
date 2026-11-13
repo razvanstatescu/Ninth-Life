@@ -5,7 +5,7 @@
  *
  * - Drawn keypad keys keep 64 or 84px from the KeypadPicture constants, set inline. The Touch drawing is the one
  *   exception: its keys are the app's true 72 and 128px (MS-10.8).
- * - Round 4 (2026-11-13, Claude Code): a loose key always sits on a key panel (.site-key-panel: --panel and --lift,
+ * - Round 4 (2026-11-13): a loose key always sits on a key panel (.site-key-panel: --panel and --lift,
  *   as the app's keypad), so plum keys never meet a plum Night stage (the Touch keys and the Night half's key were
  *   invisible in Night). The switch drawing is the section's lead: the highlight steps over rows 1 and 2, the switch
  *   picks row 2, then key 4, and the key's word ("I", the demo's first word) appears in the sentence card.

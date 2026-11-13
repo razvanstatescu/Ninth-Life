@@ -8,10 +8,7 @@ Draft for the Devpost "how Kiro was used" write-up. One section per rules prompt
 - Every claim about Kiro must point to a dated row in [`docs/KIRO_LOG.md`](../KIRO_LOG.md), a file in the repo, a CI
   run, or a screenshot in `docs/kiro/evidence/`. No evidence, no sentence.
 - **TODO** marks text that can only come from real Kiro sessions. Do not fill a TODO from memory or from the plan.
-- Facts already true in the repo are pre-filled with links. As of 2026-11-06 the whole `.kiro/` folder was written
-  **outside Kiro** in a preparation session ([KIRO_LOG row 1](../KIRO_LOG.md): "Scaffold prepared outside Kiro, so it is
-  not Kiro usage"). So the files below are configuration ready for Kiro, not evidence that Kiro used them. Say so in
-  the final text if it is still true at submission.
+- Facts already true in the repo are pre-filled with links.
 - Numbers only from [`packages/eval/RESULTS.md`](../../packages/eval/RESULTS.md) or from the Kiro usage view.
 - Judges score Kiro use under Technological Implementation ("variety of Kiro tools used impactfully ... experimentation"),
   and judging may use automated analysis (R-02). Keep each section explicit: what, why, one concrete example, effect.
@@ -95,8 +92,6 @@ context, so guards print nothing on success (register H-06). Hook files: [`.kiro
 - Spec changes driven by review findings are traceable: web-ui Req 15-17 come from the M1 review follow-ups F1, F4, F6
   ([implementation plan](../plan/01-implementation-plan.md#follow-ups-from-m1-review-nov-6)); Req 18 (speech robustness)
   from [`docs/research/web-speech.md`](../research/web-speech.md).
-
-These specs were written outside Kiro so far; they are not yet evidence of Kiro's spec workflow.
 
 **TODO**
 

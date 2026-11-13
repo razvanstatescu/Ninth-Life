@@ -1,7 +1,7 @@
 /**
  * Questions (#faq, content.md §9, design.md §9). Native <details>, closed when the page loads, opened
  * with a press, Enter or Space and no script (MS-3.4). The list is one reveal block, never each item.
- * Round 3 (Claude Code): questions a visitor has after reading the page, answered only with what the app does
+ * Round 3: questions a visitor has after reading the page, answered only with what the app does
  * (Spell this word, Add to my words, Phrases, the manifest); "Which languages?" folded into "Which devices?" and the
  * home screen into "Do I need to install anything?"; then "Something else? Ask on GitHub".
  */
@@ -23,7 +23,7 @@ const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 export function faqItems(): readonly FaqItem[] {
   const provider = providerCopy();
   return [
-    // Round 4 (2026-11-13, Claude Code): the last two sentences are "Why it is free" from the dissolved Source section,
+    // Round 4 (2026-11-13): the last two sentences are "Why it is free" from the dissolved Source section,
     // word for word, so the page still says that ranking can be switched off (content.md §9).
     [
       'Is it free?',

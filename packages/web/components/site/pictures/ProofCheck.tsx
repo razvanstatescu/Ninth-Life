@@ -1,5 +1,5 @@
 /**
- * The proof figure (#proof, MS-7.9; round 4, 2026-11-13, Claude Code). One grid in which a word's letters always sit
+ * The proof figure (#proof, MS-7.9; round 4, 2026-11-13). One grid in which a word's letters always sit
  * under the key that types them: "Your keys" as five drawn keys on a panel (the digit and the key's letters, from
  * KEY_LETTERS at build time), then one row per suggested word with its real ProofChip and, aria-hidden, its letters
  * in the five key columns. The dropped word's letter at diffAt is boxed in reject with an x under it: shape, not

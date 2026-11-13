@@ -237,7 +237,7 @@ node scripts/lighthouse.mjs --write            # --runs 1-9, --preset mobile|des
 The script refuses a development server (exit 2) and never builds anything itself. It exits 1 when a
 mobile target or budget is missed. `--write` replaces the block between the markers below.
 
-Agentic Browsing (Round 3, 2026-11-12, Claude Code). Lighthouse 13.3+ has an "Agentic Browsing" category
+Agentic Browsing (Round 3, 2026-11-12). Lighthouse 13.3+ has an "Agentic Browsing" category
 (accessibility tree, layout shift, and `/llms.txt` when it exists). The script reports it on its own line as
 a fraction, with no target; it would have caught the `/app` layout shift below.
 

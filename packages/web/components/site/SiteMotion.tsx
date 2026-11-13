@@ -10,7 +10,7 @@
  * Round 2 (A7; MS-8.11, MS-8.13): each data-play drawing below the fold plays once, by setting
  * data-played="1", when shouldPlay holds (four observers: the play area, the top line, the whole
  * viewport and the top band); drawings in view or above at mount get data-played="instant" before "on" is set.
- * Round 4 (2026-11-13, Claude Code): the How step sync (A8, MS-8.12) is gone with the sticky How picture. How's
+ * Round 4 (2026-11-13): the How step sync (A8, MS-8.12) is gone with the sticky How picture. How's
  * three scenes are data-play drawings like every other; their story order along the row is CSS only.
  */
 import { useEffect } from 'react';

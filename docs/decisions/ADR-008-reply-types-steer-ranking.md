@@ -2,7 +2,7 @@
 
 - Status: accepted
 - Date: 2026-11-11
-- Decided by: the lead on this branch (Claude Code session, not Kiro), to be confirmed by the product owner
+- Decided by: the lead on this branch, to be confirmed by the product owner
 - Spec: `web-ui` Requirement 29; `decoder-service` DS-9 (amends DS-5.2, DS-6.1, DS-6.6)
 - Code: `packages/core/src/intent.ts` (`rankByIntent`), `packages/decoder/src/schema.ts` (`context.intent`),
   `packages/decoder/src/prompt.ts` (prompt v8)

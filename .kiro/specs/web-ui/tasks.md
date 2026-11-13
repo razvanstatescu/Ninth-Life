@@ -112,7 +112,7 @@
 - [ ] 45. Re-measure on a real low-end Android phone and a school Chromebook before quoting the numbers (Req 23.5)
 
 ## Phones and tablets: phone-first screen, one screen, portrait-only phones (Req 4.7, 15.8-15.11, 24, 25; ADR-003)
-Built 2026-11-09 outside Kiro (Claude Code); see `docs/KIRO_LOG.md`. Research: `docs/research/mobile-layout.md`,
+Built 2026-11-09. Research: `docs/research/mobile-layout.md`,
 `mobile-patterns-mobbin.md`, `mobile-aac-evidence.md`, `one-screen-tablets.md`.
 - [x] 46. Mobile basics: svh key sizing, safe areas (`viewport-fit=cover`), no pull-to-refresh or double-tap zoom, pinch
       zoom kept, fixed-height sentence box so the keypad never moves (Req 15.8, 15.10, 15.11)

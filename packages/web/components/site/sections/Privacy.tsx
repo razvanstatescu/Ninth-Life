@@ -2,12 +2,12 @@
  * Offline and private (#privacy, content.md §6, design.md §6). Provider names and retention come
  * only from providerCopy() (MS-4.6). Browser makers are named only in the Listen card (MS-4.8).
  * Round 2: a 288px stage first in each card, in a 2 x 2 grid from 648px (design 4.3).
- * Round 3 (Claude Code): a surface band (Results moved up); the Model ranking card keeps what is sent
+ * Round 3: a surface band (Results moved up); the Model ranking card keeps what is sent
  * (rankingSentText(), the same list as Limits, the FAQ and /about) and the region, retention and log lines move to
  * a list under the grid; "Check it yourself" links to the evidence; on phones each stage hugs its drawing (W1).
  * The section ends on a secondary xl "Open the app" in a .site-cta row (verifier, 2026-11-13): on a 390px phone the
  * Results row and the closing one were about 14 screens apart. Only the hero and #start are ember primaries.
- * Round 4 (2026-11-13, Claude Code; decisions §2 "Boxes"): the On your device map leads, then the three ways out
+ * Round 4 (2026-11-13; decisions §2 "Boxes"): the On your device map leads, then the three ways out
  * (model ranking, online voices, Listen) in one row from 1024px (.site-bento--3). What ranking sends is real text drawn
  * at the top of its card's stage, after the card's h3 in the DOM (MS-7.2 exception; .site-card--sent), and the card
  * copy no longer repeats it. The region, retention and log lines are .site-fact rows in a note card.

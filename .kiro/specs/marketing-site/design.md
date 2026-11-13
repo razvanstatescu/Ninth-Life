@@ -251,9 +251,9 @@ compared):
 
 Round 2 (2026-11-11) replaces this section's layout and drawing: see "Round 2" below, R2.3 (MS-7.4, MS-7.8,
 MS-8.12, MS-10.9). Each card keeps a mono step label (`01`, `02`, `03`, `digits` type in `.site-step`, a 56px square),
-`h3` and text. Round 3 (2026-11-12, Claude Code): a one-line lead under the `h2`, no spelling line under the list,
-and the runway only with motion: see "Round 3: How, Proof and Conversation" below. Round 4 (2026-11-13, Claude
-Code): replaced by the three-step story row (Press, Pick, Speak), with no sticky picture, runway or step sync: see
+`h3` and text. Round 3 (2026-11-12): a one-line lead under the `h2`, no spelling line under the list,
+and the runway only with motion: see "Round 3: How, Proof and Conversation" below. Round 4 (2026-11-13)
+: replaced by the three-step story row (Press, Pick, Speak), with no sticky picture, runway or step sync: see
 "Round 4: How it works".
 
 ### 3. The proof check (`#proof`)
@@ -269,7 +269,7 @@ colour; the plus moved to the Spell card, P3-3), the closing line and a `.site-c
 `<figure class="site-proof">`: round 2 replaces the three frames with one stable layout, `ProofCheck`: see "Round
 2", R2.4 (MS-7.9).
 
-Round 4 (2026-11-13, Claude Code) replaces the layout and the figure above: see "Round 4: the proof check" at the end
+Round 4 (2026-11-13) replaces the layout and the figure above: see "Round 4: the proof check" at the end
 of this file. In short: the head across the top, then one `data-play` root holding the figure, the four steps
 (`.site-step`) and the note with its button; the legend is gone.
 
@@ -286,7 +286,7 @@ after: see "Round 3: How, Proof and Conversation" below. Round 4: a lead card (T
 Grid of five normal cards, 2 columns from 648px (round 2, MS-10.9, V37), each starting with a stage and its drawing:
 Keyboard, Touch, One or two switches, Your view, Phones tablets and laptops (across both columns). See "Round 2", R2.5 and R2.6. Below the grid,
 the accessibility note as a `site-card--note` (round 3; was `site-card--line`) with its `h3` and the issue link (no stage; it is not a feature box).
-Round 3 (Claude Code): a one-line lead under the `h2`; a ground band (Results moved up, so the bands still alternate);
+Round 3: a one-line lead under the `h2`; a ground band (Results moved up, so the bands still alternate);
 the grid adds `site-grid--hug`: below 600px each stage drops the shared height and hugs its drawing with `space-3` (24px in all, the MS-10.9 switch limit)
 above and below (W1; one card per row, so there is no row to line up).
 Round 4: the switch card leads, then four cards two by two; see "Round 4: the box sections" below, which wins.
@@ -296,7 +296,7 @@ Round 4: the switch card leads, then four cards two by two; see "Round 4: the bo
 `h2`, lead, a 2 × 2 grid of four `site-card` cards (round 3: every feature card has the edge; was `site-card--line`) from 648px (`.site-grid--boxes`, round 2), each starting
 with a stage and its drawing: On your device, Model ranking, Voices, Listen. See "Round 2", R2.5 and R2.6. Then the
 "Check it yourself" line with its link.
-Round 3 (Claude Code): a surface band; the Model ranking card keeps two sentences (off by default; what is sent, from
+Round 3: a surface band; the Model ranking card keeps two sentences (off by default; what is sent, from
 `rankingSentText()`), so it is about as long as the others; under the grid one `.site-prose` block: `h3` "What
 happens to what ranking sends", a disc list (region, retention, server logs), the "Check it yourself" line and a
 `.site-links` row 8px under it pointing at the evidence (`.kiro/steering/privacy.md` and `lib/decodeClient.ts`, not
@@ -308,14 +308,14 @@ Round 4: the On your device map leads, then the three ways out; see "Round 4: th
 `h2`, lead, `<dl class="site-stats">` of three stat cards (`repeat(auto-fit, minmax(240px, 1fr))`), the
 paragraph, the model line (when present), the links row. The stat value uses `display` type, static text
 (MS-5.5). Cards may reveal (MS-8.4); the digits inside never animate.
-Round 3 (Claude Code): right after the proof check, on a ground band. Under the stats a `site-card--note`
+Round 3: right after the proof check, on a ground band. Under the stats a `site-card--note`
 (`.site-results__note`, one measure plus its padding wide) holds the caveats, the simulated-typist sentence in bold
 first; then `.site-prose` (ink, `--measure`) with the key-press and scan line, the per-source line
 (`results.bySource`) and the model line, ending in the links row; last a `.site-cta` row with a secondary xl "Open
 the app" (64px, full width on phones), the mid-page way into the app between the hero and the close (review P1-3).
 Neither the note nor the prose is marked for a reveal (the A4 list is unchanged).
 
-Round 4 (2026-11-13, Claude Code; decisions "Results", PO-1; the shared language's chart rule). The figures are graphics
+Round 4 (2026-11-13; decisions "Results", PO-1; the shared language's chart rule). The figures are graphics
 now, with fewer sentences. In `.site-stack` order:
 - `div.site-head` with the `h2` only: no lead with results.
 - `.site-caveat.site-results__caveat`: the shared limit look; `SiteIcon` `info`, then one paragraph with the
@@ -371,10 +371,10 @@ budget is +150). 1440px: 1,378px; 768px: 1,466px; 320px: 2,522px. There is no ho
 
 `h2` and one `site-card--note` (round 3) holding the list (`body`, disc markers, two columns from 1024px with
 `columns: 2; column-gap: var(--space-12)`).
-Round 3 (Claude Code): the note card is a grid of three `.site-limits__group`s (`h3` + disc list): Before you start,
+Round 3: the note card is a grid of three `.site-limits__group`s (`h3` + disc list): Before you start,
 Not tested yet (with "Want to help test it?" and the issue link as a `.site-links` row), What it is not. One column,
 `space-8` apart; three columns from 1024px (`column-gap: space-12`). No CSS columns, so reading order is DOM order.
-Round 4 (2026-11-13, Claude Code): a lead and two cards; see "Round 4: the end of the page".
+Round 4 (2026-11-13): a lead and two cards; see "Round 4: the end of the page".
 
 ### 9. Questions (`#faq`)
 
@@ -385,7 +385,7 @@ transition); `list-style: none` and `::-webkit-details-marker { display: none }`
 the answer in `body`. Items are separated by a `--line-width` (2px) `--line` rule (decorative; the summary's
 own focus ring shows focus), and each `.site-faq` has `padding-block: var(--space-1)`, so two closed summaries
 are 4 + 2 + 4 = 10px apart (MS-10.4 asks for 8px or more). `site.mjs` checks that gap with the link groups.
-Round 3 (Claude Code): 11 questions from `faqItems()` (the FAQPage JSON-LD and `/llms.txt` read the same list), then,
+Round 3: 11 questions from `faqItems()` (the FAQPage JSON-LD and `/llms.txt` read the same list), then,
 inside the list's reveal block, `p.site-links.site-faq__more` "Something else? Ask on GitHub" (`ISSUES_URL`, a 56px
 link target, `space-2` after the text).
 
@@ -394,15 +394,15 @@ link target, `space-2` after the text).
 `.site-split`: left `div.site-source__copy` (not marked for reveal) holding the heading group `div.site-head`
 (`h2`, lead) and then `div.site-source__more` with the two `h3` blocks (Why it is free, Who made it) and the
 links row; right a `site-card--note` (round 3) "Credits" with its list.
-Round 3 (Claude Code): the two `h3` blocks are `.site-prose` (ink, `--measure`, their own 8px gap); below 600px the
+Round 3: the two `h3` blocks are `.site-prose` (ink, `--measure`, their own 8px gap); below 600px the
 links row stacks (one 56px link per line) instead of wrapping one and two. The maker stays unnamed (W6).
-Round 4 (2026-11-13, Claude Code): dissolved; `sections/Source.tsx` is deleted. See "Round 4: the end of the page".
+Round 4 (2026-11-13): dissolved; `sections/Source.tsx` is deleted. See "Round 4: the end of the page".
 
 ### 11. Closing call to action (`#start`)
 
 Centred column on a Night band with the banner's night sky (`.site-night`, `data-theme="night"`, round 3, W2; was `--surface`): the icon (96px, `alt=""`, still), `h2` and line (`.site-head--center`), primary "Open the app" in a `.site-cta--center` row, then the input-methods note
 (`nl-btn--primary nl-btn--xl`). It is the only ember fill in any viewport that shows it (the footer has none).
-No `data-reveal` on this section, because it holds the logo. Round 4 (2026-11-13, Claude Code): a facts row between
+No `data-reveal` on this section, because it holds the logo. Round 4 (2026-11-13): a facts row between
 the `h2` and the button; see "Round 4: the end of the page".
 
 ### 12. Footer
@@ -411,7 +411,7 @@ As today's `/welcome` footer, plus the licence line, written out on tokens (R3):
 2px solid var(--line)` and `padding-top: var(--space-12)`, brand image 32px, the licence line and the statement
 in `caption` (14/20), `--ink-muted` (6.4:1 or better). Footer nav links follow the standalone link rule
 (`min-height` and `min-width` `var(--target-min)`) and the group gap `var(--space-2) var(--space-6)`.
-Round 4 (2026-11-13, Claude Code): rebuilt (brand column, three labelled groups, the legal block); see "Round 4: the
+Round 4 (2026-11-13): rebuilt (brand column, three labelled groups, the legal block); see "Round 4: the
 end of the page".
 
 ### Ember per viewport (MS-9.1, D6.2)
@@ -441,7 +441,7 @@ export const KEY_DRAWING_SIZE = '64px';                                   // How
 export const HERO_KEY_SIZE = 'clamp(64px, calc((100vw - 120px) / 3), 84px)'; // the hero demo
 ```
 
-(Round 4, 2026-11-13, Claude Code: `HERO_KEY_SIZE` is retired; the hero demo's keys use `KEY_DRAWING_SIZE`, see "Round 4: the hero demo".)
+(Round 4, 2026-11-13: `HERO_KEY_SIZE` is retired; the hero demo's keys use `KEY_DRAWING_SIZE`, see "Round 4: the hero demo".)
 
 `size` is typed as `typeof KEY_DRAWING_SIZE | typeof HERO_KEY_SIZE`. Never below 64px (MS-10.5): at 64px
 `.nl-key__letters` is 23px, `.nl-key__letters--4` 17.3px and the digit 16px. Other drawing text (rank numbers,
@@ -528,7 +528,7 @@ Server only (it uses `node:fs`); nothing here reaches the browser except the pla
   - Returns `{ items, ghost: { wordAcc, top1, top5, ksr, scanStepsPerChar }, dict: { top1, top5 }, modelRuns:
     { sizes: number[]; count: number } | null }`; percentages formatted as today (`pct`), steps with two
     decimals. `modelNotRun` goes.
-  - Round 4 (2026-11-13, Claude Code): it also returns the following, each null when missing or invalid in
+  - Round 4 (2026-11-13): it also returns the following, each null when missing or invalid in
     RESULTS.json, so the page leaves it out:
     - `words` (B1 `words`, a positive integer);
     - `ghost.pressesPerChar` (B1 `pressesPerChar` to two decimals);
@@ -653,7 +653,7 @@ Marked blocks (`data-reveal`), and only these:
   Results cards (round 4: the chart card, the by-source card and the presses card; never the `dl`, a group or a
   `dd`, and never the caveat), the Good to know card, the FAQ list as a
   whole (`div.site-faq-list`, not each `details`), and the rest of the source column (`div.site-source__more`:
-  the two `h3` blocks and the links row) and the Credits card. (Round 4, 2026-11-13, Claude Code: the Good to know
+  the two `h3` blocks and the links row) and the Credits card. (Round 4, 2026-11-13: the Good to know
   head and its two cards, `.site-limits__card` with `--reveal-i` 0 and 1, the grid `div.site-limits` unmarked; the
   source blocks are gone with the section. Proof: `figure.site-proof`, the steps `ol.site-proof-steps` and
   `div.site-proof__more`, the note and the button; their parent, the play root `div.site-proof-layout`, unmarked.)
@@ -1004,9 +1004,9 @@ drawing at the five layout sizes; Tab order in the Access grid); MS-8.12 (the de
 1 and give way to the rows after step 2, V36); MS-8.11 (drawings a 150px flick passes on short phones play in view);
 `axe.mjs` MS-13.1 as today.
 
-## Round 3 (2026-11-12, Claude Code): shared primitives and one theme
+## Round 3 (2026-11-12): shared primitives and one theme
 
-Round 3 was done with Claude Code, not Kiro. Product-owner answers W1-W6 are in the ADR-006 amendment of
+Product-owner answers W1-W6 are in the ADR-006 amendment of
 2026-11-12; this part covers W2, W3 and the theme review (`findings/theme.md` of the review). MS-14.
 
 - **Primitives** (documented at the top of `components/site/site.css`; every section builds on them):
@@ -1039,9 +1039,9 @@ Round 3 was done with Claude Code, not Kiro. Product-owner answers W1-W6 are in 
   `SiteFooter home="/" statement={false}`. It imports `site.css` (one cached stylesheet for the website) instead of
   `styles/app.css`, whose About rules were removed.
 
-## Round 3: How, Proof and Conversation (2026-11-12, Claude Code)
+## Round 3: How, Proof and Conversation (2026-11-12)
 
-Done with Claude Code, not Kiro (landing review `findings/top.md` and `findings/theme.md`; W1 of the ADR-006
+(landing review `findings/top.md` and `findings/theme.md`; W1 of the ADR-006
 amendment of 2026-11-12). Files: `sections/How.tsx`, `pictures/HowScreen.tsx`, `sections/Proof.tsx`,
 `Pictures.tsx`, `sections/Conversation.tsx`, `pictures/Conversation.tsx` and their `site.css` blocks.
 
@@ -1085,9 +1085,9 @@ Tests: `test/site.test.tsx` (MS-7.4, MS-7.7, MS-7.9, MS-9.3, MS-10.9, MS-3.1 ban
 reduced-motion layout check: no How runway, Proof figure before the legend and beside or under the head, its 64px
 `.site-cta` button).
 
-## Round 3: hero, bar and the try-it keypad (2026-11-12, Claude Code)
+## Round 3: hero, bar and the try-it keypad (2026-11-12)
 
-Done with Claude Code, not Kiro. Findings P1-1, P1-2, P2-1, P2-2 and P2-10 of the landing review and the product
+Findings P1-1, P1-2, P2-1, P2-2 and P2-10 of the landing review and the product
 owner's W1 and W4 (ADR-006 amendment of 2026-11-12). Requirements MS-3.1, MS-3.3, MS-6.1, MS-6.2, MS-6.2a, MS-6.4,
 MS-6.7, MS-6.10 to MS-6.14, MS-7.2, MS-11.3. Copy: `content.md` §1. This section wins where §0, §1 and "`KeypadDemo`
 changes" above say otherwise.
@@ -1530,9 +1530,9 @@ Review: `.agents/tasks/marketing-landing/design-review.md` (2026-11-10, third re
 | 6 | NIT: the tablet hero padding is not given (R6) | §1: tablet (600-1023px) padding block `var(--space-12)` / `var(--space-16)`; desktop `var(--space-16)` / `calc(var(--space-16) + var(--space-12))`, no raw 112px. |
 | 7 | NIT: `site.mjs` sizes carry screen and touch, but `newContext` cannot set them (R7) | Test plan: size passes build their contexts like `responsive.mjs` (`viewport`, `screen`, `deviceScaleFactor: 2`, `hasTouch`, `isMobile` on Chromium touch sizes, `reducedMotion`, `serviceWorkers`) plus the same `nl-theme` init script; other runs use `newContext`. |
 
-## Round 3: search, sharing and answer engines (2026-11-12, Claude Code)
+## Round 3: search, sharing and answer engines (2026-11-12)
 
-Done with Claude Code, not Kiro (findings `seo.md` of the landing review; MS-3.6 to MS-3.9, W5, W6).
+(findings `seo.md` of the landing review; MS-3.6 to MS-3.9, W5, W6).
 
 - Origin: `lib/site-url.ts` `siteOrigin()` reads `SITE_URL`, then `https://${VERCEL_PROJECT_PRODUCTION_URL}`, else
   null; invalid values give null. `app/layout.tsx` sets `metadataBase` only with an origin. No origin means no
@@ -1556,9 +1556,9 @@ Done with Claude Code, not Kiro (findings `seo.md` of the landing review; MS-3.6
 - Tests: `test/seo.test.tsx` (all of the above), `test/site.test.tsx` MS-3.5, `test/lighthouse-lib.test.ts`
   (Agentic Browsing reported with no target).
 
-## Round 3 polish: the final review's fixes (2026-11-13, Claude Code)
+## Round 3 polish: the final review's fixes (2026-11-13)
 
-Done with Claude Code, not Kiro, after an independent final review of the website. Items R3-P1 to R3-P10 in
+Done after an independent final review of the website. Items R3-P1 to R3-P10 in
 tasks.md; the copy is in content.md, the rules in requirements.md (MS-3.9, 4.4, 4.7, 5.3, 6.10, 6.12, 9.1, 10.5, 14.2).
 
 - **The hero keypad never moves (R3-P1, MS-6.10).** Every part of `KeypadDemo` above the keys keeps one size whatever
@@ -1608,9 +1608,9 @@ tasks.md; the copy is in content.md, the rules in requirements.md (MS-3.9, 4.4, 
   resolver both ways).
 - **A row after Access (R3-P10).** A secondary "Open the app" `.site-cta` row ends Access, as Results and Privacy do.
 
-## Round 4: shared language (2026-11-13, Claude Code)
+## Round 4: shared language (2026-11-13)
 
-This round was done with Claude Code, not Kiro. The product owner asked for more visuals, motion and
+The product owner asked for more visuals, motion and
 micro-interactions; seven agents redesigned the sections on one language, below (proposal `proposals/language.md`,
 decisions `01-decisions.md` §1, both in the round's notes). Requirements: MS-7.1, MS-7.3, MS-8.2, MS-8.11 (round-4
 rulings), MS-8.14, MS-8.15. Section designs follow in their own round-4 parts.
@@ -1772,9 +1772,9 @@ keyframe list with Results' `site-grow`), `test/tokens.test.ts`, and the languag
 (hover and press never move a key or a button; the hint is at most 4px; with reduced motion nothing transforms on
 hover).
 
-## Round 4: the hero demo (2026-11-13, Claude Code)
+## Round 4: the hero demo (2026-11-13)
 
-Done with Claude Code, not Kiro. The product owner: "the right part of the hero section, too crowded, the buttons are
+The product owner: "the right part of the hero section, too crowded, the buttons are
 too big, use some icons, too big in height, find a way to remove the text from there and improve the component
 visually and practically". Decisions §2 Hero (mock D approved; keep the one invitation line; option T). Requirements
 MS-6.2, MS-6.2a, MS-6.3, MS-6.4, MS-6.7, MS-6.10, MS-6.12, MS-6.13, MS-6.15, MS-6.16, MS-10.8. Copy: `content.md` §1.
@@ -1870,9 +1870,9 @@ Clear unavailable, keys typed from the toolbar and with nothing focused, the sta
 line in the live region, "Next:", the Tab order, the 14-size steady check on the keypad, the toolbar, the card's
 height and one status line, no-JavaScript status line); `e2e/axe.mjs` (the try-it wait reads the live region).
 
-## Round 4: How it works (2026-11-13, Claude Code)
+## Round 4: How it works (2026-11-13)
 
-Done with Claude Code, not Kiro. The product owner asked for "a total revamp, both in the way it looks, feels and
+The product owner asked for "a total revamp, both in the way it looks, feels and
 works"; the approved concept is the story row (proposal `proposals/how.md`, decisions §2). Requirements: MS-7.4, MS-7.7,
 MS-7.8, MS-8.11 (the sequenced row), MS-8.12 (removed), MS-8.13 and MS-10.9. Files: `sections/How.tsx`,
 `pictures/HowScenes.tsx` (replaces `pictures/HowScreen.tsx`), `KeypadPicture.tsx` (a `rows` prop for the crop; the
@@ -1925,10 +1925,10 @@ texts); `e2e/site.mjs` (the row, the column and stage order at every layout size
 hugging below; the story order at 1280 × 800 and 1024 × 768 and one scene alone at 768 × 1024; at most one ember ring
 across How; no How animation left 4.5 s after the play line).
 
-## Round 4: the proof check (2026-11-13, Claude Code)
+## Round 4: the proof check (2026-11-13)
 
 The product owner asked for "a more visual and intuitive visual on the right, possibly animated and coordinated with
-the left section". Done with Claude Code, not Kiro (r4-proof; proposal `proposals/proof.md`, decisions §1.2 and §2
+the left section". (r4-proof; proposal `proposals/proof.md`, decisions §1.2 and §2
 "Proof" of the round's `01-decisions.md`). Requirements: MS-7.6, MS-7.9, MS-8.4, MS-8.11, MS-9.3, MS-10.5, MS-10.9.
 Files: `sections/Proof.tsx`, `pictures/ProofCheck.tsx` (new; `Pictures.tsx` is deleted), `site-data.ts`
 (`getProofExample` gains `keyLetters` and two checks; `proofCanLine` and `proofNeverLine` replace `proofSaidLine`), the
@@ -1998,9 +1998,9 @@ Plays once per page view (PO-2: no replay button).
     3700 ms);
   - none lit with reduced motion.
 
-## Round 4: the end of the page (2026-11-13, Claude Code)
+## Round 4: the end of the page (2026-11-13)
 
-Done with Claude Code, not Kiro, after the product owner's "'Good to know' and 'Free and open' either put the info
+Done after the product owner's "'Good to know' and 'Free and open' either put the info
 across the site and make it more visually appealing" and "make a better footer" (the round's `proposals/close.md`,
 decisions §2). Requirements MS-3.1, MS-3.8, MS-4.4, MS-4.5, MS-4.5a, MS-4.7, MS-9.1, MS-14.5; copy in content.md §8 to
 §12 and `/about`.
@@ -2066,9 +2066,9 @@ the RSC payload that repeats the text; the server markup stays about 11.7 KB of 
 rules are 5.0 KB minified (0.6 KB gzip in the stylesheet's context) and 1.0 KB of round-3 rules went, about +0.4 KB
 gzip. JavaScript: none (every part is a server component; the icons render to markup).
 
-## Round 4: the box sections (2026-11-13, Claude Code)
+## Round 4: the box sections (2026-11-13)
 
-Done with Claude Code, not Kiro. The product owner, on "Made for both sides...", "Works the way" and "Offline
+The product owner, on "Made for both sides...", "Works the way" and "Offline
 unless...": "research and improve visuals in these boxes". Proposal `proposals/boxes.md` of the round (Mobbin: bento
 grids, feature cards with UI fragments, privacy and accessibility sections, face-to-face translation screens, opt-in
 toggles; the web: bento practice, simplified UI graphics, safer animation, privacy labels), approved with the changes

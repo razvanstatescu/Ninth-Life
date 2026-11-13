@@ -3,7 +3,7 @@
  * ends the way it opens. Shared by /, /about and the 404, so "Report a problem" sits in the same place on every page
  * (WCAG 2.2 SC 3.2.6).
  *
- * Round 4 (2026-11-13, Claude Code), research in the round-4 proposal (NN/g footers, GOV.UK footer):
+ * Round 4 (2026-11-13), research in the round-4 proposal (NN/g footers, GOV.UK footer):
  * - The brand, a one-line promise (the hero lead's first sentence) and a secondary "Open the app" (56px, as in the
  *   bar; never an ember fill, MS-9.1).
  * - One Footer navigation with three labelled groups, an h2 and a list each: Product (the page's sections), Trust

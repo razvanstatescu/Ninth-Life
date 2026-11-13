@@ -136,7 +136,7 @@ try {
         if (t.replyTypes) await pressAsk(page, t.replyTypes);
         if (t.tryIt) {
           for (const k of t.tryIt) await page.locator(`[data-try-key="${k}"]`).click();
-          // Round 4 (2026-11-13, Claude Code): the result line is in the demo's polite live region (there is no caption).
+          // Round 4 (2026-11-13): the result line is in the demo's polite live region (there is no caption).
           await page.waitForFunction((code) => (document.querySelector('.site-demo [role="status"]')?.textContent ?? '').startsWith(`Keys ${code} match:`), t.tryIt, {
             timeout: 20000,
             polling: 50,
