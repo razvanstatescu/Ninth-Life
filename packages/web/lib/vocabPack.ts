@@ -56,6 +56,19 @@ const NOT_A_PACK = 'This is not a word pack. A word pack is a JSON file with an 
 const fmt = (n: number) => n.toLocaleString('en-US');
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
+/**
+ * A pack from text typed or pasted by a helper (web-ui Req 35.4): one name or word per line, one phrase per line.
+ * Lines are trimmed and empty ones dropped; the result goes through parseVocabPack and planImport like a file.
+ */
+export function packFromLines(words: string, phrases: string): { id: string; lang: string; version: number; words: { w: string }[]; phrases: string[] } {
+  const lines = (t: string) =>
+    t
+      .split(/\r?\n/)
+      .map((x) => x.trim())
+      .filter(Boolean);
+  return { id: 'typed', lang: 'en', version: 1, words: lines(words).map((w) => ({ w })), phrases: lines(phrases) };
+}
+
 /** Parse and validate pack text (or an already parsed value). */
 export function parseVocabPack(input: string | unknown): PackResult {
   let v: unknown = input;

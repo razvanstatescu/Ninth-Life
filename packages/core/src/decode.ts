@@ -39,15 +39,16 @@ export function lattice(codes: string[], lex: Lexicon, perSlot: number = DEFAULT
  * `prev` (additive, see ADR-core-001) is the word before slot 0; it defaults to '<s>'.
  * Any empty slot means no full sentence exists, so the result is [].
  */
-export function beam(lat: string[][], lm: LanguageModel, B: number = DEFAULT_BEAM, prev: string = BOS): Candidate[] {
+export function beam(lat: string[][], lm: LanguageModel, B: number = DEFAULT_BEAM, prev: string = BOS, starts?: ReadonlySet<number>): Candidate[] {
   const width = Math.max(1, Math.floor(B) || 1);
   let beams: { words: string[]; score: number }[] = [{ words: [], score: 0 }];
-  for (const rawSlot of lat) {
+  for (const [si, rawSlot] of lat.entries()) {
     const slot = [...new Set(rawSlot)];
     if (slot.length === 0) return [];
     const next: { words: string[]; score: number }[] = [];
     for (const b of beams) {
-      const p = b.words.length > 0 ? b.words[b.words.length - 1]! : prev;
+      // A slot in `starts` begins a new sentence (after ". ? !", web-ui Req 34.3): its previous word is BOS.
+      const p = starts?.has(si) ? BOS : b.words.length > 0 ? b.words[b.words.length - 1]! : prev;
       for (const w of slot) {
         const lp = lm.logP(p, w);
         next.push({ words: [...b.words, w], score: b.score + (Number.isFinite(lp) ? lp : BAD_LOGP) });
@@ -67,6 +68,8 @@ export interface GhostOptions {
   mode?: Mode;
   /** Words said before these codes; only the last one is used, as the prev of the first slot. */
   context?: string[];
+  /** Slots that begin a new sentence (their previous word is BOS; web-ui Req 34.3). */
+  starts?: ReadonlySet<number>;
 }
 
 /** Top k ghost-mode candidates. Every returned candidate passes validate(words, codes, mode). */
@@ -79,7 +82,7 @@ export function decodeGhost(codes: string[], opts: GhostOptions): Candidate[] {
   const prev = ctx.length > 0 ? ctx[ctx.length - 1]! : BOS;
   const out: Candidate[] = [];
   const seen = new Set<string>();
-  for (const c of beam(lat, opts.lm, Math.max(DEFAULT_BEAM, k), prev)) {
+  for (const c of beam(lat, opts.lm, Math.max(DEFAULT_BEAM, k), prev, opts.starts)) {
     if (!validate(c.words, codes, mode)) continue; // the safety net: never trust the lattice
     const key = c.words.join(' ');
     if (seen.has(key)) continue;

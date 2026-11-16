@@ -20,6 +20,7 @@ and in the eval CLI. `package.json` points `main`/`exports` at `src/index.ts`; c
 | `src/lexicon.ts` | `Lexicon`, `LexiconFile`, `LexiconFileV2`, `TRIE_TOP_K`, `NEW_WORD_ZIPF` | Exact code -> words map, sorted code index with cached completions, vocab packs; loads v1 and the compact v2 file (ADR-data-003). |
 | `src/lm.ts` | `unigramModel`, `bigramModel`, `LanguageModel`, `BigramFile`, `LmOptions`, `BOS`, `LOGP_FLOOR`, `DEFAULT_LETTER_PENALTY`, `SPOKEN_LETTERS` | log10 scores for the beam, with the one-letter penalty (ADR-core-002). |
 | `src/decode.ts` | `lattice`, `beam`, `decodeGhost`, `Candidate`, `GhostOptions`, defaults | Ghost mode: offline decoding, no LLM. |
+| `src/complete.ts` | `rankCompletions`, `MAX_COMPLETIONS`, `COMPLETION_POOL`, `MAX_COMPLETION_CODE`, `CompletionOptions` | Finish the word: up to 3 words that start with the keys typed, ranked by the word pair before (web-ui Req 31). |
 | `src/format.ts` | `formatSentence`, `Punct` | Sentence case, `i` -> `I`, punctuation. Runs after validation and never changes words. |
 | `src/scan.ts` | `initialScan`, `scanReducer`, `ScanConfig`, `ScanState`, `ScanEvent`, `ScanResult` | Row/column switch scanning as a pure reducer (the UI owns the timer). |
 | `src/index.ts` | everything above | Public entry point. |

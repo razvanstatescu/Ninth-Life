@@ -2,7 +2,7 @@
 /**
  * The conversation on the main screen (web-ui Req 27.4-27.6, ADR-007). Where it fits, by layout
  * (lib/layout.ts threadRows): their newest line inside the header's They said button (ThreadBubble,
- * stack 620-1149px; yours only before they have said anything), a fixed-height strip of the newest 2 turns above the sentence card (ThreadStrip,
+ * stack 640-1149px; yours only before they have said anything), a fixed-height strip of the newest 2 turns above the sentence card (ThreadStrip,
  * split and stack 1150px or taller) or a panel of the newest 3 (ThreadPanel, laptop layouts). Each turn
  * opens the Conversation sheet on that turn. Who said it is a word, "They" or "You", never color alone.
  * Nothing here is a live region (the polite announcements are CommunicationScreen's), and nothing is ember.
@@ -37,7 +37,7 @@ function TurnLine({ turn, textClass }: { turn: Turn; textClass: string }) {
 export const turnName = (t: Turn) => `${whoShort(t)}: ${t.text}`;
 
 /**
- * The header's They said button (stack 620-1149px). No turns: the 56px speech-bubble square that opens
+ * The header's They said button (stack 640-1149px). No turns: the 56px speech-bubble square that opens
  * the They said field (Req 25.3). With turns: their newest line (or, before they have said anything,
  * yours) on one row, cut with an ellipsis, which opens the Conversation sheet on it. Their line, not
  * yours, because what you said is already on the sentence card.

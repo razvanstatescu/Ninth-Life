@@ -155,7 +155,8 @@ describe('my words (web-ui Req 21)', () => {
     expect(words.textContent).toContain('64424');
     fireEvent.click(within(words).getByRole('button', { name: 'Remove Mihai' }));
     fireEvent.click(within(words).getByRole('button', { name: 'Remove word' }));
-    expect(words.textContent).not.toContain('Mihai');
+    // The help text of Add names and phrases (Req 35.4) shows "Mihai" as an example, so look for the word's own row.
+    expect(within(words).queryByRole('button', { name: 'Remove Mihai' })).toBeNull();
     await waitFor(() => expect(reloadDict).toHaveBeenCalledTimes(1));
     fireEvent.click(within(words).getByRole('button', { name: 'Close' }));
     await act(async () => undefined);

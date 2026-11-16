@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { SHEET_REPLY_ROWS } from '@/lib/replies';
+import { PIN_TOO_LONG, SHEET_REPLY_ROWS, fitsQuickReply, replyMeasurer, type ReplyCell } from '@/lib/replies';
+import { PHONE_CALLS_HELP, PHONE_LINES } from '@/lib/cards';
 import type { Phrase } from '@/lib/storage';
 import { Button } from './Button';
 import { QuickReplies } from './QuickReplies';
@@ -33,6 +34,8 @@ export function PhrasesSheet({
   onDelete,
   onMyWords,
   onReply,
+  replyRows = SHEET_REPLY_ROWS,
+  onPin,
   onClose,
 }: {
   open: boolean;
@@ -49,11 +52,17 @@ export function PhrasesSheet({
   onMyWords?: () => void;
   /** Laptops: speak a quick reply (web-ui Req 28.4). */
   onReply?: (text: string) => void;
+  /** The quick replies in rows (pinned phrases first, web-ui Req 35.1). */
+  replyRows?: readonly (readonly ReplyCell[])[];
+  /** Pin or unpin a saved phrase as a quick reply (web-ui Req 35.1). */
+  onPin?: (p: Phrase, pinned: boolean) => void;
   onClose: () => void;
 }) {
   const [confirming, setConfirming] = useState<string | null>(null);
   const [shown, setShown] = useState(QUICK_PAGE);
   const quick = quickPhrases.slice(0, shown);
+  const measure = open ? replyMeasurer() : null;
+  const fits = (t: string) => fitsQuickReply(t, measure);
   return (
     <Sheet open={open} name="phrases" title="Phrases" onClose={onClose} scanning={scanning}>
       {onReply ? (
@@ -61,7 +70,7 @@ export function PhrasesSheet({
           <h3 className="group__title" id="phrases-replies">
             Quick replies
           </h3>
-          <QuickReplies variant="menu" rows={SHEET_REPLY_ROWS} onSay={onReply} />
+          <QuickReplies variant="menu" rows={replyRows} onSay={onReply} />
         </section>
       ) : null}
       {onMyWords ? (
@@ -88,6 +97,24 @@ export function PhrasesSheet({
                 <Button variant="quiet" icon="speaker" onClick={() => onSpeak(p)} aria-label={`Speak "${p.text}"`}>
                   Speak
                 </Button>
+                {onPin ? (
+                  <Button
+                    variant="secondary"
+                    icon={p.pinned ? 'check' : 'plus'}
+                    aria-pressed={p.pinned}
+                    aria-label={`Pin "${p.text}" to quick replies`}
+                    aria-describedby={!p.pinned && !fits(p.text) ? `pin-long-${p.id}` : undefined}
+                    disabled={!p.pinned && !fits(p.text)}
+                    onClick={() => onPin(p, !p.pinned)}
+                  >
+                    Pin to quick replies
+                  </Button>
+                ) : null}
+                {onPin && !p.pinned && !fits(p.text) ? (
+                  <span className="field__help phrase__note" id={`pin-long-${p.id}`}>
+                    {PIN_TOO_LONG}
+                  </span>
+                ) : null}
                 {confirming === p.id ? (
                   <>
                     <Button
@@ -113,6 +140,22 @@ export function PhrasesSheet({
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="group" aria-labelledby="phrases-calls">
+        <h3 className="group__title" id="phrases-calls">
+          Phone calls
+        </h3>
+        <p className="field__help">{PHONE_CALLS_HELP}</p>
+        <ul className="quick" aria-labelledby="phrases-calls">
+          {PHONE_LINES.map((text, i) => (
+            <li key={text} className="quick__row scan-cluster" data-scan-row={`call-${i}`}>
+              <Button variant="quiet" icon="speaker" className="quick__phrase" onClick={() => onSpeakQuick(text)} aria-label={`Speak "${text}"`} lang="en">
+                {text}
+              </Button>
+            </li>
+          ))}
+        </ul>
       </section>
 
       {quickPhrases.length > 0 ? (

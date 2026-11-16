@@ -10,3 +10,5 @@ export * from './decode';
 export * from './format';
 export * from './scan';
 export * from './intent';
+export * from './complete';
+export * from './fix';

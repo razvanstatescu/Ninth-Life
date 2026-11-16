@@ -92,7 +92,7 @@ describe('phone layout (web-ui Req 24)', () => {
     typeDigits('4');
     press('Menu');
     const menu = document.querySelector<HTMLElement>('[data-scan-row="sentence"]')!;
-    expect(within(menu).getAllByRole('button').map((b) => b.textContent)).toEqual(['Save phrase', 'Spell this word', 'Check the words', 'They said', 'Conversation']);
+    expect(within(menu).getAllByRole('button').map((b) => b.textContent)).toEqual(['Fix a word', 'Save phrase', 'Spell this word', 'Check the words', 'They said', 'Conversation']);
     // The footer's links and the intended-purpose sentence are in the Menu too.
     expect(screen.getByRole('link', { name: 'About Ninth Life' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'How Ninth Life works' })).toBeTruthy();

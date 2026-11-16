@@ -44,6 +44,8 @@ export function aggregate(rs: readonly ItemResult[], k: number, hasRaw: boolean,
     usdPer1k: hasCost ? r4((usd / n) * 1000) : null,
   };
   if (initials) m.retypedWords = rs.reduce((s, r) => s + (r.retyped ?? 0), 0);
+  if (rs.some((r) => r.completed !== undefined)) m.completedWords = r4(rs.reduce((s, r) => s + (r.completed ?? 0), 0) / (words || 1));
+  if (rs.some((r) => r.scanStepsApp !== undefined)) m.scanStepsPerCharApp = r4(rs.reduce((s, r) => s + (r.scanStepsApp ?? 0), 0) / (chars || 1));
   return m;
 }
 

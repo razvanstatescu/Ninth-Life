@@ -33,25 +33,27 @@ describe('composer: the reply type and Ask\'s "?" (Req 29.3, 29.4)', () => {
   });
 
   it('Ask never replaces punctuation the person set, and key 1 or Back take the "?" over as usual', () => {
+    // Since Req 34 the person's mark sits on the last word; what ends the sentence is that mark, else Ask's "?".
+    const end = (st: ComposerState) => st.slots[st.slots.length - 1]?.punct ?? st.punct;
     const dot = run(...digits('36'), { type: 'punct' }, { type: 'intent', intent: 'ask', turn: 1 });
-    expect(dot.punct).toBe('.');
-    expect(composerReducer(dot, { type: 'intent', turn: 1 }).punct).toBe('.');
+    expect(end(dot)).toBe('.');
+    expect(end(composerReducer(dot, { type: 'intent', turn: 1 }))).toBe('.');
     // 1 cycles from "?" to "!" as it would from any "?"; leaving Ask then keeps the person's "!".
     const ask = run(...digits('36 968'), { type: 'intent', intent: 'ask', turn: 1 });
     const bang = composerReducer(ask, { type: 'punct' });
-    expect(bang.punct).toBe('!');
-    expect(composerReducer(bang, { type: 'intent', turn: 1 }).punct).toBe('!');
+    expect(end(bang)).toBe('!');
+    expect(end(composerReducer(bang, { type: 'intent', turn: 1 }))).toBe('!');
     // Key 1 back round to "?": it is the person's now, so leaving Ask keeps it.
     const theirs = run(...digits('36 968'), { type: 'intent', intent: 'ask', turn: 1 }, { type: 'punct' }, { type: 'punct' }, { type: 'punct' }, { type: 'punct' }, { type: 'punct' });
-    expect(theirs.punct).toBe('?');
-    expect(composerReducer(theirs, { type: 'intent', turn: 1 }).punct).toBe('?');
+    expect(end(theirs)).toBe('?');
+    expect(end(composerReducer(theirs, { type: 'intent', turn: 1 }))).toBe('?');
     // Back removes the "?" first (as any punctuation, once the word is closed), then the words; Ask stays pressed.
     const closed = run(...digits('36 968 '), { type: 'intent', intent: 'ask', turn: 1 });
     const back = composerReducer(closed, { type: 'back' });
-    expect(back.punct).toBeUndefined();
+    expect(end(back)).toBeUndefined();
     expect(back.slots.length).toBe(2);
     expect(back.intent).toBe('ask');
-    expect(composerReducer(back, { type: 'intent', turn: 1 }).punct).toBeUndefined();
+    expect(end(composerReducer(back, { type: 'intent', turn: 1 }))).toBeUndefined();
   });
 
   it('the words are never touched: same slots, pins and choice', () => {

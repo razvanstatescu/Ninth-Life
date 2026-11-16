@@ -13,9 +13,10 @@ claim against `.kiro/steering/product.md` (banned claims).
 **The old keypad, back as your voice.**
 
 Ninth Life is a free web app that brings back 9-key predictive text as a way to talk. Press keys 2 to 9, one press per
-letter, and Ninth Life speaks the sentence you meant. A proof check makes sure every spoken word matches the keys
-pressed, so a language model can help rank sentences but can never put words in someone's mouth. It works offline, in
-any modern browser, with a keyboard, touch or a single switch.
+letter, and Ninth Life speaks the sentence you meant. A proof check makes sure
+every spoken word matches the keys on screen, and nothing gets there without your press, so a language model can
+help rank sentences but can never put words in someone's mouth. It works offline, in any modern browser, with a
+keyboard, touch or a single switch.
 
 > Ninth Life is a general-purpose text entry and text-to-speech tool. It is not a medical device and is not intended to
 > diagnose, treat or replace a clinical AAC assessment.
@@ -51,7 +52,7 @@ contrast, no time limits, and switch scanning. [Optional history paragraph only 
 
 Every word on screen carries a chip: it **matches your keys**, it is **new** (not in your words yet), or it was
 **rejected**. A deterministic validator re-encodes every candidate word and drops any that does not spell exactly the
-keys pressed, on the server and again in the browser. When the model suggests a word your keys do not spell, the panel
+keys on screen, on the server and again in the browser. When the model suggests a word your keys do not spell, the panel
 says so ("The model suggested "wafer". Your keys spell "water", so "wafer" was dropped and will not be spoken."). The
 model can reorder; only the person decides what is said, and only a Speak press speaks.
 
@@ -87,8 +88,10 @@ Method: [`docs/architecture/data-and-eval.md`](../architecture/data-and-eval.md)
 | Model ranking (B2-B4) | not run yet | | |
 
 Notes: some AACText test sentences are short stock phrases that also occur in the training text, so the AACText subset
-is somewhat optimistic; the Turk subset is shown next to it for that reason. In letter mode every letter is still one
-press, so keystroke savings are about zero by design (RESULTS.md, KSR column). Decode latency is in RESULTS.md; it is
+is somewhat optimistic; the Turk subset is shown next to it for that reason. Typing every letter is one press per
+letter (B1, 1.00 presses per character); with Finish the word a simulated typist who takes the right word at the first
+chance needs 0.62 presses per character, 37.6% fewer (B1c; RESULTS.md, "Finish the word (B1c)"). Real people will save
+less. Decode latency is in RESULTS.md; it is
 wall-clock per call in Node, varies run to run, and is not a browser measurement, so we do not quote it here. [Update the table from RESULTS.md after the final eval run; add B2-B4 only if run.]
 
 ## User feedback

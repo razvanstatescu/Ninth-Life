@@ -49,6 +49,12 @@ const DEVICES = [
   // Android tablets: estimates (no emulator measured).
   ['Android tablet 10"', 800, 1200, 800, 1280],
   ['Android tablet 10" landscape', 1280, 720, 1280, 800],
+  // 620-639px tall: the header used to overflow by 7px here (2026-11-16); it now hides under 640px.
+  ['Phone 390x620', 390, 620, 390, 844],
+  ['Phone 390x627', 390, 627, 390, 844],
+  ['Phone 360x630', 360, 630, 360, 800],
+  ['Phone 390x639', 390, 639, 390, 844],
+  ['iPhone SE, 375x640', 375, 640, 375, 667],
 ];
 const LONG = '4 6333 92837 75327 263 7663 27323'; // "i need water please and some bread"
 // Web-ui Req 27: a long "they said" line for the thread (header button, strip or Menu).
@@ -113,6 +119,17 @@ try {
       check(qr.small === 0 && qr.cut === 0 && qr.widths.length === 1, `28.1 equal cells (${qr.widths.join(', ')}px wide), at least 56px, none cut`);
       check(qr.inside && qr.live === 0 && qr.pageScroll <= 1, `28.6 the replies are on screen, not a live region, and nothing scrolls (${qr.pageScroll}px over)`);
     }
+    // Web-ui Req 32.1, accessibility rule 1: with a one-word sentence the sentence button (Fix a word) is at least 56px
+    // tall, or not there at all (a card of one 48px line; Menu > Fix a word instead).
+    await page.locator('button[data-key="4"]').first().tap();
+    await page.waitForTimeout(170);
+    const fixH = await page.evaluate(() => {
+      const e = document.querySelector('.nl-speakbar__fix');
+      return e ? Math.round(e.getBoundingClientRect().height) : null;
+    });
+    check(fixH === null || fixH >= 56, `32.1 the sentence button is at least 56px tall or absent (${fixH === null ? 'absent' : `${fixH}px`})`);
+    await page.locator('button[data-key="*"]').first().tap();
+    await page.waitForTimeout(170);
     for (const ch of LONG) {
       await page.locator(`button[data-key="${ch === ' ' ? '0' : ch}"]`).first().tap();
       await page.waitForTimeout(170);
@@ -215,12 +232,12 @@ try {
         tiny: [...document.querySelectorAll('[data-thread] *, .thread-bubble *')].filter((e) => e.textContent.trim() && e.getBoundingClientRect().width > 0 && parseFloat(getComputedStyle(e).fontSize) < 16).length,
       };
     });
-    const expect = /app--split/.test(m.layout) || (vh >= 1150 && /app--stack/.test(m.layout)) ? 'strip' : vh >= 620 ? 'bubble' : 'menu';
+    const expect = /app--split/.test(m.layout) || (vh >= 1150 && /app--stack/.test(m.layout)) ? 'strip' : vh >= 640 ? 'bubble' : 'menu';
     check(th.pageScroll <= 1, `27.6 with a conversation the main screen still does not scroll (${th.pageScroll}px over)`);
     check(Math.abs(k1.top - k0.top) < 0.5 && Math.abs(k1.w - k0.w) < 0.5 && Math.abs(k1.h - k0.h) < 0.5, `27.6 the conversation did not move or resize the keys (${Math.round(k1.top - k0.top)}px, ${Math.round(k0.h)} -> ${Math.round(k1.h)}px tall)`);
     if (expect === 'strip') check(th.strip && th.stripRows === 2 && !th.bubble && th.stripH === 132, `27.5 the strip shows the newest 2 turns at a fixed height, 2 x 56 + 8px and 12px of scan-ring room (${th.stripRows} rows, ${th.stripH}px)`);
     else if (expect === 'bubble') check(th.bubble && !th.strip && th.bubbleName === `They: ${THEM_LONG}`, `27.4 the header button shows their newest line, not yours again ("${th.bubbleName.slice(0, 30)}")`);
-    else check(!th.bubble && !th.strip, '27.6 under 620px the thread is not on the screen (Menu > Conversation)');
+    else check(!th.bubble && !th.strip, '27.6 under 640px the thread is not on the screen (Menu > Conversation)');
     check(th.small === 0 && th.tiny === 0, `the thread's targets are at least 56px and its text at least 16px (${th.small} small, ${th.tiny} tiny)`);
 
     // Web-ui Req 29.5: their new line brings the reply types; the keypad box stays exactly the same.

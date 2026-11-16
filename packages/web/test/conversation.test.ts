@@ -202,6 +202,6 @@ describe('where the thread shows (web-ui Req 27.4-27.6)', () => {
     expect(threadRows('compact', { tall: false, noHeader: false })).toBe(3);
     expect(threadRows('rotate', { tall: false, noHeader: false })).toBe(0);
     expect(STACK_THREAD_QUERY).toBe('(min-height: 1150px)');
-    expect(STACK_NO_HEADER_QUERY).toBe('(max-height: 619px)');
+    expect(STACK_NO_HEADER_QUERY).toBe('(max-height: 639px)');
   });
 });

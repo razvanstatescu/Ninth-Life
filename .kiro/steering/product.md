@@ -4,7 +4,7 @@ inclusion: always
 
 # Product: Ninth Life
 
-Ninth Life brings back 9-key predictive text as a free web app for typing to talk. People press keys 2 to 9, one press per letter, and Ninth Life speaks the sentence they meant. A proof check makes sure every spoken word matches the keys pressed, so a language model can help rank sentences but can never put words in someone's mouth. It works offline, in any browser, with a keyboard, touch or a single switch.
+Ninth Life brings back 9-key predictive text as a free web app for typing to talk. People press keys 2 to 9, one press per letter, and Ninth Life speaks the sentence they meant. A proof check makes sure every spoken word matches the keys on screen, and nothing gets there without your press, so a language model can help rank sentences but can never put words in someone's mouth. It works offline, in any browser, with a keyboard, touch or a single switch.
 
 Kiroween 2026, Resurrection category. Submission deadline: Dec 4, 2026, 2:00 pm PT. The app must stay free and working until judging ends on Jan 29, 2027.
 
@@ -57,7 +57,7 @@ Never write, say, or imply any of these, in UI, docs, commits, video, posts or c
 - Research results (for example SpeakFaster) presented as ours.
 - "AI understands you", "reads your mind", or anything that suggests the model decides what is said. The person decides; the model only ranks words that match their keys.
 
-Allowed: "free", "works offline", "runs in your browser", "every spoken word matches the keys you pressed", and numbers copied from RESULTS.md with the method linked.
+Allowed: "free", "works offline", "runs in your browser", "every spoken word matches the keys on screen, and nothing gets there without your press" (short form: "every spoken word matches the keys on screen"; web-ui Req 31.8; the older wording about the keys "you pressed" is retired since Finish the word), and numbers copied from RESULTS.md with the method linked.
 
 ## Honest limits to keep visible
 

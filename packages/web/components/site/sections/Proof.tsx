@@ -24,7 +24,7 @@ export function Proof({ proof }: { proof: ProofExample }) {
       <div className="site-wrap site-stack">
         <div className="site-head" data-reveal="">
           <h2 id="proof-title" className="site-h2">
-            Every spoken word matches the keys you pressed
+            Every spoken word matches the keys on screen
           </h2>
           <p className="site-lead">A language model can suggest sentences. It cannot put words in your mouth.</p>
         </div>

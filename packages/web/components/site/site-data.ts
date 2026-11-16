@@ -316,6 +316,11 @@ export interface SiteResults {
   /** B0: word frequency only, for comparison (round 4: its word accuracy too, so every measure has its pair). */
   dict: { top1: string; top5: string; wordAcc: string };
   /**
+   * B1c: B1 with Finish the word (web-ui Req 31; RESULTS.md "Finish the word (B1c)"), a simulated typist who takes
+   * the right word at the first chance: presses per character and the keystroke saving. Null when not measured.
+   */
+  finish: { pressesPerChar: string; ksr: string } | null;
+  /**
    * B1 right sentence first per test source (RESULTS.md "By source"): AACText's test sentences and the Turk
    * dialogue replies, which are longer and more varied, each with its item count (round 4). Null when RESULTS.json
    * has no valid split (round 3).
@@ -405,6 +410,13 @@ function modelRunsOf(file: unknown): SiteResults['modelRuns'] {
   return { sizes: [...sizes].sort((a, b) => a - b), count: models.size, provider: [...providers][0] as Provider, models: [...models].sort() };
 }
 
+/** B1c's presses per character and saving, or null unless both are there and valid. */
+function finishOf(m: Metrics | null): SiteResults['finish'] {
+  const p = m?.pressesPerChar;
+  if (!m || typeof p !== 'number' || !Number.isFinite(p) || p <= 0 || !(m.ksr > 0)) return null;
+  return { pressesPerChar: p.toFixed(2), ksr: pct(m.ksr) };
+}
+
 export function getResults(read: JsonReader = readJson): SiteResults | null {
   const r = read(['..', 'eval', 'RESULTS.json']);
   const configs = isObject(r) ? r.configs : undefined;
@@ -427,6 +439,7 @@ export function getResults(read: JsonReader = readJson): SiteResults | null {
       pressesPerChar: typeof presses === 'number' && Number.isFinite(presses) && presses > 0 ? presses.toFixed(2) : null,
     },
     dict: { top1: pct(b0.top1), top5: pct(b0.top5), wordAcc: pct(b0.wordAcc) },
+    finish: finishOf(okMetrics(configs, 'B1c')),
     bySource: bySourceOf(configs),
     modelRuns: modelRunsOf(read(['..', 'eval', 'RESULTS.llm.json'])),
   };

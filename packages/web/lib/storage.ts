@@ -3,11 +3,12 @@
  * "Save phrase". Settings are stored so the app opens the way the person left it. "My words"
  * (lib/myWords.ts) are stored only after the person adds a word or imports a word pack.
  */
+import { MAX_PINNED, MAX_PIN_CHARS } from './replies';
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import { FOLDED_WORD, sortMyWords, type MyWord } from './myWords';
 import { sanitizeSettings, type Settings } from './settings';
 
-export type Phrase = { id: string; text: string; lang: string; uses: number; lastUsed: number; pinned: boolean };
+export type Phrase = { id: string; text: string; lang: string; uses: number; lastUsed: number; pinned: boolean; /** When it was pinned to the quick replies (web-ui Req 35.1). */ pinnedAt?: number };
 
 interface NinthDB extends DBSchema {
   phrases: { key: string; value: Phrase; indexes: { 'by-text': string } };
@@ -72,6 +73,36 @@ export async function markPhraseUsed(id: string, now = Date.now()): Promise<void
   const d = await db();
   const p = await d.get('phrases', id);
   if (p) await d.put('phrases', { ...p, uses: p.uses + 1, lastUsed: now });
+}
+
+/**
+ * Pin or unpin a saved phrase as a quick reply (web-ui Req 35.1). Refused (false) when 5 are pinned already or the
+ * text is longer than 20 characters.
+ */
+export async function setPhrasePinned(id: string, pinned: boolean, now = Date.now()): Promise<boolean> {
+  const d = await db();
+  const p = await d.get('phrases', id);
+  if (!p) return false;
+  if (pinned) {
+    if (p.pinned) return true;
+    if (p.text.length > MAX_PIN_CHARS) return false;
+    const all = await d.getAll('phrases');
+    if (all.filter((x) => x.pinned).length >= MAX_PINNED) return false;
+    await d.put('phrases', { ...p, pinned: true, pinnedAt: now });
+    return true;
+  }
+  const { pinnedAt: _unused, ...rest } = p;
+  void _unused;
+  await d.put('phrases', { ...rest, pinned: false });
+  return true;
+}
+
+/** The pinned phrase texts, in the order they were pinned (the quick replies, Req 35.1). */
+export function pinnedTexts(list: readonly Phrase[]): string[] {
+  return list
+    .filter((p) => p.pinned)
+    .sort((a, b) => (a.pinnedAt ?? 0) - (b.pinnedAt ?? 0))
+    .map((p) => p.text);
 }
 
 export async function deletePhrase(id: string): Promise<void> {

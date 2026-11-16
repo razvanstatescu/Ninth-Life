@@ -51,7 +51,7 @@ export function llmsText({ origin = siteOrigin(), results = getResults(), faq = 
       '',
       // Round 4 (r4-results): RESULTS.md's own figure, as the page shows it ("1.00 key presses per character"), instead
       // of a keystroke-savings percentage RESULTS.md prints as "-0.0%"; the old sentence only when the figure is absent.
-      `${results.ghost.pressesPerChar ? `${results.ghost.pressesPerChar} key presses per character: letter mode saves no key presses.` : `Every letter is still one press, so letter mode saves no key presses (${results.ghost.ksr} keystroke savings).`} With one switch it takes ${results.ghost.scanStepsPerChar} scan steps per character. These figures come from a simulated typist, not from studies with people.`,
+      `${results.ghost.pressesPerChar ? `${results.ghost.pressesPerChar} key presses per character with letters only.` : `Every letter is one press (${results.ghost.ksr} keystroke savings).`}${results.finish ? ` With Finish the word, ${results.finish.pressesPerChar} key presses per character, ${results.finish.ksr} fewer.` : ''} With one switch it takes ${results.ghost.scanStepsPerChar} scan steps per character. These figures come from a simulated typist, not from studies with people.`,
       '',
       'Some test sentences, mostly short stock phrases such as "Thank you.", also appear in the text the dictionary was built from, so these figures are somewhat optimistic.',
       '',

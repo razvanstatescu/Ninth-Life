@@ -1,4 +1,6 @@
+import { codeEdit } from '@ninth/core';
 import { Icon } from './Icon';
+import { EditedCode, editWords } from './KeyCode';
 
 export type ChipState = 'match' | 'new' | 'reject' | 'typing' | 'unspelled';
 
@@ -18,7 +20,9 @@ export const CHIP_SR_TEXT: Record<ChipState, string> = {
  * (dotted, the digits and the words "not spelled yet": no dictionary word matches these keys and
  * the person has not spelled one; web-ui Req 20.2).
  */
-export function ProofChip({ state, word, code }: { state: ChipState; word: string; code: string }) {
+export function ProofChip({ state, word, code, typed, was }: { state: ChipState; word: string; code: string; typed?: number; was?: string }) {
+  const filled = typed !== undefined && typed < code.length ? code.length - typed : 0;
+  const edit = was !== undefined ? codeEdit(was, code) : null;
   if (state === 'unspelled') {
     return (
       <span className="nl-chip nl-chip--unspelled" data-state={state}>
@@ -35,9 +39,22 @@ export function ProofChip({ state, word, code }: { state: ChipState; word: strin
       {state !== 'typing' ? <Icon name={ICON[state]} /> : null}
       <span className="nl-chip__word">{word}</span>
       <span className="nl-chip__code" aria-hidden="true">
-        {code}
+        {edit ? (
+          <EditedCode was={was!} code={code} srText={false} />
+        ) : filled > 0 ? (
+          <>
+            {code.slice(0, typed)}
+            <span className="nl-filled">{code.slice(typed)}</span>
+          </>
+        ) : (
+          code
+        )}
       </span>
-      <span className="nl-sr-only">, {CHIP_SR_TEXT[state]}. Keys {code.split('').join(' ')}.</span>
+      <span className="nl-sr-only">
+        , {CHIP_SR_TEXT[state]}. Keys {code.split('').join(' ')}
+        {filled > 0 ? `, ${filled} filled in` : ''}
+        {edit ? `, ${editWords(edit)}` : ''}.
+      </span>
     </span>
   );
 }

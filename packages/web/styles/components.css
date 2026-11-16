@@ -79,6 +79,12 @@ a.nl-brand { min-height: var(--target-min); }
 .nl-key__word { font-size: 18px; line-height: 22px; font-weight: 700; }
 .nl-key.is-lit { background: var(--ember); color: var(--on-ember); box-shadow: inset 0 0 0 3px var(--plum), var(--glow-ember); }
 .nl-key.is-lit:active { background: var(--ember-deep); }
+/* app: a repeat press inside the accept delay was not counted (web-ui Req 30.4): a dashed inner ring, a shape
+   change in the key's own text colour; it appears and goes with no motion. */
+.nl-key.is-ignored::after {
+  content: ""; position: absolute; inset: 3px; pointer-events: none; /* at the edge, clear of the corner digit (top 9px) */
+  border: var(--ring-width) dashed currentColor; border-radius: calc(var(--radius-key) - 3px);
+}
 
 /* Keypad */
 .nl-keypad {

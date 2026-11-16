@@ -2,7 +2,7 @@
 
 The old keypad, back as your voice.
 
-Ninth Life is a free web app that brings back 9-key predictive text as a way to talk. People press keys 2 to 9, one press per letter, and Ninth Life speaks the sentence they meant. A proof check makes sure every spoken word matches the keys pressed, so a language model can help rank sentences but can never put words in someone's mouth. It works offline, in any browser, with a keyboard, touch or a single switch.
+Ninth Life is a free web app that brings back 9-key predictive text as a way to talk. People press keys 2 to 9, one press per letter, and Ninth Life speaks the sentence they meant. A proof check makes sure every spoken word matches the keys on screen, and nothing gets there without your press, so a language model can help rank sentences but can never put words in someone's mouth. It works offline, in any browser, with a keyboard, touch or a single switch.
 
 This system covers the app, the website, the demo video and social cards. Night is the default theme and the brand.
 

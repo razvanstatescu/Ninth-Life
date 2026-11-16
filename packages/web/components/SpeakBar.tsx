@@ -1,6 +1,9 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { DisplayWord } from '@/lib/sentence';
 import { Button } from './Button';
+import { KeyCode } from './KeyCode';
+
+export { EditedCode, KeyCode, editWords } from './KeyCode';
 
 /**
  * design-system SpeakBar (nl-speakbar): the sentence about to be spoken (utterance, 40px),
@@ -26,6 +29,9 @@ export function SpeakBar({
   digitsApart = false,
   extra,
   tag,
+  retype = false,
+  onFix,
+  fixLit = false,
 }: {
   tokens: string[];
   words: DisplayWord[];
@@ -48,6 +54,12 @@ export function SpeakBar({
   extra?: ReactNode;
   /** The reply type pressed ("Ask"), shown as a word at the start of the key line (web-ui Req 29.6). */
   tag?: string;
+  /** A word is being retyped: the key line starts with "Retype ·" (web-ui Req 32.3). */
+  retype?: boolean;
+  /** Fix a word (web-ui Req 32.1, ADR-009): the sentence itself is the button that opens it. */
+  onFix?: () => void;
+  /** Switch scanning has the sentence button lit. */
+  fixLit?: boolean;
 }) {
   const empty = tokens.length === 0;
   const textRef = useRef<HTMLParagraphElement>(null);
@@ -63,11 +75,12 @@ export function SpeakBar({
   // Apart from the sentence, the key line keeps its place even when empty, so nothing moves on the first key.
   // The key line is always there on the shells, so the type shows even before the first key; on laptops
   // the group itself stays on screen, so the word joins the keys only once there are keys.
+  const tagWord = retype ? 'Retype' : tag;
   const tagEl =
-    tag && (!empty || digitsApart) ? (
+    tagWord && (!empty || digitsApart) ? (
       <span className="nl-speakbar__tag">
-        <span className="nl-sr-only">Reply type: </span>
-        {tag}
+        <span className="nl-sr-only">{retype ? 'Retyping a word: ' : 'Reply type: '}</span>
+        {tagWord}
         {empty ? null : (
           <span className="nl-speakbar__sep" aria-hidden="true">
             ·
@@ -83,21 +96,32 @@ export function SpeakBar({
         {empty ? null : (
           <>
             <span className="nl-sr-only">Keys: </span>
-            <span className="nl-speakbar__digits-end">{codes.join(' ')}</span>
+            <span className="nl-speakbar__digits-end">
+              {codes.map((c, i) => (
+                <KeyCode key={i} code={c} typed={words[i]?.typed} was={words[i]?.was} lead={i > 0 ? ' ' : ''} />
+              ))}
+            </span>
           </>
         )}
       </span>
     );
+  const tokenEls = tokens.map((t, i) => (
+    <span key={i}>
+      {i > 0 ? ' ' : null}
+      <span className={words[i]?.word === null || words[i]?.editing ? 'nl-speakbar__partial' : undefined}>{t}</span>
+    </span>
+  ));
   const text = (
-      <p ref={textRef} className={empty ? 'nl-speakbar__text is-empty' : 'nl-speakbar__text'} id="utterance" tabIndex={overflows ? 0 : undefined}>
-        {empty
-          ? emptyText
-          : tokens.map((t, i) => (
-              <span key={i}>
-                {i > 0 ? ' ' : null}
-                <span className={words[i]?.word === null ? 'nl-speakbar__partial' : undefined}>{t}</span>
-              </span>
-            ))}
+      <p ref={textRef} className={empty ? 'nl-speakbar__text is-empty' : 'nl-speakbar__text'} id="utterance" tabIndex={overflows && !onFix ? 0 : undefined}>
+        {empty ? (
+          emptyText
+        ) : onFix ? (
+          <button type="button" className={fixLit ? 'nl-speakbar__fix is-lit' : 'nl-speakbar__fix'} onClick={onFix} aria-label={`${tokens.join(' ')}. Fix a word`} data-action="fix">
+            {tokenEls}
+          </button>
+        ) : (
+          tokenEls
+        )}
         {digitsApart ? null : digits}
       </p>
   );
@@ -151,3 +175,4 @@ export function SpeakButton({
     </Button>
   );
 }
+

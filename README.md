@@ -3,10 +3,10 @@
 **The old keypad, back as your voice.**
 
 Ninth Life brings back 9-key predictive text as a free web app for typing to talk. Press one key per
-letter on keys 2 to 9 and hear the sentence you meant: every spoken word matches the keys you
-pressed. A proof check makes sure of that, so a language model can help rank sentences but can never
-put words in someone's mouth. It works offline, in any modern browser, with a keyboard, touch or a
-single switch.
+letter on keys 2 to 9 and hear the sentence you meant: every spoken word matches the keys on screen,
+and nothing gets there without your press. A proof check makes sure of that, so a language model
+can help rank sentences but can never put words in someone's mouth. It works offline, in any modern
+browser, with a keyboard, touch or a single switch.
 
 > Ninth Life is a general-purpose text entry and text-to-speech tool. It is not a medical device and
 > is not intended to diagnose, treat or replace a clinical AAC assessment.
@@ -27,7 +27,7 @@ Early development (milestone M1: ghost mode in the browser). See
    sentence: Claude Haiku through the Anthropic API, or MiniMax-M3 through MiniMax's
    Anthropic-compatible API ([ADR-002](docs/decisions/ADR-002-minimax-provider.md)).
 3. **Proof.** Every candidate goes through a deterministic validator: each word must encode to
-   exactly the keys pressed. Anything else is shown struck through and is never spoken.
+   exactly the keys on screen. Anything else is shown struck through and is never spoken.
 
 ## Repository layout
 

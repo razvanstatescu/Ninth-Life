@@ -52,6 +52,10 @@ export default function AboutPage() {
               What it does
             </h2>
             <p>H and I share key 4, so &quot;hi&quot; is 4 4. There is no tapping a key three times and no code to learn.</p>
+            <p>
+              Key 1 puts a mark after the word you just typed: press it again for ? ! or a comma. A full stop, question mark or exclamation mark starts a
+              new sentence.
+            </p>
             <p>It runs in your browser and works offline. You can type with a keyboard, by touch, or with one or two switches.</p>
             <p>After the other person speaks, you can pick a reply type. {REPLY_TYPES_HELP}</p>
             <p className="site-links">
@@ -64,8 +68,8 @@ export default function AboutPage() {
               Every word is checked against your keys
             </h2>
             <p>
-              Before anything is spoken, each word is turned back into keys and compared with the keys you pressed. A word that does not match is dropped and never
-              spoken. The proof panel shows each word with its keys: a check means the word matches your keys and is in the dictionary or in My words, a plus means it
+              Before anything is spoken, each word is turned back into keys and compared with the keys on screen. A word that does not match is dropped and never
+              spoken. A word you finish from the word row brings its own keys; the screen marks the ones you did not press. Fix a word lets you change any word. A word one key away changes that word's keys, and the screen marks the key that changed. Nothing is changed without your press. The proof panel shows each word with its keys: a check means the word matches your keys and is in the dictionary or in My words, a plus means it
               matches but is not in the dictionary or My words yet (add it to My words), and a struck-through word was suggested but does not match.
             </p>
             <p>
@@ -85,6 +89,10 @@ export default function AboutPage() {
               <li>
                 The conversation (what they said and what you said) is kept only on the open page, never saved: it is gone when you reload, leave or close the page,
                 and Clear conversation removes it sooner. Share and Copy hand the text to the app you pick.
+              </li>
+              <li>
+                The partner strip, off unless you turn it on, shows the other person &ldquo;Typing&hellip;&rdquo; while you type and what you said after you speak.
+                It never shows your words before you speak.
               </li>
               <li>
                 With model ranking on, {provider.company} receives what is sent for ranking. {provider.region} {provider.retention} Our server logs timings and

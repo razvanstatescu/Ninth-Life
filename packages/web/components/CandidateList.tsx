@@ -8,6 +8,7 @@ export function CandidateList({
   candidates,
   selectedIndex,
   punct,
+  marks,
   scanning,
   litIndex,
   emptyText,
@@ -19,6 +20,8 @@ export function CandidateList({
   candidates: Candidate[];
   selectedIndex: number;
   punct?: Punct;
+  /** Each word's own mark (web-ui Req 34.1). */
+  marks?: readonly (Punct | undefined)[];
   /** This list is the scan row with the ring. */
   scanning?: boolean;
   litIndex?: number;
@@ -47,6 +50,7 @@ export function CandidateList({
                 text={formatSentence(
                   c.words.map((w) => showWord(w, display)),
                   punct,
+                  marks,
                 )}
                 selected={i === selectedIndex}
                 lit={litIndex === i}

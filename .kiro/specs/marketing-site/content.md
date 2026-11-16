@@ -26,9 +26,9 @@ Rules for this file:
 | Field | Text |
 |---|---|
 | `<title>` | Ninth Life: type on 9 keys, hear your sentence |
-| `description` | Free web app for typing to talk. Press one key per letter and hear the sentence you meant. Every spoken word matches your keys. Works offline. |
+| `description` | Free web app for typing to talk. Press one key per letter and hear the sentence you meant. Every spoken word matches the keys on screen. Works offline. |
 | `og:title` | Ninth Life: the old phone keypad, back as a way to talk |
-| `og:description` | Press one key per letter and hear the sentence you meant. Every spoken word matches the keys you pressed. Free, works offline, runs in your browser. |
+| `og:description` | Press one key per letter and hear the sentence you meant. Every spoken word matches the keys on screen. Free, works offline, runs in your browser. |
 | `og:type`, `og:site_name`, `og:locale` | `website`, `Ninth Life`, `en_US` |
 | `twitter:card` | `summary_large_image` when the social card is emitted (the origin is known), else `summary` (same title and description) |
 
@@ -38,7 +38,7 @@ Round 3 (2026-11-12; MS-3.6 to MS-3.9). The definition, used word for word in th
 `description`, `public/manifest.webmanifest`, the JSON-LD, `/llms.txt` and the README's first paragraph
 (`SITE_DEFINITION` in `components/site/seo.ts`):
 
-> Ninth Life brings back 9-key predictive text as a free web app for typing to talk. Press one key per letter on keys 2 to 9 and hear the sentence you meant: every spoken word matches the keys you pressed.
+> Ninth Life brings back 9-key predictive text as a free web app for typing to talk. Press one key per letter on keys 2 to 9 and hear the sentence you meant: every spoken word matches the keys on screen, and nothing gets there without your press.
 
 | Page | `<title>` | `description` |
 |---|---|---|
@@ -55,7 +55,7 @@ The social card shows the icon, **Ninth Life**, **Type on 9 keys. Hear your sent
 offline. No account.** and a drawn keypad under the sentence **I need water** with its keys `4 6333 92837`.
 
 JSON-LD feature list (`FEATURE_LIST` in `components/site/structured-data.ts`): **One press per letter on keys 2 to 9**;
-**Every spoken word matches the keys you pressed**; **Works offline after the first visit**; **Type with a keyboard, by
+**Every spoken word matches the keys on screen**; **Works offline after the first visit**; **Type with a keyboard, by
 touch, or with one or two switches**.
 
 404 page: `h1` **Page not found**; **There is no page at this address. It may have moved, or the link may be
@@ -172,7 +172,7 @@ possibly animated and coordinated with the left section". The lead keeps its fir
 four steps that light up in time with the figure. The legend becomes the figure's closing lines. The claims are
 unchanged.
 
-- `h2`: **Every spoken word matches the keys you pressed**
+- `h2`: **Every spoken word matches the keys on screen**
 - Lead: **A language model can suggest sentences. It cannot put words in your mouth.**
 - Figure caption (the accessible content of the figure): **Your keys: {proof.keys}**
 - Chips (finished frame): **water** (matches), **waves** (matches), **wafer** (does not match, struck through), from
@@ -341,7 +341,7 @@ When `getResults()` returns results:
   - **Right word first**: `{ghost.wordAcc}` · `{dict.wordAcc}` · **of {words} words, before any correction**. RESULTS.md "Word acc": 96.8% and 91.5%; word frequency's 91.5% is new on the page in round 4, so every measure has its pair. The 4,890 words: B1 `words` in RESULTS.json; RESULTS.md "By source" Words 2730 + 2160, and "2306 of 4890" in the initials table. With no `words`: "of words, before any correction".
   - Once, under the three: **Word frequency alone: the same dictionary, ranked without word pairs.** (B0 is the same lexicon with the unigram model, `packages/eval/src/decoders.ts`.)
 - Card (only with `bySource`), `h3` **Right sentence first, by source**: `{bySource.aac.top1}` **of {bySource.aac.items} AAC sentences** · `{bySource.turk.top1}` **of {bySource.turk.items} dialogue replies** · **The replies are longer and more varied.** RESULTS.md "By source", rows "B1 ghost | aac | 566" (88.7%) and "B1 ghost | turk | 300" (79.7%); "longer and more varied" is the method's wording (`data-and-eval.md` §4).
-- Card, `h3` **Presses and scan steps**: a figure of "home" over the keys that type it (`pressExample()`, `encodeWord`; aria-hidden) · `{ghost.pressesPerChar}` **key presses per character** · **Letter mode saves no key presses.** · the scan steps as marks, whole and part (aria-hidden) · `{ghost.scanStepsPerChar}` **scan steps per character, with one switch**. RESULTS.md: "Letter-mode B1 needs 1.00 presses per character on the same items."; Summary "Scan steps/char" 3.57. With no `pressesPerChar` the card falls back to the round-3 sentence, with `{ghost.ksr}` keystroke savings. Round 4 drops "0.0% keystroke savings" from the page: RESULTS.md prints that measurement as "-0.0%" (the page's `pct` lost the sign of -0.04%), and 1.00 presses per character is RESULTS.md's own figure for it.
+- Card, `h3` **Presses and scan steps**: a figure of "home" over the keys that type it (`pressExample()`, `encodeWord`; aria-hidden) · `{ghost.pressesPerChar}` **key presses per character** · **Typing every letter. With Finish the word,** `{finish.pressesPerChar}`: `{finish.ksr}` **fewer. Real people save less.** (B1c, RESULTS.md "Finish the word (B1c)"; without B1c the note is "Every letter is one press."; the Results section stays within its height budget at 390x699) · the scan steps as marks, whole and part (aria-hidden) · `{ghost.scanStepsPerChar}` **scan steps per character, with one switch**. RESULTS.md: "Letter-mode B1 needs 1.00 presses per character on the same items."; Summary "Scan steps/char" 3.57. With no `pressesPerChar` the card falls back to "Every letter is one press ({ghost.ksr} keystroke savings without Finish the word)." Round 6 (2026-11-16): "Letter mode saves no key presses." is retired now that Finish the word is measured. Round 4 drops "0.0% keystroke savings" from the page: RESULTS.md prints that measurement as "-0.0%" (the page's `pct` lost the sign of -0.04%), and 1.00 presses per character is RESULTS.md's own figure for it.
 - Model status (only with `modelRuns`; `modelStatus()`), `h3` **Model ranking**, one row per status, each with an icon and a status word:
   - check: **Measured with {count} {company} models ({models}), on samples of {sizes} sentences, with how often a reply came too late.** ("1 MiniMax model" for one; a model id never breaks inside.)
   - dash, while this build's provider is not the measured one: **Not measured yet: {service}, which the app's model ranking uses.** When it is the measured one, row 1 ends with "The app's model ranking uses {service}, the provider measured here." and there is no second row.
@@ -411,7 +411,7 @@ real-device check (product.md, Honest limits).
 - **What if the sentence I meant is not first?** Other sentences that match your keys are listed under it: pick one with a tap, the arrow keys or your switch. If a word is still wrong, Spell this word lets you choose the letter for each key you pressed.
 - **Can I type names and my own words?** Yes. When a word is not in the dictionary, choose Spell this word, then Add to my words. My words stay on this device and come up when you type their keys.
 - **Can I use it with a switch?** Yes, with one or two switches. Space or Enter acts as the switch, and the scan speed goes from 0.4 to 5 seconds a step.
-- **Can the model say something I did not type?** No. Every word is turned back into keys and checked against the keys you pressed. A word that does not match is dropped. Nothing is spoken until you press Speak.
+- **Can the model say something I did not type?** No. Every word is turned back into keys and checked against the keys on screen. A word that does not match is dropped. Nothing is spoken until you press Speak.
 - **What does model ranking send, and to whom?** Your keys, the dictionary words that match them, Ninth Life's own best guesses and the other person's last line, to {provider.service}. {RANKING_SENT_ALSO} It is off until you turn it on. {provider.retention}
 - **Does it work without a connection?** Yes, after the first visit. The dictionary and the proof check run on your device. Model ranking and online voices need a connection; the dictionary does not.
 - **Where are my saved phrases?** In your browser on this device, nowhere else. Nothing is saved unless you press Save phrase. Delete one in Phrases; clearing this site's data in your browser deletes them all, with My words.

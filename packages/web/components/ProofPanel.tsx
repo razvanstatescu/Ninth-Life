@@ -5,6 +5,9 @@ import type { DisplayWord } from '@/lib/sentence';
 import { Button } from './Button';
 import { ProofChip } from './ProofChip';
 
+/** Shown when a word on show has keys that came with a word picked from Finish the word (web-ui Req 31.3). */
+export const FILLED_NOTE = 'A dotted line marks keys that came with a word you picked. Every word still matches all of its keys.';
+
 function quoteList(words: string[]): string {
   if (words.length <= 1) return words[0] ?? '';
   return `${words.slice(0, -1).join(', ')} or ${words[words.length - 1]}`;
@@ -76,7 +79,7 @@ export function ProofPanel({
         <h2 className="proof__title" id="proof-title">
           Proof
         </h2>
-        <p className="proof__lead">Every word that can be spoken matches the keys you pressed.</p>
+        <p className="proof__lead">Every word that can be spoken matches the keys on screen.</p>
       </div>
       {words.length === 0 && rejectChips.length === 0 ? (
         <p className="proof__note">Each word shows here with its keys as you type.</p>
@@ -84,7 +87,7 @@ export function ProofPanel({
         <ul className="proof__chips">
           {words.map((w, i) => (
             <li key={`w-${i}`}>
-              <ProofChip state={w.state} word={labels[i]?.replace(/[.?!,]+$/, '') || w.word || w.partial || w.code} code={w.code} />
+              <ProofChip state={w.state} word={labels[i]?.replace(/[.?!,]+$/, '') || w.word || w.partial || w.code} code={w.code} typed={w.typed} was={w.was} />
             </li>
           ))}
           {rejectChips.map((c) => (
@@ -94,6 +97,7 @@ export function ProofPanel({
           ))}
         </ul>
       )}
+      {words.some((w) => w.typed !== undefined) ? <p className="proof__note">{FILLED_NOTE}</p> : null}
       {words.some((w) => w.state === 'typing') ? (
         <p className="proof__note">The last word is not finished yet. Keep typing, or press Back.</p>
       ) : null}

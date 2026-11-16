@@ -27,10 +27,11 @@ export function phoneSuggestions(
   rows: number,
   punct?: Punct,
   display?: DisplayMap | null,
+  marks?: readonly (Punct | undefined)[],
 ): { items: PhoneSuggestion[]; more: boolean } {
   const chosen = selectedIndex >= 0 ? selectedIndex : 0;
   const others = candidates
-    .map((c, index) => ({ index, text: formatSentence(c.words.map((w) => showWord(w, display)), punct) }))
+    .map((c, index) => ({ index, text: formatSentence(c.words.map((w) => showWord(w, display)), punct, marks) }))
     .filter((s) => s.index !== chosen);
   return { items: others.slice(0, rows), more: others.length > rows };
 }

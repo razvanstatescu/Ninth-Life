@@ -62,7 +62,7 @@ export interface BigramFile {             // data/lexicon/<lang>.bigram.v1.json
   logp: Record<string, Record<string, number>>; // log10 P(w | prev), 2 decimals; prev may be '<s>'
   backoff: Record<string, number>;              // log10 backoff weight for prev
 }
-export interface LanguageModel { logP(prev: string, word: string): number } // log10
+export interface LanguageModel { logP(prev: string, word: string): number; successors?(prev: string): readonly string[]; knows?(word: string): boolean } // log10; bigramModel implements the optional two (web-ui Req 31)
 export const DEFAULT_LETTER_PENALTY = -3;                                  // ADR-core-002
 export const SPOKEN_LETTERS: readonly string[];                            // ['a', 'i']
 export interface LmOptions { letterPenalty?: number; spokenLetters?: readonly string[] } // default -3, ['a','i']; 0 = off
@@ -101,6 +101,13 @@ export function intentCue(words: readonly string[], intent: ReplyIntent): number
 export function rankByIntent<T extends { words: readonly string[]; score: number }>(c: readonly T[], intent?: ReplyIntent): T[];
 //   score + INTENT_WEIGHT * cue, stable sort; a permutation of the input (every result still validates);
 //   no reply type = the input order.
+
+// complete.ts — Finish the word (web-ui Req 31.1, 31.7)
+export const MAX_COMPLETIONS = 3, COMPLETION_POOL = 300, MAX_COMPLETION_CODE = 16;
+export function rankCompletions(prefix: string, prev: string, lex: Lexicon, lm: LanguageModel,
+  opts?: { k?: number; pool?: number; maxCode?: number; allow?: (w: string) => boolean }): string[];
+//   lexicon words whose code starts with prefix and is longer (<= maxCode keys), from lex.completions(prefix, pool)
+//   plus lm.successors(prev); ranked by lm.logP(prev, w), stable; at most k; [] for a prefix that is not 2-9 digits.
 ```
 
 ## 2. Data files (`data/`, CC BY-SA 4.0)
@@ -179,15 +186,17 @@ but is normally unset (same-origin `/api/decode`).
 ```ts
 type Settings = { mode: 'letter'|'initials'; access: 'keyboard'|'touch'|'scan1'|'scan2';
   scanMs: number; scanLoops: number; acceptDelayMs: number; voiceURI?: string; rate: number; pitch: number;
-  llm: boolean; llmRecent: boolean; dictation: boolean; quickReplies: boolean; theme: 'night'|'day'|'system'; targetSize: 'l'|'xl'; lang: 'en' };
+  llm: boolean; llmRecent: boolean; dictation: boolean; quickReplies: boolean; wordCompletion: boolean; partnerStrip: 'off'|'facing'|'upright'; theme: 'night'|'day'|'system'; targetSize: 'l'|'xl'; lang: 'en' };
 // llmRecent (default false, ADR-007): with model ranking on, also send your last 3 sentences as context.recent.
 // quickReplies (default true, web-ui Req 28): Yes, No, Hold on, Pardon?, Thanks in the suggestion area when nothing is typed.
+// wordCompletion (default true, web-ui Req 31): Finish the word, up to 3 words that start with the keys typed.
+// partnerStrip (default 'off', web-ui Req 33, ADR-010): the band for the other person; 'facing' turns it 180°.
 // The reply type (web-ui Req 29, ADR-008) is not a setting: ComposerState.intent / intentFor, memory only,
 // cleared by Speak, Clear and a new "they said" line.
 // The conversation itself (packages/web/lib/conversation.ts) is memory only and is never stored:
 type Turn = { id: number; who: 'them'|'me'; text: string; at: number;
   via: 'typed'|'heard'|'keys'|'phrase'|'quick'|'again'|'shown' };
-type Phrase = { id: string; text: string; lang: string; uses: number; lastUsed: number; pinned: boolean };
+type Phrase = { id: string; text: string; lang: string; uses: number; lastUsed: number; pinned: boolean; pinnedAt?: number }; // pinned: a quick reply (web-ui Req 35.1), at most 5, text <= 20 chars
 type VocabPack = { id: string; lang: string; version: number; words: { w: string; boost: number }[]; phrases: string[] };
 ```
 IndexedDB via `idb`. Nothing is stored unless the person taps "Save phrase". History is opt-in. The conversation thread

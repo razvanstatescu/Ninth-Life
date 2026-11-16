@@ -96,6 +96,10 @@ export interface ItemResult {
   usd: number;
   /** Initials mode only: gold words the person had to retype in letter mode (not among the slot's readings). */
   retyped?: number;
+  /** B1c only: words taken from Finish the word. */
+  completed?: number;
+  /** B1 and B1c: scan steps on the app's grid (keypad first; scan-cost.ts APP_GRID). */
+  scanStepsApp?: number;
 }
 
 export interface Metrics {
@@ -113,6 +117,10 @@ export interface Metrics {
   usdPer1k: number | null;
   /** Initials mode only: words retyped in letter mode because the initials readings did not hold them. */
   retypedWords?: number;
+  /** B1c only: share of gold words taken from Finish the word. */
+  completedWords?: number;
+  /** B1 and B1c: scan steps per character on the app's grid (keypad rows first). */
+  scanStepsPerCharApp?: number;
 }
 
 /** Deterministic totals of the model calls behind one LLM config (no timings, Req 6.2). */

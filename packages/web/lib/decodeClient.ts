@@ -201,18 +201,20 @@ export async function decodeRemote(
 }
 
 /**
- * Small LRU on codes + partner line + recent sentences + reply type (source plan §4.5 step 5; web-ui
- * Req 27.11, 29.8).
+ * Small LRU on codes + partner line + recent sentences + reply type + pinned words (source plan §4.5
+ * step 5; web-ui Req 27.11, 29.8, 30.1).
  */
 export class DecodeCache {
   private map = new Map<string, RemoteResult>();
   constructor(private max = 20) {}
-  static key(codes: string[], partner?: string, recent: readonly string[] = [], intent?: ReplyIntent): string {
+  static key(codes: string[], partner?: string, recent: readonly string[] = [], intent?: ReplyIntent, pins: readonly (string | undefined)[] = []): string {
     let key = `${codes.join(' ')}|${partner?.trim() ?? ''}`;
     // JSON keeps the recent lines apart whatever they contain; no recent keeps the old key.
     if (recent.length > 0) key += `|${JSON.stringify(recent)}`;
     // A reply type is one of three fixed words, so it cannot run into the other parts; none keeps the old key.
     if (intent) key += `|intent:${intent}`;
+    // Pinned words are sent as one-word slots (web-ui Req 30.1), so they make a different request; none keeps the old key.
+    if (pins.some(Boolean)) key += `|pins:${JSON.stringify(pins.map((p) => p ?? null))}`;
     return key;
   }
   get(key: string): RemoteResult | undefined {

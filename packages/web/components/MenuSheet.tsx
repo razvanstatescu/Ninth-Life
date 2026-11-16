@@ -1,6 +1,8 @@
 'use client';
+import type { ReactNode } from 'react';
 import type { StatusLine } from '@/lib/status';
-import { SHEET_REPLY_ROWS } from '@/lib/replies';
+import { SHEET_REPLY_ROWS, type ReplyCell } from '@/lib/replies';
+import { Button as CardButton } from './Button';
 import { StatusPill } from './AppHeader';
 import { Button } from './Button';
 import { QuickReplies } from './QuickReplies';
@@ -26,6 +28,8 @@ export function MenuSheet({
   sentence,
   about,
   onReply,
+  replyRows = SHEET_REPLY_ROWS,
+  onCards,
 }: {
   open: boolean;
   status: StatusLine[];
@@ -47,11 +51,19 @@ export function MenuSheet({
     onPartner?: () => void;
     /** The whole conversation (web-ui Req 27.6: on a short phone the only way to it). */
     onConversation?: () => void;
+    /** Short phones: the Finish the word group (web-ui Req 31.5), or null. */
+    words?: ReactNode;
+    /** Fix a word (web-ui Req 32.1); left out while there is nothing to fix. */
+    onFix?: () => void;
   } | null;
   /** Phones and tablets: the About links and this sentence (the footer is not on the screen). */
   about?: string | null;
   /** Speak a quick reply (web-ui Req 28.4); the caller closes the Menu. */
   onReply?: (text: string) => void;
+  /** The quick replies in rows (pinned phrases first, web-ui Req 35.1). */
+  replyRows?: readonly (readonly ReplyCell[])[];
+  /** Show a card (web-ui Req 35.2). */
+  onCards?: () => void;
 }) {
   return (
     <Sheet open={open} name="menu" title="Menu" onClose={onClose} scanning={scanning}>
@@ -60,9 +72,17 @@ export function MenuSheet({
           <h3 className="group__title" id="menu-replies">
             Quick replies
           </h3>
-          <QuickReplies variant="menu" rows={SHEET_REPLY_ROWS} onSay={onReply} />
+          <QuickReplies variant="menu" rows={replyRows} onSay={onReply} />
+          {onCards ? (
+            <div className="scan-cluster" data-scan-row="cards">
+              <CardButton variant="secondary" icon="show" onClick={onCards}>
+                Show a card
+              </CardButton>
+            </div>
+          ) : null}
         </section>
       ) : null}
+      {sentence?.words ?? null}
       {sentence ? (
         <section className="group" aria-labelledby="menu-sentence">
           <h3 className="group__title" id="menu-sentence">
@@ -72,6 +92,11 @@ export function MenuSheet({
             {sentence.onSentences ? (
               <Button variant="secondary" icon="menu" onClick={sentence.onSentences}>
                 Sentences
+              </Button>
+            ) : null}
+            {sentence.onFix ? (
+              <Button variant="secondary" icon="edit" onClick={sentence.onFix}>
+                Fix a word
               </Button>
             ) : null}
             <Button variant="secondary" icon="save" onClick={sentence.onSave} disabled={!sentence.canSave}>

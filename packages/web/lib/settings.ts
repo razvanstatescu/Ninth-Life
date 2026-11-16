@@ -25,6 +25,16 @@ export type Settings = {
    * (web-ui Req 28). On by default; off keeps the area's empty text, and they stay in Menu and Phrases.
    */
   quickReplies: boolean;
+  /**
+   * Finish the word (web-ui Req 31.1): up to 3 words that start with the keys typed, one press puts the whole
+   * word in. On by default; off, every letter is typed.
+   */
+  wordCompletion: boolean;
+  /**
+   * The partner strip (web-ui Req 33): a band at the top for the other person, "Typing…" then what was said.
+   * Off by default (Req 28.3); 'facing' turns it 180° for someone across a table, 'upright' for someone beside you.
+   */
+  partnerStrip: 'off' | 'facing' | 'upright';
   theme: ThemeChoice;
   targetSize: 'l' | 'xl';
   lang: 'en';
@@ -49,6 +59,8 @@ export const DEFAULT_SETTINGS: Settings = Object.freeze({
   llmRecent: false,
   dictation: false,
   quickReplies: true,
+  wordCompletion: true,
+  partnerStrip: 'off',
   theme: 'night',
   targetSize: 'l',
   lang: 'en',
@@ -81,6 +93,8 @@ export function sanitizeSettings(input: unknown): Settings {
     llmRecent: s.llmRecent === true,
     dictation: s.dictation === true,
     quickReplies: s.quickReplies !== false,
+    wordCompletion: s.wordCompletion !== false,
+    partnerStrip: oneOf(s.partnerStrip, ['off', 'facing', 'upright'] as const, d.partnerStrip),
     theme: oneOf(s.theme, ['night', 'day', 'system'] as const, d.theme),
     targetSize: oneOf(s.targetSize, ['l', 'xl'] as const, d.targetSize),
     lang: 'en',

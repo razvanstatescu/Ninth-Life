@@ -362,7 +362,7 @@ viewport heights measured in the iOS Simulator, thumb reach, motor-impaired touc
 24.6 THE keypad SHALL fill the width (keys wider than tall) and the height left over, keys 72 to 96px tall (128 with XL);
      the screen SHALL fit, with no scrolling, at 495px (iPhone SE in Safari with the Bottom tab bar) and up, dropping
      first the second suggestion row (under 760px), then the second sentence line (under 680px), then the header and
-     the key line (under 620px), then the suggestion rows (under 548px, Req 24.9).
+     the key line (under 640px), then the suggestion rows (under 548px, Req 24.9).
 24.7 THE keypad SHALL NOT move while typing; the sentence box SHALL keep its height and scroll in whole lines, kept on
      the newest word, AND the key line SHALL keep its place before the first key.
 24.8 IN switch scanning the rows SHALL follow the screen: keypad rows, suggestions (then More or Spell), offers, the action
@@ -424,14 +424,14 @@ say something again, show it, or keep track, without anything being saved.
      said" turn, unless the newest turn is the same "you said" line from the last 60 s; Test voice SHALL NOT add one.
 27.3 WHEN Done is pressed in They said, THE app SHALL add a "they said" turn (marked heard when Listen filled any of it);
      Change SHALL edit only the newest one, and saving it empty SHALL remove it.
-27.4 WHILE the stack shell is 620-1149px tall, THE header's They said button SHALL show their newest line on one row
+27.4 WHILE the stack shell is 640-1149px tall, THE header's They said button SHALL show their newest line on one row
      with the word "They" (or, while they have said nothing, your newest line with "You"), AND with no turns SHALL open
      the They said field.
 27.5 WHILE the split shell is shown, or the stack shell is at least 1150px tall, THE app SHALL show the newest 2 turns in
      a strip of fixed height above the sentence card, with They said and All; laptop layouts SHALL show the newest 3
      in a panel with Listen, Type their line and All.
 27.6 THE thread SHALL NOT change the keys' size or position, AND THE main screen SHALL NOT scroll at any size in
-     `responsive.mjs`; under 620px the thread SHALL be in Menu > This sentence > Conversation.
+     `responsive.mjs`; under 640px the thread SHALL be in Menu > This sentence > Conversation.
 27.7 THE Conversation sheet SHALL list every turn newest first with Say again (yours only), Show and Copy, AND SHALL offer
      Share only where the browser can share and Copy only where it can copy.
 27.8 WHEN Say again is chosen, THE app SHALL speak that text and nothing else, inside the press.
@@ -500,3 +500,148 @@ the fitting sentence comes first, while the words still come only from my keys.
 29.9 THE copy SHALL say what reply types do and SHALL NOT say that the model understands or decides, nor claim any
      effect: "Agree, Disagree and Ask change the order of the sentences for your keys. They never change the words. Ask
      also adds a question mark." Req 12.1 and 12.2 name the reply type in what is sent.
+
+## Requirement 30: Ranking and input fixes (2026-11-16, improvement plan Part 1 "Bugs")
+
+**User story:** As a person typing a sentence, I want model ranking to keep helping after I fix a word, without
+spending the quota on half-typed words, and I want to know when a key press was not taken, so that nothing I press
+is lost without a word.
+
+30.1 WHEN model ranking is on AND any word is pinned (by # or by a chosen sentence), THE app SHALL still request
+     ranking, sending each pinned slot as a one-word lattice slot (the pinned word), AND the decode cache key SHALL
+     include the pins. THE app SHALL show only model sentences that agree with every pin, and every one SHALL pass
+     `validate()` as before (Req 12.4).
+30.2 WHILE the last word is open (keys still coming), THE app SHALL NOT send a ranking request until no key has been
+     pressed for `RANK_PAUSE_OPEN_MS` (1,000 ms). WHEN the last word is closed (Space, or a word pinned or chosen),
+     THE app SHALL send it after the normal `RANK_DEBOUNCE_MS` (400 ms). Any key SHALL restart the wait.
+30.3 WHEN a letter key would add a 17th key to a word, or a 21st word to a sentence, THE app SHALL NOT add it (the
+     caps stay 16 and 20) AND SHALL announce in the polite live region "Words can be at most 16 letters." or "A
+     sentence can have at most 20 words.".
+30.4 WHEN a repeat press of the same key inside the accept delay is ignored (Req 7.2), THE key SHALL show it for
+     `IGNORED_MARK_MS` (700 ms) with a dashed ring just inside the key edge (clear of the corner digit), in the key's own text colour (a shape change, no motion, not
+     ember), AND only the first ignored press of a visit SHALL be announced, politely: "Pressed again too quickly, so
+     the second press was not counted. Accept delay in Settings changes this." Later ignored presses SHALL show on
+     the key only.
+
+## Requirement 31: Finish the word (2026-11-16, improvement plan T1)
+
+**User story:** As a person who types to talk, I want the words that start with my keys offered as I type, so that one
+press finishes a long word, while every word still matches the keys on screen.
+
+31.1 WHILE the last word is open, has no fixed word (# or Spell), the sentence on show is not the spoken one, the mode is
+     letter and `wordCompletion` is on (default), THE app SHALL offer up to 3 words whose code starts with the keys typed
+     and is longer (at most 16 keys), ranked offline by the word-pair model given the word before (`rankCompletions`),
+     in 3 fixed places: word 1 left, word 3 right; fewer words leave the later places empty, never shifted.
+31.2 WHEN a word is chosen (touch, keyboard or switch), THE app SHALL set that word's keys to the word's code, fix the
+     word and close it (the next letter key starts a new word), AND SHALL NOT speak.
+31.3 THE key line and the proof chip SHALL show every key of a finished word, marking the keys not pressed with a
+     dotted underline and, for screen readers, ", N filled in". THE proof panel SHALL then add "A dotted line marks keys
+     that came with a word you picked. Every word still matches all of its keys."
+31.4 WHEN Back is pressed on a finished word (no punctuation set), THE app SHALL reopen it at the keys that were pressed,
+     and the words SHALL show again.
+31.5 THE words SHALL take the last row of the suggestion area on phones and tablets (the only row on a 1-row phone,
+     with Sentences in Menu while they hold it), a row under the SpeakBar above the reply types and the sentences on
+     laptops, and a "Finish the word" group in Menu on phones under 548px tall (no suggestion area there, ADR-005).
+     THE keypad SHALL NOT move. Each word SHALL be a button at least 56px tall with text 16px or larger (20px; 16px on
+     2 lines for a long word), never cut.
+31.6 IN scan modes THE words SHALL be scan row 4, after the keypad rows, skipped while there are none (the rows after it
+     move down one). Alt+Shift+1 to 3 and numpad + (word 1) SHALL choose them while they are on screen; plain digits
+     always type. THE words SHALL be a section named "Finish the word", outside any live region; the sentence live region
+     SHALL add "Words: w1, w2, w3." after typing pauses. Nothing SHALL be announced per key.
+31.7 THE app SHALL offer only lexicon words that are in the word-pair data, My words or the word pack, AND nothing about
+     the words SHALL be sent for model ranking (a finished word is a pin, sent as one word, Req 30.1).
+31.8 THE public claim SHALL read "Every spoken word matches the keys on screen, and nothing gets there without your
+     press." (short form "Every spoken word matches the keys on screen"), on the website, the About page, the metadata,
+     `product.md` and the app's proof panel (decision 1 of the improvement plan, D-claim).
+
+## Requirement 32: Fix any word, and Did you mean (2026-11-16, ADR-009)
+
+**User story:** As a person who types to talk, I want to change any word of my sentence, and to be offered the word I
+meant when a slip leaves keys that spell nothing, so that one slip does not cost me the whole sentence.
+
+32.1 WHILE a sentence is typed and not yet spoken, pressing the sentence (a button named "{sentence}. Fix a word"), Fix a
+     word in Menu > This sentence, or Fix a word in the laptop action row SHALL open the Fix a word sheet with one button
+     per word (at least 56px; skipped for a 1-word sentence). On phones the sentence is the first cell of the card's
+     scan row, before Clear. THE sentence SHALL be a button only where it is at least 56px tall: on stack screens whose
+     card has one 48px line (under 680px tall, moved up by a partner band) it SHALL stay plain text, and Menu > This
+     sentence > Fix a word is the way in.
+32.2 FOR the word picked, THE sheet SHALL offer its other readings (keys unchanged), up to 3 words one key away ranked by
+     fit with the words before and after (`keyFixes`), Retype this word and Spell this word; a pick SHALL change only that
+     word, SHALL close the sheet, SHALL be announced politely AND SHALL NOT speak.
+32.3 WHEN Retype is chosen, THE key line SHALL start with "Retype ·" and the next letter keys SHALL replace that word's keys
+     (# cycles it, Finish the word offers words for it) until 0; Back or 0 with no key typed, or Back deleting its last
+     key, SHALL keep the old word ("{word} kept."). No ranking request SHALL be sent while a word is retyped.
+32.4 WHEN a word's keys spell nothing and there is no word to finish, THE word row (Req 31.5's places; Menu under 548px)
+     SHALL offer up to 3 words one key away (a key changed, added or removed), titled "Did you mean", with Spell beside
+     them on a 1-row phone; THE app SHALL NOT apply any offer without a press.
+32.5 WHEN a word one key away is taken, THE app SHALL set that word's keys to the word's code, AND THE key line and the
+     proof chip SHALL mark the change: a changed or added key in a 2px box, a removed key struck through in its place,
+     and ", key N changed from A to B" / ", key B added" / ", extra A removed" for screen readers.
+32.6 WHEN Back is pressed right after a word one key away was taken on the last word, THE app SHALL restore the old keys
+     (an open word reopens).
+32.7 THE sheet's buttons SHALL be scan rows of at most 4 (rows, then cells, Req 16.2); THE keypad SHALL NOT move.
+
+## Requirement 33: Partner strip (2026-11-16, ADR-010)
+
+**User story:** As a person who types to talk, I want the other person to see that I am typing and then read what I said,
+so that they wait instead of talking on, without seeing my words before I speak.
+
+33.1 THE `partnerStrip` setting SHALL be Off by default, with "Turned to face the person opposite" and "Upright, for
+     someone beside you", AND THE app SHALL show no typing status while it is Off (Req 28.3).
+33.2 WHILE it is on, THE app SHALL show a band at the top of the screen with nothing (nothing said yet, or their line is the
+     newest), "Typing…" while a sentence is in progress, or the newest text the person said or showed, the newest event
+     first (`partnerView`).
+33.3 THE band SHALL NOT show the sentence, its letters, its keys or any candidate before it is spoken or shown.
+33.4 THE band SHALL have no controls, SHALL NOT be a live region, SHALL NOT animate AND SHALL NOT time out.
+33.5 THE band SHALL be full (112px; 128px on split and laptops) on stack screens at least 740px tall, split screens at
+     least 752px tall and laptops, compact (64px, one line, cut with "…") on stack screens 640-739px and split screens
+     688-751px, and absent below (Settings then says the screen is too short). With a band, THE shells SHALL follow
+     today's height rules at the visible height minus the band and its gap (with the compact band the stack hides its
+     header up to 711px), SHALL fit without scrolling with keys of at least 72px, AND the keys SHALL NOT move while typing.
+33.6 THE full band's text SHALL be at most 40px and at least 24px, fitting the band ("Typing…" 32px); "Turned" SHALL rotate
+     it 180°.
+
+## Requirement 34: Punctuation where typed, and capitals (2026-11-16)
+
+**User story:** As a person who types to talk, I want commas and full stops where I type them and capitals on days and
+names, so that what I say reads and sounds the way I mean it.
+
+34.1 WHEN 1 is pressed with at least one word, THE app SHALL close the open word (or end a retype) AND SHALL cycle the mark
+     after that word through ".", "?", "!", ",", none; the mark SHALL stay after that word when more words are typed.
+     With nothing typed, 1 SHALL do nothing. (Changes Req 1.6.)
+34.2 WHEN Back is pressed with no open word, THE app SHALL remove the last word's mark before the word. (Changes 1.4.)
+34.3 THE app SHALL capitalise the first word and every word after ".", "?" or "!", AND the offline ranking (and Finish the
+     word) SHALL start a new sentence there (the previous word is the sentence start).
+34.4 THE app SHALL show the words of a fixed table (days, the months that are not ordinary words, holidays, titles, a few
+     short forms, languages and places; core `CAPITALS`) with their capitals, after the person's own spellings.
+34.5 Marks and capitals SHALL NOT change the words, their keys or the proof check, AND SHALL NOT be sent for model ranking.
+34.6 Ask's "?" SHALL end the sentence only while the last word has no mark of its own; 1 on the last word hands it to the
+     person (cycles on from "?"). (Amends 29.3.)
+34.7 THE Fix a word sheet SHALL offer "Mark after it" (None, Full stop, Question mark, Exclamation mark, Comma) for the
+     word picked.
+34.8 Each press of 1 SHALL be announced in the polite region as the mark in words ("Full stop after now.", "No mark."),
+     and Back removing a mark as "Mark removed.".
+
+## Requirement 35: Your quick replies, cards and setup (2026-11-16)
+
+**User story:** As a person who types to talk, I want my own replies one press away, a card that asks people to wait,
+opening lines for a call, and a quick way for a helper to add names and phrases, so that I am ready before the
+conversation starts.
+
+35.1 Your phrases SHALL offer "Pin to quick replies" (a toggle with `aria-pressed`) for a phrase of at most 20
+     characters whose words wrap into at most 2 lines of the narrowest phone cell (144px of text at 20px, measured in the
+     browser), at most 5 pinned ("5 phrases are pinned. Unpin one first."; a phrase that does not fit says "Too long for
+     a quick reply: it must fit 2 lines on a phone (about 20 letters). Use Phrases or Show a card for longer ones.").
+     THE quick replies SHALL be the pinned phrases in pin order, then "Hold on.", "Yes.", "No.", "Pardon?", "Thanks."
+     without repeats, 5 in all, in every list (Menu, Phrases, laptops). On phones and tablets, WHEN any reply is longer
+     than 9 characters, THE area SHALL lay them out 2 to a row (2 lines of 20px in a 56px cell, never cut, never
+     smaller), the last reply row ending with Phrases; replies that do not fit the area's rows stay in Menu and Phrases.
+     (Amends 28.1.)
+35.2 WHEN Show is pressed with nothing typed, THE app SHALL open "Show a card" with 4 fixed cards and the saved phrases
+     (also in Menu > Quick replies); a card SHALL open Show mode with that text, SHALL add a "you said" turn (shown) AND
+     SHALL NOT speak.
+35.3 Phrases SHALL have a "Phone calls" group of 4 opening lines that speak on press, with the note that Ninth Life cannot
+     speak into a phone call.
+35.4 My words SHALL accept names and words, and phrases, one per line, typed or pasted ("Add names and phrases"), AND
+     SHALL show the pack import preview (Req 22.3), titled "From what you typed", before adding anything.
+35.5 THE built-in phrases SHALL NOT hold two phrases that differ only by a contraction or "thanks" / "thank you".

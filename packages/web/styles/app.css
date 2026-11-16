@@ -587,7 +587,7 @@ body:has(.app--shell) { min-height: 0; }
 @media (max-height: 679px) {
   .app--stack .nl-speakbar__text { height: 48px; }
 }
-@media (max-height: 619px) {
+@media (max-height: 639px) {
   .app--stack { --shell-head: 0px; }
   .app--stack .shell-screen { padding-bottom: env(safe-area-inset-bottom); } /* in a tab, the toolbar is below */
   .app--stack .app-header { display: none; }
@@ -766,3 +766,102 @@ body:has(.app--shell) { min-height: 0; }
     .app--wide { visibility: hidden; }
   }
 }
+
+/* Finish the word (web-ui Req 31.1, 31.5): three equal places in one 56px row; a place with no word stays
+   empty so the words never shift. In the shells' area the row takes the last row (the area's height is
+   unchanged, so the keypad does not move). */
+.word-row { flex: none; padding: 6px; margin: -6px; border-radius: calc(var(--radius-key) + 6px); }
+.word-row__cells { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
+.word-row__word { width: 100%; min-width: 0; height: var(--target-min); padding: 0 var(--space-2); font-size: 20px; line-height: 24px; font-weight: 600; white-space: nowrap; }
+.word-row__word--long { font-size: var(--type-label-size); line-height: 18px; white-space: normal; overflow-wrap: anywhere; text-align: center; }
+.word-row__empty { display: block; height: var(--target-min); }
+.word-row--menu { padding: 0; margin: 0; }
+/* The shells: the sentence rows above, the word row last, by the keys; together the area's fixed height. */
+.sugg-split { display: flex; flex-direction: column; gap: var(--space-2); }
+/* Keys that came with a word picked from the row (web-ui Req 31.3): a dotted underline, not colour alone. */
+.nl-filled { text-decoration: underline dotted var(--ink-muted); text-decoration-thickness: var(--line-width); text-underline-offset: 3px; }
+
+/* Fix a word (web-ui Req 32, ADR-009). The sentence is the button that opens it: it keeps the sentence's look. */
+.nl-speakbar__fix {
+  display: block; width: 100%; min-height: min(var(--target-min), 100%); margin: 0; padding: 0; border: 0; border-radius: var(--radius-chip);
+  background: transparent; color: inherit; font: inherit; line-height: inherit; letter-spacing: inherit; text-align: left; cursor: pointer;
+}
+.nl-speakbar__fix:focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: 3px; }
+.nl-speakbar__fix.is-lit { box-shadow: 0 0 0 var(--scan-width) var(--ember), 0 0 0 calc(var(--scan-width) + 3px) var(--plum); }
+/* A changed or added key: a 2px box; a removed key: struck through in its place. A shape, not colour alone. */
+.nl-keyfix { border: var(--line-width) solid var(--ink); border-radius: 4px; padding: 0 1px; }
+.nl-keyfix-removed { color: var(--ink-muted); text-decoration: line-through; text-decoration-thickness: var(--line-width); }
+.fix__lead { margin: 0 0 var(--space-3); font-size: var(--type-body-size); }
+.fix__words { display: flex; flex-direction: column; gap: var(--space-2); }
+.fix__row { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(140px, 100%), 1fr)); gap: var(--space-2); margin-bottom: var(--space-2); }
+.fix__word { flex-direction: column; gap: 2px; min-height: 72px; padding: var(--space-2); }
+.fix__word-text { font-size: 26px; line-height: 30px; font-weight: 600; overflow-wrap: anywhere; }
+.fix__word-code { font-family: var(--font-mono); font-size: var(--type-label-size); line-height: 20px; font-weight: 500; color: var(--ink-muted); }
+
+/* The partner strip (web-ui Req 33, components/PartnerStrip.tsx): a band for the other person, first on the
+   screen. Full 112px (128px on split and laptops), compact 64px, plus the 8px gap. No controls, no motion. */
+.partner-strip {
+  flex: none; display: flex; align-items: center; justify-content: center; height: 112px; padding: var(--space-2) var(--space-4);
+  background: var(--surface); border-bottom: var(--line-width) solid var(--line-strong); border-radius: var(--radius-card); overflow: hidden;
+}
+.partner-strip--compact { height: 64px; padding: 0 var(--space-4); }
+.app--split .partner-strip--full, .app:not(.app--shell) .partner-strip--full { height: 128px; }
+.partner-strip__text {
+  margin: 0; width: 100%; max-height: 100%; overflow: hidden; text-align: center; color: var(--ink);
+  font-size: 40px; line-height: 48px; font-weight: 700; overflow-wrap: anywhere;
+}
+.partner-strip.is-typing .partner-strip__text { font-size: 32px; line-height: 40px; }
+.partner-strip--compact .partner-strip__text { font-size: 28px; line-height: 34px; white-space: nowrap; text-overflow: ellipsis; }
+/* Too long even at 24px: the end of what was said shows (Show mode has all of it). */
+.partner-strip--full.is-cut .partner-strip__text { display: flex; flex-direction: column; justify-content: flex-end; }
+.partner-strip__text.is-flipped { transform: rotate(180deg); }
+.app--split .partner-strip { grid-area: partner; }
+.app--split.app--partner-compact .app__inner,
+.app--split.app--partner-full .app__inner {
+  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
+  grid-template-areas: "partner partner" "header pad" "thread pad" "speak pad" "cands pad" "actions pad";
+}
+/* The stack gives the band its height: the screen below follows today's rules at the height left. */
+.app--stack.app--partner-compact .shell-screen { min-height: calc(100svh - max(var(--space-2), env(safe-area-inset-top)) - var(--shell-head) - 72px); }
+.app--stack.app--partner-full .shell-screen { min-height: calc(100svh - max(var(--space-2), env(safe-area-inset-top)) - var(--shell-head) - 120px); }
+/* Today's height rules, moved up by the band (72px compact, 120px full; split 72px / 136px). */
+@media (min-height: 900px) and (max-height: 971px) { .app--stack.app--partner-compact .nl-speakbar__text { height: calc(2 * 48px); } }
+@media (min-height: 900px) and (max-height: 1019px) { .app--stack.app--partner-full .nl-speakbar__text { height: calc(2 * 48px); } }
+@media (max-height: 751px) { .app--stack.app--partner-compact .nl-speakbar__text { height: 48px; } }
+@media (max-height: 799px) { .app--stack.app--partner-full .nl-speakbar__text { height: 48px; } }
+/* 639 + 72 and 639 + 120: the header hides where the height left is under 640px. */
+@media (max-height: 711px) {
+  .app--stack.app--partner-compact { --shell-head: 0px; }
+  .app--stack.app--partner-compact .shell-screen { padding-bottom: env(safe-area-inset-bottom); }
+  .app--stack.app--partner-compact .app-header { display: none; }
+  .app--stack.app--partner-compact .nl-speakbar__digits { display: none; }
+}
+@media (max-height: 759px) {
+  .app--stack.app--partner-full { --shell-head: 0px; }
+  .app--stack.app--partner-full .shell-screen { padding-bottom: env(safe-area-inset-bottom); }
+  .app--stack.app--partner-full .app-header { display: none; }
+  .app--stack.app--partner-full .nl-speakbar__digits { display: none; }
+}
+@media (max-width: 959px) and (max-height: 832px) and (orientation: portrait) {
+  .app--partner-compact .nl-keypad { padding: var(--space-3); gap: var(--space-2); }
+  .app--partner-compact .nl-keypad__row { gap: var(--space-2); }
+}
+@media (max-width: 959px) and (max-height: 880px) and (orientation: portrait) {
+  .app--partner-full .nl-keypad { padding: var(--space-3); gap: var(--space-2); }
+  .app--partner-full .nl-keypad__row { gap: var(--space-2); }
+}
+@media (min-height: 700px) and (max-height: 771px) { .app--split.app--partner-compact .nl-speakbar__text { height: calc(2 * 48px); } }
+@media (min-height: 700px) and (max-height: 835px) { .app--split.app--partner-full .nl-speakbar__text { height: calc(2 * 48px); } }
+
+/* Show a card and Add names and phrases (web-ui Req 35.2, 35.4). */
+.cards { display: flex; flex-direction: column; gap: var(--space-2); }
+.cards__card { width: 100%; justify-content: flex-start; text-align: left; white-space: normal; padding: var(--space-3) var(--space-4); }
+.textarea { display: block; width: 100%; min-height: calc(3 * 24px + 2 * var(--space-3)); resize: vertical; font: inherit; line-height: 24px; padding: var(--space-3); }
+.phrase__note { flex-basis: 100%; }
+
+/* Long pinned replies on a phone (web-ui Req 35.1): 2 to a row, 2 lines of 20px in a 56px cell (no vertical padding),
+   never cut, never smaller. */
+.quick-replies--pairs .quick-replies__row:not(.quick-replies__slot) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.quick-replies--pairs .quick-reply { padding: 0 var(--space-2); }
+/* Laptops: the sentence box has no fixed height, so the button keeps the full 56px target (accessibility rule 1). */
+.app:not(.app--shell) .nl-speakbar__fix { min-height: var(--target-min); }

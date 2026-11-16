@@ -1,11 +1,15 @@
 import type { KeyDef } from '@/lib/keys';
 
-/** design-system Key (nl-key): letters lead, the digit sits small in the corner. */
-export function Key({ def, lit, onPress }: { def: KeyDef; lit?: boolean; onPress: (def: KeyDef) => void }) {
+/**
+ * design-system Key (nl-key): letters lead, the digit sits small in the corner. `ignored`: the last press
+ * was a repeat inside the accept delay and was not counted; a dashed inner ring shows it (shape, not colour).
+ */
+export function Key({ def, lit, ignored, onPress }: { def: KeyDef; lit?: boolean; ignored?: boolean; onPress: (def: KeyDef) => void }) {
   return (
     <button
       type="button"
-      className={lit ? 'nl-key is-lit' : 'nl-key'}
+      className={['nl-key', lit && 'is-lit', ignored && 'is-ignored'].filter(Boolean).join(' ')}
+      data-ignored={ignored ? '' : undefined}
       aria-label={def.ariaLabel}
       data-key={def.id}
       data-pad-focus=""

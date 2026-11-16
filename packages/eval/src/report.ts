@@ -82,6 +82,40 @@ ${src.join('\n')}
 `;
 }
 
+/** B1 against B1c (Finish the word, web-ui Req 31): presses, words taken, scan steps on both grids. */
+function completionSection(results: Results): string {
+  const b1 = results.configs.find((c) => c.id === 'B1' && c.status === 'ok');
+  const b1c = results.configs.find((c) => c.id === 'B1c' && c.status === 'ok');
+  if (!b1c?.metrics) return '';
+  const line = (c: ConfigResult, src?: string) => {
+    const m = src ? c.bySource?.[src] : c.metrics;
+    if (!m) return '';
+    const app = m.scanStepsPerCharApp === undefined ? 'n/a' : f2(m.scanStepsPerCharApp);
+    const done = m.completedWords === undefined ? '0' : pct(m.completedWords);
+    return `| ${c.label} | ${src ?? 'all'} | ${m.items} | ${f2(m.pressesPerChar)} | ${pct(m.ksr)} | ${done} | ${pct(m.top1)} | ${f2(m.scanStepsPerChar)} | ${app} |`;
+  };
+  const rows: string[] = [];
+  for (const src of [undefined, 'aac', 'turk']) for (const c of [b1, b1c]) if (c) rows.push(line(c, src));
+  return `
+## Finish the word (B1c)
+
+B1c is B1 with Finish the word (web-ui Req 31): after each key the simulated user looks at the up to 3
+words the app offers (core \`rankCompletions\`, ranked by the word pair before, limited to words the
+word-pair model knows) and takes the gold word at the first chance that saves a press. Taking a word is
+one press and closes it. Taken words stay fixed, the sentence is decoded with them, and the usual
+corrections follow. It is an ideal user who never misses an offer, so real people will save less; fewer
+presses is not the same as less time (reading the offers costs attention).
+
+Scan steps/char is on the harness grid (sentences and the offered words in row 0, then the keypad);
+"app grid" is the app's own order (keypad rows, then the 3 words, then 5 sentences), with the word row
+counted as always there.
+
+| Config | Source | Items | Presses/char | KSR | Words taken | Sent top-1 | Scan steps/char | Scan steps/char (app grid) |
+|---|---|---|---|---|---|---|---|---|
+${rows.filter(Boolean).join('\n')}
+`;
+}
+
 export function resultsMarkdown(results: Results, timing: Timing, env: { node: string; platform: string }, initialsTiming: Timing = {}): string {
   const s = results.subset;
   return `# Ninth Life eval results
@@ -117,5 +151,5 @@ ${sourceTable(results)}
 
 "Unreachable" = items with a word that is not in the lexicon, so neither decoding nor cycling can
 produce it (names, rare spellings).
-${initialsSection(results, initialsTiming)}`;
+${completionSection(results)}${initialsSection(results, initialsTiming)}`;
 }

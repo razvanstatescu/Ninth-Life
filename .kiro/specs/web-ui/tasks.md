@@ -218,3 +218,37 @@ Built 2026-11-09. Research: `docs/research/mobile-layout.md`,
         Say again guard), `test/e2e/responsive.mjs` (bubble shows their line, the group in the last row)
 - [ ] 66. Measure before any claim: `pnpm -F @ninth/eval llm --intent oracle` and a v6-vs-v8 regression need a key
       (decoder-service task 16.7); try reply types with AAC users (ADR-008)
+
+## Plan Part 1 and 2 (docs/plan/02-improvement-plan.md, 2026-11-16)
+- [x] 67. Ranking and input fixes: `rankingLattice`, `rankDelayMs`, `RANK_DEBOUNCE_MS` / `RANK_PAUSE_OPEN_MS` in
+      `lib/sentence.ts`; pins in `DecodeCache.key`; `limitFor` and `LIMIT_MESSAGE` in `lib/composer.ts`; the ignored
+      press mark (`ignoredKey`, `Key` `ignored`, `.nl-key.is-ignored`) and its one-time announcement in
+      `CommunicationScreen` (Req 30.1-30.4)
+  - [x] 67.1 Tests: `test/ranking-fixes.test.tsx` (lattice with pins, request, delays, caps, the mark and the single
+        announcement), `test/plan-bugs.test.tsx`, `test/e2e/plan-bugs.mjs`; `test/e2e/responsive.mjs` (24 sizes)
+- [x] 68. Finish the word: core `rankCompletions` + `LanguageModel.successors` / `knows` (`bigramModel`); composer
+      `complete`, `typed`, Back reopens; `WordRow` on the shells' last row, laptops and the short phones' Menu; scan
+      row 4; Alt+Shift+1-3 and numpad +; the live region's "Words:"; `KeyCode` and `ProofChip` filled-in keys; the
+      `wordCompletion` setting (Settings > Typing > Finish words); the new claim everywhere (Req 31.1-31.8)
+  - [x] 68.1 Tests: `core/test/complete.test.ts` (properties), `test/completion.test.tsx`, `test/finish-word.test.tsx`,
+        `test/claim.test.ts`, `eval/test/completion-safety.test.ts`; `test/e2e/responsive.mjs` (24 sizes)
+  - [x] 68.2 Eval: `B1c` in `packages/eval/src/completion.ts`, app-grid scan steps, RESULTS.md regenerated
+  - [ ] 68.3 Try the word row with AAC users: are three words read or ignored, and does it save time, not only presses
+- [x] 69. Fix any word and Did you mean: core `codeEdit`, `neighbourCodes`, `keyFixes`; composer `recode`, `edit`,
+      `openIndex`, Back restores `was`; `FixSheet`, the sentence as a button, Fix a word in Menu and the laptop action
+      row; Did you mean in the word row and the short phones' Menu; `KeyCode` / `EditedCode` marks; About copy;
+      ADR-009 (Req 32.1-32.7)
+  - [x] 69.1 Tests: `core/test/fix.test.ts` (properties), `test/fix-word.test.tsx`; `test/phone.test.tsx` (Menu list);
+        `test/e2e/responsive.mjs` (24 sizes)
+  - [ ] 69.2 Try Fix a word with AAC users: is the sentence-as-a-button found without a visible label
+- [x] 70. Partner strip: `partnerStrip` setting (Settings > Partner strip), `lib/partner.ts`, `PartnerStrip.tsx`,
+      `shiftQuery` and the `.app--partner-*` CSS, About copy, ADR-010 (Req 33.1-33.6)
+  - [x] 70.1 Tests: `test/partner-view.test.ts`, `test/partner-strip.test.tsx`; band sizes checked at 15 sizes by script
+- [x] 71. Punctuation where typed and capitals: core `formatSentence` marks, `SENTENCE_END`, `CAPITALS`, `beam` /
+      `decodeGhost` `starts`; composer `Slot.punct`, `punct` / `back` / `mark`, `marksOf`, `startsOf`; every format
+      call site; the display map; announcements; Fix a word "Mark after it"; About copy (Req 34.1-34.8)
+  - [x] 71.1 Tests: `core/test/marks.test.ts` (properties), `test/marks.test.tsx`
+- [x] 72. Your quick replies, cards and setup: pinned phrases as quick replies (`quickReplies`, `setPhrasePinned`, the
+      Phrases toggle), Show a card (`CardsSheet`, Show with nothing typed, Menu), Phone calls in Phrases, Add names and
+      phrases in My words (`packFromLines`), `core-en.json` v2 without near-duplicates (Req 35.1-35.5)
+  - [x] 72.1 Tests: `test/my-replies.test.ts`; `test/phone.test.tsx` and the quick-reply tests unchanged

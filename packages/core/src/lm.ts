@@ -20,6 +20,10 @@ export interface BigramFile {
 
 export interface LanguageModel {
   logP(prev: string, word: string): number;
+  /** Words the model lists after `prev`, if it has a table (bigram). Used by rankCompletions (web-ui Req 31.1). */
+  successors?(prev: string): readonly string[];
+  /** True when the model's own data holds the word (bigram vocabulary). Used to limit word offers (web-ui Req 31.7). */
+  knows?(word: string): boolean;
 }
 
 /** Sentence-start token. */
@@ -98,7 +102,32 @@ export function bigramModel(file: BigramFile, lex: Lexicon, opts?: LmOptions): L
   const penalty = letterPenalty(opts);
   const bos = typeof file.bos === 'string' ? file.bos : BOS;
   const backoff = file.backoff ?? {};
+  let vocab: Set<string> | null = null;
+  const vocabulary = (): Set<string> => {
+    if (vocab) return vocab;
+    vocab = new Set<string>();
+    for (const [p, row] of Object.entries(file.logp)) {
+      if (p !== bos) vocab.add(p);
+      if (row && typeof row === 'object') for (const w of Object.keys(row)) vocab.add(w);
+    }
+    return vocab;
+  };
+  const succ = new Map<string, readonly string[]>();
   return {
+    successors(prev: string): readonly string[] {
+      const p = prev === bos || prev === BOS ? bos : norm(prev);
+      let out = succ.get(p);
+      if (!out) {
+        const row = own(file.logp, p);
+        out = row && typeof row === 'object' ? Object.keys(row) : [];
+        if (succ.size >= 2048) succ.clear();
+        succ.set(p, out);
+      }
+      return out;
+    },
+    knows(word: string): boolean {
+      return vocabulary().has(norm(word));
+    },
     logP(prev: string, word: string): number {
       const p = prev === bos || prev === BOS ? bos : norm(prev);
       const w = norm(word);

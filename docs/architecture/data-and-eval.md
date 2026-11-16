@@ -245,7 +245,16 @@ random seeds) and two CLI runs give byte-identical files.
 |---|---|---|---|---|---|
 | B0 dict | 91.5% | 62.4% | 92.0% | −1.2% | 3.61 |
 | B1 ghost | 96.8% | 85.6% | 97.3% | −0.0% | 3.57 |
+| B1c ghost + finish the word (top 3) | 97.7% | 88.9% | 97.9% | 37.6% | 1.63 |
 | B2–B4 | not run yet: needs `ANTHROPIC_API_KEY` (commands below) | | | | |
+
+**B1c, Finish the word** (`src/completion.ts`, web-ui Req 31): the simulated user types each word a key
+at a time and, after each key, takes the gold word if core `rankCompletions` offers it (top 3, the
+word pair before, words the word-pair model knows) at the first chance that saves a press. A taken
+word costs one press, closes the word and is pinned; the sentence is then decoded with the pins and
+the usual corrections follow. It is an ideal user (real people will save less) and presses are not
+time. `RESULTS.md` also reports scan steps on the app's own grid (keypad rows first, then the word
+row, then the sentences): B1 2.59, B1c 1.88 steps per character.
 
 B1 beats the plan's 92% word-accuracy target on this test set. Latency for both is well under
 1 ms per decode (see `RESULTS.md`). Per-source breakdown: B1 reaches 88.7% top-1 on AACText and

@@ -22,7 +22,7 @@ import { siteOrigin } from '@/lib/site-url';
 export const SITE_NAME = 'Ninth Life';
 
 export const SITE_DEFINITION =
-  'Ninth Life brings back 9-key predictive text as a free web app for typing to talk. Press one key per letter on keys 2 to 9 and hear the sentence you meant: every spoken word matches the keys you pressed.';
+  'Ninth Life brings back 9-key predictive text as a free web app for typing to talk. Press one key per letter on keys 2 to 9 and hear the sentence you meant: every spoken word matches the keys on screen, and nothing gets there without your press.';
 
 /** Open Graph locale, in its `language_TERRITORY` form. */
 export const OG_LOCALE = 'en_US';

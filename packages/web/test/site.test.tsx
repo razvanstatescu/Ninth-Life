@@ -383,7 +383,7 @@ describe('copy and claims (MS-4, MS-5)', () => {
     // Round 3: the per-source split (RESULTS.md "By source", B1 right sentence first) also comes from getResults().
     // Round 4: word frequency's right word first too (RESULTS.md B0 "Word acc"), so every measure has its pair.
     expect(r.bySource).not.toBeNull();
-    const allowed = new Set([r.ghost.top1, r.ghost.top5, r.ghost.wordAcc, r.ghost.ksr, r.dict.top1, r.dict.top5, r.dict.wordAcc, r.bySource!.aac.top1, r.bySource!.turk.top1]);
+    const allowed = new Set([r.ghost.top1, r.ghost.top5, r.ghost.wordAcc, r.ghost.ksr, r.dict.top1, r.dict.top5, r.dict.wordAcc, r.bySource!.aac.top1, r.bySource!.turk.top1, ...(r.finish ? [r.finish.ksr] : [])]);
     // Per text node, so a heading ending in a digit ("top 5") never runs into the value after it.
     const found: string[] = [];
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -1318,7 +1318,10 @@ describe('lower sections (round 3, 2026-11-12)', () => {
     expect(cards[0]).toContain(`${r.bySource!.aac.top1} of ${r.bySource!.aac.items} AAC sentences`);
     expect(cards[0]).toContain(`${r.bySource!.turk.top1} of ${r.bySource!.turk.items} dialogue replies`);
     expect(cards[1]).toContain(`${r.ghost.pressesPerChar} key presses per character`);
-    expect(cards[1]).toContain('Letter mode saves no key presses.');
+    // Finish the word (B1c), measured in RESULTS.md, with the caveat (web-ui Req 31; the section's simulated-typist line).
+    expect(r.finish).not.toBeNull();
+    expect(cards[1]).toContain(`Typing every letter. With Finish the word, ${r.finish!.pressesPerChar}: ${r.finish!.ksr} fewer. Real people save less.`);
+    expect(cards[1]).not.toContain('saves no key presses');
     expect(cards[1]).toContain(`${r.ghost.scanStepsPerChar} scan steps per character, with one switch`);
     // Model ranking: an icon and a status word per row (never colour alone), the measured models by name.
     const rows = $$('#results .site-status li');

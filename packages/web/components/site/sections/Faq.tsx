@@ -48,7 +48,7 @@ export function faqItems(): readonly FaqItem[] {
     ['Can I use it with a switch?', 'Yes, with one or two switches. Space or Enter acts as the switch, and the scan speed goes from 0.4 to 5 seconds a step.'],
     [
       'Can the model say something I did not type?',
-      'No. Every word is turned back into keys and checked against the keys you pressed. A word that does not match is dropped. Nothing is spoken until you press Speak.',
+      'No. Every word is turned back into keys and checked against the keys on screen. A word that does not match is dropped. Nothing is spoken until you press Speak.',
     ],
     [
       'What does model ranking send, and to whom?',

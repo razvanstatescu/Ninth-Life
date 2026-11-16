@@ -65,7 +65,7 @@ export function AppHeader({
   /** False in the phone layout: Menu lives in the action bar under the keypad (web-ui Req 24). */
   actions?: boolean;
   /**
-   * Phones and tablets 620-1149px tall (web-ui Req 25.3, 27.4): the They said button at the end of the
+   * Phones and tablets 640-1149px tall (web-ui Req 25.3, 27.4): the They said button at the end of the
    * header. No turns: opens the They said field. With turns: the newest one, which opens the Conversation sheet.
    */
   thread?: { last: Turn | null; onOpen: () => void; onAdd: () => void; lit?: boolean } | null;

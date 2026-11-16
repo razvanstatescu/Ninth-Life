@@ -180,10 +180,14 @@ export function Results({ results }: { results: SiteResults | null }) {
                       <p className="site-stats__line">
                         <span className="site-stats__value">{results.ghost.pressesPerChar}</span> <span>key presses per character</span>
                       </p>
-                      <p className="site-effort__note">Letter mode saves no key presses.</p>
+                      <p className="site-effort__note">
+                        {results.finish
+                          ? `Typing every letter. With Finish the word, ${results.finish.pressesPerChar}: ${results.finish.ksr} fewer. Real people save less.`
+                          : 'Every letter is one press.'}
+                      </p>
                     </>
                   ) : (
-                    <p className="site-effort__note">Every letter is still one press, so letter mode saves no key presses ({results.ghost.ksr} keystroke savings).</p>
+                    <p className="site-effort__note">Every letter is one press ({results.ghost.ksr} keystroke savings without Finish the word).</p>
                   )}
                 </div>
                 <div className="site-effort">

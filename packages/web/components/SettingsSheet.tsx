@@ -19,6 +19,12 @@ import { DICTATION_NOTICE } from './PartnerTurn';
 import { Sheet } from './Sheet';
 
 export const VOICE_PICKER_ID = 'voice-picker';
+/** Settings > Typing > Finish words (web-ui Req 31.1). */
+/** Settings > Partner strip (web-ui Req 33.1). */
+export const PARTNER_STRIP_HELP =
+  'A band at the top of the screen for the other person. It says "Typing…" while you type, then shows what you said after you speak or show it. It never shows your words before you speak.';
+export const PARTNER_STRIP_TOO_SHORT = 'This screen is too short for the strip, so it is hidden here. Nothing else on the screen changes.';
+export const FINISH_WORDS_HELP = 'Show up to 3 words that start with your keys. One press puts the whole word in. When off, you type every letter.';
 
 type Access = Settings['access'];
 const isScan = (a: Access) => a === 'scan1' || a === 'scan2';
@@ -160,8 +166,11 @@ export function SettingsSheet({
   onTestVoice,
   onClose,
   scanning: scanningSheet,
+  partnerTooShort = false,
 }: {
   open: boolean;
+  /** The strip is on but this screen is too short for it (web-ui Req 33.5). */
+  partnerTooShort?: boolean;
   /** Switch scanning drives the sheet (web-ui Req 16). */
   scanning?: boolean;
   focusVoice?: boolean;
@@ -177,6 +186,7 @@ export function SettingsSheet({
   const recentHelpId = useId();
   const dictationHelpId = useId();
   const repliesHelpId = useId();
+  const wordsHelpId = useId();
   const dictationOk = useDictationSupported();
   const voiceIndex = current ? voices.voices.findIndex((v) => v.voiceURI === current.voiceURI) : -1;
   const stepVoice = (d: 1 | -1) => {
@@ -349,6 +359,24 @@ export function SettingsSheet({
         />
       </section>
 
+      <section className="group" aria-labelledby="set-typing">
+        <h3 className="group__title" id="set-typing">
+          Typing
+        </h3>
+        <div className="scan-cluster" data-scan-row="typing">
+          <label className="toggle">
+            <input type="checkbox" role="switch" checked={settings.wordCompletion} aria-describedby={wordsHelpId} onChange={(e) => set('wordCompletion', e.target.checked)} />
+            <span className="toggle__text">Finish words</span>
+            <span className="toggle__state" aria-hidden="true">
+              {settings.wordCompletion ? 'On' : 'Off'}
+            </span>
+          </label>
+        </div>
+        <p className="field__help" id={wordsHelpId}>
+          {FINISH_WORDS_HELP}
+        </p>
+      </section>
+
       <section className="group" aria-labelledby="set-replies">
         <h3 className="group__title" id="set-replies">
           Quick replies
@@ -363,9 +391,28 @@ export function SettingsSheet({
           </label>
         </div>
         <p className="field__help" id={repliesHelpId}>
-          Show Yes, No, Hold on and other replies when nothing is typed. Each one speaks when you press it. When off, they are still in Menu, or in Phrases on a laptop.
+          Show your pinned phrases and Yes, No, Hold on and other replies when nothing is typed. Each one speaks when you press it. Pin up to 5 of your phrases in Phrases. When off, they are still in Menu, or in Phrases on a laptop.
         </p>
         <p className="field__help">After the other person speaks, you can also pick a reply type. {REPLY_TYPES_HELP}</p>
+      </section>
+
+      <section className="group" aria-labelledby="set-partner">
+        <h3 className="group__title" id="set-partner">
+          Partner strip
+        </h3>
+        <Seg
+          legend="Partner strip"
+          name="partner-strip"
+          value={settings.partnerStrip}
+          onChange={(v) => set('partnerStrip', v)}
+          options={[
+            { value: 'off', label: 'Off' },
+            { value: 'facing', label: 'Turned to face the person opposite' },
+            { value: 'upright', label: 'Upright, for someone beside you' },
+          ]}
+          help={PARTNER_STRIP_HELP}
+        />
+        {partnerTooShort && settings.partnerStrip !== 'off' ? <p className="field__help">{PARTNER_STRIP_TOO_SHORT}</p> : null}
       </section>
 
       <section className="group" aria-labelledby="set-model">

@@ -141,7 +141,7 @@ describe('data/packs/core-en.json (VocabPack)', () => {
   const lex = Lexicon.fromJSON(lexFile);
 
   it('has the VocabPack shape with the 36 Universal Core words', () => {
-    expect(pack).toMatchObject({ id: 'core-en', lang: 'en', version: 1 });
+    expect(pack).toMatchObject({ id: 'core-en', lang: 'en', version: 2 });
     expect(pack.words).toHaveLength(36);
     for (const { w, boost } of pack.words) {
       expect(lex.has(w)).toBe(true);

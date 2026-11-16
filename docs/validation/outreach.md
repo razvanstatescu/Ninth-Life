@@ -33,7 +33,7 @@ Dear [Head of the speech and language therapy programme / Department coordinator
 
 We are a team of three building Ninth Life, a free, open-source web app for typing to talk. You press keys 2 to 9,
 one press per letter, and it speaks the sentence you meant. A proof check makes sure every spoken word matches the
-keys pressed. It works offline, in a browser, with a keyboard, touch or a single switch.
+keys on screen, and nothing gets there without your press. It works offline, in a browser, with a keyboard, touch or a single switch.
 
 We are building it for the Kiroween 2026 hackathon and would value 30 minutes of feedback from a speech-language
 professional on a video call before Nov 26: what is confusing, and what would stop someone from trying it again.
@@ -138,7 +138,7 @@ Dear [Communications team / Services coordinator],
 
 We are a small volunteer team building Ninth Life, a free, open-source web app for typing to talk on 9 keys, one press
 per letter. It works offline in a browser, with a keyboard, touch or a single switch, and it never speaks a word that
-does not match the keys pressed.
+does not match the keys on screen.
 
 We are looking for two or three people, professionals or people who use AAC, who would like to try it for 30 minutes
 on a video call before Nov 26 and tell us what to change. Taking part is entirely voluntary, nothing is recorded

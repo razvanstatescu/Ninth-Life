@@ -100,6 +100,38 @@ def caps_ok(surface: str) -> bool:
     return True
 
 
+# Contractions folded for the near-duplicate check (web-ui Req 35.5).
+FOLDS = [
+    (r"\bi am\b", "i'm"), (r"\bit is\b", "it's"), (r"\byou are\b", "you're"), (r"\bwe are\b", "we're"),
+    (r"\bthey are\b", "they're"), (r"\bdo not\b", "don't"), (r"\bcan not\b", "can't"), (r"\bcannot\b", "can't"),
+    (r"\bthat is\b", "that's"), (r"\bwhat is\b", "what's"),
+    (r"^no,? thanks\b", "no thank you"), (r"^thanks\b(?! for| so)", "thank you"),
+]
+
+
+def fold_key(p: str) -> str:
+    s = normalize(p).replace("\u2019", "'")
+    for pat, rep in FOLDS:
+        s = re.sub(pat, rep, s)
+    return re.sub(r"[^a-z]", "", s)  # "Good bye." == "Goodbye!"
+
+
+def dedupe_phrases(phrases: list) -> list:
+    """Drop phrases that say the same thing; keep the earlier position, with the contraction surface."""
+    pos, uniq = {}, []
+    for p in phrases:
+        k = fold_key(p)
+        if k not in pos:
+            pos[k] = len(uniq)
+            uniq.append(p)
+            continue
+        kept = uniq[pos[k]]
+        contracted = ("'" in p or "\u2019" in p) and "'" not in kept and "\u2019" not in kept
+        if contracted and not re.match(r"^(no,? )?thanks\b", normalize(p)):
+            uniq[pos[k]] = p
+    return uniq
+
+
 def main() -> int:
     lex = json.loads((DATA_DIR / "lexicon" / "en.v1.json").read_text(encoding="utf-8"))
     vocab = {w for items in lex["codes"].values() for w, _ in items}
@@ -135,13 +167,10 @@ def main() -> int:
         good.sort(key=lambda t: (-t[0], not t[1], not t[2], t[3]))
         phrases.append(tidy(good[0][3]))
 
-    # Deduplicate after tidying (e.g. "Thank you" / "Thank you.").
-    seen, uniq = set(), []
-    for p in phrases:
-        k = re.sub(r"[^a-z]", "", normalize(p))  # "Good bye." == "Goodbye!"
-        if k not in seen:
-            seen.add(k)
-            uniq.append(p)
+    # Deduplicate after tidying (e.g. "Thank you" / "Thank you."), folding contractions and "thanks" too
+    # (web-ui Req 35.5): "I am hungry." == "I'm hungry.", "Thanks." == "Thank you.". On a collision the earlier
+    # position is kept, with the contraction when the two differ only by one.
+    uniq = dedupe_phrases(phrases)
 
     words = []
     for w in UNIVERSAL_CORE:
@@ -149,7 +178,7 @@ def main() -> int:
         assert encode_word(n) and n in vocab, w
         words.append({"w": n, "boost": BOOST})
 
-    pack = {"id": "core-en", "lang": "en", "version": 1, "words": words, "phrases": uniq}
+    pack = {"id": "core-en", "lang": "en", "version": 2, "words": words, "phrases": uniq}
     out = DATA_DIR / "packs" / "core-en.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(pack, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")

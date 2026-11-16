@@ -51,22 +51,36 @@ function cycleDistance(readings: readonly string[], from: string, want: string):
   return at < 0 ? to + 1 : (to - at + readings.length) % readings.length;
 }
 
+/** How the sentence was typed, when not one press per letter (Finish the word, src/completion.ts). */
+export interface Typing {
+  presses: number;
+  targets: Target[];
+  /** Words taken from Finish the word. */
+  completed: number;
+}
+
 export function simulate(item: TestItem, out: DecodeOutput, lex: Lexicon, k: number, mode: Mode = 'letter'): ItemResult {
+  return simulateWithTargets(item, out, lex, k, mode).result;
+}
+
+/** simulate(), also returning the choices made (for the app-grid scan count). `typing` replaces step 1. */
+export function simulateWithTargets(item: TestItem, out: DecodeOutput, lex: Lexicon, k: number, mode: Mode = 'letter', typing?: Typing): { result: ItemResult; targets: Target[] } {
   const gold = item.words;
   const n = gold.length;
   const chars = gold.reduce((s, w) => s + w.length, 0) + (n - 1);
   const codes = codesFor(item, mode);
 
-  const targets: Target[] = [];
-  let presses = 0;
-  codes.forEach((code, i) => {
-    for (const d of code) targets.push({ key: d });
-    presses += code.length;
-    if (i < n - 1) {
-      targets.push({ key: '0' });
-      presses += 1;
-    }
-  });
+  const targets: Target[] = typing ? [...typing.targets] : [];
+  let presses = typing ? typing.presses : 0;
+  if (!typing)
+    codes.forEach((code, i) => {
+      for (const d of code) targets.push({ key: d });
+      presses += code.length;
+      if (i < n - 1) {
+        targets.push({ key: '0' });
+        presses += 1;
+      }
+    });
 
   const firstReading = (i: number) =>
     mode === 'initials' ? (lattice([codes[i]!], lex, 1, 'initials')[0]?.[0] ?? '') : (lex.lookup(item.codes[i]!)[0] ?? '');
@@ -134,5 +148,6 @@ export function simulate(item: TestItem, out: DecodeOutput, lex: Lexicon, k: num
     usd: out.usd ?? 0,
   };
   if (mode === 'initials') result.retyped = retyped;
-  return result;
+  if (typing) result.completed = typing.completed;
+  return { result, targets };
 }

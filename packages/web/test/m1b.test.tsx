@@ -64,7 +64,7 @@ describe('phone layout (web-ui Req 15)', () => {
     const menu = openSheet('menu') as HTMLElement;
     expect(menu).toBeTruthy();
     // Web-ui Req 28.4: the quick replies come first in every Menu.
-    expect(within(menu).getAllByRole('button').map((b) => b.textContent)).toEqual(['Close', 'Hold on.', 'Yes.', 'No.', 'Pardon?', 'Thanks.', 'Phrases', 'My words', 'Voice', 'Settings']);
+    expect(within(menu).getAllByRole('button').map((b) => b.textContent)).toEqual(['Close', 'Hold on.', 'Yes.', 'No.', 'Pardon?', 'Thanks.', 'Show a card', 'Phrases', 'My words', 'Voice', 'Settings']);
     fireEvent.click(within(menu).getByRole('button', { name: 'Settings' }));
     expect(openSheet('menu')).toBeNull();
     expect(openSheet('settings')).toBeTruthy();

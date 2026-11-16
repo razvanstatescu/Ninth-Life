@@ -6,6 +6,7 @@
  *   Backspace                   Back          Enter / numpad Enter      Speak
  *   Space                       0 (Space)     ArrowUp / ArrowDown       move the chosen sentence
  *   Alt+1 ... Alt+5             choose sentence 1-5 (plain digits are keypad input)
+ *   Alt+Shift+1 ... 3, numpad + finish the word with word 1-3 (+ is word 1; web-ui Req 31.6)
  *
  * In switch scanning, Space and Enter are the switch: 1 switch -> both select;
  * 2 switches -> Space moves, Enter selects.
@@ -18,12 +19,15 @@ export type KeyIntent =
   | { type: 'speak' }
   | { type: 'move'; delta: 1 | -1 }
   | { type: 'rank'; rank: number }
+  /** Finish the word with the word in place 0, 1 or 2 (web-ui Req 31.6). */
+  | { type: 'complete'; index: 0 | 1 | 2 }
   | { type: 'switch'; action: 'select' | 'advance' };
 
 export interface KeyLike {
   key: string;
   code?: string;
   altKey?: boolean;
+  shiftKey?: boolean;
   ctrlKey?: boolean;
   metaKey?: boolean;
   repeat?: boolean;
@@ -41,6 +45,13 @@ export function mapKey(e: KeyLike, access: AccessMode, focus: FocusContext): Key
     if (e.key === ' ' || e.code === 'Space') return { type: 'switch', action: access === 'scan2' ? 'advance' : 'select' };
     if (e.key === 'Enter') return { type: 'switch', action: 'select' };
   }
+
+  // Matched on the physical key, so it works on any layout (Shift+1 types "!" on some, other marks elsewhere).
+  if (e.altKey && e.shiftKey) {
+    const w = /^(?:Digit|Numpad)([1-3])$/.exec(e.code ?? '');
+    return w ? { type: 'complete', index: (Number(w[1]) - 1) as 0 | 1 | 2 } : null;
+  }
+  if (e.code === 'NumpadAdd' && !e.altKey) return { type: 'complete', index: 0 };
 
   if (e.altKey) {
     const m = /^(?:Digit|Numpad)([1-5])$/.exec(e.code ?? '');

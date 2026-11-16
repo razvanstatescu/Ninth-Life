@@ -13,7 +13,7 @@
  * No 'use client': it is only ever imported from KeypadDemo, which is the client island (MS-11.3).
  */
 import { formatSentence } from '@ninth/core';
-import { EMPTY, actionForKey, codesOf, composerReducer, type ComposerState } from '@/lib/composer';
+import { EMPTY, actionForKey, codesOf, composerReducer, marksOf, type ComposerState } from '@/lib/composer';
 import { loadDictionary, type DictState } from '@/lib/data';
 import type { KeyId } from '@/lib/keys';
 import { MAX_CANDIDATES, buildSentence, decodeAround, decodeWithPins, readings, type WordState } from '@/lib/sentence';
@@ -74,7 +74,7 @@ export function view(state: ComposerState, dict: DictState | null): TryView {
   // The matches for the keys alone: the same decode with every pin and choice taken off.
   const pinned = state.slots.some((x) => x.pin) || state.selected !== null;
   const free = candidates.length === 0 ? [] : d && pinned ? decodeWithPins({ ...state, slots: state.slots.map((x) => ({ code: x.code })), selected: null }, d.lexicon, d.lm, { k: TRY_MATCHES }) : candidates;
-  const matches = free.slice(0, TRY_MATCHES).map((c) => formatSentence(c.words, state.punct));
+  const matches = free.slice(0, TRY_MATCHES).map((c) => formatSentence(c.words, state.punct, marksOf(state)));
   if (free.length > 0 && s.text && !matches.includes(s.text)) matches.push(s.text);
   const words = s.words.map((w, i) => ({
     word: w.word ?? w.partial ?? null,

@@ -84,7 +84,8 @@
         "pressesPerChar": 1.0004,
         "invalidPreValidator": null,
         "unreachable": 15,
-        "usdPer1k": null
+        "usdPer1k": null,
+        "scanStepsPerCharApp": 2.593
       },
       "bySource": {
         "aac": {
@@ -98,7 +99,8 @@
           "pressesPerChar": 1.0017,
           "invalidPreValidator": null,
           "unreachable": 7,
-          "usdPer1k": null
+          "usdPer1k": null,
+          "scanStepsPerCharApp": 2.5985
         },
         "turk": {
           "items": 300,
@@ -111,7 +113,60 @@
           "pressesPerChar": 0.9988,
           "invalidPreValidator": null,
           "unreachable": 8,
-          "usdPer1k": null
+          "usdPer1k": null,
+          "scanStepsPerCharApp": 2.5864
+        }
+      }
+    },
+    {
+      "id": "B1c",
+      "label": "B1c ghost + finish the word (top 3)",
+      "status": "ok",
+      "metrics": {
+        "items": 866,
+        "words": 4890,
+        "wordAcc": 0.9771,
+        "top1": 0.8891,
+        "top5": 0.9792,
+        "ksr": 0.3763,
+        "scanStepsPerChar": 1.6295,
+        "pressesPerChar": 0.6237,
+        "invalidPreValidator": null,
+        "unreachable": 15,
+        "usdPer1k": null,
+        "completedWords": 0.7855,
+        "scanStepsPerCharApp": 1.8846
+      },
+      "bySource": {
+        "aac": {
+          "items": 566,
+          "words": 2730,
+          "wordAcc": 0.9813,
+          "top1": 0.917,
+          "top5": 0.9859,
+          "ksr": 0.3966,
+          "scanStepsPerChar": 1.5355,
+          "pressesPerChar": 0.6034,
+          "invalidPreValidator": null,
+          "unreachable": 7,
+          "usdPer1k": null,
+          "completedWords": 0.8081,
+          "scanStepsPerCharApp": 1.8558
+        },
+        "turk": {
+          "items": 300,
+          "words": 2160,
+          "wordAcc": 0.9718,
+          "top1": 0.8367,
+          "top5": 0.9667,
+          "ksr": 0.3519,
+          "scanStepsPerChar": 1.7419,
+          "pressesPerChar": 0.6481,
+          "invalidPreValidator": null,
+          "unreachable": 8,
+          "usdPer1k": null,
+          "completedWords": 0.7569,
+          "scanStepsPerCharApp": 1.919
         }
       }
     },

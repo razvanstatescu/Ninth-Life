@@ -46,7 +46,8 @@ Spec: `.kiro/specs/web-ui/` (requirements, design, tasks). Contracts: `docs/arch
 settings  (IndexedDB 'settings', theme mirrored in localStorage for first paint)
 dict      loading | ready{lexicon, lm, model, pack} | missing | error      ← lib/data.ts (parallel fetch, idle warm-up)
 composer  { slots: [{code, pin?}], open, punct, selected, spoken }       ← lib/composer.ts (pure reducer)
-remote    model ranking result for (codes, partner), LRU-cached          ← lib/decodeClient.ts
+remote    model ranking result for (codes, context, pins), LRU-cached    ← lib/decodeClient.ts
+          pins sent as one-word slots; 400 ms after a closed word, 1,000 ms pause while open (Req 30)
 derived   ghost = decodeWithPins(composer)  →  candidates = merge(remote, ghost)
           sentence = buildSentence(composer, candidates)  → text, tokens, proof per word, speakable
 layout    'wide' (>= 960px) | 'compact', matchMedia                         ← lib/layout.ts
@@ -122,7 +123,7 @@ Laptops and desktops keep Wide and Compact.
 | | Wide (>= 960px) | Compact (600-959px, tablets) | Split (phone held sideways) | Phone (< 600px, portrait) |
 |---|---|---|---|---|
 | When | 960px or wider | 600 to 959px wide | narrower than 960px, landscape, under 600px tall (`SPLIT_QUERY`) | narrower than 600px (`PHONE_QUERY`) |
-| Header | Brand, every status pill, Phrases / Voice / Settings | One row: brand, one summary pill, Menu | As compact, at the top of the left column | Brand and summary pill; no actions (Menu is in the action bar); hidden under 620px tall |
+| Header | Brand, every status pill, Phrases / Voice / Settings | One row: brand, one summary pill, Menu | As compact, at the top of the left column | Brand and summary pill; no actions (Menu is in the action bar); hidden under 640px tall |
 | Main | Left: They said, SpeakBar, sentences, proof. Right: keypad, scan control, hint | SpeakBar, keypad, scan control, sentences (3 + More), proof, They said, hint | Left: SpeakBar, sentences (3 + More), proof, They said, scan control, hint. Right: the keypad alone, pinned | One screen: sentence card (+ Clear / Undo), 1-2 suggestion rows (+ More / Spell), keypad, action bar [Menu] [Speak] [Show]. Below: proof, They said, scan control, hint |
 | Keys | key-size (96) or key-xl | `(100svh - 528px) / 4`, 72 to 96 (or 128 XL) | `(100svh - 72px) / 4`, 72 to 96 (or 128 XL) | fill the height left over (`100cqh`), 72 to 96 tall (128 XL); width fills the screen (`100cqw / 3`) |
 

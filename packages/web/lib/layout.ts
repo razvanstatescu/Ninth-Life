@@ -132,8 +132,8 @@ export const SPLIT_ROWS_QUERIES = { r3: '(min-height: 700px)', r4: '(min-height:
 /**
  * The conversation thread on the main screen (web-ui Req 27.4-27.6, ADR-007), measured so the keys
  * never change size or place:
- *   0  stack under 620px tall: no header, so the thread is in Menu > This sentence > Conversation;
- *   1  stack 620-1149px: the newest turn inside the header's They said button (0 extra px);
+ *   0  stack under 640px tall: no header, so the thread is in Menu > This sentence > Conversation;
+ *   1  stack 640-1149px: the newest turn inside the header's They said button (0 extra px);
  *   2  split, and stack 1150px or taller: a fixed-height strip with the newest 2 turns above the card
  *      (the stack has 162px or more to spare there, so 96px keys stay 96px);
  *   3  wide and compact (a laptop window, the page may scroll): a panel with the newest 3 turns.
@@ -147,8 +147,20 @@ export function threadRows(layout: Layout, h: { tall: boolean; noHeader: boolean
 }
 /** The stack shell is tall enough for the 2-turn strip (iPad 11" with no toolbar, 10" Android tablets, iPad Pro 13"). */
 export const STACK_THREAD_QUERY = '(min-height: 1150px)';
-/** Under 620px the stack shell hides its header (styles/app.css), and the They said button with it. */
-export const STACK_NO_HEADER_QUERY = '(max-height: 619px)';
+/**
+ * Under 640px the stack shell hides its header (styles/app.css), and the They said button with it. 640, not 620:
+ * at 620-639px the header, one suggestion row and 72px keys overflowed by up to 7px (measured, 2026-11-16).
+ */
+export const STACK_NO_HEADER_QUERY = '(max-height: 639px)';
+
+/**
+ * The same height query for a screen that gives `px` to the partner strip (web-ui Req 33.5): every min-height and
+ * max-height in it moves up by `px`, so the rest of the screen follows today's rules at the height it has left.
+ */
+export function shiftQuery(query: string, px: number): string {
+  if (!px) return query;
+  return query.replace(/\((min|max)-height:\s*(\d+)px\)/g, (_, k: string, n: string) => `(${k}-height: ${Number(n) + px}px)`);
+}
 
 /** A media query as React state (false on the server and in tests without matchMedia). */
 export function useMediaQuery(query: string): boolean {

@@ -18,7 +18,7 @@ import { REPO_URL } from './site-data';
 /** What the app does, in the approved copy's words (content.md §1-§5). */
 export const FEATURE_LIST = [
   'One press per letter on keys 2 to 9',
-  'Every spoken word matches the keys you pressed',
+  'Every spoken word matches the keys on screen',
   'Works offline after the first visit',
   'Type with a keyboard, by touch, or with one or two switches',
 ] as const;

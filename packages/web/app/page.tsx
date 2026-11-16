@@ -26,10 +26,10 @@ export const dynamic = 'force-static';
 
 const TITLE = 'Ninth Life: type on 9 keys, hear your sentence';
 const DESCRIPTION =
-  'Free web app for typing to talk. Press one key per letter and hear the sentence you meant. Every spoken word matches your keys. Works offline.';
+  'Free web app for typing to talk. Press one key per letter and hear the sentence you meant. Every spoken word matches the keys on screen. Works offline.';
 const SHARE_TITLE = 'Ninth Life: the old phone keypad, back as a way to talk';
 const SHARE_DESCRIPTION =
-  'Press one key per letter and hear the sentence you meant. Every spoken word matches the keys you pressed. Free, works offline, runs in your browser.';
+  'Press one key per letter and hear the sentence you meant. Every spoken word matches the keys on screen. Free, works offline, runs in your browser.';
 
 // Canonical, og:url and the social card only when the origin is known (components/site/seo.ts).
 export const metadata: Metadata = pageMetadata({ path: '/', title: TITLE, description: DESCRIPTION, shareTitle: SHARE_TITLE, shareDescription: SHARE_DESCRIPTION });

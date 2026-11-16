@@ -4,7 +4,9 @@ import { dictDecoder, ghostDecoder, llmDecoder, LLM_CONFIGS, type LlmProposer } 
 import { oracleIntent } from './intent';
 import { aggregate, percentile } from './metrics';
 import { sample } from './rng';
-import { codesFor, simulate } from './simulate';
+import { B1C, completionUser, simulateCompletion } from './completion';
+import { scanSteps } from './scan-cost';
+import { codesFor, simulateWithTargets } from './simulate';
 import type { ConfigResult, Decoder, DecodeOutput, ItemResult, LatticeCoverage, LlmAggregate, Results, TestItem, Timing } from './types';
 
 export const HARNESS_VERSION = 'ninth-eval/1';
@@ -157,7 +159,12 @@ export async function runEval(input: RunInput): Promise<RunOutput> {
       ? await mapPool(items, 1, decodeOne)
       : await mapPool(items, input.concurrency ?? 1, decodeOne);
     const outs = runs.map((r) => r.out);
-    const rs = items.map((item, i) => simulate(item, outs[i]!, lex, k, mode));
+    const rs = items.map((item, i) => {
+      const { result, targets } = simulateWithTargets(item, outs[i]!, lex, k, mode);
+      // B1 also gets the app-grid scan count, to compare with B1c (Finish the word).
+      if (d.id === 'B1' && mode === 'letter') result.scanStepsApp = scanSteps(targets, 'app');
+      return result;
+    });
     // Model configs report the recorded latency of each API call; offline ones the decode time.
     const recorded = outs.some((o) => o.llm);
     const ms = recorded ? outs.flatMap((o) => o.llm?.latencyMs ?? []) : runs.map((r) => r.ms);
@@ -177,6 +184,20 @@ export async function runEval(input: RunInput): Promise<RunOutput> {
     if (recorded) timing[d.id]!.overDeadline = ms.length ? round4(ms.filter((x) => x > ROUTE_DEADLINE_MS).length / ms.length) : 0;
     perItem[d.id] = rs;
     outputs[d.id] = outs;
+  }
+  // B1c: B1 with Finish the word (web-ui Req 31), an ideal user who takes the right word at the first
+  // chance that saves a press (src/completion.ts). Letter mode only.
+  if (mode === 'letter' && wanted(B1C.id)) {
+    const user = completionUser(lex, input.bigram.data, k, input.lm);
+    const rs = items.map((item) => simulateCompletion(item, user).result);
+    const bySource: Record<string, ReturnType<typeof aggregate>> = {};
+    for (const src of ['aac', 'turk'] as const) {
+      const sub = rs.filter((_, i) => items[i]!.src === src);
+      if (sub.length > 0) bySource[src] = aggregate(sub, k, false, false);
+    }
+    configs.push({ id: B1C.id, label: B1C.label, status: 'ok', metrics: aggregate(rs, k, false, false), bySource });
+    perItem[B1C.id] = rs;
+    outputs[B1C.id] = [];
   }
   for (const id of missing) {
     if (!wanted(id)) continue;

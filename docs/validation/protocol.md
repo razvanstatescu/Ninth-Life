@@ -21,7 +21,7 @@ say so plainly in the write-up ("not tested with people who use AAC") and presen
 What we want to learn:
 
 1. Can a first-time person type and speak a short sentence without help?
-2. Is the proof panel understandable ("every spoken word matches the keys")?
+2. Is the proof panel understandable ("every spoken word matches the keys on screen")?
 3. Is one-switch scanning usable at an adjustable speed, and is the speed control reachable by switch?
 4. What would stop someone from trying it again?
 

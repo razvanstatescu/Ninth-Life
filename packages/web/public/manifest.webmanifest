@@ -1,7 +1,7 @@
 {
   "name": "Ninth Life",
   "short_name": "Ninth Life",
-  "description": "Ninth Life brings back 9-key predictive text as a free web app for typing to talk. Press one key per letter on keys 2 to 9 and hear the sentence you meant: every spoken word matches the keys you pressed.",
+  "description": "Ninth Life brings back 9-key predictive text as a free web app for typing to talk. Press one key per letter on keys 2 to 9 and hear the sentence you meant: every spoken word matches the keys on screen, and nothing gets there without your press.",
   "id": "/",
   "start_url": "/app",
   "scope": "/",

@@ -27,11 +27,11 @@ describe('composer', () => {
     const seen = [];
     for (let i = 0; i < 5; i++) {
       s = composerReducer(s, { type: 'punct' });
-      seen.push(s.punct);
+      seen.push(s.slots[0]!.punct); // since Req 34 the mark sits on the word it was typed after
     }
     expect(seen).toEqual(['.', '?', '!', ',', undefined]);
     s = run([{ type: 'space' }, { type: 'punct' }, { type: 'back' }], s);
-    expect(s.punct).toBeUndefined();
+    expect(s.slots[0]!.punct).toBeUndefined();
     expect(codesOf(s)).toEqual(['4']);
   });
 

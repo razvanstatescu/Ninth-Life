@@ -21,7 +21,7 @@ import {
   type ProofState,
   type ReplyIntent,
 } from '@ninth/core';
-import { codesOf, type ComposerState } from './composer';
+import { codesOf, marksOf, openIndex, startsOf, type ComposerState } from './composer';
 import { showWord, type DisplayMap } from './myWords';
 
 export const MAX_CANDIDATES = 5;
@@ -41,6 +41,15 @@ export interface DisplayWord {
   /** For an unfinished word: the letters typed so far, taken from the likeliest completion. */
   partial?: string;
   state: WordState;
+  /**
+   * A word finished from the word row (web-ui Req 31.3): how many of its keys were pressed. The rest of
+   * `code` came with the word and is shown as filled in. Left out when every key was pressed.
+   */
+  typed?: number;
+  /** A word taken one key away (web-ui Req 32.5): its keys before, so the changed key can be marked. */
+  was?: string;
+  /** The word being retyped (web-ui Req 32.3). */
+  editing?: boolean;
 }
 
 export interface Sentence {
@@ -96,7 +105,8 @@ export function decodeWithPins(
   const mode = opts.mode ?? 'letter';
   if (codes.length === 0) return [];
   const pinned = state.slots.some((s) => s.pin);
-  if (!pinned) return decodeGhost(codes, { lexicon: lex, lm, k, mode, context: opts.context });
+  const starts = startsOf(state);
+  if (!pinned) return decodeGhost(codes, { lexicon: lex, lm, k, mode, context: opts.context, starts });
 
   const lat = lattice(codes, lex, READINGS_PER_SLOT, mode).map((slot, i) => {
     const pin = state.slots[i]?.pin;
@@ -105,7 +115,7 @@ export function decodeWithPins(
   const prev = opts.context?.length ? opts.context[opts.context.length - 1]!.toLowerCase() : BOS;
   const out: Candidate[] = [];
   const seen = new Set<string>();
-  for (const c of beam(lat, lm, Math.max(32, k), prev)) {
+  for (const c of beam(lat, lm, Math.max(32, k), prev, starts)) {
     if (!validate(c.words, codes, mode)) continue;
     const key = c.words.join(' ');
     if (seen.has(key)) continue;
@@ -114,6 +124,36 @@ export function decodeWithPins(
     if (out.length >= k) break;
   }
   return out;
+}
+
+/** Model ranking waits this long after the last key once a word is closed (Space, # or a chosen sentence). */
+export const RANK_DEBOUNCE_MS = 400;
+/**
+ * While the last word is still open it waits longer (web-ui Req 30.2): typing fast sends nothing, so the
+ * quota does not pay for half words, and a pause still ranks the last word for people who never press Space.
+ */
+export const RANK_PAUSE_OPEN_MS = 1000;
+
+/** How long the screen waits with no key before it asks for model ranking (web-ui Req 30.2). */
+export function rankDelayMs(state: ComposerState): number {
+  return state.open || state.edit !== undefined ? RANK_PAUSE_OPEN_MS : RANK_DEBOUNCE_MS;
+}
+
+/**
+ * The lattice sent for model ranking (web-ui Req 30.1), or null when there is nothing to rank yet (no
+ * keys, or a slot with no word). A word the person fixed (# or a chosen sentence) is sent as a one-word
+ * slot, so ranking keeps working after a pin; the server drops any lattice word that fails validate(),
+ * and the screen keeps only model sentences that agree with the pins.
+ */
+export function rankingLattice(state: ComposerState, lex: Lexicon, mode: Mode = 'letter', perSlot = READINGS_PER_SLOT): string[][] | null {
+  // Nothing while a word is being retyped (web-ui Req 32.3): its keys are still changing.
+  if (state.slots.length === 0 || state.edit !== undefined) return null;
+  const codes = codesOf(state);
+  const lat = lattice(codes, lex, perSlot, mode).map((slot, i) => {
+    const pin = state.slots[i]?.pin;
+    return pin ? [pin] : slot;
+  });
+  return lat.some((slot) => slot.length === 0) ? null : lat;
 }
 
 /** Stands for a slot with no word in beam search around it; never shown, never spoken. */
@@ -139,7 +179,7 @@ export function decodeAround(
     return slot.length > 0 ? slot : [HOLE];
   });
   const prev = opts.context?.length ? opts.context[opts.context.length - 1]!.toLowerCase() : BOS;
-  const best = beam(lat, lm, 32, prev)[0];
+  const best = beam(lat, lm, 32, prev, startsOf(state))[0];
   return codes.map((code, i) => {
     const w = best?.words[i];
     return w && w !== HOLE && matchesCode(w, code, mode) ? w : null;
@@ -218,18 +258,25 @@ export function buildSentence(
     const word = raw[i] ?? null;
     if (word === null) {
       // The open word may still grow into a dictionary word; anything else has no word yet.
-      const open = state.open && i === codes.length - 1;
+      const open = openIndex(state) === i;
       const partial = lex && open ? partialFor(lex, code) : undefined;
-      if (partial || !lex || mode !== 'letter') return { word: null, code, partial, state: 'typing' };
-      return { word: null, code, state: 'unspelled' };
+      const ed = state.edit === i ? { editing: true } : {};
+      if (partial || !lex || mode !== 'letter') return { word: null, code, partial, state: 'typing', ...ed };
+      return { word: null, code, state: 'unspelled', ...ed };
     }
-    return { word, code, state: proofs?.[i]?.state ?? 'reject' };
+    const slot = state.slots[i];
+    const typed = slot?.typed;
+    const st = proofs?.[i]?.state ?? 'reject';
+    const out: DisplayWord = typed !== undefined && typed < code.length ? { word, code, state: st, typed } : { word, code, state: st };
+    if (slot?.was !== undefined && slot.was !== code) out.was = slot.was;
+    if (state.edit === i) out.editing = true;
+    return out;
   });
 
   const speakable = words.length > 0 && words.every((w) => w.word !== null && (w.state === 'match' || w.state === 'new'));
   // One token per slot (an unfinished word shows its partial letters, or its digits).
   const shownTokens = words.map((w) => (w.word !== null ? showWord(w.word, opts.display) : (w.partial ?? w.code)));
-  const text = formatSentence(shownTokens, state.punct);
+  const text = formatSentence(shownTokens, state.punct, marksOf(state));
   const tokens = text.split(' ');
   const shown = words.map((w) => w.word ?? '');
   const selectedIndex = candidates.findIndex((c) => sameWords(c.words, shown));

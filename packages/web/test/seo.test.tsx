@@ -297,11 +297,15 @@ describe('/llms.txt (MS-3.8)', () => {
     expect(LIMITS).toContain('Tested with people who use AAC: not yet.');
     expect(text.slice(text.indexOf('## Source\n'))).toContain(HISTORY_LINE);
     // RESULTS.md's own key-press figure, as the page shows it (round 4, r4-results), never a "-0.0%" savings figure.
-    const presses = getResults()?.ghost.pressesPerChar;
+    const res = getResults();
+    const presses = res?.ghost.pressesPerChar;
     if (presses) {
-      expect(text).toContain(`${presses} key presses per character: letter mode saves no key presses.`);
+      expect(text).toContain(`${presses} key presses per character with letters only.`);
       expect(text).not.toContain('keystroke savings');
+      expect(text).not.toContain('saves no key presses');
     }
+    // B1c (Finish the word), measured: both figures from RESULTS.json.
+    if (res?.finish) expect(text).toContain(`With Finish the word, ${res.finish.pressesPerChar} key presses per character, ${res.finish.ksr} fewer.`);
     expect(text).toContain('- [Full results](');
   });
 
@@ -315,7 +319,8 @@ describe('/llms.txt (MS-3.8)', () => {
   it('every number is one getResults() measured, with the results and the method linked', () => {
     const text = llmsText({ origin: ORIGIN });
     const r = getResults()!;
-    const allowed = new Set([r.ghost.top1, r.ghost.top5, r.ghost.wordAcc, r.ghost.ksr, r.dict.top1, r.dict.top5]);
+    // B1c's saving (Finish the word, RESULTS.md) is a getResults() number too.
+    const allowed = new Set([r.ghost.top1, r.ghost.top5, r.ghost.wordAcc, r.ghost.ksr, r.dict.top1, r.dict.top5, ...(r.finish ? [r.finish.ksr] : [])]);
     for (const m of text.matchAll(/-?\d+(\.\d+)?%/g)) expect(allowed.has(m[0]), m[0]).toBe(true);
     expect(text).toContain(`[Full results](${RESULTS_URL})`);
     expect(text).toContain(`[How we measured](${METHOD_URL})`);

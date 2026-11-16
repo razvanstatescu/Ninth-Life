@@ -2,7 +2,7 @@
 import { encodeWord, type Lexicon } from '@ninth/core';
 import { useEffect, useId, useRef, useState } from 'react';
 import type { MyWord } from '@/lib/myWords';
-import { PACK_LIMITS, exportVocabPack, fetchPackText, packUrl, parseVocabPack, planImport, type ImportPlan, type ParsedPack } from '@/lib/vocabPack';
+import { PACK_LIMITS, exportVocabPack, fetchPackText, packFromLines, packUrl, parseVocabPack, planImport, type ImportPlan, type ParsedPack } from '@/lib/vocabPack';
 import { Button } from './Button';
 import { Sheet } from './Sheet';
 
@@ -24,6 +24,8 @@ function readText(f: File): Promise<string> {
     r.readAsText(f);
   });
 }
+/** Where a preview came from when a helper typed or pasted the lines (web-ui Req 35.4). */
+export const FROM_TYPED = 'what you typed';
 const plural = (n: number, one: string, many = `${one}s`) => `${n.toLocaleString('en-US')} ${n === 1 ? one : many}`;
 
 /**
@@ -65,6 +67,8 @@ export function MyWordsSheet({
   const [busy, setBusy] = useState(false);
   const [packMsg, setPackMsg] = useState<string | null>(null);
   const [preview, setPreview] = useState<{ pack: ParsedPack; plan: ImportPlan; from: string } | null>(null);
+  const [typedWords, setTypedWords] = useState('');
+  const [typedPhrases, setTypedPhrases] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLElement>(null);
 
@@ -85,7 +89,16 @@ export function MyWordsSheet({
     if (!msg) setText('');
   };
 
-  const showPack = (raw: string, from: string) => {
+  /** Names and phrases typed or pasted, one per line: the same check and preview as a pack file (web-ui Req 35.4). */
+  const checkTyped = () => {
+    if (!typedWords.trim() && !typedPhrases.trim()) {
+      setPreview(null);
+      return;
+    }
+    showPack(packFromLines(typedWords, typedPhrases), FROM_TYPED);
+  };
+
+  const showPack = (raw: string | unknown, from: string) => {
     const res = parseVocabPack(raw);
     if (!res.ok) {
       setPreview(null);
@@ -247,6 +260,52 @@ export function MyWordsSheet({
         )}
       </section>
 
+      <section className="group" aria-labelledby={`${ids}-typed`}>
+        <h3 className="group__title" id={`${ids}-typed`}>
+          Add names and phrases
+        </h3>
+        <p className="field__help" id={`${ids}-typedhelp`}>
+          One name or word per line, as you want it written (&ldquo;Mihai&rdquo;, &ldquo;Ștefan&rdquo;). A name of two words goes on two lines. A phrase can have
+          spaces and punctuation, up to 280 characters.
+        </p>
+        <div className="field scan-cluster" data-scan-row="typed-words">
+          <label className="field__label" htmlFor={`${ids}-tw`}>
+            Names and words, one per line
+          </label>
+          <textarea
+            id={`${ids}-tw`}
+            className="input textarea"
+            rows={3}
+            value={typedWords}
+            aria-describedby={`${ids}-typedhelp`}
+            onChange={(e) => {
+              setTypedWords(e.target.value);
+              if (!e.target.value.trim() && !typedPhrases.trim()) setPreview(null);
+            }}
+          />
+        </div>
+        <div className="field scan-cluster" data-scan-row="typed-phrases">
+          <label className="field__label" htmlFor={`${ids}-tp`}>
+            Phrases, one per line
+          </label>
+          <textarea
+            id={`${ids}-tp`}
+            className="input textarea"
+            rows={3}
+            value={typedPhrases}
+            onChange={(e) => {
+              setTypedPhrases(e.target.value);
+              if (!e.target.value.trim() && !typedWords.trim()) setPreview(null);
+            }}
+          />
+        </div>
+        <div className="scan-cluster" data-scan-row="typed-check">
+          <Button variant="secondary" icon="check" onClick={checkTyped} disabled={!typedWords.trim() && !typedPhrases.trim()}>
+            Check what this adds
+          </Button>
+        </div>
+      </section>
+
       <section className="group" aria-labelledby={`${ids}-packs`}>
         <h3 className="group__title" id={`${ids}-packs`}>
           Word packs
@@ -316,7 +375,7 @@ export function MyWordsSheet({
         {preview && plan ? (
           <section className="pack-preview card" aria-labelledby={`${ids}-preview`} tabIndex={-1} ref={previewRef}>
             <h4 className="group__title" id={`${ids}-preview`}>
-              Pack &quot;{preview.pack.id}&quot;, version {preview.pack.version}
+              {preview.from === FROM_TYPED ? 'From what you typed' : `Pack "${preview.pack.id}", version ${preview.pack.version}`}
             </h4>
             <p className="field__help">From {preview.from}. Nothing is added until you choose Add.</p>
             <ul className="pack-preview__list">

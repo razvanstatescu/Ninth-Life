@@ -14,8 +14,9 @@ run say so. Method: `docs/architecture/data-and-eval.md` and `.kiro/specs/eval-h
 
 | Config | Word acc | Sent top-1 | Sent top-5 | KSR | Scan steps/char | Invalid pre-validator | p50 ms | p95 ms | $/1k |
 |---|---|---|---|---|---|---|---|---|---|
-| B0 dict | 91.5% | 62.4% | 92.0% | -1.2% | 3.61 | n/a | 0.07 | 0.30 | 0 |
+| B0 dict | 91.5% | 62.4% | 92.0% | -1.2% | 3.61 | n/a | 0.08 | 0.32 | 0 |
 | B1 ghost | 96.8% | 85.6% | 97.3% | -0.0% | 3.57 | n/a | 0.09 | 0.35 | 0 |
+| B1c ghost + finish the word (top 3) | 97.7% | 88.9% | 97.9% | 37.6% | 1.63 | n/a |  |  | 0 |
 | B2 LLM raw | not run | | | | | | | | |
 | B3 LLM+val | not run | | | | | | | | |
 | B4 lattice+val | not run | | | | | | | | |
@@ -39,9 +40,33 @@ items.
 | B0 dict | turk | 300 | 2160 | 91.9% | 56.7% | 87.7% | -0.8% | 3.59 | 8 |
 | B1 ghost | aac | 566 | 2730 | 97.3% | 88.7% | 98.4% | -0.2% | 3.57 | 7 |
 | B1 ghost | turk | 300 | 2160 | 96.2% | 79.7% | 95.3% | 0.1% | 3.56 | 8 |
+| B1c ghost + finish the word (top 3) | aac | 566 | 2730 | 98.1% | 91.7% | 98.6% | 39.7% | 1.54 | 7 |
+| B1c ghost + finish the word (top 3) | turk | 300 | 2160 | 97.2% | 83.7% | 96.7% | 35.2% | 1.74 | 8 |
 
 "Unreachable" = items with a word that is not in the lexicon, so neither decoding nor cycling can
 produce it (names, rare spellings).
+
+## Finish the word (B1c)
+
+B1c is B1 with Finish the word (web-ui Req 31): after each key the simulated user looks at the up to 3
+words the app offers (core `rankCompletions`, ranked by the word pair before, limited to words the
+word-pair model knows) and takes the gold word at the first chance that saves a press. Taking a word is
+one press and closes it. Taken words stay fixed, the sentence is decoded with them, and the usual
+corrections follow. It is an ideal user who never misses an offer, so real people will save less; fewer
+presses is not the same as less time (reading the offers costs attention).
+
+Scan steps/char is on the harness grid (sentences and the offered words in row 0, then the keypad);
+"app grid" is the app's own order (keypad rows, then the 3 words, then 5 sentences), with the word row
+counted as always there.
+
+| Config | Source | Items | Presses/char | KSR | Words taken | Sent top-1 | Scan steps/char | Scan steps/char (app grid) |
+|---|---|---|---|---|---|---|---|---|
+| B1 ghost | all | 866 | 1.00 | -0.0% | 0 | 85.6% | 3.57 | 2.59 |
+| B1c ghost + finish the word (top 3) | all | 866 | 0.62 | 37.6% | 78.5% | 88.9% | 1.63 | 1.88 |
+| B1 ghost | aac | 566 | 1.00 | -0.2% | 0 | 88.7% | 3.57 | 2.60 |
+| B1c ghost + finish the word (top 3) | aac | 566 | 0.60 | 39.7% | 80.8% | 91.7% | 1.54 | 1.86 |
+| B1 ghost | turk | 300 | 1.00 | 0.1% | 0 | 79.7% | 3.56 | 2.59 |
+| B1c ghost + finish the word (top 3) | turk | 300 | 0.65 | 35.2% | 75.7% | 83.7% | 1.74 | 1.92 |
 
 ## Initials mode, offline (plan section 3.3 "Phantom mode")
 
@@ -57,8 +82,8 @@ ceiling for any ranker, B4 included, that keeps to listed words.
 
 | Config | Word acc | Sent top-1 | Sent top-5 | Presses/char | KSR | Words retyped in letter mode | Unreachable items | Scan steps/char | p50 ms | p95 ms |
 |---|---|---|---|---|---|---|---|---|---|---|
-| B0 dict | 14.6% | 0.0% | 0.0% | 1.26 | -25.8% | 2306 of 4890 | 15 | 5.36 | 0.23 | 0.68 |
-| B1 ghost | 21.0% | 1.5% | 2.0% | 1.35 | -34.6% | 2306 of 4890 | 15 | 5.89 | 0.32 | 0.91 |
+| B0 dict | 14.6% | 0.0% | 0.0% | 1.26 | -25.8% | 2306 of 4890 | 15 | 5.36 | 0.24 | 0.67 |
+| B1 ghost | 21.0% | 1.5% | 2.0% | 1.35 | -34.6% | 2306 of 4890 | 15 | 5.89 | 0.33 | 0.94 |
 
 | Config | Source | Items | Word acc | Sent top-1 | Sent top-5 | Presses/char |
 |---|---|---|---|---|---|---|

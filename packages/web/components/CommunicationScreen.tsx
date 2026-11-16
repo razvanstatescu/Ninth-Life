@@ -14,9 +14,9 @@
  * Reply types (web-ui Req 29, ADR-008): Agree, Disagree, Ask for their newest line, only reorder the
  * sentences (and Ask adds a "?"); the area's last row, the laptop list, or the Conversation and Sentences sheets.
  */
-import { REPLY_INTENTS, encodeWord, lattice, normalize, type Candidate, type Lexicon, type ReplyIntent } from '@ninth/core';
+import { BOS, CAPITALS, REPLY_INTENTS, encodeWord, keyFixes, normalize, rankCompletions, type KeyFix, type Candidate, type Lexicon, type ReplyIntent } from '@ninth/core';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactElement } from 'react';
-import { EMPTY, actionForKey, codesOf, composerReducer, type ComposerState } from '@/lib/composer';
+import { EMPTY, LIMIT_MESSAGE, actionForKey, codesOf, composerReducer, limitFor, marksOf, openIndex as openIndexOf, startsOf, type ComposerState } from '@/lib/composer';
 import { loadDictionary, type DictState } from '@/lib/data';
 import { DecodeCache, buildRequest, decodeRemote, type RejectedSuggestion } from '@/lib/decodeClient';
 import { decodeContext, recordMine, replyIntentFor, useConversation, type MeVia, type ThemVia, type Turn } from '@/lib/conversation';
@@ -24,6 +24,7 @@ import { focusContext, mapKey } from '@/lib/keyboard';
 import {
   isShell,
   isTwoColumn,
+  shiftQuery,
   sectionOrder,
   SPLIT_ROWS_QUERIES,
   splitSuggestionRows,
@@ -41,9 +42,9 @@ import {
 } from '@/lib/layout';
 import { KEY_ROWS, type KeyDef } from '@/lib/keys';
 import { applyMyWords, buildDisplayMap, makeMyWord, mergeMyWords, showWord, type MyWord } from '@/lib/myWords';
-import { MAX_CANDIDATES, buildSentence, decodeAround, decodeWithPins, mergeCandidates, readings, spellTarget } from '@/lib/sentence';
+import { MAX_CANDIDATES, buildSentence, decodeAround, decodeWithPins, mergeCandidates, rankDelayMs, rankingLattice, readings, spellTarget } from '@/lib/sentence';
 import { DEFAULT_SETTINGS, applyLook, readStoredLook, sanitizeSettings, stepScanMs, type Settings } from '@/lib/settings';
-import { acceptReply, replyCells, replyRows, suggestionMode } from '@/lib/replies';
+import { PIN_FULL, PIN_TOO_LONG, acceptReply, fitsQuickReply, quickReplies, replyCells, replyColumns, replyMeasurer, replyRows, sheetReplyRows, suggestionMode } from '@/lib/replies';
 import { pickVoice, speak, speechSupported } from '@/lib/speech';
 import {
   deleteMyWord,
@@ -53,6 +54,8 @@ import {
   listPhrases,
   loadSettings,
   markPhraseUsed,
+  pinnedTexts,
+  setPhrasePinned,
   putMyWords,
   savePhrase,
   saveSettings,
@@ -86,35 +89,52 @@ import { ScanBar } from './ScanBar';
 import { SettingsSheet } from './SettingsSheet';
 import { Sheet } from './Sheet';
 import { ShowMode } from './ShowMode';
-import { SpeakBar, SpeakButton } from './SpeakBar';
+import { CardsSheet } from './CardsSheet';
+import { SpeakBar, SpeakButton, editWords } from './SpeakBar';
 import { SpellSheet } from './SpellSheet';
+import { DID_YOU_MEAN, FINISH_THE_WORD, WordRow } from './WordRow';
+import { PartnerStrip } from './PartnerStrip';
+import { BAND_SHIFT, PARTNER_COMPACT_NO_HEADER_QUERY, partnerView } from '@/lib/partner';
+import { FixSheet, type FixWord } from './FixSheet';
 
-const LLM_DEBOUNCE_MS = 400;
-const ACTIONS = ['speak', 'clear', 'save', 'show', 'spell'] as const;
+const CAPITAL_WORDS = Object.entries(CAPITALS).map(([w, display]) => ({ w, display }));
+const ACTIONS = ['speak', 'clear', 'save', 'show', 'fix', 'spell'] as const;
+/** How long a key shows that a quick repeat press was not counted (web-ui Req 30.4). No motion, one state change. */
+export const IGNORED_MARK_MS = 700;
+export const IGNORED_MESSAGE = 'Pressed again too quickly, so the second press was not counted. Accept delay in Settings changes this.';
 /** Phones and tablets (stack, split): the action bar, left to right (web-ui Req 24). */
 const PHONE_ACTIONS = ['menu', 'speak', 'show'] as const;
 const KEYPAD_ROWS = KEY_ROWS.length; // 4
 /**
  * Scan grid (web-ui Req 8.1, 16.1, 21.2): keypad rows first so any key is at most 4 + 3 = 7 steps
- * away (Keypad README), then sentences, "Add to my words" offers (empty, so skipped, unless a word on
+ * away (Keypad README), then Finish the word (web-ui Req 31.6; 0 cells, so skipped, unless words are
+ * offered), then sentences, "Add to my words" offers (empty, so skipped, unless a word on
  * show is not in the person's words), the actions under the SpeakBar, and the header (Menu, or
  * Phrases / Voice / Settings on wide screens). Phone layout: the same rows, with the action row being
  * the action bar (Menu, Speak, Show) and the last row the sentence card's Clear (or Undo).
  */
+/** Finish the word (web-ui Req 31.6): up to 3 words for the open word, right after the keys. */
+export const WORD_ROW = KEYPAD_ROWS; // scan row 4
 /** Sentences, or the quick replies while they hold the area (web-ui Req 28.6). */
-export const CAND_ROW = KEYPAD_ROWS; // scan row 4
-export const OFFER_ROW = KEYPAD_ROWS + 1; // scan row 5
-export const ACTION_ROW = KEYPAD_ROWS + 2; // scan row 6
-export const MENU_ROW = KEYPAD_ROWS + 3; // scan row 7
+export const CAND_ROW = KEYPAD_ROWS + 1; // scan row 5
+export const OFFER_ROW = KEYPAD_ROWS + 2; // scan row 6
+export const ACTION_ROW = KEYPAD_ROWS + 3; // scan row 7
+export const MENU_ROW = KEYPAD_ROWS + 4; // scan row 8
 /**
  * The conversation (web-ui Req 27.10): after the card's Clear on phones, after the header on laptops.
- * 0 cells under 620px (no header; the row is skipped), 1 for the header's They said button, up to 4 for
+ * 0 cells under 640px (no header; the row is skipped), 1 for the header's They said button, up to 4 for
  * the strip (2 turns, They said, All), up to 6 for the laptop panel (3 turns, Listen, Type their line, All).
  */
-export const THREAD_ROW = KEYPAD_ROWS + 4; // scan row 8
+export const THREAD_ROW = KEYPAD_ROWS + 5; // scan row 9
 const WIDE_MENU = ['phrases', 'voice', 'settings'] as const;
+/** A mark in words, for the polite region (web-ui Req 34.8). */
+const MARK_WORDS: Record<string, string> = { '.': 'Full stop', '?': 'Question mark', '!': 'Exclamation mark', ',': 'Comma' };
+function markSaid(m: string | undefined, word?: string): string {
+  if (!m) return 'No mark.';
+  return word ? `${MARK_WORDS[m]} after ${word}.` : `${MARK_WORDS[m]}.`;
+}
 
-type SheetName = 'menu' | 'settings' | 'voice' | 'phrases' | 'words' | 'spell' | 'sentences' | 'proof' | 'partner' | 'conversation' | null;
+type SheetName = 'cards' | 'menu' | 'settings' | 'voice' | 'phrases' | 'words' | 'spell' | 'sentences' | 'proof' | 'partner' | 'conversation' | 'fix' | null;
 /** What the person chose to say: Speak (keys), a phrase, a quick reply, Say again. Each becomes a 'you said' turn. */
 export type SayAndRecord = (text: string, via: Exclude<MeVia, 'shown'>) => boolean;
 const WORDS_NOT_SAVED = 'My words could not be saved on this device, so they last until you close the app. Storage may be off in this browser window.';
@@ -174,6 +194,7 @@ export function CommunicationScreen({
   const voices = useVoices(settings.lang);
   const cache = useRef(new DecodeCache());
   const lastPointerKey = useRef<{ id: string; at: number } | null>(null);
+  const lastKeyAt = useRef<number | null>(null);
   const lastReply = useRef<{ text: string; at: number } | null>(null);
 
   // ---- load settings, dictionary, phrases ---------------------------------------------------
@@ -219,7 +240,8 @@ export function CommunicationScreen({
 
   // ---- decoding -------------------------------------------------------------------------------
   const lex = dict.status === 'ready' ? dict.lexicon : null;
-  const display = useMemo(() => buildDisplayMap(myWords, [...spelled].map(([w, d]) => ({ w, display: d }))), [myWords, spelled]);
+  // Capitals (web-ui Req 34.4) first, so the person's own spellings win.
+  const display = useMemo(() => buildDisplayMap(CAPITAL_WORDS, myWords, [...spelled].map(([w, d]) => ({ w, display: d }))), [myWords, spelled]);
   const codes = useMemo(() => codesOf(composer), [composer]);
   // The reply type (web-ui Req 29): only the one pressed for their newest line counts (a new line resets it).
   const intent = replyIntentFor(conv.state, composer.intent, composer.intentFor);
@@ -246,10 +268,10 @@ export function CommunicationScreen({
     () => decodeContext(conv.state, { recent: settings.llmRecent, before, intent: composer.spoken ? undefined : composer.intent, intentFor: composer.intentFor }),
     [conv.state, settings.llmRecent, before, composer.spoken, composer.intent, composer.intentFor],
   );
-  const remoteKey = DecodeCache.key(codes, decodeCtx.partner, decodeCtx.recent, decodeCtx.intent);
+  const pins = useMemo(() => composer.slots.map((s) => s.pin), [composer.slots]);
+  const remoteKey = DecodeCache.key(codes, decodeCtx.partner, decodeCtx.recent, decodeCtx.intent, pins);
   const llmActive = settings.llm && online && dict.status === 'ready';
   const remoteNow = llmActive && remote?.key === remoteKey ? remote : null;
-  const pinned = composer.slots.some((s) => s.pin);
   // Model sentences must also respect words the person fixed with # or by choosing a sentence.
   const remoteValid = useMemo(
     () => (remoteNow?.candidates ?? []).filter((c) => composer.slots.every((s, i) => !s.pin || s.pin === c.words[i])),
@@ -268,10 +290,82 @@ export function CommunicationScreen({
     [composer, candidates, lex, settings.mode, fallback, display, lexVersion],
   );
 
+  const say = useCallback((msg: string) => {
+    setAnnounce('');
+    // A fresh string each time so the same message is announced twice in a row.
+    setTimeout(() => setAnnounce(msg), 30);
+  }, []);
+
+  // Finish the word (web-ui Req 31.1, 31.7): words that start with the open word's keys, ranked offline by
+  // the word pair before; only words in the word-pair data, My words or the pack. Never sent anywhere.
+  const openIndex = openIndexOf(composer);
+  const openSlot = openIndex >= 0 ? composer.slots[openIndex] : undefined;
+  const finishOn = settings.wordCompletion && settings.mode === 'letter' && dict.status === 'ready' && !!openSlot && !openSlot.pin && !composer.spoken;
+  const prevWord = openIndex > 0 && !startsOf(composer).has(openIndex) ? (sentence.words[openIndex - 1]?.word ?? BOS) : BOS;
+  const packWords = useMemo(() => new Set((dict.status === 'ready' ? (dict.pack?.words ?? []) : []).map((x) => normalize(x.w))), [dict]);
+  const mineWords = useMemo(() => new Set(myWords.map((m) => m.w)), [myWords]);
+  const completions = useMemo(() => {
+    if (!finishOn || dict.status !== 'ready' || !openSlot) return [];
+    const lm = dict.lm;
+    const allow = (w: string) => lm.knows?.(w) === true || mineWords.has(w) || packWords.has(w);
+    return rankCompletions(openSlot.code, prevWord, dict.lexicon, lm, { allow });
+    // lexVersion: the lexicon was changed in place (addWords).
+  }, [finishOn, dict, openSlot, prevWord, mineWords, packWords, lexVersion]);
+  const finishWord = useCallback((word: string) => dispatch({ type: 'complete', word }), []);
+  // Did you mean (web-ui Req 32.4, ADR-009): keys that spell nothing get up to 3 words one key away, in the
+  // same places, when there is no word to finish. Never applied without a press.
+  const dymIndex =
+    completions.length === 0 && dict.status === 'ready' && settings.mode === 'letter' && !composer.spoken && composer.edit === undefined
+      ? sentence.words.findIndex((w) => w.state === 'unspelled')
+      : -1;
+  const dymCode = dymIndex >= 0 ? composer.slots[dymIndex]?.code : undefined;
+  const dymPrev = dymIndex > 0 ? (sentence.words[dymIndex - 1]?.word ?? BOS) : BOS;
+  const dymNext = dymIndex >= 0 ? (sentence.words[dymIndex + 1]?.word ?? undefined) : undefined;
+  const dym = useMemo<KeyFix[]>(
+    () => (dymCode && dict.status === 'ready' ? keyFixes(dymCode, dymPrev, dict.lexicon, dict.lm, { next: dymNext }) : []),
+    // lexVersion: the lexicon was changed in place (addWords).
+    [dymCode, dymPrev, dymNext, dict, lexVersion],
+  );
+  /** Say a key change and make it (a Did you mean pick, or a word one key away in Fix a word). */
+  const takeFix = useCallback(
+    (index: number, fix: KeyFix) => {
+      const old = composer.slots[index]?.code;
+      if (!old) return;
+      dispatch({ type: 'recode', index, word: fix.word });
+      say(`${showWord(fix.word, display)}. Keys changed from ${old.split('').join(' ')} to ${fix.code.split('').join(' ')}.`);
+    },
+    [composer.slots, say, display],
+  );
+  /** The word row's words: words to finish, or Did you mean (web-ui Req 31, 32.4). */
+  const rowKind: 'finish' | 'dym' | null = completions.length > 0 ? 'finish' : dym.length > 0 ? 'dym' : null;
+  const rowWords = useMemo(() => (rowKind === 'finish' ? completions : rowKind === 'dym' ? dym.map((f) => f.word) : []), [rowKind, completions, dym]);
+  const pickRowWord = useCallback(
+    (word: string) => {
+      if (rowKind === 'finish') return finishWord(word);
+      const f = dym.find((x) => x.word === word);
+      if (f && dymIndex >= 0) takeFix(dymIndex, f);
+    },
+    [rowKind, finishWord, dym, dymIndex, takeFix],
+  );
+  const dymAria = useCallback(
+    (w: string) => {
+      const f = dym.find((x) => x.word === w);
+      return f ? `${showWord(w, display)}, keys ${f.code.split('').join(' ')}, ${editWords(f.edit)}` : showWord(w, display);
+    },
+    [dym, display],
+  );
+
+  // Model ranking (web-ui Req 30.1, 30.2): pinned words go as one-word slots, so ranking goes on after #
+  // or a chosen sentence; an open word waits for a longer pause than a closed one.
+  const rankLat = useMemo(
+    () => (llmActive && dict.status === 'ready' ? rankingLattice(composer, dict.lexicon, settings.mode) : null),
+    // lexVersion: the lexicon was changed in place (addWords).
+    [llmActive, dict, composer, settings.mode, lexVersion],
+  );
+  const rankDelay = rankDelayMs(composer);
   useEffect(() => {
-    if (!llmActive || dict.status !== 'ready' || codes.length === 0 || pinned) return;
-    const lat = lattice(codes, dict.lexicon, 12, settings.mode);
-    if (lat.some((slot) => slot.length === 0)) return; // an unfinished word: nothing to rank yet
+    if (!llmActive || dict.status !== 'ready' || !rankLat) return; // no keys, or a word with no reading yet
+    const lat = rankLat;
     const key = remoteKey;
     const hit = cache.current.get(key);
     if (hit) {
@@ -288,24 +382,20 @@ export function CommunicationScreen({
         cache.current.set(key, res);
         setRemote({ key, candidates: res.candidates, rejected: res.rejected, rejectedCount: res.rejectedCount });
       });
-    }, LLM_DEBOUNCE_MS);
+    }, rankDelay);
     return () => {
       clearTimeout(t);
       ctrl.abort();
     };
     // remoteKey stands for the context (partner, recent lines and reply type).
-  }, [llmActive, dict, codes, remoteKey, settings.mode, pinned, ghost]);
+  }, [llmActive, dict, codes, remoteKey, settings.mode, rankLat, rankDelay, ghost]);
 
   // ---- actions --------------------------------------------------------------------------------
-  const say = useCallback((msg: string) => {
-    setAnnounce('');
-    // A fresh string each time so the same message is announced twice in a row.
-    setTimeout(() => setAnnounce(msg), 30);
-  }, []);
 
   const nextReading = useCallback(() => {
     if (!lex || composer.slots.length === 0) return;
-    const index = composer.slots.length - 1;
+    // # cycles the word being retyped (web-ui Req 32.3), else the last word.
+    const index = composer.edit ?? composer.slots.length - 1;
     const rs = readings(lex, composer.slots[index]!.code, settings.mode);
     const cur = sentence.words[index]?.word ?? null;
     if (rs.length === 0 || (rs.length === 1 && rs[0] === cur)) {
@@ -320,21 +410,58 @@ export function CommunicationScreen({
     (def: KeyDef) => {
       if (def.id === '#') return nextReading();
       const a = actionForKey(def.id);
-      if (a) dispatch(a);
+      if (!a) return;
+      // The partner strip turns to "Typing…" on a key (web-ui Req 33.2); only the time is kept, in memory.
+      lastKeyAt.current = Date.now();
+      // The 17th letter of a word or the 21st word is not added; say why, politely (web-ui Req 30.3).
+      const limit = limitFor(composer, a);
+      if (limit) return say(LIMIT_MESSAGE[limit]);
+      // A retype ended before any key keeps the old word (web-ui Req 32.3).
+      if (composer.edit !== undefined && composer.editFresh && (a.type === 'space' || a.type === 'back')) {
+        const old = sentence.words[composer.edit];
+        if (old) say(`${sentence.tokens[composer.edit]?.replace(/[.?!,]+$/, '') || old.code} kept.`);
+      }
+      // Key 1 and Back on a mark say it in words (web-ui Req 34.8).
+      if (a.type === 'punct' && composer.slots.length > 0) {
+        const after = composerReducer(composer, a);
+        const at = composer.edit !== undefined && !composer.editFresh ? composer.edit : after.slots.length - 1;
+        say(markSaid(after.slots[at]?.punct, sentence.tokens[at]?.replace(/[.?!,]+$/, '')));
+      } else if (a.type === 'back' && !composer.open && composer.edit === undefined && composer.slots[composer.slots.length - 1]?.punct) {
+        say('Mark removed.');
+      }
+      dispatch(a);
     },
-    [nextReading],
+    [nextReading, composer, say, sentence.words, sentence.tokens],
   );
 
-  /** Pointer and touch presses: a repeat of the same key inside the accept delay is a tremor. */
+  /**
+   * Pointer and touch presses: a repeat of the same key inside the accept delay is a tremor and is not
+   * counted (web-ui Req 7.2). The key shows it was not counted (web-ui Req 30.4); only the first such press
+   * of a visit is announced, so a shaky hand does not hear it every time.
+   */
+  const [ignoredKey, setIgnoredKey] = useState<{ id: string; n: number } | null>(null);
+  const ignoredSaid = useRef(false);
+  useEffect(() => {
+    if (!ignoredKey) return;
+    const t = setTimeout(() => setIgnoredKey(null), IGNORED_MARK_MS);
+    return () => clearTimeout(t);
+  }, [ignoredKey]);
   const pressKeyPointer = useCallback(
     (def: KeyDef) => {
       const now = Date.now();
       const last = lastPointerKey.current;
-      if (last && last.id === def.id && now - last.at < settings.acceptDelayMs) return;
+      if (last && last.id === def.id && now - last.at >= 0 && now - last.at < settings.acceptDelayMs) {
+        setIgnoredKey((k) => ({ id: def.id, n: (k?.n ?? 0) + 1 }));
+        if (!ignoredSaid.current) {
+          ignoredSaid.current = true;
+          say(IGNORED_MESSAGE);
+        }
+        return;
+      }
       lastPointerKey.current = { id: def.id, at: now };
       pressKey(def);
     },
-    [pressKey, settings.acceptDelayMs],
+    [pressKey, settings.acceptDelayMs, say],
   );
 
   const selectCandidate = useCallback(
@@ -520,9 +647,34 @@ export function CommunicationScreen({
   );
 
   const canSpell = dict.status === 'ready' && settings.mode === 'letter' && codes.length > 0;
-  const openSpell = useCallback(() => {
+  // Fix a word (web-ui Req 32.1): any word of a sentence that is typed and not yet spoken.
+  const canFix = dict.status === 'ready' && codes.length > 0 && !composer.spoken;
+  const openFix = useCallback(() => {
+    if (canFix) setSheet('fix');
+  }, [canFix]);
+  const fixWords = useMemo<FixWord[]>(
+    () => sentence.words.map((w, i) => ({ label: sentence.tokens[i]?.replace(/[.?!,]+$/, '') || w.word || w.partial || w.code, code: w.code, mark: composer.slots[i]?.punct })),
+    [sentence.words, sentence.tokens, composer.slots],
+  );
+  const fixReadings = useCallback(
+    (i: number) => {
+      const w = sentence.words[i];
+      return lex && w ? readings(lex, w.code, settings.mode).filter((r) => r !== w.word) : [];
+    },
+    [lex, sentence.words, settings.mode],
+  );
+  const fixFixes = useCallback(
+    (i: number) => {
+      const w = sentence.words[i];
+      if (dict.status !== 'ready' || !w || settings.mode !== 'letter') return [];
+      const prev = i > 0 ? (sentence.words[i - 1]?.word ?? BOS) : BOS;
+      return keyFixes(w.code, prev, dict.lexicon, dict.lm, { next: sentence.words[i + 1]?.word ?? undefined });
+    },
+    [dict, sentence.words, settings.mode],
+  );
+  const openSpell = useCallback((at?: number) => {
     if (!canSpell) return;
-    const i = spellTarget(sentence.words);
+    const i = typeof at === 'number' ? at : spellTarget(sentence.words);
     const w = sentence.words[i];
     if (!w) return;
     const start = w.word ?? w.partial ?? null;
@@ -593,28 +745,48 @@ export function CommunicationScreen({
   const menuCells = layout === 'wide' ? WIDE_MENU.length : 1;
   // Phones and tablets (web-ui Req 24, 25): one screen, suggestions next to the keypad, the action bar.
   const phone = isShell(layout);
+  // The partner strip (web-ui Req 33.5): full, compact or none by the visible height; with a band the shells
+  // follow today's height rules at the height left (shiftQuery, and the .app--partner-* rules in app.css).
+  const bandFull = useMediaQuery(layout === 'split' ? '(min-height: 752px)' : '(min-height: 740px)');
+  const bandCompact = useMediaQuery(layout === 'split' ? '(min-height: 688px)' : '(min-height: 640px)');
+  const band: 'none' | 'compact' | 'full' = settings.partnerStrip === 'off' ? 'none' : !phone ? 'full' : bandFull ? 'full' : bandCompact ? 'compact' : 'none';
+  const bandShift = !phone || band === 'none' ? 0 : band === 'compact' ? BAND_SHIFT.compact : layout === 'split' ? BAND_SHIFT.fullSplit : BAND_SHIFT.full;
   const stackRows = stackSuggestionRows({
-    r2: useMediaQuery(STACK_ROWS_QUERIES.r2),
-    r3: useMediaQuery(STACK_ROWS_QUERIES.r3),
-    r4: useMediaQuery(STACK_ROWS_QUERIES.r4),
-    short: useMediaQuery(STACK_SHORT_QUERY),
+    r2: useMediaQuery(shiftQuery(STACK_ROWS_QUERIES.r2, bandShift)),
+    r3: useMediaQuery(shiftQuery(STACK_ROWS_QUERIES.r3, bandShift)),
+    r4: useMediaQuery(shiftQuery(STACK_ROWS_QUERIES.r4, bandShift)),
+    short: useMediaQuery(shiftQuery(STACK_SHORT_QUERY, bandShift)),
   });
-  const splitRows = splitSuggestionRows({ r3: useMediaQuery(SPLIT_ROWS_QUERIES.r3), r4: useMediaQuery(SPLIT_ROWS_QUERIES.r4) });
+  // The sentence opens Fix a word only where it is at least 56px tall (accessibility rule 1): not on stack screens
+  // whose card has one 48px line (under 680px, moved up by a partner band); Menu > Fix a word is the way there.
+  const oneLineCard = useMediaQuery(shiftQuery('(max-height: 679px)', bandShift)) && layout === 'stack';
+  const fixOnCard = canFix && !oneLineCard;
+  const splitRows = splitSuggestionRows({ r3: useMediaQuery(shiftQuery(SPLIT_ROWS_QUERIES.r3, bandShift)), r4: useMediaQuery(shiftQuery(SPLIT_ROWS_QUERIES.r4, bandShift)) });
   const sugRows = layout === 'split' ? splitRows : stackRows;
   const unspelledWord = sentence.words.find((w) => w.state === 'unspelled');
   // One contextual row, in this order: spell a word the dictionary lacks, or add a word to my words.
   // A short phone has no suggestion row (Req 24.9): Sentences and Spell this word are in Menu.
   const noSugRow = phone && sugRows === 0;
-  const spellOffer: { label: string; icon: 'spell' | 'plus'; onClick: () => void } | null = !phone || noSugRow
+  // Finish the word (web-ui Req 31.5): on the shells it takes the area's last row, by the keys (the only row
+  // on a 1-row phone, with Sentences in Menu); on a short phone it is in Menu; laptops get their own row.
+  const wordRowShown = rowWords.length > 0 && !noSugRow;
+  const wordsInMenu = rowWords.length > 0 && noSugRow;
+  const sentRows = phone && wordRowShown ? sugRows - 1 : sugRows;
+  // A 1-row phone keeps Spell beside Did you mean: 2 words and "Spell 7532573" (web-ui Req 32.4).
+  const rowSpell =
+    rowKind === 'dym' && phone && wordRowShown && sentRows === 0 && canSpell && dymIndex >= 0 && dymCode ? { label: `Spell ${dymCode}`, onClick: () => openSpell(dymIndex) } : null;
+  const rowShownWords = rowSpell ? rowWords.slice(0, 2) : rowWords;
+  const rowCells = wordRowShown ? rowShownWords.length + (rowSpell ? 1 : 0) : 0;
+  const spellOffer: { label: string; icon: 'spell' | 'plus'; onClick: () => void } | null = !phone || noSugRow || sentRows === 0
     ? null
     : canSpell && unspelledWord && sentence.candidates.length === 0
       ? { label: `Spell ${unspelledWord.code}`, icon: 'spell', onClick: openSpell }
       : offers[0]
         ? { label: `Add ${offers[0].label} to my words`, icon: 'plus', onClick: () => addOffer(offers[0]!.word) }
         : null;
-  const sug: ReturnType<typeof phoneSuggestions> = noSugRow
+  const sug: ReturnType<typeof phoneSuggestions> = noSugRow || sentRows === 0
     ? { items: [], more: false }
-    : phoneSuggestions(sentence.candidates, sentence.selectedIndex, spellOffer ? sugRows - 1 : sugRows, composer.punct, display);
+    : phoneSuggestions(sentence.candidates, sentence.selectedIndex, spellOffer ? sentRows - 1 : sentRows, composer.punct, display, marksOf(composer));
   const openSentences = useCallback(() => setSheet('sentences'), []);
   // The shells size the keys from the room the keypad area gets (styles/app.css --pad-w / --pad-h).
   // Measured here rather than with container query units, which Chrome resolved to 0 in this layout.
@@ -649,7 +821,26 @@ export function CommunicationScreen({
   const setIntent = useCallback((next: ReplyIntent | undefined) => dispatch({ type: 'intent', intent: next, turn: lastThemId }), [lastThemId]);
   const toggleIntent = useCallback((t: ReplyIntent) => setIntent(intent === t ? undefined : t), [intent, setIntent]);
 
-  // ---- quick replies (web-ui Req 28) ------------------------------------------------------------------
+  // ---- quick replies (web-ui Req 28, 35.1) -------------------------------------------------------------
+  // The person's pinned phrases first (pin order), then the usual replies, 5 in all, in every place they show.
+  const pinned = useMemo(() => pinnedTexts(phrases), [phrases]);
+  const replyTexts = useMemo(() => quickReplies(pinned), [pinned]);
+  const sheetRows = useMemo(() => sheetReplyRows(replyTexts), [replyTexts]);
+  const replyCols = phone ? replyColumns(replyTexts) : 3;
+  const pinPhrase = useCallback(
+    (p: Phrase, on: boolean) => {
+      if (on && !fitsQuickReply(p.text, replyMeasurer())) return say(PIN_TOO_LONG);
+      if (on && pinned.length >= 5) return say(PIN_FULL);
+      void setPhrasePinned(p.id, on)
+        .then((ok) => {
+          if (!ok) return say(on ? PIN_FULL : 'This phrase could not be changed.');
+          say(on ? 'Pinned to quick replies.' : 'Unpinned.');
+          return listPhrases().then(setPhrases);
+        })
+        .catch(() => setPhraseError('This phrase could not be changed.'));
+    },
+    [pinned.length, say],
+  );
   // Nothing typed, or the sentence was just spoken: the area holds the replies instead of the sentences.
   const replyMode = suggestionMode({ typed: codes.length > 0, spoken: composer.spoken, enabled: settings.quickReplies });
   // Reply types go here on the shells while the newest turn is theirs: with 2 or more rows they take the
@@ -673,8 +864,8 @@ export function CommunicationScreen({
   // Shells: the rows that fit (none on a short phone: Menu > Quick replies). Laptops: one row of 5 on wide
   // (the header has Phrases), 2 rows of 3 on compact.
   const replyGrid = useMemo(
-    () => (phone ? replyRows(sugRows, slotCells) : layout === 'wide' ? replyRows(1, slotCells, true) : replyRows(3, slotCells)),
-    [phone, sugRows, slotCells, layout],
+    () => (phone ? replyRows(sugRows, slotCells, false, replyTexts, replyCols) : layout === 'wide' ? replyRows(1, slotCells, true, replyTexts) : replyRows(3, slotCells, false, replyTexts)),
+    [phone, sugRows, slotCells, layout, replyTexts, replyCols],
   );
   const showReplies = replyMode === 'replies' && replyGrid.length > 0;
   const replyList = useMemo(() => (showReplies ? replyCells(replyGrid) : []), [showReplies, replyGrid]);
@@ -702,13 +893,26 @@ export function CommunicationScreen({
 
   const openSheet = useCallback((name: SheetName) => setSheet(name), []);
   const showCurrent = useCallback(() => {
+    // Nothing typed: Show opens the cards (web-ui Req 35.2).
+    if (codes.length === 0) {
+      setSheet('cards');
+      return;
+    }
     if (!sentence.speakable || !sentence.text) return;
     setShow({ text: sentence.text, reason: null });
     recordMine(sentence.text, 'shown');
-  }, [sentence.speakable, sentence.text]);
+  }, [sentence.speakable, sentence.text, codes.length]);
+  /** A card or phrase shown big (web-ui Req 35.2): a "you said" turn (shown), never spoken. */
+  const showCard = useCallback((text: string) => {
+    setSheet(null);
+    setShow({ text, reason: null });
+    recordMine(text, 'shown');
+  }, []);
 
   // ---- the conversation on the main screen (web-ui Req 27.4-27.6) ------------------------------------
-  const threadView = threadRows(layout, { tall: useMediaQuery(STACK_THREAD_QUERY), noHeader: useMediaQuery(STACK_NO_HEADER_QUERY) });
+  const threadView = threadRows(layout, { tall: useMediaQuery(shiftQuery(STACK_THREAD_QUERY, bandShift)), noHeader: useMediaQuery(band === 'compact' && layout === 'stack' ? PARTNER_COMPACT_NO_HEADER_QUERY : shiftQuery(STACK_NO_HEADER_QUERY, bandShift)) });
+  // What the band shows: never the words before Speak, only "Typing…" (web-ui Req 33.3).
+  const strip = partnerView({ typing: composer.slots.length > 0 && !composer.spoken, lastKeyAt: lastKeyAt.current, newest: conv.turns[conv.turns.length - 1] ?? null });
   const newestFirst = useMemo(() => [...conv.turns].reverse(), [conv.turns]);
   // The header button (Req 27.4) shows their newest line: what you said is already on the card, and their
   // line is the context worth seeing. Yours only when they have said nothing yet.
@@ -730,13 +934,13 @@ export function CommunicationScreen({
     },
     [conv, say],
   );
-  const actionsRef = useRef({ pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout, openSpell, offers, addOffer, phone, sug, spellOffer, openSentences, undo, undoClear, threadView, newestFirst, bubbleTurn, threadShown, openConversation, openPartner, replyList, chooseReplyCell, groupCells, toggleIntent });
-  actionsRef.current = { pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout, openSpell, offers, addOffer, phone, sug, spellOffer, openSentences, undo, undoClear, threadView, newestFirst, bubbleTurn, threadShown, openConversation, openPartner, replyList, chooseReplyCell, groupCells, toggleIntent };
+  const actionsRef = useRef({ fixOnCard, openFix, rowShownWords, pickRowWord, rowSpell, pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout, openSpell, offers, addOffer, phone, sug, spellOffer, openSentences, undo, undoClear, threadView, newestFirst, bubbleTurn, threadShown, openConversation, openPartner, replyList, chooseReplyCell, groupCells, toggleIntent });
+  actionsRef.current = { fixOnCard, openFix, rowShownWords, pickRowWord, rowSpell, pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout, openSpell, offers, addOffer, phone, sug, spellOffer, openSentences, undo, undoClear, threadView, newestFirst, bubbleTurn, threadShown, openConversation, openPartner, replyList, chooseReplyCell, groupCells, toggleIntent };
   const scanner = useScanner({
     mode: scanMode,
     rows: phone
-      ? [...KEY_ROWS.map((r) => r.length), showReplies ? replyList.length : phoneCandCells, 0, PHONE_ACTIONS.length, 1, threadCells]
-      : [...KEY_ROWS.map((r) => r.length), replyList.length + groupCells + candCells, offers.length, ACTIONS.length, menuCells, threadCells],
+      ? [...KEY_ROWS.map((r) => r.length), rowCells, showReplies ? replyList.length : phoneCandCells, 0, PHONE_ACTIONS.length, fixOnCard ? 2 : 1, threadCells]
+      : [...KEY_ROWS.map((r) => r.length), rowCells, replyList.length + groupCells + candCells, offers.length, ACTIONS.length, menuCells, threadCells],
     loops: settings.scanLoops,
     scanMs: settings.scanMs,
     acceptDelayMs: settings.acceptDelayMs,
@@ -746,6 +950,10 @@ export function CommunicationScreen({
       if (row < KEYPAD_ROWS) {
         const def = KEY_ROWS[row]?.[cell];
         if (def) a.pressKey(def);
+      } else if (row === WORD_ROW) {
+        const w = a.rowShownWords[cell];
+        if (w) a.pickRowWord(w);
+        else a.rowSpell?.onClick();
       } else if (row === CAND_ROW && cell < a.replyList.length) {
         a.chooseReplyCell(cell);
       } else if (row === CAND_ROW && a.phone) {
@@ -771,7 +979,9 @@ export function CommunicationScreen({
         else if (act === 'speak') a.speakNow();
         else if (act === 'show') a.showCurrent();
       } else if (row === MENU_ROW && a.phone) {
-        if (a.undo) a.undoClear();
+        // The card's row: the sentence (Fix a word) while there is one, then Clear or Undo (web-ui Req 32.1).
+        if (a.fixOnCard && cell === 0) a.openFix();
+        else if (a.undo) a.undoClear();
         else a.clearAll();
       } else if (row === ACTION_ROW) {
         const act = ACTIONS[cell];
@@ -779,6 +989,7 @@ export function CommunicationScreen({
         else if (act === 'clear') a.clearAll();
         else if (act === 'save') a.saveCurrent();
         else if (act === 'show') a.showCurrent();
+        else if (act === 'fix') a.openFix();
         else if (act === 'spell') a.openSpell();
       } else if (row === MENU_ROW) {
         a.openSheet(a.layout === 'wide' ? (WIDE_MENU[cell] ?? null) : 'menu');
@@ -813,8 +1024,10 @@ export function CommunicationScreen({
   });
 
   // ---- physical keyboard ----------------------------------------------------------------------
-  const handlers = useRef({ pressKey, speakNow, moveSelection, selectCandidate, scanner, sheetScanner, overlayScanMode, access: settings.access, overlayOpen, sentencesHidden });
-  handlers.current = { pressKey, speakNow, moveSelection, selectCandidate, scanner, sheetScanner, overlayScanMode, access: settings.access, overlayOpen, sentencesHidden };
+  // Alt+Shift+1-3 and numpad + only while the word row is on screen (web-ui Req 31.6).
+  const shownWords = wordRowShown ? rowShownWords : [];
+  const handlers = useRef({ pressKey, speakNow, moveSelection, selectCandidate, scanner, sheetScanner, overlayScanMode, access: settings.access, overlayOpen, sentencesHidden, shownWords, finishWord: pickRowWord });
+  handlers.current = { pressKey, speakNow, moveSelection, selectCandidate, scanner, sheetScanner, overlayScanMode, access: settings.access, overlayOpen, sentencesHidden, shownWords, finishWord: pickRowWord };
   useEffect(() => {
     let swallowKeyUp: string | null = null;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -862,6 +1075,11 @@ export function CommunicationScreen({
         case 'rank':
           if (!h.sentencesHidden) h.selectCandidate(intent.rank - 1);
           break;
+        case 'complete': {
+          const w = h.shownWords[intent.index];
+          if (w) h.finishWord(w);
+          break;
+        }
       }
     };
     // A focused button activates on Space keyup; the keydown already did the work.
@@ -895,9 +1113,19 @@ export function CommunicationScreen({
   // ---- announcements --------------------------------------------------------------------------
   const [spokenLive, setSpokenLive] = useState('');
   useEffect(() => {
-    const t = setTimeout(() => setSpokenLive(sentence.text ? `Sentence: ${sentence.text}` : ''), 600);
+    // With words to finish the open word, they are read after the sentence (web-ui Req 31.6), once typing pauses.
+    const words = wordRowShown ? rowShownWords.map((w) => showWord(w, display)) : [];
+    const end = /[.?!,]$/.test(sentence.text) ? '' : '.';
+    const said = !sentence.text
+      ? ''
+      : words.length === 0
+        ? `Sentence: ${sentence.text}`
+        : rowKind === 'dym'
+          ? `Sentence: ${sentence.text}${end} No word has these keys. Did you mean: ${words.join(', ')}?`
+          : `Sentence: ${sentence.text}${end} Words: ${words.join(', ')}.`;
+    const t = setTimeout(() => setSpokenLive(said), 600);
     return () => clearTimeout(t);
-  }, [sentence.text]);
+  }, [sentence.text, wordRowShown, rowShownWords, rowKind, display]);
 
   // ---- view -----------------------------------------------------------------------------------
   // While scanning, the scan highlight is the screen's one ember thing, so Speak turns quiet.
@@ -912,7 +1140,9 @@ export function CommunicationScreen({
         ? 'Sentences appear here as you press keys.'
         : dict.status === 'loading'
           ? 'Loading your dictionary.'
-          : sentence.words.some((w) => w.state === 'unspelled')
+          : rowKind === 'dym' && dymCode
+            ? `No word has these keys: ${dymCode}. Pick a word above, spell it, or press Back.`
+            : sentence.words.some((w) => w.state === 'unspelled')
             ? `Not in your words yet: ${sentence.words
                 .filter((w) => w.state === 'unspelled')
                 .map((w) => w.code)
@@ -923,6 +1153,31 @@ export function CommunicationScreen({
   const quickPhrases = dict.status === 'ready' ? (dict.pack?.phrases ?? []) : [];
   const actionLit = (i: number) => scanRow === ACTION_ROW && litCell === i;
 
+  const wordRowEl = (
+    <WordRow
+      words={rowShownWords}
+      display={display}
+      onPick={pickRowWord}
+      scanning={scanRow === WORD_ROW}
+      litIndex={scanRow === WORD_ROW ? litCell : -1}
+      title={rowKind === 'dym' ? DID_YOU_MEAN : FINISH_THE_WORD}
+      ariaFor={rowKind === 'dym' ? dymAria : undefined}
+      extra={rowSpell}
+    />
+  );
+  const phoneSugEl = (rows: number) => (
+    <PhoneSuggestions
+      items={sug.items}
+      more={sug.more}
+      spell={spellOffer}
+      emptyText={dict.status === 'missing' || dict.status === 'error' ? 'Dictionary not loaded. Reload to try again.' : codes.length === 0 ? 'Sentences for your keys appear here.' : null}
+      rows={rows}
+      scanning={scanRow === CAND_ROW}
+      litIndex={scanRow === CAND_ROW ? litCell : -1}
+      onSelect={selectCandidate}
+      onMore={openSentences}
+    />
+  );
   const sections: Record<Section, ReactElement> = {
     thread:
       threadView === 3 ? (
@@ -968,9 +1223,12 @@ export function CommunicationScreen({
           hideSpeak
           digitsApart
           tag={intent ? REPLY_TYPE_LABEL[intent] : undefined}
+          retype={composer.edit !== undefined}
+          onFix={fixOnCard ? openFix : undefined}
+          fixLit={fixOnCard && scanRow === MENU_ROW && litCell === 0}
           extra={
             undo ? (
-              <Button variant="secondary" onClick={undoClear} lit={scanRow === MENU_ROW && litCell === 0} className="phone-card__undo">
+              <Button variant="secondary" onClick={undoClear} lit={scanRow === MENU_ROW && litCell === (fixOnCard ? 1 : 0)} className="phone-card__undo">
                 Undo
               </Button>
             ) : (
@@ -979,7 +1237,7 @@ export function CommunicationScreen({
                 icon="x"
                 onClick={clearAll}
                 disabled={codes.length === 0}
-                lit={scanRow === MENU_ROW && litCell === 0}
+                lit={scanRow === MENU_ROW && litCell === (fixOnCard ? 1 : 0)}
                 aria-label="Clear"
                 className="phone-card__clear"
               >
@@ -1002,6 +1260,8 @@ export function CommunicationScreen({
           speaking={speaking}
           onSpeak={speakNow}
           tag={intent ? REPLY_TYPE_LABEL[intent] : undefined}
+          retype={composer.edit !== undefined}
+          onFix={canFix ? openFix : undefined}
         />
         <div className="speak-actions">
           <Button variant="secondary" icon="x" onClick={clearAll} disabled={codes.length === 0} lit={actionLit(1)}>
@@ -1010,10 +1270,13 @@ export function CommunicationScreen({
           <Button variant="quiet" icon="save" onClick={saveCurrent} disabled={!sentence.speakable} lit={actionLit(2)} aria-label="Save phrase">
             Save<span className="save-btn__more"> phrase</span>
           </Button>
-          <Button variant="quiet" icon="show" onClick={showCurrent} disabled={!sentence.speakable} lit={actionLit(3)}>
+          <Button variant="quiet" icon="show" onClick={showCurrent} disabled={codes.length > 0 && !sentence.speakable} lit={actionLit(3)}>
             Show
           </Button>
-          <Button variant="secondary" icon="spell" onClick={openSpell} disabled={!canSpell} lit={actionLit(4)} aria-label="Spell this word" data-action="spell">
+          <Button variant="secondary" icon="edit" onClick={openFix} disabled={!canFix} lit={actionLit(4)} data-action="fix-word">
+            Fix a word
+          </Button>
+          <Button variant="secondary" icon="spell" onClick={() => openSpell()} disabled={!canSpell} lit={actionLit(5)} aria-label="Spell this word" data-action="spell">
             Spell<span className="spell-btn__more"> this word</span>
           </Button>
         </div>
@@ -1031,23 +1294,22 @@ export function CommunicationScreen({
             onSay={sayReply}
             onPhrases={() => setSheet('phrases')}
             slot={replySlot}
+            columns={replyCols}
           />
+        ) : wordRowShown ? (
+          // Finish the word takes the area's last row; the sentence rows keep the rows above (web-ui Req 31.5).
+          <div className="sugg-split">
+            {sentRows > 0 ? phoneSugEl(sentRows) : null}
+            {wordRowEl}
+          </div>
         ) : (
-        <PhoneSuggestions
-          items={sug.items}
-          more={sug.more}
-          spell={spellOffer}
-          emptyText={dict.status === 'missing' || dict.status === 'error' ? 'Dictionary not loaded. Reload to try again.' : codes.length === 0 ? 'Sentences for your keys appear here.' : null}
-          rows={sugRows}
-          scanning={scanRow === CAND_ROW}
-          litIndex={scanRow === CAND_ROW ? litCell : -1}
-          onSelect={selectCandidate}
-          onMore={openSentences}
-        />
+          phoneSugEl(sugRows)
         )}
       </div>
     ) : (
       <div key="cands" className="order-cands" data-section="cands">
+        {/* Laptops: Finish the word (or Did you mean) under the SpeakBar, above the reply types and the sentences (web-ui Req 31.5). */}
+        {wordRowShown ? wordRowEl : null}
         {dict.status === 'missing' || dict.status === 'error' ? (
           <div className="notice notice--warn" role="alert">
             <Icon name="x" />
@@ -1079,6 +1341,7 @@ export function CommunicationScreen({
               candidates={sentence.candidates}
               selectedIndex={sentence.selectedIndex}
               punct={composer.punct}
+              marks={marksOf(composer)}
               litIndex={scanRow === CAND_ROW ? litCell - replyList.length - groupCells : -1}
               emptyText={candEmpty}
               onSelect={selectCandidate}
@@ -1095,6 +1358,7 @@ export function CommunicationScreen({
               candidates={sentence.candidates}
               selectedIndex={sentence.selectedIndex}
               punct={composer.punct}
+              marks={marksOf(composer)}
               litIndex={scanRow === CAND_ROW ? litCell - groupCells : -1}
               emptyText={candEmpty}
               onSelect={selectCandidate}
@@ -1108,6 +1372,7 @@ export function CommunicationScreen({
             candidates={sentence.candidates}
             selectedIndex={sentence.selectedIndex}
             punct={composer.punct}
+              marks={marksOf(composer)}
             scanning={scanRow === CAND_ROW}
             litIndex={scanRow === CAND_ROW ? litCell : -1}
             emptyText={candEmpty}
@@ -1138,6 +1403,7 @@ export function CommunicationScreen({
       <div key="pad" className="order-pad" id="keypad" tabIndex={-1} data-section="pad" ref={padRef}>
         <Keypad
           onPress={pressKeyPointer}
+          ignoredKey={ignoredKey?.id ?? null}
           scanRow={scanRow < KEYPAD_ROWS ? scanRow : -1}
           litKey={scanRow >= 0 && scanRow < KEYPAD_ROWS && litCell >= 0 ? [scanRow, litCell] : null}
         />
@@ -1149,7 +1415,7 @@ export function CommunicationScreen({
           Menu
         </Button>
         <SpeakButton canSpeak={sentence.speakable} variant={emberIsScan ? 'quiet' : 'primary'} lit={actionLit(1)} speaking={speaking} onSpeak={speakNow} className="phone-actions__speak" />
-        <Button variant="quiet" icon="show" onClick={showCurrent} disabled={!sentence.speakable} lit={actionLit(2)}>
+        <Button variant="quiet" icon="show" onClick={showCurrent} disabled={codes.length > 0 && !sentence.speakable} lit={actionLit(2)}>
           Show
         </Button>
       </div>
@@ -1168,7 +1434,7 @@ export function CommunicationScreen({
     hint:
       settings.access === 'keyboard' ? (
         <p key="hint" className="hint order-hint">
-          Your keyboard works too: <kbd>0</kbd>–<kbd>9</kbd>, <kbd>*</kbd> and <kbd>#</kbd>. <kbd>Enter</kbd> speaks, <kbd>Backspace</kbd> goes back, arrows and <kbd>Alt</kbd>+<kbd>1</kbd>–<kbd>5</kbd> pick a sentence.
+          Your keyboard works too: <kbd>0</kbd>–<kbd>9</kbd>, <kbd>*</kbd> and <kbd>#</kbd>. <kbd>Enter</kbd> speaks, <kbd>Backspace</kbd> goes back, arrows and <kbd>Alt</kbd>+<kbd>1</kbd>–<kbd>5</kbd> pick a sentence, <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>1</kbd>–<kbd>3</kbd> finish the word.
         </p>
       ) : (
         <span key="hint" hidden />
@@ -1184,11 +1450,12 @@ export function CommunicationScreen({
   const pageHeading = <h1 className="nl-sr-only">Ninth Life</h1>;
 
   return (
-    <div className={phone ? `app app--${layout} app--shell` : `app app--${layout}`} onPointerDown={onBackgroundPointer}>
+    <div className={[`app app--${layout}`, phone ? 'app--shell' : '', band !== 'none' ? `app--partner-${band}` : ''].filter(Boolean).join(' ')} onPointerDown={onBackgroundPointer}>
       <a className="nl-skip" href="#keypad">
         Skip to the keypad
       </a>
       <div className="app__inner">
+        {band !== 'none' ? <PartnerStrip view={strip} band={band} flipped={settings.partnerStrip === 'facing'} /> : null}
         <AppHeader
           status={status}
           summary={summary}
@@ -1254,8 +1521,24 @@ export function CommunicationScreen({
                 },
                 canSpell,
                 onSpell: openSpell,
-                // Short phones, and while the replies hold the area after Speak (web-ui Req 24.9, 28.5).
-                onSentences: noSugRow || (showReplies && sentence.candidates.length > 0) ? openSentences : undefined,
+                // Short phones, while the replies hold the area after Speak, and while Finish the word holds a
+                // 1-row phone's only row (web-ui Req 24.9, 28.5, 31.5).
+                onSentences: noSugRow || (showReplies && sentence.candidates.length > 0) || (wordRowShown && sentRows === 0 && sentence.candidates.length > 0) ? openSentences : undefined,
+                // Short phones (no suggestion row): Finish the word or Did you mean is a group here (web-ui Req 31.5, 32.4).
+                words: wordsInMenu ? (
+                  <WordRow
+                    variant="menu"
+                    words={rowWords}
+                    display={display}
+                    title={rowKind === 'dym' ? DID_YOU_MEAN : FINISH_THE_WORD}
+                    ariaFor={rowKind === 'dym' ? dymAria : undefined}
+                    onPick={(w) => {
+                      pickRowWord(w);
+                      setSheet(null);
+                    }}
+                  />
+                ) : null,
+                onFix: canFix ? () => setSheet('fix') : undefined,
                 onProof: () => setSheet('proof'),
                 onPartner: () => setSheet('partner'),
                 onConversation: () => openConversation(null),
@@ -1263,6 +1546,8 @@ export function CommunicationScreen({
             : null
         }
         about={phone ? NOT_A_MEDICAL_DEVICE : null}
+        replyRows={sheetRows}
+        onCards={() => setSheet('cards')}
         onReply={(text) => {
           // Speak inside the press, then back to the keys (web-ui Req 28.4: "Hold on" while typing).
           sayReply(text);
@@ -1298,6 +1583,7 @@ export function CommunicationScreen({
               candidates={sentence.candidates}
               selectedIndex={sentence.selectedIndex}
               punct={composer.punct}
+              marks={marksOf(composer)}
               emptyText={null}
               onSelect={(i) => {
                 selectCandidate(i);
@@ -1317,6 +1603,7 @@ export function CommunicationScreen({
         onChange={setSettings}
         onTestVoice={() => speakText('Hello. This is how I sound.')}
         onClose={() => setSheet(null)}
+        partnerTooShort={phone && band === 'none'}
       />
       <PhrasesSheet
         open={sheet === 'phrases'}
@@ -1336,8 +1623,11 @@ export function CommunicationScreen({
             .catch(() => setPhraseError('This phrase could not be deleted.'));
         }}
         onMyWords={() => setSheet('words')}
+        replyRows={sheetRows}
+        onPin={pinPhrase}
         onClose={() => setSheet(null)}
       />
+      <CardsSheet open={sheet === 'cards'} scanning={overlayScanMode !== null} phrases={phrases.map((p) => p.text)} onShow={showCard} onClose={() => setSheet(null)} />
       <MyWordsSheet
         open={sheet === 'words'}
         scanning={overlayScanMode !== null}
@@ -1348,6 +1638,35 @@ export function CommunicationScreen({
         onAdd={(raw) => addWord(raw, 'typed')}
         onRemove={removeWord}
         onImport={importPack}
+        onClose={() => setSheet(null)}
+      />
+      <FixSheet
+        open={sheet === 'fix'}
+        scanning={overlayScanMode !== null}
+        words={fixWords}
+        readingsFor={fixReadings}
+        fixesFor={fixFixes}
+        showWord={(w) => showWord(w, display)}
+        onReading={(i, w) => {
+          const old = fixWords[i]?.label ?? '';
+          dispatch({ type: 'pin', index: i, word: w });
+          say(`${showWord(w, display)} in place of ${old}.`);
+          setSheet(null);
+        }}
+        onFix={(i, f) => {
+          takeFix(i, f);
+          setSheet(null);
+        }}
+        onRetype={(i) => {
+          dispatch({ type: 'edit', index: i });
+          say(`Retype ${fixWords[i]?.label ?? ''}: type its keys, then press 0.`);
+          setSheet(null);
+        }}
+        onSpell={(i) => openSpell(i)}
+        onMark={(i, m) => {
+          dispatch({ type: 'mark', index: i, punct: m });
+          say(markSaid(m, fixWords[i]?.label));
+        }}
         onClose={() => setSheet(null)}
       />
       <SpellSheet

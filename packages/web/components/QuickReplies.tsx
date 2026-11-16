@@ -35,6 +35,7 @@ export function QuickReplies({
   onSay,
   onPhrases,
   slot,
+  columns = 3,
 }: {
   rows: readonly (readonly ReplyCell[])[];
   variant: 'area' | 'line' | 'menu';
@@ -45,6 +46,8 @@ export function QuickReplies({
   onSay: (text: string) => void;
   onPhrases?: () => void;
   slot?: ReplySlot | null;
+  /** 2 on a phone when a reply is long (web-ui Req 35.1). */
+  columns?: 2 | 3;
 }) {
   const titleId = useId();
   let n = -1;
@@ -84,7 +87,7 @@ export function QuickReplies({
 
   const cls =
     variant === 'area'
-      ? ['quick-replies', 'quick-replies--area', 'phone-sugg', `phone-sugg--${size}`, `quick-replies--${rows.length}`, 'nl-scanrow', scanning ? 'is-scanning' : '']
+      ? ['quick-replies', 'quick-replies--area', 'phone-sugg', `phone-sugg--${size}`, `quick-replies--${rows.length}`, columns === 2 ? 'quick-replies--pairs' : '', 'nl-scanrow', scanning ? 'is-scanning' : '']
       : ['quick-replies', 'quick-replies--line', scanning ? 'is-scanning' : ''];
   return (
     <section className={cls.filter(Boolean).join(' ')} aria-labelledby={titleId} data-section-inner="replies">
