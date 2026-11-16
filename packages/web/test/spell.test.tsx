@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CommunicationScreen } from '@/components/CommunicationScreen';
 import type { MyWord } from '@/lib/myWords';
 import { miniDict } from './fixtures';
+import { closeProof, openProof, proofChips } from './proof-helper';
 
 const CODES: Record<string, string> = { '0': 'Digit0', '2': 'Digit2', '3': 'Digit3', '4': 'Digit4', '6': 'Digit6', '7': 'Digit7', '8': 'Digit8', '9': 'Digit9' };
 function typeKeys(digits: string) {
@@ -13,8 +14,8 @@ function typeKeys(digits: string) {
 }
 const utterance = () => document.getElementById('utterance')!.textContent ?? '';
 const sheet = (name: string) => document.querySelector<HTMLElement>(`dialog[data-overlay="${name}"][open]`);
-const proof = () => screen.getByRole('region', { name: 'Check the words' });
-const chips = () => [...proof().querySelectorAll('.nl-chip')].map((c) => c.getAttribute('data-state'));
+const proof = openProof;
+const chips = proofChips;
 function sw(key: ' ' | 'Enter') {
   act(() => {
     fireEvent.keyDown(window, { key, code: key === ' ' ? 'Space' : 'Enter' });
@@ -48,6 +49,7 @@ describe('unknown keys and spell mode (web-ui Req 19, 20)', () => {
     expect(utterance()).toContain('I 64424');
     expect(chips()).toEqual(['match', 'unspelled']);
     expect(proof().textContent).toContain('not spelled yet');
+    closeProof();
     expect(screen.getByText(/Not in your words yet: 64424\. Spell this word/)).toBeTruthy();
     expect((screen.getByRole('button', { name: 'Speak' }) as HTMLButtonElement).disabled).toBe(true);
   });
@@ -70,6 +72,7 @@ describe('unknown keys and spell mode (web-ui Req 19, 20)', () => {
     expect(utterance()).toContain('I Mihai');
     expect(chips()).toEqual(['match', 'new']);
     expect(proof().textContent).toContain('Not in your words yet. Add it?');
+    closeProof();
     expect((screen.getByRole('button', { name: 'Speak' }) as HTMLButtonElement).disabled).toBe(false);
     // The sentence list now has full sentences with the spelled word.
     expect(screen.getByRole('button', { name: /Sentence 1: I Mihai/ })).toBeTruthy();

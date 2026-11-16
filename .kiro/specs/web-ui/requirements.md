@@ -753,3 +753,34 @@ that I trust what the app did.
      title says it, with no heading of its own); the Sentences sheet SHALL be titled "Sentences" (one line on a 375px phone) and not repeat it;
      phone titles SHALL be the 22px heading under 400px wide; Phrases SHALL not start with a My words button (My words
      is in Menu and More); the laptop conversation panel's button SHALL read "Whole conversation".
+
+## Requirement 40: One screen on laptops, content by context (2026-11-16, ADR-012)
+
+**User story:** As a person who types to talk on a laptop, I want everything I need on one screen and only what the
+moment needs, so that I know where to look and never scroll to reach a sentence or a button.
+
+40.1 WHILE a laptop window (fine pointer) is 960px wide or wider (wide), THE main screen SHALL not scroll at any height
+     from 640px; a narrower laptop window SHALL get the stack shell (Req 24) instead of the old one-column page
+     (supersedes Req 15.1-15.4 and 15.6 for laptops).
+40.2 WHILE wide, THE header SHALL show one status pill (Status lists every line) and Phrases, Voice, Settings and More;
+     THE conversation SHALL be one row: the newest turn (its full text as its title and name) or "Nothing said yet.",
+     then Listen, Type their line and, once there is a turn, Whole conversation.
+40.3 WHILE wide, THE SpeakBar SHALL hold the sentence and its keys, then Clear (an icon named "Clear", or Undo after a
+     clear), Show and Speak, which wrap together under a long sentence.
+40.4 WHILE wide AND there is a sentence, Fix a word, Spell this word, Save phrase and Check the words SHALL show under
+     the SpeakBar as one row of equal cells (short visible labels in a narrow column, full names always); WHILE there is
+     no sentence, THEY SHALL not show, and neither SHALL a Sentences heading or an empty box. In switch scanning they
+     SHALL be the SpeakBar row's cells after Speak, Show and Clear.
+40.5 WHILE wide, THE sentences SHALL take the height left in whole 56px rows 8px apart; WHEN more sentences exist than
+     fit, THE last row SHALL be More sentences, which opens the Sentences popover; WHEN a sentence past the rows shown is
+     chosen, IT SHALL be shown (the list scrolls inside, the page never does).
+40.6 WHILE wide, Check the words SHALL be a popover from the sentence's actions (and More); THE main screen SHALL show
+     only its notes that need the person now ("Add to my words" offers, one scan row; words the model suggested that
+     were dropped), in a region named "Notes on these words", and nothing when there are none (supersedes the laptop
+     part of Req 39.5).
+40.7 WHILE wide, THE keyboard paragraph SHALL be a Keyboard shortcuts button under the keypad (keyboard access only) and
+     a More row, opening a popover that lists every shortcut.
+40.8 WHILE wide, THE app footer SHALL not show; More SHALL end with About Ninth Life and How Ninth Life works (new
+     tabs) and the intended-purpose sentence, which Settings > About also keeps.
+40.9 WHILE wide, keys SHALL shrink with the window's height (never under 72px) so the keypad and the switch-scanning
+     controls under it fit; with switch scanning on, its speed, Slower and Faster and its status SHALL fit too.

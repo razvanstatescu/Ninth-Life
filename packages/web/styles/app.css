@@ -35,12 +35,8 @@
 .status-btn:focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: 3px; }
 .status-btn.is-lit { box-shadow: 0 0 0 var(--scan-width) var(--ember), 0 0 0 calc(var(--scan-width) + 3px) var(--plum); }
 .status-btn:active .pill { background: var(--surface-sunken); }
-/* Wide header: every pill from 1366px; below that the summary pill, so Phrases, Voice, Settings and More fit one row. */
-.status-btn__summary { display: none; }
-@media (max-width: 1365px) {
-  .status-btn .status-btn__line { display: none; }
-  .status-btn .status-btn__summary { display: inline-flex; }
-}
+/* Wide header: one summary pill at every width (web-ui Req 40.2); every line is one press away in Status. */
+.status-btn .status-btn__line { display: none; }
 .pill--ok .nl-icon { color: var(--proof-match); }
 .pill--warn .nl-icon { color: var(--proof-reject); }
 .pill--info .nl-icon { color: var(--proof-new); }
@@ -252,6 +248,8 @@
     border-radius: var(--radius-card); border: var(--line-width) solid var(--line-strong);
   }
   .sheet--fit::backdrop { background: rgba(8, 4, 20, 0.35); }
+  /* Keyboard shortcuts: room for its title on one line and each shortcut on one line (web-ui Req 40.7). */
+  .sheet--fit[data-overlay="shortcuts"] { width: min(520px, calc(100vw - 2 * var(--space-4))); }
   .sheet--fit .sheet__head { padding: var(--space-4) var(--space-4) var(--space-3) var(--space-6); }
   .sheet--fit .sheet__back { padding: var(--space-3) var(--space-6) 0; }
   .sheet--fit .sheet__body { padding: var(--space-4) var(--space-6) var(--space-6); gap: var(--space-6); }
@@ -1040,3 +1038,94 @@ body:has(.app--shell) { min-height: 0; }
 .sheet--fit[data-keyboard="up"] .sheet__back,
 .sheet--fit[data-keyboard="up"] .sheet__lead,
 .sheet--fit[data-keyboard="up"] .sheet__grabber { display: none; }
+
+/* Laptops, wide (web-ui Req 40, ADR-012): one screen with no page scroll, as on phones. The header, the
+   conversation's one row, the SpeakBar and the sentence's actions keep their height; the sentences take what is
+   left, in whole 56px rows 8px apart (FIT_PITCH in CommunicationScreen.tsx), then More sentences. The keys
+   shrink with the window's height before anything scrolls. Inside the query, so the static wide HTML that a
+   phone paints before hydration is never clipped. */
+@media screen and (min-width: 960px) {
+  .app--wide { --app-pad-top: var(--space-4); --app-pad-bottom: var(--space-4); height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
+  .app--wide .app__inner { height: 100%; gap: var(--space-4); }
+  .app--wide .app-header { flex: none; flex-wrap: nowrap; }
+  .app--wide .app-main { flex: 1 1 auto; min-height: 0; flex-wrap: nowrap; align-items: stretch; }
+  .app--wide .app-main__talk { flex: 1 1 auto; min-height: 0; gap: var(--space-4); }
+  .app--wide .app-main__pad { flex: none; justify-content: flex-start; gap: var(--space-3); }
+  .app--wide .nl-keypad { --nl-key: clamp(var(--key-min), min(calc((100vw - 104px) / 3), calc((100vh - 344px) / 4), calc((100svh - 344px) / 4)), var(--key-size)); }
+  .app--wide[data-keysize="xl"] .nl-keypad, [data-keysize="xl"] .app--wide .nl-keypad { --nl-key: clamp(var(--key-min), min(calc((100vw - 104px) / 3), calc((100vh - 344px) / 4), calc((100svh - 344px) / 4)), var(--key-xl)); }
+
+  /* The conversation: one row (the newest line, then its buttons); it wraps under itself only when narrow. */
+  .app--wide .thread-panel { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4); }
+  .app--wide .thread-panel__empty { flex: 1 1 160px; font-size: var(--type-body-size); line-height: var(--type-body-line); }
+  .app--wide .thread-panel__turns { flex: 1 1 0; min-width: 160px; }
+  .app--wide .thread-panel { container-type: inline-size; }
+  .app--wide .thread-panel__actions { flex: none; max-width: 100%; }
+  .app--wide .speak-group { container-type: inline-size; }
+  .app--wide .thread-panel .partner { flex: 1 1 100%; }
+
+  /* The SpeakBar: the sentence, then Clear (or Undo), Show and Speak. */
+  .app--wide .speak-group { flex: none; gap: var(--space-3); }
+  .app--wide .nl-speakbar__end { display: flex; align-items: center; gap: var(--space-3); margin-left: auto; }
+  .app--wide .nl-speakbar__text { flex-basis: 240px; }
+  .app--wide .speak-clear { width: var(--target-min); padding: 0; }
+  /* The sentence's actions: one equal row; short labels where the column is narrow (names keep the words). */
+  .app--wide .speak-actions { container-type: inline-size; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
+  .app--wide .speak-actions .nl-btn { min-width: 0; padding: 0 var(--space-3); white-space: nowrap; }
+
+  /* The sentences: what is left of the column, whole rows only. */
+  .app--wide .order-cands { position: relative; flex: 1 1 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: var(--space-3); padding: 6px; margin: -6px; }
+  .app--wide .cands, .app--wide .cands-area { gap: var(--space-2); }
+  .app--wide .cands__title { font-size: var(--type-label-size); line-height: var(--type-label-line); }
+  .app--wide .cands__list { gap: var(--space-2); }
+  .app--wide .nl-candidate { min-height: var(--target-min); padding: var(--space-1) var(--space-6) var(--space-1) var(--space-2); }
+  .app--wide .nl-candidate__rank { width: 36px; height: 36px; font-size: var(--type-label-size); }
+  .app--wide .nl-candidate__text { font-size: 22px; line-height: 28px; }
+  .app--wide .cands-area .quick-replies { gap: var(--space-2); }
+
+  /* The proof's notes, only when there is one (Add to my words, a dropped model word). */
+  .app--wide .order-proof { flex: none; }
+  .app--wide .proof--notes { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-radius: var(--radius-card); border: 2px solid var(--line-strong); }
+
+  /* Under the keypad: switch scanning and Keyboard shortcuts, side by side. */
+  /* width 0 + min-width 100%: the row never widens the column past the keypad, so the sentences keep the room. */
+  .app--wide .pad-tools { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--space-3); width: 0; min-width: 100%; }
+  .app--wide .pad-tools .scanbar { flex: 1 1 auto; justify-content: space-between; }
+  .app--wide .pad-tools__keys { flex: 1 1 auto; }
+  .app--wide .pad-tools .scanbar { padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4); }
+  .app--wide .pad-tools .scan-status { flex: 1 1 100%; margin: 0; text-align: center; font-size: var(--type-label-size); line-height: var(--type-label-line); }
+  /* Scanning: the speed on its own line, Slower and Faster side by side under it. */
+  .app--wide .pad-tools .scanbar:has(> .nl-btn + .nl-btn) { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); padding: var(--space-3); }
+  .app--wide .pad-tools .scanbar:has(> .nl-btn + .nl-btn) .scanbar__text { grid-column: 1 / -1; text-align: center; }
+  /* ...and the keys give it the room (about 90px more under the keypad). */
+  .app--wide:has(.scan-status) .nl-keypad { --nl-key: clamp(var(--key-min), min(calc((100vw - 104px) / 3), calc((100vh - 384px) / 4), calc((100svh - 384px) / 4)), var(--key-size)); }
+}
+/* Short laptop windows (under 720px tall): a tighter keypad and SpeakBar, so 72px keys, the scan controls and a
+   sentence row still fit (web-ui Req 40.1, 40.9). */
+@media screen and (min-width: 960px) and (max-height: 719px) {
+  .app--wide .app__inner, .app--wide .app-main__talk { gap: var(--space-3); }
+  .app--wide .nl-keypad { padding: var(--space-3); gap: var(--space-2); --nl-key: clamp(var(--key-min), min(calc((100vw - 104px) / 3), calc((100vh - 296px) / 4), calc((100svh - 296px) / 4)), var(--key-size)); }
+  .app--wide:has(.scan-status) .nl-keypad { --nl-key: clamp(var(--key-min), min(calc((100vw - 104px) / 3), calc((100vh - 336px) / 4), calc((100svh - 336px) / 4)), var(--key-size)); }
+  .app--wide .nl-keypad__row { gap: var(--space-2); }
+  .app--wide .nl-speakbar { padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4); }
+  .app--wide .nl-speakbar__text { font-size: 32px; line-height: 40px; }
+  .app--wide .nl-speakbar__digits { font-size: var(--type-label-size); line-height: 20px; }
+}
+@container (max-width: 759px) { .act-more { display: none; } }
+/* A narrow laptop column (about 1024px windows): words without icons, so the conversation's buttons keep one row and
+   the sentence keeps its place beside Clear, Show and Speak. */
+@container (max-width: 639px) {
+  .thread-panel__actions .nl-btn .nl-icon, .nl-speakbar__end .nl-btn:not(.speak-clear) .nl-icon { display: none; }
+  .thread-panel__actions .nl-btn, .nl-speakbar__end .nl-btn { padding: 0 var(--space-4); }
+  .nl-speakbar__text { flex-basis: 160px; font-size: 32px; line-height: 40px; }
+  .nl-speakbar__end { gap: var(--space-2); }
+  .speak-clear { padding: 0; }
+}
+@container (max-width: 639px) { .speak-actions .nl-icon { display: none; } }
+
+/* Keyboard shortcuts (web-ui Req 40.7). */
+.shortcuts { display: flex; flex-direction: column; gap: var(--space-1); margin: 0; }
+.shortcuts__row { display: grid; grid-template-columns: minmax(0, 11fr) minmax(0, 9fr); align-items: center; gap: var(--space-3); padding: 2px 0; }
+.shortcuts__keys { margin: 0; font-size: var(--type-body-size); line-height: var(--type-body-line); }
+.shortcuts__does { margin: 0; font-size: var(--type-body-size); line-height: var(--type-body-line); }
+.shortcuts kbd { font-family: var(--font-mono); font-size: var(--type-label-size); padding: 0 6px; border: 2px solid var(--line-strong); border-radius: 8px; color: var(--ink); }
+.more__purpose { margin: 0; }

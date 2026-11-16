@@ -1442,7 +1442,9 @@ async function naming(page, d) {
   if (d.laptop) {
     await prepare(page, 'typed');
     const heads = await page.evaluate(() => [...document.querySelectorAll('h1, h2, h3, h4, [role=region]')].filter((h) => h.getBoundingClientRect().height > 0).map((h) => (h.getAttribute('aria-label') || h.textContent).trim().slice(0, 30)));
-    ck(4, 'naming', d.id, !heads.some((h) => /^proof\b/i.test(h)) && heads.some((h) => /^check the words/i.test(h)), `the laptop's on-screen panel is headed "Check the words", not "Proof" (${JSON.stringify(heads)})`);
+    // Web-ui Req 40.6: no proof card on the laptop screen; "Check the words" is the sentence action that opens it.
+    const checkBtn = await page.evaluate(() => [...document.querySelectorAll('.speak-actions button')].some((b) => b.getAttribute('aria-label') === 'Check the words' && b.getBoundingClientRect().height > 0));
+    ck(4, 'naming', d.id, !heads.some((h) => /^proof\b/i.test(h)) && checkBtn, `the laptop's proof is "Check the words" (a sentence action), never "Proof" (${JSON.stringify(heads)})`);
     await prepare(page, 'turn');
     ck(4, 'naming', d.id, !!(await findControl(page, /whole conversation/i)), 'the laptop conversation button says "Whole conversation"');
   }

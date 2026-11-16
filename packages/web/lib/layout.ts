@@ -14,11 +14,13 @@
  *   Everything else (proof, They said, the whole conversation, switch-scanning controls, About) is one tap
  *   away in a sheet. The conversation's newest turns show where they fit (threadRows).
  * Fine pointer (laptop and desktop windows):
- *   wide     (>= 960px): the In-context-app artboard. Left: the conversation, SpeakBar, sentences, proof.
- *            Right: keypad, scan control, keyboard hint. Header: pills, Phrases, Voice, Settings.
- *   compact  (600-959px): one column, keypad first: SpeakBar, keypad, scan control, sentences
- *            (3, then More), proof, the conversation, hint. Header: icon + name, one status pill, Menu.
- *   stack / split also serve narrow (< 600px) and short landscape (< 600px tall) windows.
+ *   wide     (>= 960px): one screen with no page scroll (web-ui Req 40). Left: the conversation's newest line,
+ *            the SpeakBar (Clear, Show, Speak), the sentence's word actions while there is a sentence, Finish
+ *            the word, the sentences that fit (then More sentences), and the proof only when it has something
+ *            to say. Right: keypad, scan control, Keyboard shortcuts. Header: one status pill, Phrases, Voice,
+ *            Settings, More.
+ *   stack / split serve every other window: narrow (< 960px) and short landscape (< 600px tall) ones. The old
+ *            compact one-column page (600-959px, page scroll) is no longer chosen (web-ui Req 40.1).
  * The DOM follows the visual order so focus order matches what people see (accessibility rule 7).
  */
 import { useSyncExternalStore } from 'react';
@@ -41,7 +43,7 @@ export const COMPACT_SENTENCES = 3;
 
 /** Top-to-bottom order of the main sections; two-column layouts list the left column first. */
 export function sectionOrder(layout: Layout): { columns: Section[][] } {
-  if (layout === 'wide') return { columns: [['thread', 'speak', 'cands', 'proof'], ['pad', 'scan', 'hint']] };
+  if (layout === 'wide') return { columns: [['thread', 'speak', 'cands', 'proof'], ['pad', 'scan']] };
   if (layout === 'split') return { columns: [['thread', 'speak', 'cands', 'actions'], ['pad']] };
   // The stack shows the thread strip only when tall (threadRows); otherwise it is in the header.
   if (layout === 'stack') return { columns: [['thread', 'speak', 'cands', 'pad', 'actions']] };
@@ -57,14 +59,26 @@ export const isTwoColumn = (layout: Layout): boolean => layout === 'wide' || lay
 /**
  * How many sentences to show. Compact shows 3 and a More control; a sentence chosen past
  * the limit (ArrowDown, Alt+4) opens the full list so the chosen one is always on screen.
+ * Wide shows the rows that fit the height left (`fit`, counted with the More control's row); the
+ * rest are behind More sentences, and a sentence chosen past them is added to the list, so the chosen
+ * one is always on screen (web-ui Req 40.5).
  */
 export function visibleSentences(
   total: number,
   layout: Layout,
   expanded: boolean,
   selectedIndex = -1,
+  fit?: number,
 ): { count: number; more: boolean; canCollapse: boolean } {
-  if (layout === 'wide' || total <= COMPACT_SENTENCES) return { count: total, more: false, canCollapse: false };
+  if (layout === 'wide') {
+    if (fit === undefined || total <= fit) return { count: total, more: false, canCollapse: false };
+    // The rows left once More sentences has its row. With none (a very short window), only More shows: the first
+    // sentence is already the SpeakBar's.
+    const room = Math.max(0, fit - 1);
+    const count = selectedIndex > 0 && selectedIndex >= room ? selectedIndex + 1 : room;
+    return { count: Math.min(total, count), more: count < total, canCollapse: false };
+  }
+  if (total <= COMPACT_SENTENCES) return { count: total, more: false, canCollapse: false };
   const open = expanded || selectedIndex >= COMPACT_SENTENCES;
   return open ? { count: total, more: false, canCollapse: selectedIndex < COMPACT_SENTENCES } : { count: COMPACT_SENTENCES, more: true, canCollapse: false };
 }
@@ -77,7 +91,8 @@ export function chooseLayout(m: { touch: boolean; landscape: boolean; shortSide:
   }
   if (m.wide) return 'wide';
   if (m.split) return 'split';
-  return m.narrow ? 'stack' : 'compact';
+  // Narrow laptop windows (a half-screen window too) get the one-screen phone shell (web-ui Req 40.1).
+  return 'stack';
 }
 
 const QUERIES = [WIDE_QUERY, SPLIT_QUERY, PHONE_QUERY, TOUCH_QUERY, LANDSCAPE_QUERY];
@@ -136,7 +151,8 @@ export const SPLIT_ROWS_QUERIES = { r3: '(min-height: 700px)', r4: '(min-height:
  *   1  stack 640-1149px: the newest turn inside the header's They said button (0 extra px);
  *   2  split, and stack 1150px or taller: a fixed-height strip with the newest 2 turns above the card
  *      (the stack has 162px or more to spare there, so 96px keys stay 96px);
- *   3  wide and compact (a laptop window, the page may scroll): a panel with the newest 3 turns.
+ *   3  wide (and the old compact): a one-row panel with the newest turn, then Listen, Type their line and
+ *      Whole conversation (web-ui Req 40.2).
  */
 export function threadRows(layout: Layout, h: { tall: boolean; noHeader: boolean }): 0 | 1 | 2 | 3 {
   if (layout === 'rotate') return 0;

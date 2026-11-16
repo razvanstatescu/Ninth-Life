@@ -118,14 +118,15 @@ One-screen shells for touch devices (ADR-003, web-ui Req 25): `stack` (portrait 
 below), `split` (tablets in landscape: header, card, suggestions and action bar left, keypad right) and `rotate` (a phone
 held sideways: "Turn your phone upright"). Proof, They said, Save phrase, Spell, Phrases, My words, Voice, Settings and
 About are sheets; the main page never scrolls. Keys are sized from the measured keypad area (`--pad-w`, `--pad-h`).
-Laptops and desktops keep Wide and Compact.
+Laptops and desktops get Wide at 960px or wider, one screen too (ADR-012, web-ui Req 40); a narrower laptop window
+gets the stack shell. Compact (below) is no longer chosen; its row is kept for the layout prop in tests.
 
 | | Wide (>= 960px) | Compact (600-959px, tablets) | Split (phone held sideways) | Phone (< 600px, portrait) |
 |---|---|---|---|---|
 | When | 960px or wider | 600 to 959px wide | narrower than 960px, landscape, under 600px tall (`SPLIT_QUERY`) | narrower than 600px (`PHONE_QUERY`) |
-| Header | Brand, every status pill, Phrases / Voice / Settings | One row: brand, one summary pill, Menu | As compact, at the top of the left column | Brand and summary pill; no actions (Menu is in the action bar); hidden under 640px tall |
-| Main | Left: They said, SpeakBar, sentences, proof. Right: keypad, scan control, hint | SpeakBar, keypad, scan control, sentences (3 + More), proof, They said, hint | Left: SpeakBar, sentences (3 + More), proof, They said, scan control, hint. Right: the keypad alone, pinned | One screen: sentence card (+ Clear / Undo), 1-2 suggestion rows (+ More / Spell), keypad, action bar [Menu] [Speak] [Show]. Below: proof, They said, scan control, hint |
-| Keys | key-size (96) or key-xl | `(100svh - 528px) / 4`, 72 to 96 (or 128 XL) | `(100svh - 72px) / 4`, 72 to 96 (or 128 XL) | fill the height left over (`100cqh`), 72 to 96 tall (128 XL); width fills the screen (`100cqw / 3`) |
+| Header | Brand, one status pill (Status has every line), Phrases / Voice / Settings / More | One row: brand, one summary pill, Menu | As compact, at the top of the left column | Brand and summary pill; no actions (Menu is in the action bar); hidden under 640px tall |
+| Main | One screen, by context (Req 40). Left: the conversation's one row, SpeakBar (+ Clear / Undo, Show), the sentence's actions while there is one, Finish the word, reply types, the sentences that fit + More, proof notes when any. Right: keypad, scan control, Keyboard shortcuts | SpeakBar, keypad, scan control, sentences (3 + More), proof, They said, hint | Left: SpeakBar, sentences (3 + More), proof, They said, scan control, hint. Right: the keypad alone, pinned | One screen: sentence card (+ Clear / Undo), 1-2 suggestion rows (+ More / Spell), keypad, action bar [Menu] [Speak] [Show]. Below: proof, They said, scan control, hint |
+| Keys | `(100svh - 288px) / 4` (384px with scanning on), 72 to 96 (or 128 XL) | `(100svh - 528px) / 4`, 72 to 96 (or 128 XL) | `(100svh - 72px) / 4`, 72 to 96 (or 128 XL) | fill the height left over (`100cqh`), 72 to 96 tall (128 XL); width fills the screen (`100cqw / 3`) |
 
 The static HTML is the wide DOM; CSS `order` shows it in compact or split order until hydration swaps in the matching
 DOM order (so focus order matches). Phone layout (2026-11-09, web-ui Req 24): built from

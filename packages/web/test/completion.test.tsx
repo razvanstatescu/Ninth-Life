@@ -8,6 +8,7 @@ import { CommunicationScreen } from '@/components/CommunicationScreen';
 import { EMPTY, MAX_CODE, codesOf, composerReducer, type ComposerAction, type ComposerState } from '@/lib/composer';
 import type { DictState } from '@/lib/data';
 import { openSection } from './settings-section';
+import { openProof } from './proof-helper';
 
 /** "I need wa…": water, want, wait all start with 92; waves too (not in the word pairs, so never offered). */
 const LEX: LexiconFile = {
@@ -346,7 +347,7 @@ describe('screen: the word row (Req 31.1-31.3, 31.6, 31.7)', () => {
     render(<CommunicationScreen initialDict={dict()} layout="wide" />);
     typeDigits('406333092');
     fireEvent.click(within(wordRow()!).getByRole('button', { name: 'water' }));
-    const proof = screen.getByRole('region', { name: 'Check the words' });
+    const proof = openProof();
     expect(proof.textContent).toContain('A dotted line marks keys that came with a word you picked. Every word still matches all of its keys.');
     expect(proof.textContent).toMatch(/3 filled in/);
   });

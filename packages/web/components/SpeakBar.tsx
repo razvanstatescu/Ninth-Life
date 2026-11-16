@@ -28,6 +28,7 @@ export function SpeakBar({
   hideSpeak = false,
   digitsApart = false,
   extra,
+  lead,
   tag,
   retype = false,
   onFix,
@@ -52,6 +53,8 @@ export function SpeakBar({
   digitsApart?: boolean;
   /** Controls at the end of the bar (the phone layout's Clear / Undo). */
   extra?: ReactNode;
+  /** Controls just before Speak (laptops: Clear or Undo, then Show; web-ui Req 40.3). */
+  lead?: ReactNode;
   /** The reply type pressed ("Ask"), shown as a word at the start of the key line (web-ui Req 29.6). */
   tag?: string;
   /** A word is being retyped: the key line starts with "Retype ·" (web-ui Req 32.3). */
@@ -135,7 +138,15 @@ export function SpeakBar({
       ) : (
         text
       )}
-      {hideSpeak ? null : <SpeakButton canSpeak={canSpeak} variant={speakVariant} lit={speakLit} speaking={speaking} onSpeak={onSpeak} />}
+      {lead ? (
+        // Laptops: one group, so Clear, Show and Speak wrap together under a long sentence.
+        <div className="nl-speakbar__end">
+          {lead}
+          {hideSpeak ? null : <SpeakButton canSpeak={canSpeak} variant={speakVariant} lit={speakLit} speaking={speaking} onSpeak={onSpeak} />}
+        </div>
+      ) : hideSpeak ? null : (
+        <SpeakButton canSpeak={canSpeak} variant={speakVariant} lit={speakLit} speaking={speaking} onSpeak={onSpeak} />
+      )}
       {extra}
     </div>
   );

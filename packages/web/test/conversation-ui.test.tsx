@@ -86,7 +86,7 @@ describe('what becomes a turn (web-ui Req 27.2, 27.3)', () => {
     expect(turns()).toHaveLength(2);
     press('Close');
     typeDigits('4');
-    fireEvent.click(within(document.querySelector<HTMLElement>('.speak-actions')!).getByRole('button', { name: 'Show' }));
+    fireEvent.click(within(document.querySelector<HTMLElement>('.speak-group')!).getByRole('button', { name: 'Show' }));
     expect(turns().at(-1)).toEqual(['me', 'I', 'shown']);
   });
 

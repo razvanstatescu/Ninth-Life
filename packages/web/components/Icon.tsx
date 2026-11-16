@@ -37,6 +37,8 @@ const PATHS = {
   more: ['M4 12a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', 'M10.5 12a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', 'M17 12a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0'],
   /** An i in a circle (the circle is drawn below): Status (the website's info icon is its own). */
   status: ['M12 11v6', 'M12 7.5h.01'],
+  /** A keyboard: a rounded box, two rows of keys and a space bar (Keyboard shortcuts). */
+  keys: ['M3 7h18v10H3z', 'M7 10.5h.01M11 10.5h.01M15 10.5h.01M8 13.5h8'],
   /** A box with an arrow out of its corner: a link that opens in a new tab. */
   newtab: ['M14 4h6v6', 'M20 4l-9 9', 'M18 14v6H4V6h6'],
   offline: ['M3 3l18 18', 'M8.5 16.5a5 5 0 0 1 7 0', 'M5 13a10 10 0 0 1 5-2.7M14 10.4A10 10 0 0 1 19 13', 'M2 9.5a15 15 0 0 1 4.6-2.8M11 5.6A15 15 0 0 1 22 9.5', 'M12 20h.01'],

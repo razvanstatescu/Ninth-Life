@@ -39,9 +39,11 @@ export function CandidateList({
 }) {
   const visible = candidates.slice(0, shown ?? candidates.length);
   const usedModel = candidates.some((c) => c.source === 'llm');
+  // No heading over nothing: laptops show no empty box before the first key (web-ui Req 40.4).
+  const titled = !inSheet && (candidates.length > 0 || !!emptyText);
   return (
-    <section className={scanning ? 'cands nl-scanrow is-scanning' : 'cands nl-scanrow'} aria-labelledby={inSheet ? undefined : 'cands-title'} aria-label={inSheet ? 'Sentences for your keys' : undefined}>
-      {inSheet ? null : (
+    <section className={scanning ? 'cands nl-scanrow is-scanning' : 'cands nl-scanrow'} aria-labelledby={titled ? 'cands-title' : undefined} aria-label={titled ? undefined : 'Sentences for your keys'}>
+      {!titled ? null : (
         <h2 className="cands__title" id="cands-title">
           Sentences for your keys
         </h2>
@@ -64,10 +66,10 @@ export function CandidateList({
             </li>
           ))}
         </ol>
-      ) : emptyText ? (
+      ) : emptyText && candidates.length === 0 ? (
         <p className="cands__empty">{emptyText}</p>
       ) : null}
-      {toggle && visible.length > 0 ? (
+      {toggle && candidates.length > 0 ? (
         <div className="cands__more">
           <Button variant="secondary" onClick={toggle.onClick} lit={litIndex === visible.length} aria-expanded={visible.length === candidates.length}>
             {toggle.label}

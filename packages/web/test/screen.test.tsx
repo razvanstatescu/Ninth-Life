@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CommunicationScreen } from '@/components/CommunicationScreen';
 import { miniDict } from './fixtures';
+import { closeProof, openProof } from './proof-helper';
 
 function press(label: string, times = 1) {
   for (let i = 0; i < times; i++) fireEvent.click(screen.getByRole('button', { name: label }));
@@ -35,8 +36,9 @@ describe('CommunicationScreen (ghost mode)', () => {
     const rows = within(list).getAllByRole('button');
     expect(rows[0]?.getAttribute('aria-pressed')).toBe('true');
     expect(rows.some((r) => r.textContent?.includes('Sentence 2: I need waves'))).toBe(true);
-    const proof = screen.getByRole('region', { name: 'Check the words' });
+    const proof = openProof();
     expect(proof.querySelectorAll('.nl-chip--match')).toHaveLength(3);
+    closeProof();
   });
 
   it('# cycles the last word; choosing a row does not speak', () => {
@@ -101,9 +103,12 @@ describe('CommunicationScreen (ghost mode)', () => {
     typeDigits('406333092837');
     await waitFor(() => expect(fetchMock).toHaveBeenCalled(), { timeout: 2000 });
     await waitFor(() => expect(utterance()).toContain('I need waves'));
-    const proof = screen.getByRole('region', { name: 'Check the words' });
+    // The dropped word's note stays on the main screen (web-ui Req 40.6); its struck-through chip is in Check the words.
+    expect(screen.getByRole('region', { name: 'Notes on these words' }).textContent).toContain('so wafer was dropped and will not be spoken');
+    const proof = openProof();
     expect(proof.querySelector('.nl-chip--reject')?.textContent).toContain('wafer');
     expect(proof.textContent).toContain('so wafer was dropped and will not be spoken');
+    closeProof();
     expect(speak).not.toHaveBeenCalled();
     const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
     expect(Object.keys(body).sort()).toEqual(['beams', 'codes', 'context', 'k', 'lang', 'lattice', 'mode', 'v']);

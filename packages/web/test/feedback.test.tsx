@@ -2,6 +2,7 @@
 // two-switch path in a browser: test/e2e/surfaces.mjs.
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { conversationStore } from '@/lib/conversation';
 
 const store = vi.hoisted(() => ({ existing: false, phrases: [] as { id: string; text: string; lang: string; uses: number; lastUsed: number; pinned: boolean }[] }));
 vi.mock('@/lib/storage', async (orig) => {
@@ -44,6 +45,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  conversationStore.dispatch({ type: 'clear' });
 });
 
 describe('39.4 Save phrase answers in place', () => {
@@ -140,11 +142,15 @@ describe('39.5 naming', () => {
     expect(proof.textContent).not.toMatch(/\bProof\b/);
   });
 
-  it('Phrases has no My words button; the laptop conversation button says Whole conversation', () => {
+  it('Phrases has no My words button; the laptop conversation button says Whole conversation, once there is a turn', () => {
     render(<CommunicationScreen initialDict={miniDict()} layout="wide" />);
     press('Phrases');
     expect(within(document.querySelector<HTMLElement>('dialog[data-overlay="phrases"]')!).queryByRole('button', { name: 'My words' })).toBeNull();
     press('Close');
-    expect(within(document.querySelector<HTMLElement>('[data-thread="panel"]')!).getByRole('button', { name: 'Whole conversation' })).toBeTruthy();
+    const panel = () => within(document.querySelector<HTMLElement>('[data-thread="panel"]')!);
+    // Nothing to see yet, so no button for it (web-ui Req 40.2).
+    expect(panel().queryByRole('button', { name: 'Whole conversation' })).toBeNull();
+    act(() => conversationStore.dispatch({ type: 'add', who: 'them', text: 'Tea?', via: 'typed', at: 1 }));
+    expect(panel().getByRole('button', { name: 'Whole conversation' })).toBeTruthy();
   });
 });

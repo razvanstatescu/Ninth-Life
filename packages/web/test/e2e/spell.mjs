@@ -14,7 +14,31 @@ const shot = async (page, name) => {
 };
 
 const speakText = (page) => page.evaluate(() => (document.getElementById('utterance')?.childNodes[0] ? [...document.getElementById('utterance').childNodes].filter((n) => !n.classList?.contains('nl-speakbar__digits')).map((n) => n.textContent).join('').trim() : ''));
-const chipStates = (page) => page.evaluate(() => [...document.querySelectorAll('.proof .nl-chip')].map((c) => c.getAttribute('data-state')));
+// Laptops show every word with its keys in Check the words (web-ui Req 40.6): open it with the mouse, read the
+// chips, close it with Escape (focus goes back to the button, as for a person).
+const chipStates = async (page) => {
+  await page.locator('[data-action="check"]').first().click();
+  await page.locator('dialog[data-overlay="proof"][open]').waitFor({ state: 'visible', timeout: 5000 });
+  const states = await page.evaluate(() => [...document.querySelectorAll('dialog[data-overlay="proof"][open] .nl-chip')].map((c) => c.getAttribute('data-state')));
+  const note = await page.locator('dialog[data-overlay="proof"][open] .nl-chip__note').getByText('not spelled yet', { exact: true }).isVisible().catch(() => false);
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => !document.querySelector('dialog[data-overlay="proof"][open]'), null, { timeout: 5000 });
+  // Back to the keys, so a switch press (Space) is never taken by the focused button.
+  await page.evaluate(() => document.activeElement?.blur());
+  states.note = note;
+  return states;
+};
+/** Poll Check the words until its chips read `want` (e.g. "match,unspelled"). */
+const waitChips = async (page, want, what) => {
+  const t0 = Date.now();
+  let got = '';
+  while (Date.now() - t0 < 15000) {
+    got = (await chipStates(page)).join();
+    if (got === want) return;
+    await page.waitForTimeout(300);
+  }
+  throw new Error(`Timed out waiting for ${what} (chips: ${got})`);
+};
 const typeDigits = async (page, digits) => {
   for (const d of digits) await page.keyboard.press(d === ' ' ? 'Space' : d);
 };
@@ -29,9 +53,9 @@ try {
     const page = await ctx.newPage();
     await openApp(page);
     await typeDigits(page, '44064424');
-    await waitFor(page, () => [...document.querySelectorAll('.proof .nl-chip')].map((c) => c.getAttribute('data-state')).join() === 'match,unspelled', null, { what: 'the second word to show as not spelled yet' });
+    await waitChips(page, 'match,unspelled', 'the second word to show as not spelled yet');
     check(/64424/.test(await speakText(page)), `unknown keys show their digits: "${await speakText(page)}"`);
-    check(await page.locator('.proof .nl-chip__note').getByText('not spelled yet', { exact: true }).isVisible(), 'the proof chip says "not spelled yet"');
+    check((await chipStates(page)).note, 'the proof chip says "not spelled yet"');
     check(await page.getByRole('button', { name: 'Speak' }).isDisabled(), 'Speak is off until the word is spelled');
     await shot(page, 'kbd-1-unspelled');
 
@@ -57,7 +81,7 @@ try {
 
     await tabTo(page, () => document.activeElement?.textContent?.trim() === 'Add to my words', { what: 'Add to my words' });
     await page.keyboard.press('Enter');
-    await waitFor(page, () => [...document.querySelectorAll('.proof .nl-chip')].map((c) => c.getAttribute('data-state')).join() === 'match,match', null, { what: 'the word to be in my words' });
+    await waitChips(page, 'match,match', 'the word to be in my words');
     check(true, 'Add to my words: the chip now matches');
     await page.waitForTimeout(300); // IndexedDB write
 
@@ -89,7 +113,7 @@ try {
     await page.keyboard.press('Escape');
     await waitFor(page, () => !document.querySelector('dialog[open]'), null, { what: 'Settings to close' });
     await typeDigits(page, '44064424');
-    await waitFor(page, () => [...document.querySelectorAll('.proof .nl-chip')].map((c) => c.getAttribute('data-state')).join() === 'match,unspelled', null, { what: 'the unspelled word' });
+    await waitChips(page, 'match,unspelled', 'the unspelled word');
 
     let presses = 0;
     let last = 0;
@@ -128,7 +152,7 @@ try {
     const embers = await page.evaluate(() => [...document.querySelectorAll('button, label')].filter((b) => b.offsetParent !== null && getComputedStyle(b).backgroundColor === 'rgb(255, 177, 61)').length);
     check(embers === 0, `only the scan highlight is ember (${embers} ember fills)`);
     await sw();
-    await when(() => [...document.querySelectorAll('.proof .nl-chip')].map((c) => c.getAttribute('data-state')).join() === 'match,match', null, 'Mihai in my words');
+    await waitChips(page, 'match,match', 'Mihai in my words');
     check(/Mihai/.test(await speakText(page)), `used and added by switch with ${presses} presses in ${((Date.now() - t0) / 1000).toFixed(1)} s: "${await speakText(page)}"`);
     await page.waitForTimeout(300);
 

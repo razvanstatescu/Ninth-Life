@@ -17,11 +17,28 @@ describe('layout (web-ui Req 15)', () => {
     expect(col).toEqual(['speak', 'pad', 'scan', 'cands', 'proof', 'thread', 'hint']);
   });
 
-  it('Req 15.6: wide keeps the artboard: talk column beside the keypad column', () => {
+  it('Req 15.6 + 40.7: wide keeps the artboard: talk column beside the keypad column; the hint is behind Keyboard shortcuts', () => {
     expect(sectionOrder('wide').columns).toEqual([
       ['thread', 'speak', 'cands', 'proof'],
-      ['pad', 'scan', 'hint'],
+      ['pad', 'scan'],
     ]);
+  });
+
+  it('Req 40.5: wide shows the sentence rows that fit, then More sentences; a chosen one past them is added', () => {
+    // No measure yet (or no layout): every sentence.
+    expect(visibleSentences(5, 'wide', false, 0)).toEqual({ count: 5, more: false, canCollapse: false });
+    // Room for all 5, or for 6 rows: no More.
+    expect(visibleSentences(5, 'wide', false, 0, 5)).toEqual({ count: 5, more: false, canCollapse: false });
+    expect(visibleSentences(5, 'wide', false, 0, 9)).toEqual({ count: 5, more: false, canCollapse: false });
+    // Room for 4 rows: 3 sentences and More.
+    expect(visibleSentences(5, 'wide', false, 0, 4)).toEqual({ count: 3, more: true, canCollapse: false });
+    // Room for 2 rows: 1 sentence and More; for 1 row: More alone (sentence 1 is already the SpeakBar's).
+    expect(visibleSentences(5, 'wide', false, 0, 2)).toEqual({ count: 1, more: true, canCollapse: false });
+    expect(visibleSentences(5, 'wide', false, 0, 1)).toEqual({ count: 0, more: true, canCollapse: false });
+    expect(visibleSentences(5, 'wide', false, 2, 1)).toEqual({ count: 3, more: true, canCollapse: false });
+    // ArrowDown / Alt+4 past the rows that fit: the chosen one shows (the area scrolls inside, the page never does).
+    expect(visibleSentences(5, 'wide', false, 3, 4)).toEqual({ count: 4, more: true, canCollapse: false });
+    expect(visibleSentences(5, 'wide', false, 4, 4)).toEqual({ count: 5, more: false, canCollapse: false });
   });
 
   it('Req 15.4: compact shows at most 3 sentences and a More control', () => {
@@ -46,7 +63,7 @@ describe('layout (web-ui Req 15)', () => {
     expect(isShell('wide')).toBe(false);
   });
 
-  it('ADR-003: touch phones are portrait only, touch tablets use both orientations, desktops keep their layouts', () => {
+  it('ADR-003 + 40.1: touch phones are portrait only, touch tablets use both orientations, laptops get wide or a shell', () => {
     const base = { wide: false, split: false, narrow: false };
     // Phones (shorter screen side < 600px).
     expect(chooseLayout({ ...base, touch: true, landscape: false, shortSide: 393, narrow: true })).toBe('stack');
@@ -57,7 +74,8 @@ describe('layout (web-ui Req 15)', () => {
     expect(chooseLayout({ ...base, touch: true, landscape: false, shortSide: 1024, wide: true })).toBe('stack');
     // Mouse and keyboard windows.
     expect(chooseLayout({ ...base, touch: false, landscape: true, shortSide: 900, wide: true })).toBe('wide');
-    expect(chooseLayout({ ...base, touch: false, landscape: false, shortSide: 900 })).toBe('compact');
+    // 40.1: a narrower laptop window (a half-screen one too) gets the one-screen shell, never the scrolling page.
+    expect(chooseLayout({ ...base, touch: false, landscape: false, shortSide: 900 })).toBe('stack');
     expect(chooseLayout({ ...base, touch: false, landscape: false, shortSide: 900, narrow: true })).toBe('stack');
     expect(chooseLayout({ ...base, touch: false, landscape: true, shortSide: 900, split: true })).toBe('split');
   });

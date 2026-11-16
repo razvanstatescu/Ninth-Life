@@ -196,10 +196,13 @@ export function useAddCells(dictation: Dictation): number {
 }
 
 /**
- * Laptop layouts (wide, compact): the newest 3 turns, Listen, Type their line and All, in the place of
- * the old They said card. Scan cells, in order: the turns shown, then Listen, Type their line, All
- * (none of those while the field is open).
+ * Laptops (wide): one row in the place of the old They said card (web-ui Req 40.2): the newest turn (or "Nothing said
+ * yet."), then Listen, Type their line and, once there is a turn, Whole conversation, which has the rest. Scan cells, in
+ * order: the turn shown, then Listen, Type their line, Whole conversation (none of those while the field is open).
  */
+/** Turns the laptop panel shows (web-ui Req 40.2): the newest; the rest are one press away in Whole conversation. */
+export const PANEL_TURNS = 1;
+
 export function ThreadPanel({
   turns,
   adding,
@@ -212,7 +215,7 @@ export function ThreadPanel({
   scanning = false,
   litIndex = -1,
 }: {
-  /** Newest first, at most 3. */
+  /** Newest first (the panel shows PANEL_TURNS of them). */
   turns: readonly Turn[];
   adding: boolean;
   onAdding: (on: boolean) => void;
@@ -226,15 +229,15 @@ export function ThreadPanel({
   scanning?: boolean;
   litIndex?: number;
 }) {
-  const shown = turns.slice(0, 3);
-  const cls = ['thread-panel', 'nl-scanrow', 'order-partner', scanning ? 'is-scanning' : ''].filter(Boolean).join(' ');
+  const shown = turns.slice(0, PANEL_TURNS);
+  const cls = ['thread-panel', 'nl-scanrow', 'order-partner', adding ? 'is-adding' : '', scanning ? 'is-scanning' : ''].filter(Boolean).join(' ');
   return (
     <section className={cls} aria-labelledby="thread-panel-title" data-thread="panel">
-      <h2 className="thread-panel__title" id="thread-panel-title">
+      <h2 className="nl-sr-only" id="thread-panel-title">
         Conversation
       </h2>
       {shown.length === 0 ? (
-        <p className="thread-panel__empty">Nothing said yet. Add what the other person said, if you like.</p>
+        <p className="thread-panel__empty">Nothing said yet.</p>
       ) : (
         <div className="thread-panel__turns">
           {shown.map((t, i) => (
@@ -245,6 +248,7 @@ export function ThreadPanel({
               data-who={t.who}
               aria-haspopup="dialog"
               aria-label={turnName(t)}
+              title={t.text}
               onClick={() => onOpenTurn(t.id)}
             >
               <TurnLine turn={t} textClass="thread-row__text" />
@@ -260,11 +264,15 @@ export function ThreadPanel({
         autoFocus={!switchOn}
         className="thread-panel__actions"
         litIndex={litIndex - shown.length}
-        extra={(at) => (
-          <Button variant="secondary" icon="thread" onClick={onOpen} lit={litIndex - shown.length === at} aria-haspopup="dialog">
-            Whole conversation
-          </Button>
-        )}
+        extra={
+          shown.length > 0
+            ? (at) => (
+                <Button variant="secondary" icon="thread" onClick={onOpen} lit={litIndex - shown.length === at} aria-haspopup="dialog">
+                  Whole conversation
+                </Button>
+              )
+            : undefined
+        }
       />
     </section>
   );

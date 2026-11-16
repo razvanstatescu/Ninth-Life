@@ -74,8 +74,8 @@ import { AppHeader } from './AppHeader';
 import { Button } from './Button';
 import { CandidateList } from './CandidateList';
 import { ConversationSheet } from './ConversationSheet';
-import { ThreadPanel, ThreadStrip, useAddCells } from './ConversationStrip';
-import { Footer } from './Footer';
+import { PANEL_TURNS, ThreadPanel, ThreadStrip, useAddCells } from './ConversationStrip';
+import { ShortcutsSheet } from './ShortcutsSheet';
 import { Icon } from './Icon';
 import { Keypad } from './Keypad';
 import { MenuSheet, menuItemId } from './MenuSheet';
@@ -103,7 +103,15 @@ import { BAND_SHIFT, PARTNER_COMPACT_NO_HEADER_QUERY, partnerView } from '@/lib/
 import { FixSheet, type FixWord } from './FixSheet';
 
 const CAPITAL_WORDS = Object.entries(CAPITALS).map(([w, display]) => ({ w, display }));
-const ACTIONS = ['speak', 'clear', 'save', 'show', 'fix', 'spell'] as const;
+/**
+ * Laptops (web-ui Req 40.3, 40.4): the SpeakBar's Speak, Show and Clear (or Undo), then, while there is a sentence, its
+ * word actions: Fix a word, Spell this word, Save phrase, Check the words. One scan row, Speak first.
+ */
+const ACTIONS = ['speak', 'show', 'clear', 'fix', 'spell', 'save', 'check'] as const;
+/** The cells of that row with no sentence: the word actions are not on screen then. */
+const IDLE_ACTIONS = 3;
+/** Laptops: one sentence row and the gap above it (styles/app.css: 56px rows, 8px apart; web-ui Req 40.5). */
+const FIT_PITCH = 64;
 /** How long a key shows that a quick repeat press was not counted (web-ui Req 30.4). No motion, one state change. */
 export const IGNORED_MARK_MS = 700;
 export const IGNORED_MESSAGE = 'Pressed again too quickly, so the second press was not counted. Accept delay in Settings changes this.';
@@ -140,7 +148,7 @@ function markSaid(m: string | undefined, word?: string): string {
   return word ? `${MARK_WORDS[m]} after ${word}.` : `${MARK_WORDS[m]}.`;
 }
 
-type SheetName = 'cards' | 'menu' | 'more' | 'status' | 'settings' | 'voice' | 'phrases' | 'words' | 'spell' | 'sentences' | 'proof' | 'partner' | 'conversation' | 'fix' | null;
+type SheetName = 'cards' | 'menu' | 'more' | 'shortcuts' | 'status' | 'settings' | 'voice' | 'phrases' | 'words' | 'spell' | 'sentences' | 'proof' | 'partner' | 'conversation' | 'fix' | null;
 /** What the person chose to say: Speak (keys), a phrase, a quick reply, Say again. Each becomes a 'you said' turn. */
 export type SayAndRecord = (text: string, via: Exclude<MeVia, 'shown'>) => boolean;
 const WORDS_NOT_SAVED = 'My words could not be saved on this device, so they last until you close the app. Storage may be off in this browser window.';
@@ -783,13 +791,53 @@ export function CommunicationScreen({
   if (!overlayOpen && latched.current.overlay) latched.current = { overlay: false, mode: null };
   const overlayScanMode = overlayOpen ? latched.current.mode : null;
 
-  const shownSentences = visibleSentences(sentence.candidates.length, layout, moreSentences, sentence.selectedIndex);
+  // Laptops: the sentence rows that fit the height left, so the screen never scrolls (web-ui Req 40.5).
+  const fitRef = useRef<HTMLDivElement>(null);
+  const [fitRows, setFitRows] = useState<number | undefined>(undefined);
+  const shownSentences = visibleSentences(sentence.candidates.length, layout, moreSentences, sentence.selectedIndex, layout === 'wide' ? fitRows : undefined);
   const sentenceToggle = shownSentences.more
-    ? { label: 'More sentences', onClick: () => setMoreSentences(true) }
+    ? layout === 'wide'
+      ? { label: 'More sentences', onClick: () => setSheet('sentences') }
+      : { label: 'More sentences', onClick: () => setMoreSentences(true) }
     : shownSentences.canCollapse
       ? { label: 'Fewer sentences', onClick: () => setMoreSentences(false) }
       : null;
-  const candCells = shownSentences.count + (sentenceToggle && shownSentences.count > 0 ? 1 : 0);
+  const candCells = shownSentences.count + (sentenceToggle && sentence.candidates.length > 0 ? 1 : 0);
+  // A sentence chosen past the rows that fit is added to the list; keep it in view inside the list (web-ui Req 40.5).
+  useEffect(() => {
+    if (layout !== 'wide') return;
+    // The list's own box only (scrollIntoView would also nudge the clipped page around it).
+    const box = fitRef.current;
+    const row = box?.querySelector<HTMLElement>('.cands__list .nl-candidate.is-selected');
+    if (!box || !row) return;
+    const b = box.getBoundingClientRect();
+    const r = row.getBoundingClientRect();
+    if (r.bottom > b.bottom) box.scrollTop += r.bottom - b.bottom + 6;
+    else if (r.top < b.top) box.scrollTop -= b.top - r.top + 6;
+  }, [layout, sentence.selectedIndex, shownSentences.count]);
+  // Measure what is left under the "Sentences" title, in whole rows (a row and its gap: styles/app.css, wide). The
+  // area's height comes from the column (flex), never from its content, so this settles in one pass. It runs after
+  // every render and again whenever anything above the list changes size without one (fonts, the word row's cells).
+  const [, setFitTick] = useState(0);
+  useLayoutEffect(() => {
+    if (layout !== 'wide') return;
+    const box = fitRef.current;
+    const title = box?.querySelector('#cands-title');
+    if (!box || !title) return;
+    const rect = box.getBoundingClientRect();
+    // No layout (a test DOM, a hidden tab): no limit rather than one row.
+    const n = rect.height > 0 ? Math.max(1, Math.floor((rect.bottom - title.getBoundingClientRect().bottom) / FIT_PITCH)) : undefined;
+    if (n !== fitRows) setFitRows(n);
+    if (typeof ResizeObserver === 'undefined') return;
+    // An observer reports every element once when it starts; only later changes ask for a new measure.
+    let started = false;
+    const ro = new ResizeObserver(() => {
+      if (started) setFitTick((t) => t + 1);
+      started = true;
+    });
+    for (const el of [box, ...Array.from(box.parentElement?.children ?? []), ...Array.from(box.querySelectorAll(':scope > *, .cands-area > *'))]) ro.observe(el);
+    return () => ro.disconnect();
+  });
   // Words on show that match their keys but are not in the person's words: "Add to my words".
   const offers = useMemo(() => {
     const seen = new Set<string>();
@@ -984,8 +1032,9 @@ export function CommunicationScreen({
   // line is the context worth seeing. Yours only when they have said nothing yet.
   const bubbleTurn = conv.lastThem ?? newestFirst[0] ?? null;
   const addCells = useAddCells(dictation);
-  const threadShown = threadView === 3 ? Math.min(3, newestFirst.length) : threadView === 2 ? Math.min(2, newestFirst.length) : 0;
-  const threadCells = threadView === 0 ? 0 : threadView === 1 ? 1 : threadView === 2 ? threadShown + 2 : threadShown + (panelAdding ? 0 : addCells + 1);
+  const threadShown = threadView === 3 ? Math.min(PANEL_TURNS, newestFirst.length) : threadView === 2 ? Math.min(2, newestFirst.length) : 0;
+  // The panel's Whole conversation shows once there is a turn (web-ui Req 40.2).
+  const threadCells = threadView === 0 ? 0 : threadView === 1 ? 1 : threadView === 2 ? threadShown + 2 : threadShown + (panelAdding ? 0 : addCells + (threadShown > 0 ? 1 : 0));
   /** Open the Conversation sheet, with focus on a turn's first button (or on Close). */
   const openConversation = useCallback((id: number | null) => {
     setFocusTurn(id);
@@ -1009,7 +1058,7 @@ export function CommunicationScreen({
     mode: scanMode,
     rows: phone
       ? [...KEY_ROWS.map((r) => r.length), rowCells, showReplies ? replyList.length : phoneCandCells, 0, PHONE_ACTIONS.length, fixOnCard ? 2 : 1, threadCells]
-      : [...KEY_ROWS.map((r) => r.length), rowCells, replyList.length + groupCells + candCells, offers.length, ACTIONS.length, menuCells, threadCells],
+      : [...KEY_ROWS.map((r) => r.length), rowCells, replyList.length + groupCells + candCells, offers.length, codes.length > 0 ? ACTIONS.length : IDLE_ACTIONS, menuCells, threadCells],
     loops: settings.scanLoops,
     scanMs: settings.scanMs,
     acceptDelayMs: settings.acceptDelayMs,
@@ -1055,11 +1104,14 @@ export function CommunicationScreen({
       } else if (row === ACTION_ROW) {
         const act = ACTIONS[cell];
         if (act === 'speak') a.speakNow();
-        else if (act === 'clear') a.clearAll();
-        else if (act === 'save') a.saveOrUndo();
+        else if (act === 'clear') {
+          if (a.undo) a.undoClear();
+          else a.clearAll();
+        } else if (act === 'save') a.saveOrUndo();
         else if (act === 'show') a.showCurrent();
         else if (act === 'fix') a.openFix();
         else if (act === 'spell') a.openSpell();
+        else if (act === 'check') a.openSheet('proof');
       } else if (row === MENU_ROW) {
         a.openSheet(a.layout === 'wide' ? (WIDE_MENU[cell] ?? null) : 'menu');
       } else if (row === THREAD_ROW) {
@@ -1206,7 +1258,9 @@ export function CommunicationScreen({
     dict.status === 'missing' || dict.status === 'error'
       ? null
       : codes.length === 0
-        ? 'Sentences appear here as you press keys.'
+        ? layout === 'wide'
+          ? null // laptops: no empty box before the first key (web-ui Req 40.4); the SpeakBar says what to do
+          : 'Sentences appear here as you press keys.'
         : dict.status === 'loading'
           ? 'Loading your dictionary.'
           : rowKind === 'dym' && dymCode
@@ -1318,6 +1372,9 @@ export function CommunicationScreen({
       </div>
     ) : (
       <div key="speak" className={scanRow === ACTION_ROW ? 'speak-group nl-scanrow is-scanning order-speak' : 'speak-group nl-scanrow order-speak'} data-section="speak">
+        {/* Laptops (web-ui Req 40.3): the sentence, then Clear (or Undo) and Show next to Speak, as on phones; the
+            sentence's word actions under it only while there is a sentence (Req 40.4). Scan cells: Speak 0, Show 1,
+            Clear 2, then Fix a word 3, Spell this word 4, Save phrase 5, Check the words 6. */}
         <SpeakBar
           tokens={sentence.tokens}
           words={sentence.words}
@@ -1331,40 +1388,55 @@ export function CommunicationScreen({
           tag={intent ? REPLY_TYPE_LABEL[intent] : undefined}
           retype={composer.edit !== undefined}
           onFix={canFix ? openFix : undefined}
+          lead={
+            <>
+              {undo ? (
+                <Button variant="secondary" icon="back" onClick={undoClear} lit={actionLit(2)} data-action="clear">
+                  Undo
+                </Button>
+              ) : (
+                <Button variant="secondary" icon="x" onClick={clearAll} disabled={codes.length === 0} lit={actionLit(2)} aria-label="Clear" title="Clear" className="speak-clear" data-action="clear">
+                  {null}
+                </Button>
+              )}
+              <Button variant="quiet" icon="show" onClick={showCurrent} disabled={codes.length > 0 && !sentence.speakable} lit={actionLit(1)} data-action="show">
+                Show
+              </Button>
+            </>
+          }
         />
-        <div className="speak-actions">
-          <Button variant="secondary" icon="x" onClick={clearAll} disabled={codes.length === 0} lit={actionLit(1)}>
-            Clear
-          </Button>
-          {/* After a save it reads Undo save until the next key (web-ui Req 39.4); both labels hold the cell, so it keeps its size. */}
-          <Button
-            variant="quiet"
-            icon={savedNow?.undo ? 'back' : 'save'}
-            onClick={saveOrUndo}
-            disabled={!sentence.speakable}
-            lit={actionLit(2)}
-            aria-label={savedNow?.undo ? 'Saved to Phrases. Undo save' : 'Save phrase'}
-            data-action="save"
-          >
-            <span className="swap">
-              <span className={savedNow?.undo ? 'swap__off' : undefined}>
-                Save<span className="save-btn__more"> phrase</span>
+        {codes.length > 0 ? (
+          <div className="speak-actions" role="group" aria-label="This sentence">
+            <Button variant="secondary" icon="edit" onClick={openFix} disabled={!canFix} lit={actionLit(3)} data-action="fix-word">
+              Fix a word
+            </Button>
+            <Button variant="secondary" icon="spell" onClick={() => openSpell()} disabled={!canSpell} lit={actionLit(4)} aria-label="Spell this word" data-action="spell">
+              Spell<span className="act-more"> this word</span>
+            </Button>
+            {/* After a save it reads Undo save until the next key (web-ui Req 39.4); both labels hold the cell, so it keeps its size. */}
+            <Button
+              variant="secondary"
+              icon={savedNow?.undo ? 'back' : 'save'}
+              onClick={saveOrUndo}
+              disabled={!sentence.speakable}
+              lit={actionLit(5)}
+              aria-label={savedNow?.undo ? 'Saved to Phrases. Undo save' : 'Save phrase'}
+              data-action="save"
+            >
+              <span className="swap">
+                <span className={savedNow?.undo ? 'swap__off' : undefined}>
+                  Save<span className="act-more"> phrase</span>
+                </span>
+                <span className={savedNow?.undo ? undefined : 'swap__off'} aria-hidden="true">
+                  Undo save
+                </span>
               </span>
-              <span className={savedNow?.undo ? undefined : 'swap__off'} aria-hidden="true">
-                Undo save
-              </span>
-            </span>
-          </Button>
-          <Button variant="quiet" icon="show" onClick={showCurrent} disabled={codes.length > 0 && !sentence.speakable} lit={actionLit(3)}>
-            Show
-          </Button>
-          <Button variant="secondary" icon="edit" onClick={openFix} disabled={!canFix} lit={actionLit(4)} data-action="fix-word">
-            Fix a word
-          </Button>
-          <Button variant="secondary" icon="spell" onClick={() => openSpell()} disabled={!canSpell} lit={actionLit(5)} aria-label="Spell this word" data-action="spell">
-            Spell<span className="spell-btn__more"> this word</span>
-          </Button>
-        </div>
+            </Button>
+            <Button variant="secondary" icon="check" onClick={() => setSheet('proof')} lit={actionLit(6)} aria-label="Check the words" aria-haspopup="dialog" data-action="check">
+              Check<span className="act-more"> the words</span>
+            </Button>
+          </div>
+        ) : null}
       </div>
     ),
     cands: phone ? (
@@ -1392,7 +1464,7 @@ export function CommunicationScreen({
         )}
       </div>
     ) : (
-      <div key="cands" className="order-cands" data-section="cands">
+      <div key="cands" className="order-cands" data-section="cands" ref={fitRef}>
         {/* Laptops: Finish the word (or Did you mean) under the SpeakBar, above the reply types and the sentences (web-ui Req 31.5). */}
         {wordRowShown ? wordRowEl : null}
         {dict.status === 'missing' || dict.status === 'error' ? (
@@ -1416,7 +1488,7 @@ export function CommunicationScreen({
             />
             {laptopGroup ? (
               <ReplyTypes
-                variant="line"
+                variant={layout === 'wide' ? 'row' : 'line'}
                 value={intent}
                 onToggle={setIntent}
                 litIndex={scanRow === CAND_ROW && litCell >= replyList.length ? litCell - replyList.length : -1}
@@ -1438,7 +1510,7 @@ export function CommunicationScreen({
         ) : laptopGroup ? (
           // Laptops while typing: the reply types, then the sentences, one scan row.
           <div className={scanRow === CAND_ROW ? 'cands-area nl-scanrow is-scanning' : 'cands-area nl-scanrow'}>
-            <ReplyTypes variant="line" value={intent} onToggle={setIntent} litIndex={scanRow === CAND_ROW && litCell < groupCells ? litCell : -1} />
+            <ReplyTypes variant={layout === 'wide' ? 'row' : 'line'} value={intent} onToggle={setIntent} litIndex={scanRow === CAND_ROW && litCell < groupCells ? litCell : -1} />
             <CandidateList
               candidates={sentence.candidates}
               selectedIndex={sentence.selectedIndex}
@@ -1472,6 +1544,7 @@ export function CommunicationScreen({
     proof: (
       <div key="proof" className="order-proof" data-section="proof">
         <ProofPanel
+          notesOnly={layout === 'wide'}
           words={sentence.words}
           labels={sentence.tokens}
           rejected={remoteNow?.rejected ?? []}
@@ -1506,15 +1579,22 @@ export function CommunicationScreen({
       </div>
     ),
     scan: (
-      <ScanBar
-        key="scan"
-        access={settings.access}
-        scanMs={settings.scanMs}
-        phase={scanner.state.phase}
-        onSlower={() => setSettings((s) => ({ ...s, scanMs: stepScanMs(s.scanMs, 1) }))}
-        onFaster={() => setSettings((s) => ({ ...s, scanMs: stepScanMs(s.scanMs, -1) }))}
-        onTurnOn={() => setSettings((s) => ({ ...s, access: 'scan1' }))}
-      />
+      <div key="scan" className="pad-tools order-scan">
+        <ScanBar
+          access={settings.access}
+          scanMs={settings.scanMs}
+          phase={scanner.state.phase}
+          onSlower={() => setSettings((s) => ({ ...s, scanMs: stepScanMs(s.scanMs, 1) }))}
+          onFaster={() => setSettings((s) => ({ ...s, scanMs: stepScanMs(s.scanMs, -1) }))}
+          onTurnOn={() => setSettings((s) => ({ ...s, access: 'scan1' }))}
+        />
+        {/* The old hint paragraph, as a list behind a button (web-ui Req 40.7). */}
+        {settings.access === 'keyboard' ? (
+          <Button variant="quiet" icon="keys" onClick={() => setSheet('shortcuts')} aria-haspopup="dialog" className="pad-tools__keys" data-action="shortcuts">
+            Keyboard shortcuts
+          </Button>
+        ) : null}
+      </div>
     ),
     hint:
       settings.access === 'keyboard' ? (
@@ -1580,7 +1660,6 @@ export function CommunicationScreen({
           </main>
         )}
 
-        {phone ? null : <Footer />}
       </div>
 
       <p className="nl-sr-only" role="status" aria-live="polite">
@@ -1655,7 +1734,9 @@ export function CommunicationScreen({
         onConversation={() => openConversation(null)}
         onProof={() => setSheet('proof')}
         onStatus={() => setSheet('status')}
+        onShortcuts={() => setSheet('shortcuts')}
       />
+      <ShortcutsSheet open={sheet === 'shortcuts'} scanning={overlayScanMode !== null} onClose={() => setSheet(null)} />
       <StatusSheet open={sheet === 'status'} scanning={overlayScanMode !== null} status={status} onClose={() => setSheet(null)} />
       <VoiceSheet
         open={sheet === 'voice'}
@@ -1685,7 +1766,7 @@ export function CommunicationScreen({
         {/* Under the buttons, so Done stays right under the field, above the keyboard (web-ui Req 39.1). */}
         <p className="sheet__lead">What the other person just said. It goes into the conversation on this screen and is never saved. With model ranking on, it helps rank your sentences.</p>
       </Sheet>
-      {phone ? (
+      {phone || layout === 'wide' ? (
         <Sheet open={sheet === 'sentences'} name="sentences" kind="fit" title="Sentences" onClose={() => setSheet(null)} scanning={overlayScanMode !== null}>
           {sheetGroup}
           <div className="scan-cluster" data-scan-row="sentences">

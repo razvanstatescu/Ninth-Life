@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CommunicationScreen } from '@/components/CommunicationScreen';
+import { NOT_A_MEDICAL_DEVICE } from '@/components/Footer';
 import { statusExplained } from '@/components/StatusSheet';
 import { statusLines } from '@/lib/status';
 import { SCAN_CELL_SELECTOR, collectScanRows } from '@/lib/useOverlayScan';
@@ -95,14 +96,17 @@ describe('37.4 Voice', () => {
 });
 
 describe('37.5 37.6 the laptop header: More and the status button', () => {
-  it('More holds My words, Show a card, Conversation, Check the words, then Status and About; a choice has Back to More', () => {
+  it('More holds My words, Show a card, Conversation, Check the words, then Keyboard shortcuts, Status and the website; a choice has Back to More', () => {
     render(<CommunicationScreen initialDict={miniDict()} layout="wide" />);
     press('More');
     const more = open('more')!;
     expect(rows(more).slice(1)).toEqual([
       ['more', ['My words', 'Show a card', 'Conversation', 'Check the words']],
-      ['more-2', ['Status', 'About Ninth Life (opens in a new tab)']],
+      ['more-2', ['Keyboard shortcuts', 'Status']],
+      ['more-3', ['About Ninth Life (opens in a new tab)', 'How Ninth Life works (opens in a new tab)']],
     ]);
+    // The intended-purpose sentence that was the laptop footer (web-ui Req 40.8).
+    expect(more.textContent).toContain(NOT_A_MEDICAL_DEVICE);
     press('Check the words', more);
     expect(open('proof')).not.toBeNull();
     press('Back to More');

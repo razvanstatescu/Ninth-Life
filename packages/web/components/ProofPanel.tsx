@@ -28,6 +28,7 @@ export function ProofPanel({
   offerScanning = false,
   offerLit = -1,
   inSheet = false,
+  notesOnly = false,
 }: {
   words: DisplayWord[];
   /** How each word is written in the sentence ("I", not "i"); trailing punctuation is dropped. */
@@ -48,6 +49,12 @@ export function ProofPanel({
   offerLit?: number;
   /** In the Check the words sheet: the sheet's title names it, so no "Proof" heading of its own (web-ui Req 39.5). */
   inSheet?: boolean;
+  /**
+   * Laptops (web-ui Req 40.6): only what needs the person here and now, with no title or chips: the
+   * "Add to my words" offers and the words the model suggested that were dropped. Every word with its keys
+   * is in Check the words; the SpeakBar already shows the keys under the sentence.
+   */
+  notesOnly?: boolean;
 }) {
   const uid = useId();
   const rejectChips: { word: string; code: string; key: string }[] = [];
@@ -74,6 +81,43 @@ export function ProofPanel({
           : `The model suggested "${said}". ${dropped} does not match your keys, so it was dropped and will not be spoken.`,
       );
     }
+  }
+
+  const offerRow =
+    offers.length > 0 && onAddWord ? (
+      <div className={offerScanning ? 'proof__offers nl-scanrow is-scanning' : 'proof__offers nl-scanrow'}>
+        {offers.map((o, i) => (
+          <div className="proof__offer" key={o.word}>
+            <p className="proof__note" id={`${uid}-offer-${i}`}>
+              <strong>{o.label}</strong> matches your keys and can be spoken. Not in your words yet. Add it?
+            </p>
+            <Button variant="secondary" icon="plus" onClick={() => onAddWord(o.word)} lit={offerLit === i} aria-describedby={`${uid}-offer-${i}`}>
+              Add to my words
+            </Button>
+          </div>
+        ))}
+      </div>
+    ) : null;
+  const countNote =
+    rejectedCount > 0 && rejected.length === 0 ? (
+      <p className="proof__note">
+        The model suggested {rejectedCount === 1 ? '1 sentence' : `${rejectedCount} sentences`} that did not match your keys. {rejectedCount === 1 ? 'It was' : 'They were'} dropped and will not be spoken.
+      </p>
+    ) : null;
+
+  if (notesOnly) {
+    if (!offerRow && !countNote && notes.length === 0) return null;
+    return (
+      <section className="proof proof--notes" aria-label="Notes on these words">
+        {offerRow}
+        {countNote}
+        {notes.map((n) => (
+          <p className="proof__note" key={n}>
+            {n}
+          </p>
+        ))}
+      </section>
+    );
   }
 
   return (
@@ -111,27 +155,12 @@ export function ProofPanel({
           Not spelled yet: {words.filter((w) => w.state === 'unspelled').map((w) => w.code).join(', ')}. No word in your dictionary matches these keys. Spell this word to choose its letters.
         </p>
       ) : null}
-      {offers.length > 0 && onAddWord ? (
-        <div className={offerScanning ? 'proof__offers nl-scanrow is-scanning' : 'proof__offers nl-scanrow'}>
-          {offers.map((o, i) => (
-            <div className="proof__offer" key={o.word}>
-              <p className="proof__note" id={`${uid}-offer-${i}`}>
-                <strong>{o.label}</strong> matches your keys and can be spoken. Not in your words yet. Add it?
-              </p>
-              <Button variant="secondary" icon="plus" onClick={() => onAddWord(o.word)} lit={offerLit === i} aria-describedby={`${uid}-offer-${i}`}>
-                Add to my words
-              </Button>
-            </div>
-          ))}
-        </div>
+      {offerRow ? (
+        offerRow
       ) : words.some((w) => w.state === 'new') ? (
         <p className="proof__note">A word with a plus is not in your words yet. It matches your keys and can be spoken.</p>
       ) : null}
-      {rejectedCount > 0 && rejected.length === 0 ? (
-        <p className="proof__note">
-          The model suggested {rejectedCount === 1 ? '1 sentence' : `${rejectedCount} sentences`} that did not match your keys. {rejectedCount === 1 ? 'It was' : 'They were'} dropped and will not be spoken.
-        </p>
-      ) : null}
+      {countNote}
       {notes.map((n) => (
         <p className="proof__note" key={n}>
           {n}

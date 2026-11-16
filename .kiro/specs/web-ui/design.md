@@ -295,6 +295,31 @@ Copy comes from `lib/rankingProvider.ts`: `SENT_FOR_RANKING` (Settings, About, W
   one-screen phone and on laptops an overlay covered controls at every size measured.
 - `ProofPanel` and `CandidateList` take `inSheet` (no heading of their own).
 
+## Laptops: one screen, by context (Req 40, ADR-012)
+
+```
+ wide (>= 960px, fine pointer), height 100dvh, no page scroll
+ ┌ header: brand · one status pill ············ Phrases · Voice · Settings · More ┐
+ │ ┌ conversation: newest turn ··· Listen · Type their line · Whole conv. ┐ ┌ keypad ┐ │
+ │ ┌ SpeakBar: sentence + keys ··········· [x] · Show · [Speak] ┐        │ (keys    │ │
+ │ ┌ Fix a word · Spell this word · Save phrase · Check the words ┐ *     │  shrink  │ │
+ │ ┌ Finish the word (3) ┐ *   ┌ Reply type: Agree · Disagree · Ask ┐ *  │  with    │ │
+ │ Sentences: rows that fit (FIT_PITCH 64) · More sentences → popover   │  height) │ │
+ │ Notes on these words (Add to my words, dropped model word) *         ├ scanning ┤ │
+ │                                                                      ├ Keyboard │ │
+ └──────────────────────────────────────────────────────────────────────┴ shortcuts┘ ┘
+   * only while it applies
+```
+
+- The talk column is a flex column; `.order-cands` takes what is left (`flex: 1 1 0`). A layout effect measures the
+  room under the Sentences title after every render and whenever anything above it changes size (a ResizeObserver on
+  the column's children), and `visibleSentences(…, fit)` shows `fit - 1` rows plus More sentences when more exist.
+  With no layout (jsdom, a hidden tab) there is no limit.
+- The sentence actions are the SpeakBar scan row's cells 3-6 only while there is a sentence (`ACTIONS`, `IDLE_ACTIONS`).
+- `ProofPanel notesOnly` renders nothing unless there is an offer or a dropped model word; the full panel is the
+  `proof` fit surface.
+- Under 960px a laptop window gets the stack shell, so `compact` is never chosen (its code stays for the layout prop).
+
 ## Keyboard routing (Req 6)
 
 A capture-phase `keydown` listener maps keys with `mapKey(event, access, focusContext(activeElement))`.

@@ -278,3 +278,14 @@ Built 2026-11-09. Research: `docs/research/mobile-layout.md`,
   - [x] 76.1 Tests: `test/confirms.test.tsx`, `test/feedback.test.tsx`; updated `test/spell.test.tsx` (More > My
         words) and `test/e2e/my-replies.mjs` (pins behind More), `test/e2e/axe.mjs` (Whole conversation)
   - [ ] 76.2 Check They said with the keyboard up on a real iPhone and Android phone
+
+## Laptop UX pass: one screen, by context (2026-11-16, ADR-012)
+
+- [x] 77. One-screen wide layout: `chooseLayout` (stack under 960px), `visibleSentences` with `fit`, the fit measure
+      (`FIT_PITCH`), the one-row conversation panel (`PANEL_TURNS`), the SpeakBar `lead` (Clear or Undo, Show), the
+      sentence actions only with a sentence, `ProofPanel` `notesOnly`, `ShortcutsSheet`, More's rows and the
+      intended-purpose sentence, no app footer, one status pill, the `.app--wide` CSS (Req 40.1-40.9)
+  - [x] 77.1 Tests: `test/layout.test.ts` (40.1, 40.5), `test/hubs.test.tsx` (More), `test/feedback.test.tsx` (Whole
+        conversation once there is a turn), `test/proof-helper.ts` for Check the words; updated `test/spell.test.tsx`,
+        `test/screen.test.tsx`, `test/completion.test.tsx`, `test/mobile.test.tsx`, `test/conversation-ui.test.tsx`;
+        e2e `responsive.mjs` (no scroll at laptop sizes)

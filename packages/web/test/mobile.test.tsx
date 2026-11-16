@@ -16,6 +16,9 @@ const css = (f: string) => read(`styles/${f}`);
 describe('phones and tablets', () => {
   it.each(['compact', 'wide'] as const)('%s: short action labels keep their full accessible names', (layout) => {
     render(<CommunicationScreen initialDict={miniDict()} layout={layout} />);
+    // The sentence's actions show while there is a sentence (web-ui Req 40.4).
+    expect(screen.queryByRole('button', { name: 'Save phrase' })).toBeNull();
+    fireEvent.keyDown(window, { key: '4', code: 'Digit4' });
     expect(screen.getByRole('button', { name: 'Save phrase' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Spell this word' })).toBeTruthy();
   });
