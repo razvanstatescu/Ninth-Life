@@ -13,7 +13,7 @@ function typeKeys(digits: string) {
 }
 const utterance = () => document.getElementById('utterance')!.textContent ?? '';
 const sheet = (name: string) => document.querySelector<HTMLElement>(`dialog[data-overlay="${name}"][open]`);
-const proof = () => screen.getByRole('region', { name: 'Proof' });
+const proof = () => screen.getByRole('region', { name: 'Check the words' });
 const chips = () => [...proof().querySelectorAll('.nl-chip')].map((c) => c.getAttribute('data-state'));
 function sw(key: ' ' | 'Enter') {
   act(() => {
@@ -145,11 +145,12 @@ describe('my words (web-ui Req 21)', () => {
     expect(screen.getByRole('button', { name: /Sentence 1: I Mihai/ })).toBeTruthy();
   });
 
-  it('Req 21.3 + 21.6: My words lists the word from Phrases; Remove asks first and rebuilds the lexicon', async () => {
+  it('Req 21.3 + 21.6 + 37.5: My words (More > My words) lists the word; Remove asks first and rebuilds the lexicon', async () => {
     const reloadDict = vi.fn(async () => miniDict());
     render(<CommunicationScreen initialDict={miniDict()} initialWords={[mihai()]} reloadDict={reloadDict} layout="wide" />);
-    fireEvent.click(screen.getAllByRole('button', { name: 'Phrases' })[0]!);
-    fireEvent.click(within(sheet('phrases')!).getByRole('button', { name: 'My words' }));
+    // My words is in the laptop header's More (web-ui Req 37.5), no longer inside Phrases.
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
+    fireEvent.click(within(sheet('more')!).getByRole('button', { name: 'My words' }));
     const words = sheet('words')!;
     expect(words.textContent).toContain('Mihai');
     expect(words.textContent).toContain('64424');
@@ -166,8 +167,9 @@ describe('my words (web-ui Req 21)', () => {
 
   it('Req 21.1 + 21.5: a helper can type a word with its capitals; bad words get a plain message', () => {
     render(<CommunicationScreen initialDict={miniDict()} initialWords={[]} layout="wide" />);
-    fireEvent.click(screen.getAllByRole('button', { name: 'Phrases' })[0]!);
-    fireEvent.click(within(sheet('phrases')!).getByRole('button', { name: 'My words' }));
+    // My words is in the laptop header's More (web-ui Req 37.5), no longer inside Phrases.
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
+    fireEvent.click(within(sheet('more')!).getByRole('button', { name: 'My words' }));
     const words = sheet('words')!;
     const input = within(words).getByLabelText('Add a word');
     fireEvent.change(input, { target: { value: 'r2d2' } });
@@ -185,8 +187,9 @@ describe('my words (web-ui Req 21)', () => {
 describe('word packs (web-ui Req 22)', () => {
   it('Req 22.1 + 22.3 + 22.4: a pack file is checked and shown, and nothing is added until Add', async () => {
     render(<CommunicationScreen initialDict={miniDict()} initialWords={[]} layout="wide" />);
-    fireEvent.click(screen.getAllByRole('button', { name: 'Phrases' })[0]!);
-    fireEvent.click(within(sheet('phrases')!).getByRole('button', { name: 'My words' }));
+    // My words is in the laptop header's More (web-ui Req 37.5), no longer inside Phrases.
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
+    fireEvent.click(within(sheet('more')!).getByRole('button', { name: 'My words' }));
     const words = sheet('words')!;
     const pack = { id: 'family-example', lang: 'en', version: 1, words: [{ w: 'Ana', boost: 2 }, { w: 'Mihai', boost: 2 }, { w: 'Bucharest', boost: 1 }, { w: 'x2', boost: 1 }], phrases: [] };
     const file = new File([JSON.stringify(pack)], 'family.json', { type: 'application/json' });
@@ -208,8 +211,9 @@ describe('word packs (web-ui Req 22)', () => {
 
   it('Req 22.2: a pack in the wrong shape is refused with a plain message', async () => {
     render(<CommunicationScreen initialDict={miniDict()} initialWords={[]} layout="wide" />);
-    fireEvent.click(screen.getAllByRole('button', { name: 'Phrases' })[0]!);
-    fireEvent.click(within(sheet('phrases')!).getByRole('button', { name: 'My words' }));
+    // My words is in the laptop header's More (web-ui Req 37.5), no longer inside Phrases.
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
+    fireEvent.click(within(sheet('more')!).getByRole('button', { name: 'My words' }));
     const words = sheet('words')!;
     const file = new File(['{"id":"x","lang":"ro","version":1,"words":[],"phrases":[]}'], 'ro.json', { type: 'application/json' });
     await act(async () => {

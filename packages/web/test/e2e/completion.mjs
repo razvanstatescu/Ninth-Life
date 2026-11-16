@@ -12,7 +12,7 @@
 //   - with Finish words off in Settings no row appears.
 //   node packages/web/test/e2e/completion.mjs   (BASE_URL, default http://localhost:3202; SHOTS_DIR to save shots)
 import { mkdirSync } from 'node:fs';
-import { BASE_URL, check, closeShow, done, loadPlaywright, newContext, openApp, stubSpeech, waitFor } from './lib.mjs';
+import { BASE_URL, check, closeShow, done, loadPlaywright, newContext, openApp, stubSpeech, waitFor, settingsGroup } from './lib.mjs';
 
 const SHOTS = process.env.SHOTS_DIR;
 if (SHOTS) mkdirSync(SHOTS, { recursive: true });
@@ -219,6 +219,7 @@ try {
     check((await keyLine(page)) === before, '31.6 with the row hidden, Alt+Shift+1 and Numpad + do nothing');
     // Settings: Finish words off -> no row.
     await page.getByRole('button', { name: /^settings$/i }).first().click();
+    await settingsGroup(page, 'Typing');
     const sw = page.getByRole('switch', { name: 'Finish words' });
     check(await sw.isChecked().catch(() => false), '31.1 Finish words is on by default');
     await sw.click();
@@ -241,6 +242,7 @@ try {
     await page.locator('#keypad').focus();
     await typeKeys(page, '4 6333 92');
     await page.getByRole('button', { name: /^settings$/i }).first().click();
+    await settingsGroup(page, 'Ways to type');
     await page.getByRole('radio', { name: mode === 'scan1' ? /one switch/i : /two switches/i }).check();
     await page.keyboard.press('Escape');
     await waitFor(page, () => !document.querySelector('dialog[open]'), null, { what: 'Settings to close' });

@@ -11,9 +11,17 @@ describe('Footer (plan F12)', () => {
     render(<Footer />);
     expect(screen.getByText(NOT_A_MEDICAL_DEVICE)).toBeTruthy();
     expect(footerLinks().map((a) => [a.textContent, a.getAttribute('href')])).toEqual([
-      ['About Ninth Life', '/about'],
-      ['How Ninth Life works', '/'],
+      ['About Ninth Life (opens in a new tab)', '/about'],
+      ['How Ninth Life works (opens in a new tab)', '/'],
     ]);
+  });
+
+  it('36.7 the keypad\'s links to the website open in a new tab, so the sentence is kept', () => {
+    render(<Footer />);
+    for (const a of footerLinks()) {
+      expect(a.getAttribute('target')).toBe('_blank');
+      expect(a.getAttribute('rel')).toContain('noopener');
+    }
   });
 
   it('MS-1.5 on /about links back to the keypad at /app and to the website at /', () => {
@@ -28,6 +36,6 @@ describe('Footer (plan F12)', () => {
     render(<Footer />);
     const names = footerLinks().map((a) => a.textContent);
     expect(new Set(names).size).toBe(names.length);
-    expect(screen.getByRole('link', { name: 'How Ninth Life works' }).tagName).toBe('A');
+    expect(screen.getByRole('link', { name: 'How Ninth Life works (opens in a new tab)' }).tagName).toBe('A');
   });
 });

@@ -5,7 +5,7 @@
 //   node packages/web/test/e2e/spell.mjs     (needs `next start`; BASE_URL, default http://localhost:3202)
 // SHOTS_DIR=<dir> also saves screenshots of each step.
 import { mkdirSync } from 'node:fs';
-import { BASE_URL, check, done, loadPlaywright, newContext, openApp, tabTo, waitFor } from './lib.mjs';
+import { BASE_URL, check, done, loadPlaywright, newContext, openApp, tabTo, waitFor, settingsGroup } from './lib.mjs';
 
 const SHOTS = process.env.SHOTS_DIR;
 if (SHOTS) mkdirSync(SHOTS, { recursive: true });
@@ -79,6 +79,7 @@ try {
     await openApp(page);
     // Setup (a helper would do this once): Settings -> One switch, scan speed 0.4 s.
     await page.getByRole('button', { name: /^settings$/i }).first().click();
+    await settingsGroup(page, 'Ways to type');
     await page.getByRole('radio', { name: /one switch/i }).check();
     for (let i = 0; i < 4; i++) {
       const faster = page.getByRole('button', { name: /^Faster: Scan speed/ });

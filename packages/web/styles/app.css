@@ -26,6 +26,21 @@
   font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: 600; color: var(--ink);
 }
 .pill .nl-icon { width: 18px; height: 18px; }
+/* The status is a button that opens Status (web-ui Req 37.6): the pills inside it, a 56px target, no fill of its own. */
+.status-btn {
+  display: flex; align-items: center; gap: var(--space-2); min-height: var(--target-min); min-width: var(--target-min);
+  margin: 0; padding: 0 var(--space-1); border: 0; border-radius: var(--radius-chip); background: transparent;
+  color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.status-btn:focus-visible { outline: var(--focus-width) solid var(--focus); outline-offset: 3px; }
+.status-btn.is-lit { box-shadow: 0 0 0 var(--scan-width) var(--ember), 0 0 0 calc(var(--scan-width) + 3px) var(--plum); }
+.status-btn:active .pill { background: var(--surface-sunken); }
+/* Wide header: every pill from 1366px; below that the summary pill, so Phrases, Voice, Settings and More fit one row. */
+.status-btn__summary { display: none; }
+@media (max-width: 1365px) {
+  .status-btn .status-btn__line { display: none; }
+  .status-btn .status-btn__summary { display: inline-flex; }
+}
 .pill--ok .nl-icon { color: var(--proof-match); }
 .pill--warn .nl-icon { color: var(--proof-reject); }
 .pill--info .nl-icon { color: var(--proof-new); }
@@ -204,24 +219,68 @@
 /* Footer links as on the website (one link style per role): body size, label weight, 56px targets. */
 .app-footer a { display: inline-flex; align-items: center; min-height: var(--target-min); font-size: var(--type-body-size); line-height: var(--type-body-line); font-weight: var(--type-label-weight); }
 
-/* Sheets (settings, phrases) on a native <dialog> */
+/* Surfaces (web-ui Req 36, ADR-011): every sheet, popover, panel and dialog is one native <dialog> (Sheet.tsx),
+   laid out by its kind (data-kind) and the screen. Phones are under 600px wide; everything else is "large".
+     fit     phones: a bottom sheet as tall as its content, at most 85% (full height on short phones, ADR-005);
+             large: a popover by the button that opened it (Sheet.tsx sets top and left), 440px wide.
+     panel   phones: full height with a Done bar at the bottom; large: a 440px side panel on the button's side.
+     dialog  phones: full height; large: a centred 880px dialog.
+   No slide or fade (accessibility rule 5): a surface appears in place. */
 .sheet {
-  position: fixed; inset: 0 0 0 auto; margin: 0;
-  width: min(600px, 100vw); max-width: 100vw; height: 100dvh; max-height: 100dvh;
-  padding: 0; border: 0; border-radius: var(--radius-card) 0 0 var(--radius-card);
+  position: fixed; inset: 0 0 0 auto; margin: 0; padding: 0; border: 0;
+  width: min(440px, 100vw); max-width: 100vw; height: 100dvh; max-height: 100dvh;
+  border-radius: var(--radius-card) 0 0 var(--radius-card);
   background: var(--surface); color: var(--ink); box-shadow: var(--lift);
   overflow: hidden;
 }
 .sheet::backdrop { background: rgba(8, 4, 20, 0.6); }
-.sheet__inner { display: flex; flex-direction: column; height: 100%; }
+.sheet__inner { display: flex; flex-direction: column; height: 100%; max-height: inherit; }
 .sheet__inner:focus, .show__inner:focus { outline: none; } /* focused only so a switch user has no button ring besides the scan highlight */
-.sheet__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-6) var(--space-6) var(--space-4) var(--space-8); border-bottom: 2px solid var(--line); }
+.sheet__head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-6) var(--space-6) var(--space-4) var(--space-8); border-bottom: 2px solid var(--line); }
 .sheet__title { font-size: var(--type-title-size); line-height: var(--type-title-line); font-weight: 700; }
-.sheet__body { flex: 1; overflow-y: auto; padding: var(--space-6) var(--space-8) var(--space-12); display: flex; flex-direction: column; gap: var(--space-8); }
+.sheet__back { flex: none; padding: var(--space-4) var(--space-8) 0; }
+.sheet__body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: var(--space-6) var(--space-8) var(--space-12); display: flex; flex-direction: column; gap: var(--space-8); }
+.sheet__grabber, .sheet__foot { display: none; }
+
+/* Large: side panels, popovers and the centred dialog. */
+.sheet--panel[data-side="left"] { inset: 0 auto 0 0; border-radius: 0 var(--radius-card) var(--radius-card) 0; }
+@media (min-width: 600px) {
+  .sheet--fit {
+    inset: auto; top: var(--space-4); left: var(--space-4);
+    width: min(440px, calc(100vw - 2 * var(--space-4))); height: auto;
+    max-height: min(calc(100dvh - 2 * var(--space-4)), max(70dvh, 420px));
+    border-radius: var(--radius-card); border: var(--line-width) solid var(--line-strong);
+  }
+  .sheet--fit::backdrop { background: rgba(8, 4, 20, 0.35); }
+  .sheet--fit .sheet__head { padding: var(--space-4) var(--space-4) var(--space-3) var(--space-6); }
+  .sheet--fit .sheet__back { padding: var(--space-3) var(--space-6) 0; }
+  .sheet--fit .sheet__body { padding: var(--space-4) var(--space-6) var(--space-6); gap: var(--space-6); }
+  .sheet--dialog {
+    inset: 0; margin: auto;
+    width: min(880px, calc(100vw - 2 * var(--space-4))); height: min(85dvh, calc(100dvh - 2 * var(--space-4))); max-height: calc(100dvh - 2 * var(--space-4));
+    border-radius: var(--radius-card);
+  }
+}
+
+/* Phones: full height, except fit surfaces, which rise from the bottom as tall as their content. */
 @media (max-width: 599px) {
-  .sheet { border-radius: 0; }
+  .sheet { inset: 0; width: 100vw; border-radius: 0; }
   .sheet__head { padding: var(--space-4); }
+  .sheet__back { padding: var(--space-3) var(--space-4) 0; }
   .sheet__body { padding: var(--space-4) var(--space-4) var(--space-12); }
+  .sheet--fit { inset: auto 0 0 0; height: auto; max-height: 85dvh; border-radius: var(--radius-card) var(--radius-card) 0 0; }
+  /* A handle that shows this is a sheet over the screen. Decorative: it is not a control (Close is). */
+  .sheet__grabber { display: block; flex: none; width: var(--space-12); height: 6px; margin: var(--space-2) auto 0; border-radius: var(--radius-pill); background: var(--line-strong); }
+  .sheet--fit .sheet__head { padding-top: var(--space-2); }
+  /* Done in thumb reach; Close stays the first scan row at the top. */
+  .sheet--panel .sheet__foot { display: flex; flex: none; padding: var(--space-3) var(--space-4); border-top: 2px solid var(--line); background: var(--surface); }
+  .sheet__foot .nl-btn { flex: 1; }
+  .sheet--panel .sheet__body { padding-bottom: var(--space-6); }
+}
+/* Short phones (ADR-005): every surface takes the whole screen. */
+@media (max-width: 599px) and (max-height: 547px) {
+  .sheet--fit { inset: 0; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+  .sheet--fit .sheet__grabber { display: none; }
 }
 
 .group { display: flex; flex-direction: column; gap: var(--space-4); border: 0; margin: 0; padding: 0; min-width: 0; }
@@ -742,7 +801,7 @@ body:has(.app--shell) { min-height: 0; }
   padding-bottom: max(var(--app-pad-bottom), env(safe-area-inset-bottom));
   padding-left: max(var(--app-pad-x), env(safe-area-inset-left));
 }
-.sheet__head { padding-top: max(var(--space-6), env(safe-area-inset-top)); padding-right: max(var(--space-6), env(safe-area-inset-right)); }
+.sheet--panel .sheet__head, .sheet--dialog .sheet__head { padding-top: max(var(--space-6), env(safe-area-inset-top)); padding-right: max(var(--space-6), env(safe-area-inset-right)); }
 .sheet__body { padding-bottom: max(var(--space-12), calc(env(safe-area-inset-bottom) + var(--space-6))); padding-right: max(var(--space-8), env(safe-area-inset-right)); }
 .show {
   padding: max(var(--space-8), env(safe-area-inset-top)) max(var(--space-8), env(safe-area-inset-right))
@@ -750,7 +809,14 @@ body:has(.app--shell) { min-height: 0; }
 }
 @media (max-width: 599px) {
   .sheet__head { padding: max(var(--space-4), env(safe-area-inset-top)) max(var(--space-4), env(safe-area-inset-right)) var(--space-4) max(var(--space-4), env(safe-area-inset-left)); }
+  .sheet--fit .sheet__head { padding-top: var(--space-2); }
   .sheet__body { padding-right: max(var(--space-4), env(safe-area-inset-right)); padding-left: max(var(--space-4), env(safe-area-inset-left)); }
+  .sheet--fit .sheet__body { padding-bottom: max(var(--space-6), calc(env(safe-area-inset-bottom) + var(--space-4))); }
+  .sheet--panel .sheet__body { padding-bottom: var(--space-6); }
+  .sheet--panel .sheet__foot { padding-bottom: max(var(--space-3), env(safe-area-inset-bottom)); padding-left: max(var(--space-4), env(safe-area-inset-left)); padding-right: max(var(--space-4), env(safe-area-inset-right)); }
+}
+@media (max-width: 599px) and (max-height: 547px) {
+  .sheet--fit .sheet__head { padding-top: max(var(--space-4), env(safe-area-inset-top)); }
 }
 
 /* First paint (Round 3, 2026-11-12). The static HTML is the wide layout (useLayout's server snapshot), and
@@ -791,6 +857,7 @@ body:has(.app--shell) { min-height: 0; }
 /* A changed or added key: a 2px box; a removed key: struck through in its place. A shape, not colour alone. */
 .nl-keyfix { border: var(--line-width) solid var(--ink); border-radius: 4px; padding: 0 1px; }
 .nl-keyfix-removed { color: var(--ink-muted); text-decoration: line-through; text-decoration-thickness: var(--line-width); }
+.fix { display: flex; flex-direction: column; gap: inherit; }
 .fix__lead { margin: 0 0 var(--space-3); font-size: var(--type-body-size); }
 .fix__words { display: flex; flex-direction: column; gap: var(--space-2); }
 .fix__row { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(140px, 100%), 1fr)); gap: var(--space-2); margin-bottom: var(--space-2); }
@@ -865,3 +932,111 @@ body:has(.app--shell) { min-height: 0; }
 .quick-replies--pairs .quick-reply { padding: 0 var(--space-2); }
 /* Laptops: the sentence box has no fixed height, so the button keeps the full 56px target (accessibility rule 1). */
 .app:not(.app--shell) .nl-speakbar__fix { min-height: var(--target-min); }
+
+/* Menu and More (web-ui Req 37.1, 37.5): tiles for the most used surfaces, then 64px rows that open the rest. */
+.group--tight { gap: var(--space-2); }
+.group__title--small { font-size: var(--type-label-size); line-height: var(--type-label-line); color: var(--ink-muted); }
+.menu-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+.menu-tile { flex-direction: column; gap: var(--space-1); min-height: 72px; padding: var(--space-2); text-align: center; white-space: normal; }
+.menu-tile .nl-icon { width: 28px; height: 28px; }
+/* Phones: exactly the 72px minimum (icon, 4px, one 20px line), so the Menu with nothing typed fits 375x667. */
+@media (max-width: 599px) { .menu-tile { padding: var(--space-1) var(--space-2); line-height: 20px; gap: 2px; } .menu-tile .nl-icon { width: 26px; height: 26px; } }
+.menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: var(--space-2); }
+.menu-grid .nl-btn { padding: 0 var(--space-3); }
+.menu-rows { display: flex; flex-direction: column; gap: var(--space-1); }
+/* Status and About side by side, About only as wide as its words need. */
+.menu-foot { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: var(--space-2); }
+.menu-row { justify-content: flex-start; width: 100%; min-height: 64px; padding: 0 var(--space-4); text-align: left; }
+.menu-row__label { flex: 1 1 auto; min-width: 0; }
+.menu-row__value { flex: 0 1 auto; min-width: 0; color: var(--ink-muted); font-weight: 600; overflow-wrap: anywhere; }
+.menu-row__chevron { color: var(--ink-muted); }
+/* Status (web-ui Req 37.6): each state as its pill, with what it means under it. */
+.status-list { display: flex; flex-direction: column; gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
+.status-list__item { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+/* Phones: short surfaces keep their blocks close, titles one line (web-ui Req 37.1, 39.3). */
+@media (max-width: 599px) {
+  .sheet--fit .sheet__body { gap: var(--space-2); padding-top: var(--space-2); }
+  .sheet--fit .sheet__head { padding-bottom: var(--space-2); }
+  .sheet--fit .sheet__grabber { margin-top: var(--space-1); }
+  .sheet--fit .sheet__body { padding-bottom: max(var(--space-4), calc(env(safe-area-inset-bottom) + var(--space-3))); }
+  .sheet--fit .menu-rows { gap: 2px; }
+  .menu-grid .nl-icon, .menu-foot .nl-icon { display: none; }
+  /* The Menu's group names are read by screen readers; on a phone the blocks speak for themselves. */
+  .sheet--fit .group__title--small { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+}
+@media (max-width: 399px) {
+  .sheet__title { font-size: var(--type-heading-size); line-height: var(--type-heading-line); }
+}
+
+/* Settings (web-ui Req 38): phones list the groups and drill in; larger screens show two panes. */
+.settings { display: flex; flex-direction: column; gap: var(--space-6); min-height: 0; }
+.settings__list { display: flex; flex-direction: column; gap: var(--space-1); }
+.settings__pane { display: flex; flex-direction: column; gap: var(--space-8); min-width: 0; }
+.settings__item .menu-row__value { max-width: 55%; text-align: right; }
+@media (min-width: 600px) {
+  .sheet--dialog .sheet__body { padding: 0; overflow: hidden; }
+  .settings--panes { flex-direction: row; gap: 0; height: 100%; }
+  .settings--panes .settings__nav { flex: 0 0 min(300px, 36%); overflow-y: auto; padding: var(--space-4); border-right: 2px solid var(--line); }
+  .settings--panes .settings__pane { flex: 1 1 auto; overflow-y: auto; padding: var(--space-6) var(--space-8) var(--space-12); }
+  .settings--panes .menu-row { flex-wrap: wrap; align-content: center; gap: 0 var(--space-3); min-height: 64px; padding: var(--space-2) var(--space-4); }
+  .settings--panes .menu-row__value { flex-basis: 100%; max-width: none; text-align: left; font-size: var(--type-label-size); line-height: var(--type-label-line); }
+  /* The chosen group: an ink edge and a sunken fill, plus the bold bar on its left; never colour alone. */
+  .settings__item.is-current { background: var(--surface-sunken); box-shadow: inset 0 0 0 2px var(--ink), inset 6px 0 0 var(--ink); }
+  .settings--panes > .settings__pane:only-child { padding-top: var(--space-6); }
+}
+
+/* The one confirm (web-ui Req 39.3): the question in bold, the safe choice first. Side by side in a surface 600px or
+   wider, stacked (full width) in a narrower one (a phone, a 440px panel or popover). A red frame only when the action
+   cannot be undone. The surface is the container (`.sheet__inner`). */
+.sheet__inner { container: surface / inline-size; }
+.confirm { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); border-radius: var(--radius-card); border: 2px solid var(--line-strong); }
+.confirm:focus { outline: none; }
+.confirm--danger { border-color: var(--danger); }
+.confirm__q { margin: 0; font-size: var(--type-body-lg-size); line-height: var(--type-body-lg-line); font-weight: 700; overflow-wrap: anywhere; }
+.confirm__detail { margin: 0; font-size: var(--type-body-size); line-height: var(--type-body-line); color: var(--ink-muted); }
+.confirm__buttons { display: flex; flex-direction: column; gap: var(--space-2); }
+.confirm__buttons .nl-btn { width: 100%; }
+@container surface (min-width: 600px) {
+  .confirm__buttons { flex-direction: row; flex-wrap: wrap; }
+  .confirm__buttons .nl-btn { width: auto; }
+}
+.myword__confirm { flex: 1 1 100%; }
+
+/* Phrases (web-ui Req 39.2): one full-width row that speaks, and More beside it; More opens Pin, Show and Delete. */
+.phrase-row { display: flex; flex-direction: column; gap: var(--space-2); }
+.phrase-row__main { display: flex; align-items: stretch; gap: var(--space-2); }
+.phrase-row__say { flex: 1 1 auto; min-width: 0; justify-content: flex-start; flex-wrap: wrap; text-align: left; white-space: normal; padding-top: var(--space-2); padding-bottom: var(--space-2); }
+.phrase-row__text { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; font-size: var(--type-body-lg-size); line-height: var(--type-body-lg-line); }
+.phrase-row__pin { flex: none; padding: 0 var(--space-2); border: 2px solid var(--line-strong); border-radius: var(--radius-pill); font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: 600; }
+.phrase-row__more { flex: none; width: var(--target-min); padding: 0; }
+.phrase-row__actions { display: flex; flex-direction: column; gap: var(--space-2); padding-left: var(--space-4); border-left: 2px solid var(--line-strong); }
+/* They said in its sheet (web-ui Req 39.1): the field, then Done and Listen, nothing above the field. */
+.partner--sheet { padding: 0; background: transparent; }
+.partner--sheet .partner__body { display: contents; }
+/* With the keyboard up, a short phone's full-height sheet sizes to its content above the keyboard. */
+.sheet--fit[data-keyboard="up"] { height: auto; }
+
+/* Save phrase, in place (web-ui Req 39.4). The laptop button holds both labels in one grid cell, the unused one hidden,
+   so turning into Undo save never changes its size. The Menu shows the result where Save phrase was. */
+.swap { display: inline-grid; }
+.swap > * { grid-area: 1 / 1; }
+.swap__off { visibility: hidden; }
+.menu-saved { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.menu-saved__text { flex: 1 1 auto; display: inline-flex; align-items: center; gap: var(--space-2); margin: 0; min-height: var(--target-min); font-size: var(--type-body-size); line-height: var(--type-body-line); font-weight: 700; }
+.menu-saved__text .nl-icon { color: var(--proof-match); }
+/* The phone Menu may grow to the screen's height less a 20px gap at the top (and the safe area), with a tighter head,
+   so with nothing typed it never scrolls from 375x667 up; the gap, the grabber and the rounded top keep it a sheet over
+   the screen (web-ui Req 37.1). */
+@media (max-width: 599px) and (min-height: 548px) {
+  .sheet--fit[data-overlay="menu"] { max-height: calc(100dvh - var(--space-4) - var(--space-1) - env(safe-area-inset-top)); }
+  .sheet--fit[data-overlay="menu"] .sheet__grabber { margin-top: 2px; }
+  .sheet--fit[data-overlay="menu"] .sheet__head { padding-top: var(--space-1); padding-bottom: var(--space-1); }
+  .sheet--fit[data-overlay="menu"] .sheet__body { padding-top: var(--space-1); padding-bottom: max(var(--space-2), env(safe-area-inset-bottom)); }
+}
+.menu-foot .menu-row { padding: 0 var(--space-3); }
+.menu-foot .menu-row__value { white-space: nowrap; }
+/* With the keyboard up, the field, Done and Listen come first: Back to Menu, the lead text and the grabber step aside
+   until it closes (web-ui Req 39.1). Close stays, the first scan row. */
+.sheet--fit[data-keyboard="up"] .sheet__back,
+.sheet--fit[data-keyboard="up"] .sheet__lead,
+.sheet--fit[data-keyboard="up"] .sheet__grabber { display: none; }

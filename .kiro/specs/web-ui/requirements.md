@@ -645,3 +645,111 @@ conversation starts.
 35.4 My words SHALL accept names and words, and phrases, one per line, typed or pasted ("Add names and phrases"), AND
      SHALL show the pack import preview (Req 22.3), titled "From what you typed", before adding anything.
 35.5 THE built-in phrases SHALL NOT hold two phrases that differ only by a contraction or "thanks" / "thank you".
+
+## Requirement 36: Surfaces that fit what they hold, and close the way people expect (2026-11-16, ADR-011)
+
+**User story:** As a person who types to talk on a phone or a laptop, I want short choices to open as a short sheet or a
+popup next to what I pressed, long lists as a panel, and every one of them to close with Back, a tap outside or Close,
+so that I never lose my sentence or my place.
+
+36.1 Every surface SHALL be one of four kinds: **fit** (short surfaces: Menu, Fix a word, Check the words, They said,
+     Show a card, Sentences for your keys), **panel** (lists: Phrases, My words, Spell this word, Conversation),
+     **dialog** (Settings) and **show** (Show mode). Each SHALL be a modal `<dialog>` with a title, Close as its first
+     scan row, Escape to close, 56px targets, 16px text, Night and Day tokens and no motion.
+36.2 ON a phone (under 600px wide) a fit surface SHALL be a bottom sheet as tall as its content, at most 85% of the
+     screen, with the screen visible above it and a decorative grabber, and SHALL take the whole screen under 548px tall
+     (ADR-005); a panel and the dialog SHALL take the whole screen, and a panel SHALL have a 56px Done at the bottom that
+     is not a scan row. ON larger screens a fit surface SHALL be a popover 440px wide next to the button that opened it
+     (below it, or above it when there is more room there), inside the screen and never over its button; a panel SHALL
+     be a 440px side panel on the side of that button; the dialog SHALL be centred, at most 880px wide and 85% tall.
+36.3 WHEN a surface opens from the main screen, THE app SHALL add one history entry (never on first load, never more
+     than one), so the browser's or the phone's Back closes the surface and keeps the app and the sentence; closing it
+     any other way SHALL take that entry off.
+36.4 A press that starts and ends on the backdrop SHALL close a surface, EXCEPT while switch scanning is on (the press
+     is the switch), while a text field in it holds text, while a question (a confirm) is showing in it, and within
+     300ms of it opening.
+36.5 Focus SHALL move into the surface on opening (its first useful control, or the one named by the caller) and SHALL
+     return to the control on the main screen that opened it, also when the surface replaced another.
+36.6 A surface opened from the Menu SHALL replace the Menu and SHALL have "Back to Menu" as its second scan row, after
+     Close; Back to Menu SHALL bring the Menu back; Close SHALL go to the main screen.
+36.7 Links from the app to the website (About Ninth Life, How Ninth Life works) SHALL open in a new tab, and their
+     accessible names SHALL end with "(opens in a new tab)".
+36.8 They said in its sheet SHALL have Done (and Listen), and no Cancel: Close cancels.
+36.9 Fix a word SHALL focus its first word on opening and, after a word is picked, the first choice for it (while
+     scanning, the sheet itself).
+
+## Requirement 37: Menu, Voice, More and Status (2026-11-16, ADR-011)
+
+**User story:** As a person who types to talk, I want the things I use most at the top of the Menu, the voice on its
+own, and everything on a laptop at most two clicks away, so that I find what I need without scrolling or guessing.
+
+37.1 THE Menu (phones, tablets and narrow laptop windows) SHALL be a fit surface (on phones from 548px tall it may grow
+     to the screen less 16px and the safe area, so with nothing typed it does not scroll from 375x667 up) holding, top to bottom: the quick
+     replies (Req 28.4); 4 tiles (icon above the word, at least 72px tall) for Phrases, Show a card, Conversation and
+     They said, one scan row; on phones with a sentence, This sentence: Sentences (short phones, Req 24.9), then Fix a
+     word and Spell this word, then Save phrase and Check the words, each pair a scan row (unavailable ones disabled);
+     64px rows with a chevron for My words, Voice and Settings, one scan row; Status (with the short status) and About
+     Ninth Life (a new tab), one scan row. The intended-purpose sentence and How Ninth Life works SHALL be in
+     Settings > About.
+37.2 Opening the Menu SHALL focus Phrases; Back to Menu SHALL focus the item the surface was opened from.
+37.3 A link SHALL be a scan cell like a button (Req 16.2).
+37.4 Voice SHALL be its own fit surface with the voice picker (and Previous and Next voice), Speed, Pitch and Test voice,
+     the same controls as Settings > Voice, opening with focus on the picker: Menu > Voice on phones and tablets, the
+     header's Voice on laptops.
+37.5 THE wide header SHALL hold the status button, Phrases, Voice, Settings and More (labelled), in that scan order. More
+     SHALL be a fit surface with My words, Show a card, Conversation, Check the words (one scan row), Status and About
+     Ninth Life (one scan row); a surface it opens SHALL have Back to More. Every phone Menu item SHALL be at most 2
+     visible clicks away on a laptop.
+37.6 THE header's status SHALL be a button (name "Status: " and the full status) that opens Status: each state as its
+     pill with one sentence on what it means. Its changes SHALL still be announced politely. Below 1366px the wide header
+     SHALL show the summary pill, so the header stays one row down to 960px.
+
+## Requirement 38: Settings in groups (2026-11-16, ADR-011)
+
+**User story:** As a person who types to talk, or a helper setting the app up, I want Settings in a short list of
+groups that each show their current value, so that I find a setting without scrolling through all of them, by touch,
+keyboard or switch.
+
+38.1 Settings SHALL be grouped as Voice, Look, Ways to type, Typing, Quick replies, Partner strip, Model ranking, Voice
+     to text (only where the browser can do it) and About, each row showing its current value (the voice's name, the
+     theme and key size, the way to type, Finish words on or off, On or Off, the strip's way); the rows SHALL be one scan
+     row.
+38.2 ON a phone Settings SHALL open on the list (64px rows with a chevron); a row SHALL open its group in the same sheet
+     with "All settings" as the second scan row (in place of Back to Menu), focus on the group's first control, and
+     All settings SHALL return to the list with focus on that group's row.
+38.3 ON larger screens Settings SHALL be the centred dialog with the groups on the left (the chosen one marked by an
+     ink edge, a bar and a sunken fill, and `aria-current`) and its settings on the right, each pane scrolling on its
+     own; it SHALL open on the group last used in this visit (memory only), or Voice.
+38.4 A caller SHALL be able to open Settings on a group (`section`; `focusVoice` opens Voice with focus on the picker).
+38.5 WHILE "Turn off switch scanning?" is asked (Req 16.7), it SHALL replace the group's settings and the list, so its
+     row comes straight after Close.
+
+## Requirement 39: They said over the keyboard, Phrases rows, one confirm, feedback in place, names (2026-11-16, ADR-011)
+
+**User story:** As a person who types to talk, I want the field and Done above the phone's keyboard, more phrases on a
+screen, every "are you sure?" to look and work the same, and a sign, where I pressed, that what I saved was saved, so
+that I trust what the app did.
+
+39.1 THE They said sheet SHALL show the field first (its label for screen readers only, the title says it), then Done and
+     Listen in one row, then the lead text; Enter SHALL submit. WHILE the on-screen keyboard is up (the visual viewport
+     is shorter than the window), a bottom sheet SHALL sit on top of it, no taller than the room above it, with Back
+     to Menu, the lead text and the grabber set aside, so the field, Done and Listen always show.
+39.2 Each saved phrase SHALL be one full-width row that speaks on a press (name "Speak "{phrase}"", "Pinned" shown when
+     pinned) plus one 56px More button (name "More for {phrase}", `aria-expanded`), one scan row; More SHALL open, under
+     the row, Pin to quick replies (or Unpin), Show (big text) and Delete, one scan row; one phrase open at a time.
+39.3 Every confirm SHALL be the one Confirm: the question in bold (a line under it when needed), the safe choice (Keep or
+     Cancel) first and focused (the question itself while scanning), the action second; side by side in a surface 600px or wider,
+     stacked in a narrower one; a red frame only for actions that cannot be undone (Clear conversation, Delete phrase, Remove word;
+     not Turn off scanning); it SHALL carry `data-confirm` so the backdrop never closes its surface (Req 36.4). The pack
+     preview SHALL put Cancel first and carry `data-confirm` too.
+39.4 Feedback SHALL appear where the press happened, never as an overlay (the one-screen phone has no free room, and an
+     overlay covered the word row and sentences on every size tried). Menu > Save phrase SHALL keep the Menu open and
+     turn Save phrase into "Saved to Phrases" with Undo (56px, its own scan row, focused; Undo deletes the phrase and
+     brings Save phrase back, focused), or "Already in Phrases" when it was saved before. The laptop's Save phrase SHALL
+     turn into "Undo save" (name "Saved to Phrases. Undo save"; both labels hold the same cell, so its size never
+     changes) until the next key press. Both SHALL say "Saved to Phrases." (or "Already in Phrases.") politely. Pin and
+     Unpin answer in their row (Pinned, `aria-pressed`, announced); Add to my words in the proof chip and announcement.
+39.5 Names: the proof panel SHALL be called "Check the words" everywhere (the laptop panel's heading; in its sheet the
+     title says it, with no heading of its own); the Sentences sheet SHALL be titled "Sentences" (one line on a 375px phone) and not repeat it;
+     phone titles SHALL be the 22px heading under 400px wide; Phrases SHALL not start with a My words button (My words
+     is in Menu and More); the laptop conversation panel's button SHALL read "Whole conversation".

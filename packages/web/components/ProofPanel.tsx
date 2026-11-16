@@ -27,6 +27,7 @@ export function ProofPanel({
   onAddWord,
   offerScanning = false,
   offerLit = -1,
+  inSheet = false,
 }: {
   words: DisplayWord[];
   /** How each word is written in the sentence ("I", not "i"); trailing punctuation is dropped. */
@@ -45,6 +46,8 @@ export function ProofPanel({
   onAddWord?: (word: string) => void;
   offerScanning?: boolean;
   offerLit?: number;
+  /** In the Check the words sheet: the sheet's title names it, so no "Proof" heading of its own (web-ui Req 39.5). */
+  inSheet?: boolean;
 }) {
   const uid = useId();
   const rejectChips: { word: string; code: string; key: string }[] = [];
@@ -74,11 +77,13 @@ export function ProofPanel({
   }
 
   return (
-    <section className="card proof" aria-labelledby="proof-title">
+    <section className={inSheet ? 'proof proof--sheet' : 'card proof'} aria-labelledby={inSheet ? undefined : 'proof-title'}>
       <div className="proof__head">
-        <h2 className="proof__title" id="proof-title">
-          Proof
-        </h2>
+        {inSheet ? null : (
+          <h2 className="proof__title" id="proof-title">
+            Check the words
+          </h2>
+        )}
         <p className="proof__lead">Every word that can be spoken matches the keys on screen.</p>
       </div>
       {words.length === 0 && rejectChips.length === 0 ? (

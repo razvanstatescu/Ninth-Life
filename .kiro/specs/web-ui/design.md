@@ -235,6 +235,66 @@ Copy comes from `lib/rankingProvider.ts`: `SENT_FOR_RANKING` (Settings, About, W
 - `packages/eval/scripts/build_pack.py` `dedupe_phrases` folds contractions and "thanks"; `core-en.json` version 2 (189
   phrases), applied with the same function (`data/NOTICE.md`).
 
+## Surfaces (Req 36; ADR-011)
+
+- `lib/surface.ts`: `SurfaceKind` (`fit`, `panel`, `dialog`), `placePopover(anchorBox, size, viewport)` (below or above
+  the button, its left or right edge by screen half, 16px from the edges, cut to the room on the larger side when it
+  fits on neither), `panelSide`, `backdropCloses({scanning, hasText, confirming, openedAgoMs})`, `holdsText`,
+  `showsConfirm`; `SurfaceContext` (`anchor()`, `back`); `trackPresses` / `currentTrigger` (the control on the main
+  screen a press, focus or the scan highlight is on).
+- `components/Sheet.tsx` takes `kind`; `data-kind` and `data-side` drive `styles/app.css` (phones under 600px; short
+  phones under 548px). It positions a large-screen popover itself (on open, on resize, and when its content changes
+  size, with a ResizeObserver). Back to Menu is a row after the head (`data-scan-row="back"`); the Done bar
+  (`.sheet__foot`, phones only, named "Done, close {title}") is outside every scan row.
+- `lib/useBackCloses.ts`: one `history.pushState` while any surface (or Show mode) is open; `popstate` closes; a close
+  from the app calls `history.back()` once and ignores that pop. Next's patched `pushState` copies its own state into the
+  entry, so Back is a same-URL restore with no reload.
+- `CommunicationScreen`: `setSheet` records the opener (`origin`) when the first surface opens; `menuChild` (state
+  adjusted during render) marks a surface the Menu opened, which gets `back: Back to Menu`.
+- `components/Footer.tsx` `WebsiteLink`: `target="_blank" rel="noopener"` and a screen-reader "(opens in a new tab)".
+
+## Menu, Voice, More and Status (Req 37)
+
+- `components/MenuSheet.tsx`: `Tile` (`.menu-tile`, 2x2 grid; one scan row), This sentence (`.menu-grid`, rows
+  `sentence-list`, `sentence`, `sentence-2`), `Row` (`.menu-row`, 64px, `next` chevron), the Status / About row
+  (`.menu-foot`). Items have ids `menuItemId(name)`; `CommunicationScreen` tracks `menuChild.returnTo` so Back to Menu
+  (or More) opens with focus on the item that surface came from.
+- `components/VoiceSheet.tsx` wraps `VoiceControls` (exported from `SettingsSheet.tsx`; Settings uses the same one).
+  The `voice` sheet is its own overlay now (it used to be Settings scrolled to the picker).
+- `components/MoreSheet.tsx` (wide header), `components/StatusSheet.tsx` (`statusExplained`).
+- `AppHeader`: the status pills sit in a `<button class="status-btn">` (wide and compact); an `aria-live` paragraph
+  keeps announcing changes; `.status-btn__summary` replaces the pills below 1366px. `WIDE_MENU` is
+  `status, phrases, voice, settings, more`.
+- `SCAN_CELL_SELECTOR` includes `a[href]`.
+- Icons `next`, `more`, `status`, `newtab` in `components/Icon.tsx` (names distinct from the website's).
+
+## Settings in groups (Req 38)
+
+- `SettingsSheet` builds one block per group (`sections`) and hands them to `SettingsLayout`, which picks the layout by
+  `useMediaQuery(SURFACE_PHONE_QUERY)`: phones show `.settings--phone` (the list, or one group with the Sheet's own
+  `back` "All settings"), larger screens `.settings--panes` (nav and pane, each `overflow-y: auto`). The active group
+  is reset while rendering when the sheet opens (no flash); `lastSection` is module memory, never stored.
+- `sectionValue(id, settings, voices)` gives each row its value. `Sheet` takes `back` to replace the context's Back.
+- Tests pick the group first: `test/settings-section.ts` `openSection(title)` and `test/e2e/lib.mjs`
+  `settingsGroup(page, title)`; `test/setup.ts` resets `lastSection` after each test.
+
+## They said, Phrases rows, the one confirm, feedback in place (Req 39)
+
+- `PartnerTurn` `sheet`: an `nl-sr-only` label, Done before Listen, no `order-partner` (the sheet's lead follows it).
+  `Sheet` `place()` reads `visualViewport` for a fit sheet on a phone: with a keyboard of more than 40px it sets
+  `bottom` to the keyboard's height and `max-height` to the room above (`data-keyboard="up"`); it listens to the visual
+  viewport's resize and scroll.
+- `PhrasesSheet`: `.phrase-row` (`__say`, `__more` with `aria-expanded`, `__actions`), `openId` (one open), `onShow`.
+- `components/Confirm.tsx`: question, detail, safe and action, `irreversible`, `scanning` (focus on the question),
+  `scanRow`, `role`, `data-confirm`. Used by ConversationSheet, PhrasesSheet, MyWordsSheet and SettingsSheet;
+  `test/confirms.test.tsx` fails if a component draws its own Keep.
+- Save phrase answers in place: `CommunicationScreen` keeps `saved` ({ text, undo | null }; `undo` is null when
+  `savePhrase` returned a phrase with more than one use, so it was there before), clears it in `pressKey`, and passes
+  it to the Menu (`sentence.saved`: the `saved` scan row, focus on Undo, back to Save phrase after it) and to the laptop
+  button (`saveOrUndo`, the `.swap` cell with both labels, also the scanner's save cell). There is no snackbar: on the
+  one-screen phone and on laptops an overlay covered controls at every size measured.
+- `ProofPanel` and `CandidateList` take `inSheet` (no heading of their own).
+
 ## Keyboard routing (Req 6)
 
 A capture-phase `keydown` listener maps keys with `mapKey(event, access, focusContext(activeElement))`.

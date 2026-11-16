@@ -23,7 +23,7 @@ export function CardsSheet({
   onClose: () => void;
 }) {
   return (
-    <Sheet open={open} name="cards" title="Show a card" onClose={onClose} scanning={scanning}>
+    <Sheet open={open} name="cards" kind="fit" title="Show a card" onClose={onClose} scanning={scanning}>
       <section className="group" aria-labelledby="cards-ready">
         <h3 className="group__title" id="cards-ready">
           Cards

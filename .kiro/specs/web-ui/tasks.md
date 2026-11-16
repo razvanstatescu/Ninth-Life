@@ -252,3 +252,29 @@ Built 2026-11-09. Research: `docs/research/mobile-layout.md`,
       Phrases toggle), Show a card (`CardsSheet`, Show with nothing typed, Menu), Phone calls in Phrases, Add names and
       phrases in My words (`packFromLines`), `core-en.json` v2 without near-duplicates (Req 35.1-35.5)
   - [x] 72.1 Tests: `test/my-replies.test.ts`; `test/phone.test.tsx` and the quick-reply tests unchanged
+
+## UX pass: menus, sheets and popups (2026-11-16, ADR-011)
+
+- [x] 73. Containers and closing: `lib/surface.ts`, `lib/useBackCloses.ts`, `Sheet` kinds (fit, panel, dialog) with the
+      phone bottom sheet, large-screen popover and side panel, the centred Settings dialog, the Done bar; Back closes;
+      the backdrop rule; Back to Menu; focus return across replaced surfaces; website links in a new tab; Fix a word
+      focus; no Cancel in the They said sheet (Req 36.1-36.9)
+  - [x] 73.1 Tests: `test/surfaces.test.tsx`; `test/e2e/surfaces.mjs` (phone, short phone, tablet, laptop); updated
+        `test/footer.test.tsx`, `test/routes.test.ts`, `test/phone.test.tsx` for the new-tab link names
+- [x] 74. Menu, Voice, More and Status: the Menu's tiles, This sentence pairs, rows and Status / About; `VoiceSheet`
+      with `VoiceControls`; `MoreSheet`; `StatusSheet`; the header status button and More; links as scan cells;
+      About and the intended-purpose sentence in Settings (Req 37.1-37.6)
+  - [x] 74.1 Tests: `test/hubs.test.tsx`; `test/e2e/surfaces.mjs`; updated `test/m1b.test.tsx`, `test/phone.test.tsx`,
+        `test/quick-replies.test.tsx`, `test/routes.test.ts` for the new Menu and header
+- [x] 75. Settings in groups: `SettingsLayout` (phone list and drill-in with All settings; two panes on larger screens,
+      last group used), `sectionValue`, `Sheet` `back`, the scan-off question alone after Close (Req 38.1-38.5)
+  - [x] 75.1 Tests: `test/settings-groups.test.tsx`; the e2e scripts pick the group with `settingsGroup`; updated
+        `test/m1b.test.tsx`, `test/scan-off-confirm.test.tsx`, `test/quick-replies.test.tsx`,
+        `test/conversation-ui.test.tsx`, `test/completion.test.tsx` to open the group first
+- [x] 76. They said over the keyboard, Phrases rows, one confirm, feedback in place, names: `PartnerTurn` `sheet`, the
+      `visualViewport` placement, `.phrase-row` with More, `Confirm` everywhere (`data-confirm`), Save phrase answered
+      in the Menu (Saved to Phrases + Undo) and on the laptop button (Undo save), `inSheet` headings, "Check the words"
+      as the laptop panel's heading, Whole conversation (Req 39.1-39.5)
+  - [x] 76.1 Tests: `test/confirms.test.tsx`, `test/feedback.test.tsx`; updated `test/spell.test.tsx` (More > My
+        words) and `test/e2e/my-replies.mjs` (pins behind More), `test/e2e/axe.mjs` (Whole conversation)
+  - [ ] 76.2 Check They said with the keyboard up on a real iPhone and Android phone

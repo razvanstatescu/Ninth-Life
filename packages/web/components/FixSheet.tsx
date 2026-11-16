@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { KeyFix, Punct } from '@ninth/core';
 import { Button } from './Button';
 import { EditedCode, editWords } from './KeyCode';
@@ -79,17 +79,40 @@ export function FixSheet({
 }) {
   const single = words.length === 1;
   const [index, setIndex] = useState<number | null>(single ? 0 : null);
-  // Each opening starts at step 1 (or straight at the word of a 1-word sentence).
-  useEffect(() => {
+  // Each opening starts at step 1 (or straight at the word of a 1-word sentence), set while rendering so the first
+  // frame already shows the right step (and the popover is placed for it).
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (open) setIndex(words.length === 1 ? 0 : null);
-  }, [open, words.length]);
+  }
   const at = index !== null && index < words.length ? index : null;
+  // Each step starts with focus on its first choice (web-ui Req 36.9): the button just pressed has gone, so focus
+  // would otherwise fall to the page. While scanning, focus stays on the sheet (one ember thing).
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const step = useRef<number | null | undefined>(undefined);
+  useEffect(() => {
+    if (!open) {
+      step.current = undefined;
+      return;
+    }
+    if (step.current === undefined) {
+      step.current = at;
+      return;
+    }
+    if (step.current === at) return;
+    step.current = at;
+    const d = bodyRef.current?.closest('dialog');
+    if (scanning) d?.querySelector<HTMLElement>('.sheet__inner')?.focus();
+    else bodyRef.current?.querySelector<HTMLElement>('button:not(:disabled), input:not(:disabled)')?.focus();
+  }, [open, at, scanning]);
   const word = at !== null ? words[at]! : null;
   const readings = at !== null ? readingsFor(at) : [];
   const fixes = at !== null ? fixesFor(at) : [];
 
   return (
-    <Sheet open={open} name="fix" title={word ? `Fix “${word.label}”` : FIX.title} onClose={onClose} scanning={scanning}>
+    <Sheet open={open} name="fix" kind="fit" title={word ? `Fix “${word.label}”` : FIX.title} onClose={onClose} scanning={scanning}>
+      <div className="fix" ref={bodyRef}>
       {at === null ? (
         <>
           <p className="fix__lead">{FIX.lead}</p>
@@ -97,7 +120,7 @@ export function FixSheet({
             {chunks(words.map((w, i) => ({ w, i })), ROW).map((row, r) => (
               <div className="fix__row scan-cluster" data-scan-row={`fix-words-${r}`} key={r}>
                 {row.map(({ w, i }) => (
-                  <Button key={i} variant="secondary" className="fix__word" aria-label={`${w.label}, keys ${spaced(w.code)}`} onClick={() => setIndex(i)} data-fix-index={i}>
+                  <Button key={i} variant="secondary" className="fix__word" aria-label={`${w.label}, keys ${spaced(w.code)}`} onClick={() => setIndex(i)} data-fix-index={i} data-autofocus={i === 0 ? '' : undefined}>
                     <span className="fix__word-text">{w.label}</span>
                     <span className="fix__word-code" aria-hidden="true">
                       {w.code}
@@ -119,8 +142,8 @@ export function FixSheet({
             ) : (
               chunks(readings, ROW).map((row, r) => (
                 <div className="fix__row scan-cluster" data-scan-row={`fix-readings-${r}`} key={r}>
-                  {row.map((w) => (
-                    <Button key={w} variant="secondary" className="fix__word" onClick={() => onReading(at, w)} data-word={w}>
+                  {row.map((w, k) => (
+                    <Button key={w} variant="secondary" className="fix__word" onClick={() => onReading(at, w)} data-word={w} data-autofocus={r === 0 && k === 0 ? '' : undefined}>
                       <span className="fix__word-text">{showWord(w)}</span>
                     </Button>
                   ))}
@@ -136,9 +159,10 @@ export function FixSheet({
               <p className="field__help">{FIX.noFixes}</p>
             ) : (
               <div className="fix__row scan-cluster" data-scan-row="fix-near">
-                {fixes.map((f) => (
+                {fixes.map((f, k) => (
                   <Button
                     key={f.word}
+                    data-autofocus={readings.length === 0 && k === 0 ? '' : undefined}
                     variant="secondary"
                     className="fix__word"
                     aria-label={`${showWord(f.word)}, keys ${spaced(f.code)}, ${editWords(f.edit)}`}
@@ -182,6 +206,7 @@ export function FixSheet({
           </div>
         </>
       )}
+      </div>
     </Sheet>
   );
 }

@@ -15,7 +15,8 @@ const read = (path: string) => readFileSync(path, 'utf8');
 /** The href of the `<a>` whose text (after whitespace is collapsed) is `text`, read from TSX source. */
 function hrefOf(source: string, text: string): string[] {
   const out: string[] = [];
-  const re = /<a\b[^>]*?href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/g;
+  // A plain <a>, or the app's WebsiteLink (a new-tab <a>, web-ui Req 36.7).
+  const re = /<(?:a|WebsiteLink)\b[^>]*?href="([^"]*)"[^>]*>([\s\S]*?)<\/(?:a|WebsiteLink)>/g;
   for (const m of source.matchAll(re)) if ((m[2] ?? '').replace(/\s+/g, ' ').trim() === text) out.push(m[1] ?? '');
   return out;
 }
@@ -46,8 +47,8 @@ describe('routes (ADR-006)', () => {
     expect(about).not.toContain('/welcome');
   });
 
-  it('MS-1.5 the menu links "How Ninth Life works" to /', () => {
-    const menu = read(web('components/MenuSheet.tsx'));
+  it('MS-1.5 the app links "How Ninth Life works" to / (Settings > About, web-ui Req 37.1)', () => {
+    const menu = read(web('components/SettingsSheet.tsx'));
     expect(hrefOf(menu, 'How Ninth Life works')).toEqual(['/']);
     expect(menu).not.toContain('/welcome');
   });

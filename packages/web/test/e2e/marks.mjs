@@ -9,7 +9,7 @@
 //   - the key line never shows a mark (the proof is unchanged), and only Speak speaks.
 //   node packages/web/test/e2e/marks.mjs   (BASE_URL; SHOTS_DIR to save shots)
 import { mkdirSync } from 'node:fs';
-import { BASE_URL, addTheirLine, check, closeShow, done, loadPlaywright, newContext, openApp, stubSpeech, waitFor } from './lib.mjs';
+import { BASE_URL, addTheirLine, check, closeShow, done, loadPlaywright, newContext, openApp, stubSpeech, waitFor, settingsGroup } from './lib.mjs';
 
 const SHOTS = process.env.SHOTS_DIR;
 if (SHOTS) mkdirSync(SHOTS, { recursive: true });
@@ -186,6 +186,7 @@ try {
     await page.locator('#keypad').focus();
     await typeSentence(page, 'yes i will');
     await page.getByRole('button', { name: /^settings$/i }).first().click();
+    await settingsGroup(page, 'Ways to type');
     await page.getByRole('radio', { name: /two switches/i }).check();
     await page.keyboard.press('Escape');
     await waitFor(page, () => !document.querySelector('dialog[open]'), null, { what: 'Settings to close' });

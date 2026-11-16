@@ -11,7 +11,7 @@
 //   - nothing spoken without Speak; only the setting is stored.
 //   node packages/web/test/e2e/partner.mjs   (BASE_URL; SHOTS_DIR to save shots)
 import { mkdirSync } from 'node:fs';
-import { BASE_URL, addTheirLine, check, closeShow, done, loadPlaywright, openApp, stubSpeech, waitFor } from './lib.mjs';
+import { BASE_URL, addTheirLine, check, closeShow, done, loadPlaywright, openApp, stubSpeech, waitFor, settingsGroup } from './lib.mjs';
 
 const SHOTS = process.env.SHOTS_DIR;
 if (SHOTS) mkdirSync(SHOTS, { recursive: true });
@@ -68,6 +68,7 @@ async function chooseStrip(page, label) {
     await page.locator('.phone-actions button', { hasText: 'Menu' }).first().click();
     await page.locator('dialog[open] button', { hasText: 'Settings' }).first().click();
   }
+  await settingsGroup(page, 'Partner strip');
   await page.getByRole('radio', { name: label }).check();
   await page.keyboard.press('Escape');
   await page.waitForFunction(() => !document.querySelector('dialog[open]'), null, { timeout: 5000 });

@@ -67,16 +67,21 @@ import { statusLines, statusSummary } from '@/lib/status';
 import { useOnline } from '@/lib/useOnline';
 import { useOverlayScan } from '@/lib/useOverlayScan';
 import { useScanner } from '@/lib/useScanner';
+import { SurfaceContext, currentTrigger, trackPresses, type SurfaceContextValue } from '@/lib/surface';
+import { useBackCloses } from '@/lib/useBackCloses';
 import { useVoices } from '@/lib/useVoices';
 import { AppHeader } from './AppHeader';
 import { Button } from './Button';
 import { CandidateList } from './CandidateList';
 import { ConversationSheet } from './ConversationSheet';
 import { ThreadPanel, ThreadStrip, useAddCells } from './ConversationStrip';
-import { Footer, NOT_A_MEDICAL_DEVICE } from './Footer';
+import { Footer } from './Footer';
 import { Icon } from './Icon';
 import { Keypad } from './Keypad';
-import { MenuSheet } from './MenuSheet';
+import { MenuSheet, menuItemId } from './MenuSheet';
+import { MoreSheet } from './MoreSheet';
+import { StatusSheet } from './StatusSheet';
+import { VoiceSheet } from './VoiceSheet';
 import { MyWordsSheet } from './MyWordsSheet';
 import { PartnerTurn } from './PartnerTurn';
 import { PhoneSuggestions, phoneSuggestions } from './PhoneSuggestions';
@@ -126,7 +131,8 @@ export const MENU_ROW = KEYPAD_ROWS + 4; // scan row 8
  * the strip (2 turns, They said, All), up to 6 for the laptop panel (3 turns, Listen, Type their line, All).
  */
 export const THREAD_ROW = KEYPAD_ROWS + 5; // scan row 9
-const WIDE_MENU = ['phrases', 'voice', 'settings'] as const;
+/** The wide header's scan row, left to right: the status button, then Phrases, Voice, Settings, More (web-ui Req 37.5, 37.6). */
+const WIDE_MENU = ['status', 'phrases', 'voice', 'settings', 'more'] as const;
 /** A mark in words, for the polite region (web-ui Req 34.8). */
 const MARK_WORDS: Record<string, string> = { '.': 'Full stop', '?': 'Question mark', '!': 'Exclamation mark', ',': 'Comma' };
 function markSaid(m: string | undefined, word?: string): string {
@@ -134,7 +140,7 @@ function markSaid(m: string | undefined, word?: string): string {
   return word ? `${MARK_WORDS[m]} after ${word}.` : `${MARK_WORDS[m]}.`;
 }
 
-type SheetName = 'cards' | 'menu' | 'settings' | 'voice' | 'phrases' | 'words' | 'spell' | 'sentences' | 'proof' | 'partner' | 'conversation' | 'fix' | null;
+type SheetName = 'cards' | 'menu' | 'more' | 'status' | 'settings' | 'voice' | 'phrases' | 'words' | 'spell' | 'sentences' | 'proof' | 'partner' | 'conversation' | 'fix' | null;
 /** What the person chose to say: Speak (keys), a phrase, a quick reply, Say again. Each becomes a 'you said' turn. */
 export type SayAndRecord = (text: string, via: Exclude<MeVia, 'shown'>) => boolean;
 const WORDS_NOT_SAVED = 'My words could not be saved on this device, so they last until you close the app. Storage may be off in this browser window.';
@@ -169,8 +175,42 @@ export function CommunicationScreen({
   // Voice to text for They said (web-ui Req 26): allowed once, from the notice or Settings.
   const dictation = useMemo(() => ({ allowed: settings.dictation, onAllow: () => setSettings((s) => ({ ...s, dictation: true })) }), [settings.dictation]);
   const [remote, setRemote] = useState<{ key: string; candidates: Candidate[]; rejected: RejectedSuggestion[]; rejectedCount: number } | null>(null);
-  const [sheet, setSheet] = useState<SheetName>(null);
+  const [sheet, setSheetState] = useState<SheetName>(null);
   const [show, setShow] = useState<{ text: string; reason: string | null } | null>(null);
+  // Surfaces (web-ui Req 36, ADR-011). The control on the main screen that opened the first surface: popovers sit
+  // by it, panels open on its side, and focus goes back to it. A surface opened from another one replaces it.
+  const origin = useRef<Element | null>(null);
+  const surfaceOpen = useRef(false);
+  surfaceOpen.current = sheet !== null || show !== null;
+  const setSheet = useCallback((next: SheetName) => {
+    if (next !== null && !surfaceOpen.current) origin.current = currentTrigger();
+    setSheetState(next);
+  }, []);
+  useEffect(() => trackPresses(), []);
+  // A surface the Menu (or the laptop's More) opened has Back to it (web-ui Req 36.6); Close still goes to the main
+  // screen. Back to Menu opens the Menu on the item that surface came from.
+  type Hub = 'menu' | 'more';
+  const isHub = (n: SheetName): n is Hub => n === 'menu' || n === 'more';
+  const [menuChild, setMenuChild] = useState<{ sheet: SheetName; parent: Hub | null; returnTo: SheetName }>({ sheet: null, parent: null, returnTo: null });
+  if (menuChild.sheet !== sheet) {
+    const prev = menuChild.sheet;
+    setMenuChild({
+      sheet,
+      parent: isHub(prev) && sheet !== null && !isHub(sheet) ? prev : null,
+      returnTo: isHub(sheet) && prev !== null && !isHub(prev) && menuChild.parent === sheet ? prev : null,
+    });
+  }
+  const backTo = menuChild.sheet === sheet ? menuChild.parent : null;
+  const menuReturn = menuChild.sheet === sheet && menuChild.returnTo ? menuItemId(menuChild.returnTo) : undefined;
+  const surfaceCtx = useMemo<SurfaceContextValue>(
+    () => ({ anchor: () => origin.current, back: backTo ? { label: backTo === 'menu' ? 'Back to Menu' : 'Back to More', onBack: () => setSheet(backTo) } : null }),
+    [backTo, setSheet],
+  );
+  // Back (browser, Android, mouse) closes the surface on top instead of leaving the app (web-ui Req 36.3).
+  useBackCloses(sheet !== null || show !== null, () => {
+    setSheetState(null);
+    setShow(null);
+  });
   const [phrases, setPhrases] = useState<Phrase[]>([]);
   const [phraseError, setPhraseError] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
@@ -178,6 +218,9 @@ export function CommunicationScreen({
   // Clear keeps what was cleared until the next key press, so a mistaken Clear can be undone.
   const [undo, setUndo] = useState<ComposerState | null>(null);
   const [announce, setAnnounce] = useState('');
+  // Save phrase, shown where it was pressed (web-ui Req 39.4): the sentence just saved and how to undo it (null for
+  // one that was already saved). Gone with the next key press.
+  const [saved, setSaved] = useState<{ text: string; undo: (() => void) | null } | null>(null);
   // My words (web-ui Req 21): stored on this device, boosted in the lexicon, spelled the person's way.
   const [myWords, setMyWords] = useState<MyWord[]>(initialWords ?? []);
   const [wordsLoaded, setWordsLoaded] = useState(initialWords !== undefined);
@@ -408,6 +451,7 @@ export function CommunicationScreen({
 
   const pressKey = useCallback(
     (def: KeyDef) => {
+      setSaved(null);
       if (def.id === '#') return nextReading();
       const a = actionForKey(def.id);
       if (!a) return;
@@ -566,12 +610,28 @@ export function CommunicationScreen({
   const saveCurrent = useCallback(() => {
     if (!sentence.speakable) return;
     savePhrase(sentence.text)
-      .then(() => listPhrases())
-      .then((p) => {
-        setPhrases(p);
-        setPhraseError(null);
-        say('Phrase saved on this device.');
-      })
+      .then((saved) =>
+        listPhrases().then((p) => {
+          // savePhrase counts a use on a phrase that was already saved: then there is nothing to undo.
+          const had = saved.uses > 1;
+          setPhrases(p);
+          setPhraseError(null);
+          // In place (web-ui Req 39.4): the Menu's Save phrase or the laptop's button turns into Undo; said politely.
+          setSaved({
+            text: saved.text,
+            undo: had
+              ? null
+              : () => {
+                  setSaved(null);
+                  void deletePhrase(saved.id)
+                    .then(() => listPhrases().then(setPhrases))
+                    .then(() => say('Removed from Phrases.'))
+                    .catch(() => setPhraseError('This phrase could not be deleted.'));
+                },
+          });
+          say(had ? 'Already in Phrases.' : 'Saved to Phrases.');
+        }),
+      )
       .catch(() => {
         setPhraseError('This phrase could not be saved. Storage may be off in this browser window.');
         say('This phrase could not be saved.');
@@ -714,7 +774,7 @@ export function CommunicationScreen({
 
   // ---- switch scanning ------------------------------------------------------------------------
   const scanMode = settings.access === 'scan1' ? 'scan1' : settings.access === 'scan2' ? 'scan2' : null;
-  const overlay: string | null = show !== null ? 'show' : sheet === 'voice' ? 'settings' : sheet;
+  const overlay: string | null = show !== null ? 'show' : sheet;
   const overlayOpen = overlay !== null;
   // A sheet keeps scanning the way it was opened, so a switch user who picks Keyboard or Two switches
   // in Settings can still change their mind before closing it (web-ui Req 16.4).
@@ -741,7 +801,13 @@ export function CommunicationScreen({
     }
     return out;
   }, [sentence.words, display]);
-  const addOffer = useCallback((word: string) => void addWord(showWord(word, display), 'spelled'), [addWord, display]);
+  const addOffer = useCallback(
+    (word: string) => {
+      const shown = showWord(word, display);
+      addWord(shown, 'spelled');
+    },
+    [addWord, display],
+  );
   const menuCells = layout === 'wide' ? WIDE_MENU.length : 1;
   // Phones and tablets (web-ui Req 24, 25): one screen, suggestions next to the keypad, the action bar.
   const phone = isShell(layout);
@@ -934,8 +1000,11 @@ export function CommunicationScreen({
     },
     [conv, say],
   );
-  const actionsRef = useRef({ fixOnCard, openFix, rowShownWords, pickRowWord, rowSpell, pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout, openSpell, offers, addOffer, phone, sug, spellOffer, openSentences, undo, undoClear, threadView, newestFirst, bubbleTurn, threadShown, openConversation, openPartner, replyList, chooseReplyCell, groupCells, toggleIntent });
-  actionsRef.current = { fixOnCard, openFix, rowShownWords, pickRowWord, rowSpell, pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout, openSpell, offers, addOffer, phone, sug, spellOffer, openSentences, undo, undoClear, threadView, newestFirst, bubbleTurn, threadShown, openConversation, openPartner, replyList, chooseReplyCell, groupCells, toggleIntent };
+  // The sentence on show was just saved: Save phrase turns into Undo save (web-ui Req 39.4).
+  const savedNow = saved && saved.text === sentence.text.trim() ? saved : null;
+  const saveOrUndo = useCallback(() => (savedNow?.undo ? savedNow.undo() : saveCurrent()), [savedNow, saveCurrent]);
+  const actionsRef = useRef({ saveOrUndo, fixOnCard, openFix, rowShownWords, pickRowWord, rowSpell, pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout, openSpell, offers, addOffer, phone, sug, spellOffer, openSentences, undo, undoClear, threadView, newestFirst, bubbleTurn, threadShown, openConversation, openPartner, replyList, chooseReplyCell, groupCells, toggleIntent });
+  actionsRef.current = { saveOrUndo, fixOnCard, openFix, rowShownWords, pickRowWord, rowSpell, pressKey, selectCandidate, speakNow, clearAll, saveCurrent, showCurrent, openSheet, sentenceToggle, layout, openSpell, offers, addOffer, phone, sug, spellOffer, openSentences, undo, undoClear, threadView, newestFirst, bubbleTurn, threadShown, openConversation, openPartner, replyList, chooseReplyCell, groupCells, toggleIntent };
   const scanner = useScanner({
     mode: scanMode,
     rows: phone
@@ -987,7 +1056,7 @@ export function CommunicationScreen({
         const act = ACTIONS[cell];
         if (act === 'speak') a.speakNow();
         else if (act === 'clear') a.clearAll();
-        else if (act === 'save') a.saveCurrent();
+        else if (act === 'save') a.saveOrUndo();
         else if (act === 'show') a.showCurrent();
         else if (act === 'fix') a.openFix();
         else if (act === 'spell') a.openSpell();
@@ -1267,8 +1336,24 @@ export function CommunicationScreen({
           <Button variant="secondary" icon="x" onClick={clearAll} disabled={codes.length === 0} lit={actionLit(1)}>
             Clear
           </Button>
-          <Button variant="quiet" icon="save" onClick={saveCurrent} disabled={!sentence.speakable} lit={actionLit(2)} aria-label="Save phrase">
-            Save<span className="save-btn__more"> phrase</span>
+          {/* After a save it reads Undo save until the next key (web-ui Req 39.4); both labels hold the cell, so it keeps its size. */}
+          <Button
+            variant="quiet"
+            icon={savedNow?.undo ? 'back' : 'save'}
+            onClick={saveOrUndo}
+            disabled={!sentence.speakable}
+            lit={actionLit(2)}
+            aria-label={savedNow?.undo ? 'Saved to Phrases. Undo save' : 'Save phrase'}
+            data-action="save"
+          >
+            <span className="swap">
+              <span className={savedNow?.undo ? 'swap__off' : undefined}>
+                Save<span className="save-btn__more"> phrase</span>
+              </span>
+              <span className={savedNow?.undo ? undefined : 'swap__off'} aria-hidden="true">
+                Undo save
+              </span>
+            </span>
           </Button>
           <Button variant="quiet" icon="show" onClick={showCurrent} disabled={codes.length > 0 && !sentence.speakable} lit={actionLit(3)}>
             Show
@@ -1450,6 +1535,7 @@ export function CommunicationScreen({
   const pageHeading = <h1 className="nl-sr-only">Ninth Life</h1>;
 
   return (
+    <SurfaceContext.Provider value={surfaceCtx}>
     <div className={[`app app--${layout}`, phone ? 'app--shell' : '', band !== 'none' ? `app--partner-${band}` : ''].filter(Boolean).join(' ')} onPointerDown={onBackgroundPointer}>
       <a className="nl-skip" href="#keypad">
         Skip to the keypad
@@ -1465,6 +1551,8 @@ export function CommunicationScreen({
           onPhrases={() => setSheet('phrases')}
           onVoice={() => setSheet('voice')}
           onSettings={() => setSheet('settings')}
+          onMore={() => setSheet('more')}
+          onStatus={() => setSheet('status')}
           actions={!phone}
           thread={
             phone && threadView === 1
@@ -1504,23 +1592,33 @@ export function CommunicationScreen({
 
       <MenuSheet
         open={sheet === 'menu'}
-        status={status}
         scanning={overlayScanMode !== null}
-        onPhrases={() => setSheet('phrases')}
-        onMyWords={() => setSheet('words')}
-        onVoice={() => setSheet('voice')}
-        onSettings={() => setSheet('settings')}
         onClose={() => setSheet(null)}
+        initialFocusId={sheet === 'menu' ? menuReturn : undefined}
+        // Quick replies first in every Menu, also while typing (web-ui Req 28.4): speak inside the press, then back to the keys.
+        replies={{
+          rows: sheetRows,
+          onReply: (text) => {
+            sayReply(text);
+            setSheet(null);
+          },
+        }}
+        onPhrases={() => setSheet('phrases')}
+        onCards={() => setSheet('cards')}
+        onConversation={() => openConversation(null)}
+        onPartner={() => setSheet('partner')}
         sentence={
-          phone
+          phone && codes.length > 0
             ? {
-                canSave: sentence.speakable,
-                onSave: () => {
-                  saveCurrent();
-                  setSheet(null);
-                },
+                canFix,
+                onFix: () => setSheet('fix'),
                 canSpell,
-                onSpell: openSpell,
+                onSpell: () => openSpell(),
+                canSave: sentence.speakable,
+                // The Menu stays open and Save phrase turns into "Saved to Phrases" with Undo (web-ui Req 39.4).
+                onSave: saveCurrent,
+                saved: savedNow ? { undo: savedNow.undo } : null,
+                onProof: () => setSheet('proof'),
                 // Short phones, while the replies hold the area after Speak, and while Finish the word holds a
                 // 1-row phone's only row (web-ui Req 24.9, 28.5, 31.5).
                 onSentences: noSugRow || (showReplies && sentence.candidates.length > 0) || (wordRowShown && sentRows === 0 && sentence.candidates.length > 0) ? openSentences : undefined,
@@ -1538,45 +1636,57 @@ export function CommunicationScreen({
                     }}
                   />
                 ) : null,
-                onFix: canFix ? () => setSheet('fix') : undefined,
-                onProof: () => setSheet('proof'),
-                onPartner: () => setSheet('partner'),
-                onConversation: () => openConversation(null),
               }
             : null
         }
-        about={phone ? NOT_A_MEDICAL_DEVICE : null}
-        replyRows={sheetRows}
-        onCards={() => setSheet('cards')}
-        onReply={(text) => {
-          // Speak inside the press, then back to the keys (web-ui Req 28.4: "Hold on" while typing).
-          sayReply(text);
-          setSheet(null);
-        }}
+        onMyWords={() => setSheet('words')}
+        onVoice={() => setSheet('voice')}
+        onSettings={() => setSheet('settings')}
+        onStatus={() => setSheet('status')}
+        statusText={summary.text}
       />
+      <MoreSheet
+        open={sheet === 'more'}
+        scanning={overlayScanMode !== null}
+        onClose={() => setSheet(null)}
+        initialFocusId={sheet === 'more' ? menuReturn : undefined}
+        onMyWords={() => setSheet('words')}
+        onCards={() => setSheet('cards')}
+        onConversation={() => openConversation(null)}
+        onProof={() => setSheet('proof')}
+        onStatus={() => setSheet('status')}
+      />
+      <StatusSheet open={sheet === 'status'} scanning={overlayScanMode !== null} status={status} onClose={() => setSheet(null)} />
+      <VoiceSheet
+        open={sheet === 'voice'}
+        scanning={overlayScanMode !== null}
+        settings={settings}
+        voices={voices}
+        onChange={setSettings}
+        onTestVoice={() => speakText('Hello. This is how I sound.')}
+        onClose={() => setSheet(null)}
+      />
+      <Sheet open={sheet === 'proof'} name="proof" kind="fit" title="Check the words" onClose={() => setSheet(null)} scanning={overlayScanMode !== null}>
+        <ProofPanel
+          words={sentence.words}
+          labels={sentence.tokens}
+          rejected={remoteNow?.rejected ?? []}
+          rejectedCount={remoteNow?.rejectedCount ?? 0}
+          alternatives={alternatives}
+          offers={offers}
+          onAddWord={addOffer}
+          inSheet
+        />
+      </Sheet>
+      <Sheet open={sheet === 'partner'} name="partner" kind="fit" title="They said" onClose={() => setSheet(null)} scanning={overlayScanMode !== null} initialFocusId="partner-field">
+        {sheet === 'partner' ? (
+          <PartnerTurn value="" onChange={addThem} onDone={() => setSheet(null)} dictation={dictation} inputId="partner-field" autoFocus={overlayScanMode === null} cancel={false} sheet />
+        ) : null}
+        {/* Under the buttons, so Done stays right under the field, above the keyboard (web-ui Req 39.1). */}
+        <p className="sheet__lead">What the other person just said. It goes into the conversation on this screen and is never saved. With model ranking on, it helps rank your sentences.</p>
+      </Sheet>
       {phone ? (
-        <Sheet open={sheet === 'proof'} name="proof" title="Check the words" onClose={() => setSheet(null)} scanning={overlayScanMode !== null}>
-          <ProofPanel
-            words={sentence.words}
-            labels={sentence.tokens}
-            rejected={remoteNow?.rejected ?? []}
-            rejectedCount={remoteNow?.rejectedCount ?? 0}
-            alternatives={alternatives}
-            offers={offers}
-            onAddWord={addOffer}
-          />
-        </Sheet>
-      ) : null}
-      {phone ? (
-        <Sheet open={sheet === 'partner'} name="partner" title="They said" onClose={() => setSheet(null)} scanning={overlayScanMode !== null} initialFocusId="partner-field">
-          <p className="sheet__lead">What the other person just said. It goes into the conversation on this screen and is never saved. With model ranking on, it helps rank your sentences.</p>
-          {sheet === 'partner' ? (
-            <PartnerTurn value="" onChange={addThem} onDone={() => setSheet(null)} dictation={dictation} inputId="partner-field" autoFocus={overlayScanMode === null} />
-          ) : null}
-        </Sheet>
-      ) : null}
-      {phone ? (
-        <Sheet open={sheet === 'sentences'} name="sentences" title="Sentences for your keys" onClose={() => setSheet(null)} scanning={overlayScanMode !== null}>
+        <Sheet open={sheet === 'sentences'} name="sentences" kind="fit" title="Sentences" onClose={() => setSheet(null)} scanning={overlayScanMode !== null}>
           {sheetGroup}
           <div className="scan-cluster" data-scan-row="sentences">
             <CandidateList
@@ -1590,14 +1700,14 @@ export function CommunicationScreen({
                 setSheet(null);
               }}
               display={display}
+              inSheet
             />
           </div>
         </Sheet>
       ) : null}
       <SettingsSheet
-        open={sheet === 'settings' || sheet === 'voice'}
+        open={sheet === 'settings'}
         scanning={overlayScanMode !== null}
-        focusVoice={sheet === 'voice'}
         settings={settings}
         voices={voices}
         onChange={setSettings}
@@ -1622,9 +1732,9 @@ export function CommunicationScreen({
             .then(() => listPhrases().then(setPhrases))
             .catch(() => setPhraseError('This phrase could not be deleted.'));
         }}
-        onMyWords={() => setSheet('words')}
         replyRows={sheetRows}
         onPin={pinPhrase}
+        onShow={showCard}
         onClose={() => setSheet(null)}
       />
       <CardsSheet open={sheet === 'cards'} scanning={overlayScanMode !== null} phrases={phrases.map((p) => p.text)} onShow={showCard} onClose={() => setSheet(null)} />
@@ -1694,5 +1804,6 @@ export function CommunicationScreen({
       />
       <ShowMode text={show?.text ?? null} reason={show?.reason ?? null} scanning={overlayScanMode !== null} onClose={() => setShow(null)} />
     </div>
+    </SurfaceContext.Provider>
   );
 }

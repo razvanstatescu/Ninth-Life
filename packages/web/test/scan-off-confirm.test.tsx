@@ -7,6 +7,7 @@ import { act, cleanup, fireEvent, render, screen, within } from '@testing-librar
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CommunicationScreen } from '@/components/CommunicationScreen';
 import { miniDict } from './fixtures';
+import { openSection } from './settings-section';
 
 function sw(key: ' ' | 'Enter') {
   act(() => {
@@ -34,6 +35,8 @@ const flushRows = () => act(async () => {});
 async function chooseBySwitch(way: 'Keyboard' | 'Touch') {
   render(<CommunicationScreen initialDict={miniDict()} layout="wide" initialSettings={{ access: 'scan2', acceptDelayMs: 0 }} />);
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  openSection('Ways to type');
+  await flushRows();
   moveToRow('access');
   sw('Enter');
   moveToCell(way);
@@ -103,6 +106,7 @@ describe('turning switch scanning off asks first (plan F11, web-ui Req 16.7)', (
   it('Req 16.7: a tap on Touch in a scan mode asks too; Cancel by tap keeps One switch', async () => {
     render(<CommunicationScreen initialDict={miniDict()} layout="wide" initialSettings={{ access: 'scan1', acceptDelayMs: 0 }} />);
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    openSection('Ways to type');
     fireEvent.click(radio('Touch'));
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(radio('One switch').checked).toBe(true);
@@ -114,6 +118,7 @@ describe('turning switch scanning off asks first (plan F11, web-ui Req 16.7)', (
     expect(sheet()).toBeNull();
     expect(screen.getByText('Step scanning with 2 switches')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    openSection('Ways to type');
     expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(radio('Two switches').checked).toBe(true);
   });
@@ -121,12 +126,14 @@ describe('turning switch scanning off asks first (plan F11, web-ui Req 16.7)', (
   it('Req 16.7: no question between the two scan modes, or when scanning is not on', () => {
     render(<CommunicationScreen initialDict={miniDict()} layout="wide" initialSettings={{ access: 'scan2', acceptDelayMs: 0 }} />);
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    openSection('Ways to type');
     fireEvent.click(radio('One switch'));
     expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(radio('One switch').checked).toBe(true);
     cleanup();
     render(<CommunicationScreen initialDict={miniDict()} layout="wide" initialSettings={{ access: 'keyboard' }} />);
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    openSection('Ways to type');
     fireEvent.click(radio('One switch'));
     fireEvent.click(radio('Touch')); // scanning was never on while the sheet was open: nothing to lose
     expect(screen.queryByRole('alertdialog')).toBeNull();

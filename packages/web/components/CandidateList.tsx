@@ -16,6 +16,7 @@ export function CandidateList({
   shown,
   toggle,
   display,
+  inSheet = false,
 }: {
   candidates: Candidate[];
   selectedIndex: number;
@@ -33,14 +34,18 @@ export function CandidateList({
   toggle?: { label: string; onClick: () => void } | null;
   /** The person's spellings ("Mihai"), lib/myWords.ts. */
   display?: DisplayMap | null;
+  /** In the Sentences sheet: its title names the list, so no heading of its own (web-ui Req 39.5). */
+  inSheet?: boolean;
 }) {
   const visible = candidates.slice(0, shown ?? candidates.length);
   const usedModel = candidates.some((c) => c.source === 'llm');
   return (
-    <section className={scanning ? 'cands nl-scanrow is-scanning' : 'cands nl-scanrow'} aria-labelledby="cands-title">
-      <h2 className="cands__title" id="cands-title">
-        Sentences for your keys
-      </h2>
+    <section className={scanning ? 'cands nl-scanrow is-scanning' : 'cands nl-scanrow'} aria-labelledby={inSheet ? undefined : 'cands-title'} aria-label={inSheet ? 'Sentences for your keys' : undefined}>
+      {inSheet ? null : (
+        <h2 className="cands__title" id="cands-title">
+          Sentences for your keys
+        </h2>
+      )}
       {visible.length > 0 ? (
         <ol className="cands__list">
           {visible.map((c, i) => (

@@ -1,5 +1,7 @@
 'use client';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useMediaQuery } from '@/lib/layout';
+import { SURFACE_PHONE_QUERY } from '@/lib/surface';
 import {
   ACCEPT_DELAY,
   PITCH,
@@ -15,6 +17,9 @@ import { REPLY_TYPES_HELP, SENT_FOR_RANKING, RECENT_SENDS, RECENT_SETTING, provi
 import { pickVoice } from '@/lib/speech';
 import type { VoicesState } from '@/lib/useVoices';
 import { Button } from './Button';
+import { Confirm } from './Confirm';
+import { Icon } from './Icon';
+import { NOT_A_MEDICAL_DEVICE, WebsiteLink } from './Footer';
 import { DICTATION_NOTICE } from './PartnerTurn';
 import { Sheet } from './Sheet';
 
@@ -34,31 +39,23 @@ const ACCESS_LABEL: Record<Access, string> = { keyboard: 'Keyboard', touch: 'Tou
  * Plan F11, web-ui Req 16.7: a switch user who picks Keyboard or Touch is asked first, because once
  * scanning is off they cannot turn it back on by switch. Cancel is the first cell, so a stray press
  * keeps scanning. The question replaces the sheet's settings until it is answered, so its row comes
- * straight after Close in the scan order.
+ * straight after Close. The one confirm style (web-ui Req 39.3); it can be undone, so no red frame. Focus rests on
+ * the question itself while scanning (Req 16.6).
  */
-function ConfirmScanOff({ to, onCancel, onConfirm }: { to: Access; onCancel: () => void; onConfirm: () => void }) {
-  const titleId = useId();
-  const textId = useId();
-  const ref = useRef<HTMLDivElement>(null);
-  // Focus the question itself, not a button: while scanning, a focus ring would be a second ember thing (Req 16.6).
-  useEffect(() => ref.current?.focus(), []);
+function ConfirmScanOff({ to, scanning, onCancel, onConfirm }: { to: Access; scanning?: boolean; onCancel: () => void; onConfirm: () => void }) {
   return (
-    <div className="group" role="alertdialog" aria-labelledby={titleId} aria-describedby={textId} tabIndex={-1} ref={ref} data-confirm="scan-off">
-      <h3 className="group__title" id={titleId}>
-        Turn off switch scanning?
-      </h3>
-      <p className="field__help" id={textId}>
-        You will need a keyboard or touch to turn it back on.
-      </p>
-      <div className="field__row scan-cluster" data-scan-row="confirm-scan-off">
-        <Button variant="secondary" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button variant="secondary" onClick={onConfirm}>
-          {`Turn off, use ${ACCESS_LABEL[to]}`}
-        </Button>
-      </div>
-    </div>
+    <Confirm
+      name="scan-off"
+      role="alertdialog"
+      question="Turn off switch scanning?"
+      detail="You will need a keyboard or touch to turn it back on."
+      safe="Cancel"
+      action={`Turn off, use ${ACCESS_LABEL[to]}`}
+      scanning={scanning}
+      scanRow="confirm-scan-off"
+      onSafe={onCancel}
+      onAction={onConfirm}
+    />
   );
 }
 
@@ -157,9 +154,244 @@ function Range({
   );
 }
 
+/**
+ * The voice: picker (with Previous and Next for a switch), Speed, Pitch and Test voice. One component with two homes:
+ * Settings > Voice, and the Voice surface (the laptop header's Voice, Menu > Voice; web-ui Req 37.4).
+ */
+export function VoiceControls({
+  settings,
+  voices,
+  onChange,
+  onTestVoice,
+}: {
+  settings: Settings;
+  voices: VoicesState;
+  onChange: (s: Settings) => void;
+  onTestVoice: () => void;
+}) {
+  const set = <K extends keyof Settings>(k: K, v: Settings[K]) => onChange(sanitizeSettings({ ...settings, [k]: v }));
+  const current = pickVoice(voices.voices, settings.voiceURI);
+  const voiceIndex = current ? voices.voices.findIndex((v) => v.voiceURI === current.voiceURI) : -1;
+  const stepVoice = (d: 1 | -1) => {
+    const n = voices.voices.length;
+    if (n === 0) return;
+    const next = voices.voices[(Math.max(0, voiceIndex) + d + n) % n];
+    if (next) set('voiceURI', next.voiceURI);
+  };
+  return (
+    <>
+      {!voices.supported ? (
+        <p className="field__help">This browser has no speech voices. Speak shows your sentence in big text instead.</p>
+      ) : voices.loaded && voices.voices.length === 0 ? (
+        <p className="field__help">No voices are installed yet. Speak shows your sentence in big text until a voice is added in your device settings.</p>
+      ) : (
+        <div className="field">
+          <label className="field__label" htmlFor={VOICE_PICKER_ID}>
+            Choose a voice
+          </label>
+          <p className="field__help">Voices marked &quot;on this device&quot; work offline and keep your words on the device. Online voices send the text to the browser maker.</p>
+          <select
+            id={VOICE_PICKER_ID}
+            className="select"
+            value={current?.voiceURI ?? ''}
+            onChange={(e) => set('voiceURI', e.target.value || undefined)}
+          >
+            {!voices.loaded ? <option value="">Loading voices</option> : null}
+            {voices.voices.map((v) => (
+              <option key={v.voiceURI} value={v.voiceURI}>
+                {v.name} ({v.lang}, {v.localService ? 'on this device' : 'online'})
+              </option>
+            ))}
+          </select>
+          {voices.voices.length > 1 ? (
+            <div className="field__row scan-cluster" data-scan-row="voice">
+              <Button variant="secondary" onClick={() => stepVoice(-1)} aria-label={`Previous voice, now ${current?.name ?? 'none'}`}>
+                Previous voice
+              </Button>
+              <Button variant="secondary" onClick={() => stepVoice(1)} aria-label={`Next voice, now ${current?.name ?? 'none'}`}>
+                Next voice
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      )}
+      <Range label="Speed" value={settings.rate} min={RATE.min} max={RATE.max} step={RATE.step} display={`${settings.rate.toFixed(1)}x`} down="Slower" up="Faster" onChange={(v) => set('rate', v)} />
+      <Range label="Pitch" value={settings.pitch} min={PITCH.min} max={PITCH.max} step={PITCH.step} display={settings.pitch.toFixed(1)} down="Lower" up="Higher" onChange={(v) => set('pitch', v)} />
+      <div className="field__row scan-cluster" data-scan-row="test-voice">
+        <Button variant="quiet" icon="speaker" onClick={onTestVoice}>
+          Test voice
+        </Button>
+      </div>
+    </>
+  );
+}
+
+/** Settings, in groups (web-ui Req 38.1). Voice to text shows only where the browser can do it. */
+export type SettingsSection = 'voice' | 'look' | 'access' | 'typing' | 'replies' | 'partner' | 'model' | 'dictation' | 'about';
+export const SETTINGS_SECTIONS: readonly { id: SettingsSection; title: string }[] = [
+  { id: 'voice', title: 'Voice' },
+  { id: 'look', title: 'Look' },
+  { id: 'access', title: 'Ways to type' },
+  { id: 'typing', title: 'Typing' },
+  { id: 'replies', title: 'Quick replies' },
+  { id: 'partner', title: 'Partner strip' },
+  { id: 'model', title: 'Model ranking' },
+  { id: 'dictation', title: 'Voice to text' },
+  { id: 'about', title: 'About' },
+];
+const navId = (id: SettingsSection) => `settings-nav-${id}`;
+const onOff = (on: boolean) => (on ? 'On' : 'Off');
+const PARTNER_LABEL: Record<Settings['partnerStrip'], string> = { off: 'Off', facing: 'Facing them', upright: 'Upright' };
+const THEME_LABEL: Record<Settings['theme'], string> = { night: 'Night', day: 'Day', system: 'Match device' };
+
+/** The current value shown on a group's row (web-ui Req 38.1). */
+export function sectionValue(id: SettingsSection, s: Settings, voices: VoicesState): string {
+  switch (id) {
+    case 'voice':
+      return pickVoice(voices.voices, s.voiceURI)?.name ?? (voices.supported ? 'Default' : 'None');
+    case 'look':
+      return `${THEME_LABEL[s.theme]}, ${s.targetSize === 'xl' ? '128' : '96'} px keys`;
+    case 'access':
+      return ACCESS_LABEL[s.access];
+    case 'typing':
+      return `Finish words ${onOff(s.wordCompletion).toLowerCase()}`;
+    case 'replies':
+      return onOff(s.quickReplies);
+    case 'partner':
+      return PARTNER_LABEL[s.partnerStrip];
+    case 'model':
+      return onOff(s.llm);
+    case 'dictation':
+      return onOff(s.dictation);
+    case 'about':
+      return '';
+  }
+}
+
+/** The section a larger screen opens on: the last one used in this visit (memory only), or Voice. */
+let lastSection: SettingsSection = 'voice';
+/** Back to Voice (tests start each case fresh). */
+export function resetSettingsSection(): void {
+  lastSection = 'voice';
+}
+
+/**
+ * How Settings is laid out (web-ui Req 38): on phones a list of the groups, each with its current value, that drills
+ * into one group in the same sheet with "All settings" as the second scan row; on larger screens a centred dialog with
+ * the groups on the left (the chosen one marked) and its settings on the right. The scan-off question replaces the
+ * group's settings, alone, so its row comes straight after Close (web-ui Req 16.7).
+ */
+function SettingsLayout({
+  open,
+  onClose,
+  scanning,
+  settings,
+  voices,
+  dictationOk,
+  deepLink,
+  confirming,
+  sections,
+}: {
+  open: boolean;
+  onClose: () => void;
+  scanning?: boolean;
+  settings: Settings;
+  voices: VoicesState;
+  dictationOk: boolean;
+  deepLink?: SettingsSection;
+  confirming: ReactNode;
+  sections: Record<SettingsSection, ReactNode>;
+}) {
+  const phone = useMediaQuery(SURFACE_PHONE_QUERY);
+  const list = SETTINGS_SECTIONS.filter((s) => s.id !== 'dictation' || dictationOk);
+  // Phones: null is the list. Larger screens: always a section.
+  const [active, setActive] = useState<SettingsSection | null>(null);
+  const [wasOpen, setWasOpen] = useState(false);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setActive(deepLink ?? (phone ? null : lastSection));
+  }
+  const current = active ?? (phone ? null : lastSection);
+  const shown = current && list.some((s) => s.id === current) ? current : phone ? null : 'voice';
+  const paneRef = useRef<HTMLDivElement>(null);
+  const moved = useRef<'in' | SettingsSection | null>(null);
+
+  const choose = (id: SettingsSection) => {
+    lastSection = id;
+    if (phone) moved.current = 'in';
+    setActive(id);
+  };
+  const toList = () => {
+    moved.current = shown;
+    setActive(null);
+  };
+  // Phones: into a group, focus its first control; back to the list, focus the group's row. Never while scanning.
+  useEffect(() => {
+    const m = moved.current;
+    moved.current = null;
+    if (!m || scanning) return;
+    if (m === 'in') paneRef.current?.querySelector<HTMLElement>('button:not(:disabled), input:not(:disabled), select, a[href]')?.focus();
+    else document.getElementById(navId(m))?.focus();
+  }, [shown, scanning]);
+
+  const nav = (
+    <nav className="settings__nav" aria-label="Settings groups">
+      <div className="settings__list scan-cluster" data-scan-row="sections">
+        {list.map((s) => {
+          const value = sectionValue(s.id, settings, voices);
+          const on = !phone && s.id === shown;
+          return (
+            <Button
+              key={s.id}
+              id={navId(s.id)}
+              variant="quiet"
+              className={on ? 'menu-row settings__item is-current' : 'menu-row settings__item'}
+              aria-current={on ? 'true' : undefined}
+              onClick={() => choose(s.id)}
+              data-autofocus={(phone ? s.id === list[0]!.id : on) ? '' : undefined}
+            >
+              <span className="menu-row__label">{s.title}</span>
+              {value ? <span className="menu-row__value">{value}</span> : null}
+              {phone ? <Icon name="next" className="menu-row__chevron" /> : null}
+            </Button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+  const pane = shown ? (
+    <div className="settings__pane" ref={paneRef}>
+      {confirming ?? sections[shown]}
+    </div>
+  ) : null;
+  const drilled = phone && shown !== null;
+  return (
+    <Sheet
+      open={open}
+      name="settings"
+      kind="dialog"
+      title="Settings"
+      onClose={onClose}
+      scanning={scanning}
+      initialFocusId={deepLink === 'voice' ? VOICE_PICKER_ID : undefined}
+      back={drilled && !confirming ? { label: 'All settings', onBack: toList } : undefined}
+    >
+      <div className={phone ? 'settings settings--phone' : 'settings settings--panes'} data-section={shown ?? 'list'}>
+        {confirming && !phone ? pane : phone ? (drilled ? pane : nav) : (
+          <>
+            {nav}
+            {pane}
+          </>
+        )}
+      </div>
+    </Sheet>
+  );
+}
+
 export function SettingsSheet({
   open,
   focusVoice,
+  section,
   settings,
   voices,
   onChange,
@@ -173,7 +405,10 @@ export function SettingsSheet({
   partnerTooShort?: boolean;
   /** Switch scanning drives the sheet (web-ui Req 16). */
   scanning?: boolean;
+  /** Open on Settings > Voice (kept for deep links; Voice is also its own surface, VoiceSheet). */
   focusVoice?: boolean;
+  /** Open on this section (web-ui Req 38.4). */
+  section?: SettingsSection;
   settings: Settings;
   voices: VoicesState;
   onChange: (s: Settings) => void;
@@ -181,20 +416,12 @@ export function SettingsSheet({
   onClose: () => void;
 }) {
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => onChange(sanitizeSettings({ ...settings, [k]: v }));
-  const current = pickVoice(voices.voices, settings.voiceURI);
   const llmHelpId = useId();
   const recentHelpId = useId();
   const dictationHelpId = useId();
   const repliesHelpId = useId();
   const wordsHelpId = useId();
   const dictationOk = useDictationSupported();
-  const voiceIndex = current ? voices.voices.findIndex((v) => v.voiceURI === current.voiceURI) : -1;
-  const stepVoice = (d: 1 | -1) => {
-    const n = voices.voices.length;
-    if (n === 0) return;
-    const next = voices.voices[(Math.max(0, voiceIndex) + d + n) % n];
-    if (next) set('voiceURI', next.voiceURI);
-  };
   const scanning = isScan(settings.access);
   // F11: the way to type that waits for "Turn off switch scanning?" to be answered.
   const [pendingAccess, setPendingAccess] = useState<Access | null>(null);
@@ -213,64 +440,16 @@ export function SettingsSheet({
     if (turnOff && to) set('access', to);
   };
 
-  if (pendingAccess) {
-    return (
-      <Sheet open={open} name="settings" title="Settings" onClose={onClose} scanning={scanningSheet}>
-        <ConfirmScanOff to={pendingAccess} onCancel={() => answer(false)} onConfirm={() => answer(true)} />
-      </Sheet>
-    );
-  }
-
-  return (
-    <Sheet open={open} name="settings" title="Settings" onClose={onClose} initialFocusId={focusVoice ? VOICE_PICKER_ID : undefined} scanning={scanningSheet}>
+  const sections: Record<SettingsSection, ReactNode> = {
+    voice: (
       <section className="group" aria-labelledby="set-voice">
         <h3 className="group__title" id="set-voice">
           Voice
         </h3>
-        {!voices.supported ? (
-          <p className="field__help">This browser has no speech voices. Speak shows your sentence in big text instead.</p>
-        ) : voices.loaded && voices.voices.length === 0 ? (
-          <p className="field__help">No voices are installed yet. Speak shows your sentence in big text until a voice is added in your device settings.</p>
-        ) : (
-          <div className="field">
-            <label className="field__label" htmlFor={VOICE_PICKER_ID}>
-              Choose a voice
-            </label>
-            <p className="field__help">Voices marked &quot;on this device&quot; work offline and keep your words on the device. Online voices send the text to the browser maker.</p>
-            <select
-              id={VOICE_PICKER_ID}
-              className="select"
-              value={current?.voiceURI ?? ''}
-              onChange={(e) => set('voiceURI', e.target.value || undefined)}
-            >
-              {!voices.loaded ? <option value="">Loading voices</option> : null}
-              {voices.voices.map((v) => (
-                <option key={v.voiceURI} value={v.voiceURI}>
-                  {v.name} ({v.lang}, {v.localService ? 'on this device' : 'online'})
-                </option>
-              ))}
-            </select>
-            {voices.voices.length > 1 ? (
-              <div className="field__row scan-cluster" data-scan-row="voice">
-                <Button variant="secondary" onClick={() => stepVoice(-1)} aria-label={`Previous voice, now ${current?.name ?? 'none'}`}>
-                  Previous voice
-                </Button>
-                <Button variant="secondary" onClick={() => stepVoice(1)} aria-label={`Next voice, now ${current?.name ?? 'none'}`}>
-                  Next voice
-                </Button>
-              </div>
-            ) : null}
-          </div>
-        )}
-        <Range label="Speed" value={settings.rate} min={RATE.min} max={RATE.max} step={RATE.step} display={`${settings.rate.toFixed(1)}x`} down="Slower" up="Faster" onChange={(v) => set('rate', v)} />
-        <Range label="Pitch" value={settings.pitch} min={PITCH.min} max={PITCH.max} step={PITCH.step} display={settings.pitch.toFixed(1)} down="Lower" up="Higher" onChange={(v) => set('pitch', v)} />
-        <div className="field__row scan-cluster" data-scan-row="test-voice">
-          <Button variant="quiet" icon="speaker" onClick={onTestVoice}>
-            Test voice
-          </Button>
-        </div>
+        <VoiceControls settings={settings} voices={voices} onChange={onChange} onTestVoice={onTestVoice} />
       </section>
-
+    ),
+    look: (
       <section className="group" aria-labelledby="set-look">
         <h3 className="group__title" id="set-look">
           Look
@@ -298,7 +477,8 @@ export function SettingsSheet({
           help="Keys shrink to fit narrow phones, never below 72 px."
         />
       </section>
-
+    ),
+    access: (
       <section className="group" aria-labelledby="set-access">
         <h3 className="group__title" id="set-access">
           Ways to type
@@ -358,7 +538,8 @@ export function SettingsSheet({
           help="A second press of the same key or switch within this time is ignored, so a tremor does not type twice."
         />
       </section>
-
+    ),
+    typing: (
       <section className="group" aria-labelledby="set-typing">
         <h3 className="group__title" id="set-typing">
           Typing
@@ -376,7 +557,8 @@ export function SettingsSheet({
           {FINISH_WORDS_HELP}
         </p>
       </section>
-
+    ),
+    replies: (
       <section className="group" aria-labelledby="set-replies">
         <h3 className="group__title" id="set-replies">
           Quick replies
@@ -395,7 +577,8 @@ export function SettingsSheet({
         </p>
         <p className="field__help">After the other person speaks, you can also pick a reply type. {REPLY_TYPES_HELP}</p>
       </section>
-
+    ),
+    partner: (
       <section className="group" aria-labelledby="set-partner">
         <h3 className="group__title" id="set-partner">
           Partner strip
@@ -414,7 +597,8 @@ export function SettingsSheet({
         />
         {partnerTooShort && settings.partnerStrip !== 'off' ? <p className="field__help">{PARTNER_STRIP_TOO_SHORT}</p> : null}
       </section>
-
+    ),
+    model: (
       <section className="group" aria-labelledby="set-model">
         <h3 className="group__title" id="set-model">
           Model ranking
@@ -449,26 +633,54 @@ export function SettingsSheet({
           </div>
         ) : null}
       </section>
-
-      {dictationOk ? (
-        <section className="group" aria-labelledby="set-dictation">
-          <h3 className="group__title" id="set-dictation">
-            Voice to text
-          </h3>
-          <div className="scan-cluster" data-scan-row="dictation">
-            <label className="toggle">
-              <input type="checkbox" role="switch" checked={settings.dictation} aria-describedby={dictationHelpId} onChange={(e) => set('dictation', e.target.checked)} />
-              <span className="toggle__text">Listen in They said</span>
-              <span className="toggle__state" aria-hidden="true">
-                {settings.dictation ? 'On' : 'Off'}
-              </span>
-            </label>
-          </div>
-          <p className="field__help" id={dictationHelpId}>
-            {DICTATION_NOTICE} Off until you allow it.
-          </p>
-        </section>
-      ) : null}
-    </Sheet>
+    ),
+    dictation: (
+      <section className="group" aria-labelledby="set-dictation">
+        <h3 className="group__title" id="set-dictation">
+          Voice to text
+        </h3>
+        <div className="scan-cluster" data-scan-row="dictation">
+          <label className="toggle">
+            <input type="checkbox" role="switch" checked={settings.dictation} aria-describedby={dictationHelpId} onChange={(e) => set('dictation', e.target.checked)} />
+            <span className="toggle__text">Listen in They said</span>
+            <span className="toggle__state" aria-hidden="true">
+              {settings.dictation ? 'On' : 'Off'}
+            </span>
+          </label>
+        </div>
+        <p className="field__help" id={dictationHelpId}>
+          {DICTATION_NOTICE} Off until you allow it.
+        </p>
+      </section>
+    ),
+    about: (
+      <section className="group" aria-labelledby="set-about">
+        <h3 className="group__title" id="set-about">
+          About
+        </h3>
+        <p className="field__help">{NOT_A_MEDICAL_DEVICE}</p>
+        <div className="field__row scan-cluster" data-scan-row="about">
+          <WebsiteLink className="nl-btn nl-btn--secondary" href="/about">
+            About Ninth Life
+          </WebsiteLink>
+          <WebsiteLink className="nl-btn nl-btn--secondary" href="/">
+            How Ninth Life works
+          </WebsiteLink>
+        </div>
+      </section>
+    ),
+  };
+  return (
+    <SettingsLayout
+      open={open}
+      onClose={onClose}
+      scanning={scanningSheet}
+      settings={settings}
+      voices={voices}
+      dictationOk={dictationOk}
+      deepLink={section ?? (focusVoice ? 'voice' : undefined)}
+      confirming={pendingAccess ? <ConfirmScanOff to={pendingAccess} scanning={scanningSheet} onCancel={() => answer(false)} onConfirm={() => answer(true)} /> : null}
+      sections={sections}
+    />
   );
 }

@@ -35,7 +35,7 @@ describe('CommunicationScreen (ghost mode)', () => {
     const rows = within(list).getAllByRole('button');
     expect(rows[0]?.getAttribute('aria-pressed')).toBe('true');
     expect(rows.some((r) => r.textContent?.includes('Sentence 2: I need waves'))).toBe(true);
-    const proof = screen.getByRole('region', { name: 'Proof' });
+    const proof = screen.getByRole('region', { name: 'Check the words' });
     expect(proof.querySelectorAll('.nl-chip--match')).toHaveLength(3);
   });
 
@@ -101,7 +101,7 @@ describe('CommunicationScreen (ghost mode)', () => {
     typeDigits('406333092837');
     await waitFor(() => expect(fetchMock).toHaveBeenCalled(), { timeout: 2000 });
     await waitFor(() => expect(utterance()).toContain('I need waves'));
-    const proof = screen.getByRole('region', { name: 'Proof' });
+    const proof = screen.getByRole('region', { name: 'Check the words' });
     expect(proof.querySelector('.nl-chip--reject')?.textContent).toContain('wafer');
     expect(proof.textContent).toContain('so wafer was dropped and will not be spoken');
     expect(speak).not.toHaveBeenCalled();

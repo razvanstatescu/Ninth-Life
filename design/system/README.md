@@ -69,7 +69,7 @@ Ember on the Day ground is only 1.7:1, so in Day it appears as a fill with a plu
 
 Inline SVG, 24px grid, 2.5px round stroke in `currentColor`: speaker, check, plus, x, back, space, gear, voice, switch. Icons sit beside a word; an icon alone needs an `aria-label`. No emoji, no filled glyph sets, no pictures of people.
 
-The app's icons are all in `packages/web/components/Icon.tsx`. Website-only icons (round 4, 2026-11-13) are in `packages/web/components/site/icons.tsx`, in the same style, so the app's bundle does not carry them: play, replay, backspace, arrow (turned up, down or left as needed), external, download, minus, info, report, clock, key, keypad, keyboard, view, screens, sun, moon, toggle, lock, cloud, globe, code, chart. On the website an icon is 24px (22px inside a button or chip), in the colour of its word, never ember. Never drawn: people or hands, devices with features, third-party marks, sparkles, shields or badges, hearts.
+The app's icons are all in `packages/web/components/Icon.tsx` (the UX pass, 2026-11-16, added next (a chevron for a row that opens another surface), more, status (an i in a circle) and newtab (a link that opens in a new tab)). Website-only icons (round 4, 2026-11-13) are in `packages/web/components/site/icons.tsx`, in the same style, so the app's bundle does not carry them: play, replay, backspace, arrow (turned up, down or left as needed), external, download, minus, info, report, clock, key, keypad, keyboard, view, screens, sun, moon, toggle, lock, cloud, globe, code, chart. On the website an icon is 24px (22px inside a button or chip), in the colour of its word, never ember. Never drawn: people or hands, devices with features, third-party marks, sparkles, shields or badges, hearts.
 
 ## Motion
 

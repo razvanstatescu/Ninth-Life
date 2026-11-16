@@ -177,3 +177,14 @@ export async function stubSpeech(ctx) {
     Object.defineProperty(window, 'speechSynthesis', { value: synth, configurable: true, writable: true });
   });
 }
+
+/**
+ * Settings opens on its groups (web-ui Req 38): a list on phones, two panes on larger screens. Press the group whose
+ * name is `title` ("Ways to type", "Typing", "Partner strip", "Model ranking"...), as a person would, before using one
+ * of its settings. Call with Settings open.
+ */
+export async function settingsGroup(page, title) {
+  const item = page.locator('dialog[data-overlay="settings"][open] .settings__item').filter({ has: page.locator('.menu-row__label', { hasText: new RegExp(`^${title}$`) }) });
+  await item.first().waitFor({ state: 'visible', timeout: 5000 });
+  await item.first().click();
+}

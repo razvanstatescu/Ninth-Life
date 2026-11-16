@@ -7,6 +7,7 @@ import { Lexicon, bigramModel, encodeWord, validate, type BigramFile, type Lexic
 import { CommunicationScreen } from '@/components/CommunicationScreen';
 import { EMPTY, MAX_CODE, codesOf, composerReducer, type ComposerAction, type ComposerState } from '@/lib/composer';
 import type { DictState } from '@/lib/data';
+import { openSection } from './settings-section';
 
 /** "I need wa…": water, want, wait all start with 92; waves too (not in the word pairs, so never offered). */
 const LEX: LexiconFile = {
@@ -319,6 +320,7 @@ describe('screen: the word row (Req 31.1-31.3, 31.6, 31.7)', () => {
   it('AC 14 the setting is "Finish words" in a Typing group, on by default', () => {
     render(<CommunicationScreen initialDict={dict()} layout="wide" />);
     press('Settings');
+    openSection('Typing');
     const sw = screen.getByRole('switch', { name: 'Finish words' }) as HTMLInputElement;
     expect(sw.checked).toBe(true);
     expect(document.getElementById(sw.getAttribute('aria-describedby')!)!.textContent).toContain('Show up to 3 words that start with your keys. One press puts the whole word in. When off, you type every letter.');
@@ -344,7 +346,7 @@ describe('screen: the word row (Req 31.1-31.3, 31.6, 31.7)', () => {
     render(<CommunicationScreen initialDict={dict()} layout="wide" />);
     typeDigits('406333092');
     fireEvent.click(within(wordRow()!).getByRole('button', { name: 'water' }));
-    const proof = screen.getByRole('region', { name: 'Proof' });
+    const proof = screen.getByRole('region', { name: 'Check the words' });
     expect(proof.textContent).toContain('A dotted line marks keys that came with a word you picked. Every word still matches all of its keys.');
     expect(proof.textContent).toMatch(/3 filled in/);
   });

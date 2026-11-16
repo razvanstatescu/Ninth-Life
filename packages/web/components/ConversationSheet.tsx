@@ -14,6 +14,7 @@ import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNod
 import { lastThem, threadText, useConversation, type ThemVia, type Turn } from '@/lib/conversation';
 import { AddTheirLine, whoLong, type Dictation } from './ConversationStrip';
 import { Button } from './Button';
+import { Confirm } from './Confirm';
 import { PartnerTurn } from './PartnerTurn';
 import { Sheet } from './Sheet';
 
@@ -70,8 +71,6 @@ export function ConversationSheet({
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
   const [confirming, setConfirming] = useState(false);
-  const confirmId = useId();
-  const keepRef = useRef<HTMLButtonElement>(null);
   const clearRef = useRef<HTMLButtonElement>(null);
   const wasConfirming = useRef(false);
 
@@ -84,12 +83,9 @@ export function ConversationSheet({
     }
   }, [open]);
 
-  // The question takes the row's place: focus goes to Keep, then back to Clear conversation.
+  // The question takes the row's place: focus goes to Keep (the Confirm), then back to Clear conversation.
   useEffect(() => {
-    if (!scanning) {
-      if (confirming) keepRef.current?.focus();
-      else if (wasConfirming.current) clearRef.current?.focus();
-    }
+    if (!scanning && !confirming && wasConfirming.current) clearRef.current?.focus();
     wasConfirming.current = confirming;
   }, [confirming, scanning]);
 
@@ -125,6 +121,7 @@ export function ConversationSheet({
     <Sheet
       open={open}
       name="conversation"
+      kind="panel"
       title="Conversation"
       onClose={onClose}
       scanning={scanning}
@@ -221,29 +218,25 @@ export function ConversationSheet({
       )}
       {conv.turns.length > 0 ? (
         confirming ? (
-          <div className="group thread-confirm" role="group" aria-labelledby={confirmId}>
-            <p className="thread-confirm__q" id={confirmId}>
-              Clear the whole conversation? This cannot be undone.
-            </p>
-            {/* Keep first, so a stray press keeps the conversation. */}
-            <div className="field__row scan-cluster" data-scan-row="confirm-clear">
-              <Button ref={keepRef} variant="secondary" onClick={() => setConfirming(false)}>
-                Keep
-              </Button>
-              <Button
-                variant="danger"
-                icon="x"
-                onClick={() => {
-                  conv.clear();
-                  setConfirming(false);
-                  onAnnounce('Conversation cleared.');
-                  if (!scanning) requestAnimationFrame(() => document.querySelector<HTMLElement>('dialog[data-overlay="conversation"] [data-autofocus]')?.focus());
-                }}
-              >
-                Clear conversation
-              </Button>
-            </div>
-          </div>
+          // Keep first, so a stray press keeps the conversation (web-ui Req 39.3).
+          <Confirm
+            name="clear-conversation"
+            className="thread-confirm"
+            question="Clear the whole conversation?"
+            detail="This cannot be undone."
+            action="Clear conversation"
+            actionIcon="x"
+            irreversible
+            scanning={scanning}
+            scanRow="confirm-clear"
+            onSafe={() => setConfirming(false)}
+            onAction={() => {
+              conv.clear();
+              setConfirming(false);
+              onAnnounce('Conversation cleared.');
+              if (!scanning) requestAnimationFrame(() => document.querySelector<HTMLElement>('dialog[data-overlay="conversation"] [data-autofocus]')?.focus());
+            }}
+          />
         ) : (
           <div className="thread-all scan-cluster" data-scan-row="all">
             {shareOk ? (

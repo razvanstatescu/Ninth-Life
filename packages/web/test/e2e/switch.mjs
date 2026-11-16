@@ -6,7 +6,7 @@
 // on a short phone the row is skipped and Menu > Quick replies works by switch. Then reply types (web-ui
 // Req 29.7): after their line, Ask is a cell of the same row, after the replies, and two switches press it.
 //   node packages/web/test/e2e/switch.mjs     (needs `next start`; BASE_URL, default :3202)
-import { BASE_URL, addTheirLine, check, done, loadPlaywright, newContext, openApp, recordSpeech, stubSpeech, waitFor } from './lib.mjs';
+import { BASE_URL, addTheirLine, check, done, loadPlaywright, newContext, openApp, recordSpeech, stubSpeech, waitFor, settingsGroup } from './lib.mjs';
 
 const TARGET = { row: 1, key: '4' }; // key 4 (G H I) is row 1, cell 0 of the keypad
 
@@ -27,6 +27,7 @@ try {
     await page.getByRole('button', { name: /menu/i }).first().click();
     await page.getByRole('button', { name: /^settings$/i }).first().click();
   }
+  await settingsGroup(page, 'Ways to type');
   await page.getByRole('radio', { name: /one switch/i }).check();
   await page.keyboard.press('Escape');
   await waitFor(page, () => !document.querySelector('dialog[open]'), null, { what: 'Settings to close' });
@@ -112,6 +113,7 @@ try {
     await openApp(p);
     await p.getByRole('button', { name: /^menu$/i }).first().click();
     await p.getByRole('button', { name: /^settings$/i }).first().click();
+    await settingsGroup(p, 'Ways to type');
     await p.getByRole('radio', { name: new RegExp(access, 'i') }).check();
     await p.keyboard.press('Escape');
     await waitFor(p, () => !document.querySelector('dialog[open]'), null, { what: 'Settings to close' });
@@ -173,6 +175,7 @@ try {
     await addTheirLine(p, 'Are you coming to the party tonight?');
     await p.getByRole('button', { name: /^menu$/i }).first().click();
     await p.getByRole('button', { name: /^settings$/i }).first().click();
+    await settingsGroup(p, 'Ways to type');
     await p.getByRole('radio', { name: /two switches/i }).check();
     await p.keyboard.press('Escape');
     await waitFor(p, () => !document.querySelector('dialog[open]'), null, { what: 'Settings to close' });

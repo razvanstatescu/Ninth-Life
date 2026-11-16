@@ -87,15 +87,16 @@ describe('phone layout (web-ui Req 24)', () => {
     expect(phoneSuggestions(cands.slice(0, 2), 0, 2)).toEqual({ items: [{ index: 1, text: 'B' }], more: false });
   });
 
-  it('24.5 27.6 the Menu sheet holds what the screen leaves out: Save phrase, Spell, Check the words, They said, Conversation, About', () => {
+  it('24.5 27.6 37.1 the Menu sheet holds what the screen leaves out: Save phrase, Spell, Check the words, They said, Conversation, About', () => {
     render(<CommunicationScreen initialDict={miniDict()} layout="stack" />);
     typeDigits('4');
     press('Menu');
-    const menu = document.querySelector<HTMLElement>('[data-scan-row="sentence"]')!;
-    expect(within(menu).getAllByRole('button').map((b) => b.textContent)).toEqual(['Fix a word', 'Save phrase', 'Spell this word', 'Check the words', 'They said', 'Conversation']);
-    // The footer's links and the intended-purpose sentence are in the Menu too.
-    expect(screen.getByRole('link', { name: 'About Ninth Life' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'How Ninth Life works' })).toBeTruthy();
+    const rows = (name: string) => within(document.querySelector<HTMLElement>(`dialog[open] [data-scan-row="${name}"]`)!).getAllByRole('button').map((b) => b.textContent);
+    expect(rows('tiles')).toEqual(['Phrases', 'Show a card', 'Conversation', 'They said']);
+    expect(rows('sentence')).toEqual(['Fix a word', 'Spell this word']);
+    expect(rows('sentence-2')).toEqual(['Save phrase', 'Check the words']);
+    // About opens the website in a new tab; the intended-purpose sentence is in Settings > About.
+    expect(screen.getByRole('link', { name: 'About Ninth Life (opens in a new tab)' })).toBeTruthy();
   });
 
   it('24.6 one-switch scanning: the action row is the action bar (Menu, Speak, Show) and the last row is Clear', () => {
@@ -124,7 +125,8 @@ describe('short phones (web-ui Req 24.9, 25.1)', () => {
       removeListener: () => undefined,
       dispatchEvent: () => false,
     }));
-  const menuSentenceButtons = () => within(document.querySelector<HTMLElement>('[data-scan-row="sentence"]')!).getAllByRole('button').map((b) => b.textContent);
+  // This sentence: Sentences (short phones) is its own row, then Fix a word / Spell this word, Save phrase / Check the words.
+  const menuSentenceButtons = () => [...document.querySelectorAll<HTMLElement>('dialog[open] [data-scan-row^="sentence"] button')].map((b) => b.textContent);
   function sw(key: ' ' | 'Enter') {
     act(() => {
       fireEvent.keyDown(window, { key, code: key === ' ' ? 'Space' : 'Enter' });
@@ -143,7 +145,7 @@ describe('short phones (web-ui Req 24.9, 25.1)', () => {
     expect(container.querySelector('.phone-sugg')).toBeNull();
   });
 
-  it('24.9 Menu > This sentence has Sentences and it opens "Sentences for your keys"', () => {
+  it('24.9 39.5 Menu > This sentence has Sentences and it opens the Sentences sheet (its list "Sentences for your keys")', () => {
     stubShort();
     render(<CommunicationScreen initialDict={miniDict()} layout="stack" />);
     typeDigits('4');
@@ -151,7 +153,8 @@ describe('short phones (web-ui Req 24.9, 25.1)', () => {
     expect(menuSentenceButtons()[0]).toBe('Sentences');
     press('Sentences');
     const sheet = document.querySelector('dialog[data-overlay="sentences"][open]');
-    expect(sheet?.textContent).toContain('Sentences for your keys');
+    expect(sheet?.querySelector('h2')?.textContent).toBe('Sentences'); // one line on a 375px phone
+    expect(sheet?.querySelector('[aria-label="Sentences for your keys"]')).not.toBeNull();
     expect(sheet!.querySelectorAll('.nl-candidate').length).toBeGreaterThan(0);
   });
 

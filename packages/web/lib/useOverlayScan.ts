@@ -13,7 +13,8 @@ import { useScanner, type Scanner } from './useScanner';
 
 export const SCAN_ROW_ATTR = 'data-scan-row';
 export const SCAN_STATE_ATTR = 'data-scan-state';
-export const SCAN_CELL_SELECTOR = 'button:not(:disabled), input[type="radio"]:not(:disabled), input[type="checkbox"]:not(:disabled)';
+/** A link counts too: About Ninth Life in Menu and Settings opens in a new tab by switch as by touch (web-ui Req 37.1). */
+export const SCAN_CELL_SELECTOR = 'button:not(:disabled), a[href], input[type="radio"]:not(:disabled), input[type="checkbox"]:not(:disabled)';
 
 /** The rows of controls under `root`, each a list of its cells. Rows with no enabled control are kept (empty). */
 export function collectScanRows(root: ParentNode): { row: HTMLElement; cells: HTMLElement[] }[] {

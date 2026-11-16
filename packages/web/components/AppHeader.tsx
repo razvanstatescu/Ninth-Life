@@ -5,9 +5,9 @@ import type { Turn } from '@/lib/conversation';
 import { ThreadBubble } from './ConversationStrip';
 import { Icon, type IconName } from './Icon';
 
-export function StatusPill({ icon, tone, children }: { icon?: IconName; tone?: 'ok' | 'warn' | 'info'; children: ReactNode }) {
+export function StatusPill({ icon, tone, children, className }: { icon?: IconName; tone?: 'ok' | 'warn' | 'info'; children: ReactNode; className?: string }) {
   return (
-    <span className={tone ? `pill pill--${tone}` : 'pill'}>
+    <span className={['pill', tone ? `pill--${tone}` : '', className ?? ''].filter(Boolean).join(' ')}>
       {icon ? <Icon name={icon} /> : null}
       {children}
     </span>
@@ -34,10 +34,11 @@ export function Brand({ href }: { href?: string }) {
 }
 
 /**
- * The header. Wide (>= 960px, the artboard): brand, every status pill, Phrases, Voice, Settings.
- * Compact: one row with brand, one summary pill and Menu (web-ui Req 15.2). Both are in the HTML and
- * CSS shows one, so phones never see the wide header wrap before the page script runs.
- * In switch scanning the actions are the last scan row (Req 16.1).
+ * The header. Wide (>= 960px, the artboard): brand, the status (every pill), Phrases, Voice, Settings, More.
+ * Compact: one row with brand, the status (one summary pill) and Menu (web-ui Req 15.2). Both are in the HTML and
+ * CSS shows one, so phones never see the wide header wrap before the page script runs. The status is a button that
+ * opens Status (web-ui Req 37.6); its changes are still announced politely.
+ * In switch scanning the actions are the last scan row (Req 16.1): on wide screens the status, then the buttons.
  */
 export function AppHeader({
   status,
@@ -48,6 +49,8 @@ export function AppHeader({
   onPhrases,
   onVoice,
   onSettings,
+  onMore,
+  onStatus,
   actions = true,
   thread = null,
   scanPill = null,
@@ -56,12 +59,16 @@ export function AppHeader({
   summary: StatusLine & { full: string };
   /** The actions are the lit scan row. */
   scanning?: boolean;
-  /** Lit cell in that row: Phrases 0, Voice 1, Settings 2 (wide) or Menu 0 (compact). */
+  /** Lit cell in that row: Status 0, Phrases 1, Voice 2, Settings 3, More 4 (wide) or Menu 0 (compact). */
   litCell?: number;
   onMenu: () => void;
   onPhrases: () => void;
   onVoice: () => void;
   onSettings: () => void;
+  /** Wide: More (web-ui Req 37.5). */
+  onMore?: () => void;
+  /** The status button (web-ui Req 37.6). */
+  onStatus?: () => void;
   /** False in the phone layout: Menu lives in the action bar under the keypad (web-ui Req 24). */
   actions?: boolean;
   /**
@@ -77,33 +84,54 @@ export function AppHeader({
     <header className="app-header">
       <div className="app-header__start">
         <Brand />
-        <div className="app-header__pills app-header--wide" role="status" aria-live="polite">
-          {status.map((l) => (
-            <StatusPill key={l.text} icon={l.icon} tone={l.tone}>
+        <button
+          type="button"
+          className={`app-header__pills app-header--wide status-btn nl-scanrow${scanning ? ' is-scanning' : ''}${scanning && litCell === 0 ? ' is-lit' : ''}`}
+          onClick={onStatus}
+          aria-haspopup="dialog"
+          data-action="status"
+        >
+          <span className="nl-sr-only">Status: </span>
+          {status.map((l, i) => (
+            <StatusPill key={l.text} icon={l.icon} tone={l.tone} className="status-btn__line">
               {l.text}
+              {i < status.length - 1 ? <span className="nl-sr-only">. </span> : null}
             </StatusPill>
           ))}
-        </div>
-        <div className="app-header__pills app-header--compact" role="status" aria-live="polite">
+          {/* Narrower laptop windows: the one summary pill, so the header keeps one row (styles/app.css). */}
+          <StatusPill icon={summary.icon} tone={summary.tone} className="status-btn__summary">
+            <span aria-hidden="true">{summary.text}</span>
+            <span className="nl-sr-only">{summary.full}</span>
+          </StatusPill>
+        </button>
+        <button type="button" className="app-header__pills app-header--compact status-btn" onClick={onStatus} aria-haspopup="dialog" data-action="status">
           <StatusPill icon={summary.icon} tone={summary.tone}>
+            <span className="nl-sr-only">Status: </span>
             <span aria-hidden="true">{summary.text}</span>
             <span className="nl-sr-only">{summary.full}</span>
           </StatusPill>
           {scanPill ? <StatusPill icon="switch" tone="info">{scanPill}</StatusPill> : null}
-        </div>
+        </button>
+        {/* Changes of state are announced, as when the pills were a status region. */}
+        <p className="nl-sr-only" aria-live="polite">
+          {summary.full}
+        </p>
         {thread ? <ThreadBubble last={thread.last} onOpen={thread.onOpen} onAdd={thread.onAdd} lit={thread.lit} /> : null}
       </div>
       {actions ? (
         <>
           <div className={`app-header__actions app-header--wide ${row}`}>
-            <Button variant="quiet" compact icon="save" onClick={onPhrases} lit={scanning && litCell === 0}>
+            <Button variant="quiet" compact icon="save" onClick={onPhrases} lit={scanning && litCell === 1} aria-haspopup="dialog">
               Phrases
             </Button>
-            <Button variant="quiet" compact icon="voice" onClick={onVoice} lit={scanning && litCell === 1}>
+            <Button variant="quiet" compact icon="voice" onClick={onVoice} lit={scanning && litCell === 2} aria-haspopup="dialog">
               Voice
             </Button>
-            <Button variant="quiet" compact icon="gear" onClick={onSettings} lit={scanning && litCell === 2}>
+            <Button variant="quiet" compact icon="gear" onClick={onSettings} lit={scanning && litCell === 3} aria-haspopup="dialog">
               Settings
+            </Button>
+            <Button variant="quiet" compact icon="more" onClick={onMore} lit={scanning && litCell === 4} aria-haspopup="dialog">
+              More
             </Button>
           </div>
           <div className={`app-header__actions app-header--compact ${row}`}>

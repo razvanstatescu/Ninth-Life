@@ -27,15 +27,21 @@ for (const p of [...PINS, SIXTH]) if (p.length !== 20) throw new Error(`${p} is 
 
 const spoken = (page) => page.evaluate(() => window.__spoken ?? []);
 const announced = (page) => page.evaluate(() => document.querySelector('p.nl-sr-only[role="status"]')?.textContent ?? '');
+/** Pin a saved phrase: its Pin is behind the phrase row's More (web-ui Req 39.2). */
+async function pin(page, text) {
+  const b = page.getByRole('button', { name: `Pin "${text}" to quick replies` });
+  if (!(await b.isVisible().catch(() => false))) await page.getByRole('button', { name: `More for ${text}`, exact: true }).click();
+  await b.click();
+}
 async function menu(page, item) {
   if (item === 'My words') {
-    // Phones: Menu > My words. Laptops: Phrases > My words.
+    // Phones: Menu > My words. Laptops: More > My words (web-ui Req 37.5).
     const phone = page.locator('.phone-actions button', { hasText: 'Menu' }).first();
     if (await phone.isVisible().catch(() => false)) {
       await phone.click();
       return page.locator('dialog[open] button', { hasText: /^My words$/ }).first().click();
     }
-    await page.getByRole('button', { name: /^Phrases$/ }).first().click();
+    await page.getByRole('button', { name: /^More$/ }).first().click();
     return page.locator('dialog[open] button', { hasText: /^My words$/ }).first().click();
   }
   const direct = page.getByRole('button', { name: new RegExp(`^${item}$`, 'i') }).first();
@@ -74,7 +80,7 @@ async function setup(page) {
   await closeSheet(page);
   await menu(page, 'Phrases');
   await page.locator('dialog[open]').waitFor();
-  for (const p of PINS) await page.getByRole('button', { name: `Pin "${p}" to quick replies` }).click();
+  for (const p of PINS) await pin(page, p);
   await closeSheet(page);
 }
 /** A pinned reply speaks once; Show with nothing typed opens the cards (phone). */
@@ -151,19 +157,22 @@ try {
   // ---- (a) pin 5 ------------------------------------------------------------------------------
   await menu(page, 'Phrases');
   await page.locator('dialog[open]').waitFor();
-  for (const p of PINS) await page.getByRole('button', { name: `Pin "${p}" to quick replies` }).click();
+  for (const p of PINS) await pin(page, p);
   await page.waitForTimeout(150);
   check(/Pinned to quick replies/.test(await announced(page)), `35.1 announced "${await announced(page)}"`);
-  const pressed = await page.evaluate((ps) => ps.map((p) => document.querySelector(`button[aria-label="Pin \\"${p}\\" to quick replies"]`)?.getAttribute('aria-pressed')), PINS);
-  check(pressed.every((v) => v === 'true'), `35.1 the 5 toggles are pressed (${pressed.join(',')})`);
-  await page.getByRole('button', { name: `Pin "${SIXTH}" to quick replies` }).click();
+  // Each pinned phrase's row says Pinned (its toggle is behind More, web-ui Req 39.2).
+  const pressed = await page.evaluate((ps) => ps.map((p) => [...document.querySelectorAll('dialog[open] .phrase-row')].find((r) => r.querySelector('.phrase-row__text')?.textContent === p)?.querySelector('.phrase-row__pin') ? 'true' : 'false'), PINS);
+  check(pressed.every((v) => v === 'true'), `35.1 the 5 phrases are pinned (${pressed.join(',')})`);
+  await pin(page, SIXTH);
   await page.waitForTimeout(150);
   const six = await page.getByRole('button', { name: `Pin "${SIXTH}" to quick replies` }).getAttribute('aria-pressed');
   const msg = await page.evaluate(() => document.querySelector('dialog[open]')?.innerText ?? '') + (await announced(page));
   check(six !== 'true' && /5 phrases are pinned\. Unpin one first\./.test(msg), `35.1 AC 3 a sixth pin is refused with the message (pressed ${six})`);
+  await page.getByRole('button', { name: `More for ${LONG}`, exact: true }).click();
+  const longMsg = await page.evaluate(() => document.querySelector('dialog[open]')?.innerText ?? '');
   const longBtn = page.getByRole('button', { name: `Pin "${LONG}" to quick replies` });
   check((await longBtn.count()) === 0 || (await longBtn.isDisabled()), 'AC 3 a 22-character phrase cannot be pinned');
-  check(/Too long for a quick reply: it must fit 2 lines on a phone \(about 20 letters\)\. Use Phrases or Show a card for longer ones\./.test(msg), 'AC 3 the too-long note');
+  check(/Too long for a quick reply: it must fit 2 lines on a phone \(about 20 letters\)\. Use Phrases or Show a card for longer ones\./.test(longMsg), 'AC 3 the too-long note');
   // Phone calls.
   const pc = await page.evaluate(() => {
     const h = [...document.querySelectorAll('dialog[open] h3, dialog[open] h2')].find((e) => e.textContent.trim() === 'Phone calls');

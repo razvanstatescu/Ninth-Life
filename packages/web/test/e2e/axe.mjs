@@ -80,7 +80,7 @@ async function pressAsk(page, where) {
     await page.keyboard.press('3');
     return;
   }
-  const all = page.locator('.thread-panel__actions button', { hasText: 'All' });
+  const all = page.locator('.thread-panel__actions button', { hasText: 'Whole conversation' });
   if (await all.first().isVisible().catch(() => false)) await all.first().click();
   else await page.locator('.thread-bubble').click();
   await page.locator('dialog[data-overlay="conversation"][open]').waitFor({ state: 'visible', timeout: 5000 });
@@ -107,7 +107,7 @@ async function makeConversation(page, openSheet) {
   await page.waitForTimeout(150);
   await closeShow(page);
   if (!openSheet) return;
-  const all = page.locator('.thread-panel__actions button', { hasText: 'All' });
+  const all = page.locator('.thread-panel__actions button', { hasText: 'Whole conversation' });
   if (await all.first().isVisible().catch(() => false)) await all.first().click();
   else await page.locator('.thread-bubble').click();
   await page.locator('dialog[data-overlay="conversation"][open]').waitFor({ state: 'visible', timeout: 5000 });

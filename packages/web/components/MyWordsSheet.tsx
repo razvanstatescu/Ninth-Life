@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import type { MyWord } from '@/lib/myWords';
 import { PACK_LIMITS, exportVocabPack, fetchPackText, packFromLines, packUrl, parseVocabPack, planImport, type ImportPlan, type ParsedPack } from '@/lib/vocabPack';
 import { Button } from './Button';
+import { Confirm } from './Confirm';
 import { Sheet } from './Sheet';
 
 /** Words listed at first, and how many more each "More words" adds. */
@@ -161,7 +162,7 @@ export function MyWordsSheet({
   const phrasesToAdd = plan?.phrasesNew.length ?? 0;
 
   return (
-    <Sheet open={open} name="words" title="My words" onClose={onClose} scanning={scanning}>
+    <Sheet open={open} name="words" kind="panel" title="My words" onClose={onClose} scanning={scanning}>
       <section className="group" aria-labelledby={`${ids}-words`}>
         <h3 className="group__title" id={`${ids}-words`}>
           Your words
@@ -226,21 +227,22 @@ export function MyWordsSheet({
                     {encodeWord(w.w)}
                   </span>
                   {confirming === w.w ? (
-                    <>
-                      <Button
-                        variant="danger"
-                        icon="x"
-                        onClick={() => {
-                          setConfirming(null);
-                          onRemove(w.w);
-                        }}
-                      >
-                        Remove word
-                      </Button>
-                      <Button variant="secondary" onClick={() => setConfirming(null)}>
-                        Keep
-                      </Button>
-                    </>
+                    <Confirm
+                      name="remove-word"
+                      className="myword__confirm"
+                      question={`Remove ${w.display}?`}
+                      detail="It goes from your words on this device."
+                      action="Remove word"
+                      actionIcon="x"
+                      irreversible
+                      scanning={scanning}
+                      scanRow={`word-${w.w}-confirm`}
+                      onSafe={() => setConfirming(null)}
+                      onAction={() => {
+                        setConfirming(null);
+                        onRemove(w.w);
+                      }}
+                    />
                   ) : (
                     <Button variant="danger" icon="x" onClick={() => setConfirming(w.w)} aria-label={`Remove ${w.display}`}>
                       Remove
@@ -417,7 +419,11 @@ export function MyWordsSheet({
               ) : null}
             </ul>
             {toAdd + phrasesToAdd === 0 ? <p className="field__help">Nothing new in this pack.</p> : null}
-            <div className="field__row scan-cluster" data-scan-row="pack-confirm">
+            {/* Cancel first (web-ui Req 39.3); the preview is a question, so the backdrop keeps it (Req 36.4). */}
+            <div className="field__row scan-cluster" data-scan-row="pack-confirm" data-confirm="pack">
+              <Button variant="secondary" icon="x" onClick={() => setPreview(null)}>
+                Cancel
+              </Button>
               {toAdd + phrasesToAdd > 0 ? (
                 <Button
                   variant="secondary"
@@ -432,9 +438,6 @@ export function MyWordsSheet({
                   {phrasesToAdd > 0 ? ` and ${plural(phrasesToAdd, 'phrase')}` : ''}
                 </Button>
               ) : null}
-              <Button variant="secondary" icon="x" onClick={() => setPreview(null)}>
-                Cancel
-              </Button>
             </div>
           </section>
         ) : null}

@@ -261,8 +261,8 @@ export function ThreadPanel({
         className="thread-panel__actions"
         litIndex={litIndex - shown.length}
         extra={(at) => (
-          <Button variant="secondary" icon="thread" onClick={onOpen} lit={litIndex - shown.length === at} aria-label="All of the conversation" aria-haspopup="dialog">
-            All
+          <Button variant="secondary" icon="thread" onClick={onOpen} lit={litIndex - shown.length === at} aria-haspopup="dialog">
+            Whole conversation
           </Button>
         )}
       />

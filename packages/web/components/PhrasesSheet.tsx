@@ -4,6 +4,7 @@ import { PIN_TOO_LONG, SHEET_REPLY_ROWS, fitsQuickReply, replyMeasurer, type Rep
 import { PHONE_CALLS_HELP, PHONE_LINES } from '@/lib/cards';
 import type { Phrase } from '@/lib/storage';
 import { Button } from './Button';
+import { Confirm } from './Confirm';
 import { QuickReplies } from './QuickReplies';
 import { Sheet } from './Sheet';
 
@@ -32,10 +33,10 @@ export function PhrasesSheet({
   onSpeak,
   onSpeakQuick,
   onDelete,
-  onMyWords,
   onReply,
   replyRows = SHEET_REPLY_ROWS,
   onPin,
+  onShow,
   onClose,
 }: {
   open: boolean;
@@ -48,23 +49,31 @@ export function PhrasesSheet({
   onSpeak: (p: Phrase) => void;
   onSpeakQuick: (text: string) => void;
   onDelete: (p: Phrase) => void;
-  /** Open My words (web-ui Req 21.3). */
-  onMyWords?: () => void;
   /** Laptops: speak a quick reply (web-ui Req 28.4). */
   onReply?: (text: string) => void;
   /** The quick replies in rows (pinned phrases first, web-ui Req 35.1). */
   replyRows?: readonly (readonly ReplyCell[])[];
   /** Pin or unpin a saved phrase as a quick reply (web-ui Req 35.1). */
   onPin?: (p: Phrase, pinned: boolean) => void;
+  /** Show a phrase in big text (web-ui Req 39.2). */
+  onShow?: (text: string) => void;
   onClose: () => void;
 }) {
   const [confirming, setConfirming] = useState<string | null>(null);
+  // The phrase whose More is open (one at a time); closed again each time the sheet opens.
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    setOpenId(null);
+    setConfirming(null);
+  }
   const [shown, setShown] = useState(QUICK_PAGE);
   const quick = quickPhrases.slice(0, shown);
   const measure = open ? replyMeasurer() : null;
   const fits = (t: string) => fitsQuickReply(t, measure);
   return (
-    <Sheet open={open} name="phrases" title="Phrases" onClose={onClose} scanning={scanning}>
+    <Sheet open={open} name="phrases" kind="panel" title="Phrases" onClose={onClose} scanning={scanning}>
       {onReply ? (
         <section className="group" aria-labelledby="phrases-replies">
           <h3 className="group__title" id="phrases-replies">
@@ -72,14 +81,6 @@ export function PhrasesSheet({
           </h3>
           <QuickReplies variant="menu" rows={replyRows} onSay={onReply} />
         </section>
-      ) : null}
-      {onMyWords ? (
-        <div className="scan-cluster sheet__link" data-scan-row="my-words">
-          <Button variant="secondary" icon="spell" onClick={onMyWords}>
-            My words
-          </Button>
-          <span className="field__help">Names and words you added, and word packs.</span>
-        </div>
       ) : null}
       <section className="group" aria-labelledby="phrases-saved">
         <h3 className="group__title" id="phrases-saved">
@@ -91,53 +92,88 @@ export function PhrasesSheet({
           <p className="field__help">No saved phrases yet. Type a sentence, then press Save phrase.</p>
         ) : (
           <ul className="phrases">
-            {phrases.map((p) => (
-              <li key={p.id} className="phrase scan-cluster" data-scan-row={`saved-${p.id}`}>
-                <span className="phrase__text">{p.text}</span>
-                <Button variant="quiet" icon="speaker" onClick={() => onSpeak(p)} aria-label={`Speak "${p.text}"`}>
-                  Speak
-                </Button>
-                {onPin ? (
-                  <Button
-                    variant="secondary"
-                    icon={p.pinned ? 'check' : 'plus'}
-                    aria-pressed={p.pinned}
-                    aria-label={`Pin "${p.text}" to quick replies`}
-                    aria-describedby={!p.pinned && !fits(p.text) ? `pin-long-${p.id}` : undefined}
-                    disabled={!p.pinned && !fits(p.text)}
-                    onClick={() => onPin(p, !p.pinned)}
-                  >
-                    Pin to quick replies
-                  </Button>
-                ) : null}
-                {onPin && !p.pinned && !fits(p.text) ? (
-                  <span className="field__help phrase__note" id={`pin-long-${p.id}`}>
-                    {PIN_TOO_LONG}
-                  </span>
-                ) : null}
-                {confirming === p.id ? (
-                  <>
+            {phrases.map((p) => {
+              const tooLong = !p.pinned && !fits(p.text);
+              const isOpen = openId === p.id;
+              return (
+                <li key={p.id} className="phrase-row">
+                  {/* One row: the phrase speaks on a press; More opens its other actions (web-ui Req 39.2). */}
+                  <div className="phrase-row__main scan-cluster" data-scan-row={`saved-${p.id}`}>
+                    <Button variant="quiet" icon="speaker" className="phrase-row__say" onClick={() => onSpeak(p)} aria-label={`Speak "${p.text}"`} lang="en">
+                      <span className="phrase-row__text">{p.text}</span>
+                      {p.pinned ? <span className="phrase-row__pin">Pinned</span> : null}
+                    </Button>
                     <Button
-                      variant="danger"
-                      icon="x"
+                      variant="secondary"
+                      icon="more"
+                      className="phrase-row__more"
+                      aria-label={`More for ${p.text}`}
+                      aria-expanded={isOpen}
+                      aria-controls={`phrase-${p.id}-actions`}
                       onClick={() => {
+                        setOpenId(isOpen ? null : p.id);
                         setConfirming(null);
-                        onDelete(p);
                       }}
                     >
-                      Delete phrase
+                      {null}
                     </Button>
-                    <Button variant="secondary" onClick={() => setConfirming(null)}>
-                      Keep
-                    </Button>
-                  </>
-                ) : (
-                  <Button variant="danger" icon="x" onClick={() => setConfirming(p.id)} aria-label={`Delete "${p.text}"`}>
-                    Delete
-                  </Button>
-                )}
-              </li>
-            ))}
+                  </div>
+                  {isOpen ? (
+                    <div className="phrase-row__actions" id={`phrase-${p.id}-actions`}>
+                      {confirming === p.id ? (
+                        <Confirm
+                          name="delete-phrase"
+                          question={`Delete "${p.text}"?`}
+                          detail="It goes from your phrases on this device."
+                          action="Delete phrase"
+                          actionIcon="x"
+                          irreversible
+                          scanning={scanning}
+                          scanRow={`saved-${p.id}-confirm`}
+                          onSafe={() => setConfirming(null)}
+                          onAction={() => {
+                            setConfirming(null);
+                            setOpenId(null);
+                            onDelete(p);
+                          }}
+                        />
+                      ) : (
+                        <>
+                          <div className="field__row scan-cluster" data-scan-row={`saved-${p.id}-actions`}>
+                            {onPin ? (
+                              <Button
+                                variant="secondary"
+                                icon={p.pinned ? 'check' : 'plus'}
+                                aria-pressed={p.pinned}
+                                aria-label={`Pin "${p.text}" to quick replies`}
+                                aria-describedby={tooLong ? `pin-long-${p.id}` : undefined}
+                                disabled={tooLong}
+                                onClick={() => onPin(p, !p.pinned)}
+                              >
+                                {p.pinned ? 'Unpin from quick replies' : 'Pin to quick replies'}
+                              </Button>
+                            ) : null}
+                            {onShow ? (
+                              <Button variant="secondary" icon="show" onClick={() => onShow(p.text)}>
+                                Show
+                              </Button>
+                            ) : null}
+                            <Button variant="danger" icon="x" onClick={() => setConfirming(p.id)} aria-label={`Delete "${p.text}"`}>
+                              Delete
+                            </Button>
+                          </div>
+                          {onPin && tooLong ? (
+                            <span className="field__help phrase__note" id={`pin-long-${p.id}`}>
+                              {PIN_TOO_LONG}
+                            </span>
+                          ) : null}
+                        </>
+                      )}
+                    </div>
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

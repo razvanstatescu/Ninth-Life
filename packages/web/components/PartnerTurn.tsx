@@ -38,7 +38,14 @@ export const PartnerTurn = forwardRef<PartnerTurnHandle, {
   inputId?: string;
   /** Focus the field when it appears. Off while switch scanning, where Space must stay the switch. */
   autoFocus?: boolean;
-}>(function PartnerTurn({ value, onChange, onDone, dictation = null, label = 'They said', inputId, autoFocus = true }, ref) {
+  /** Show Cancel. Off in the They said sheet, whose Close already cancels (web-ui Req 36.8). */
+  cancel?: boolean;
+  /**
+   * The They said sheet (web-ui Req 39.1): the field first (its label is the sheet's title, so only screen readers
+   * hear it), then Done and Listen in one row, so Done sits right under the field, above the keyboard.
+   */
+  sheet?: boolean;
+}>(function PartnerTurn({ value, onChange, onDone, dictation = null, label = 'They said', inputId, autoFocus = true, cancel = true, sheet = false }, ref) {
   const [draft, setDraft] = useState(value);
   const [listening, setListening] = useState(false);
   const [asking, setAsking] = useState(false);
@@ -121,14 +128,14 @@ export const PartnerTurn = forwardRef<PartnerTurnHandle, {
   const status = listening ? 'Listening. Ask them to speak now.' : problem ? DICTATION_MESSAGES[problem] : '';
   return (
     <form
-      className="partner order-partner"
+      className={sheet ? 'partner partner--sheet' : 'partner order-partner'}
       onSubmit={(e) => {
         e.preventDefault();
         close(true);
       }}
     >
       <div className="partner__body">
-        <label className="partner__label" htmlFor={id}>
+        <label className={sheet ? 'nl-sr-only' : 'partner__label'} htmlFor={id}>
           {label}
         </label>
       </div>
@@ -179,6 +186,11 @@ export const PartnerTurn = forwardRef<PartnerTurnHandle, {
           </div>
         ) : (
           <div className="partner__buttons scan-cluster" data-scan-row="partner">
+            {sheet ? (
+              <Button variant="secondary" type="submit">
+                Done
+              </Button>
+            ) : null}
             {canListen ? (
               <Button
                 ref={listenRef}
@@ -190,12 +202,16 @@ export const PartnerTurn = forwardRef<PartnerTurnHandle, {
                 {listening ? 'Stop' : 'Listen'}
               </Button>
             ) : null}
-            <Button variant="secondary" type="submit">
-              Done
-            </Button>
-            <Button variant="secondary" onClick={() => close(false)}>
-              Cancel
-            </Button>
+            {sheet ? null : (
+              <Button variant="secondary" type="submit">
+                Done
+              </Button>
+            )}
+            {cancel ? (
+              <Button variant="secondary" onClick={() => close(false)}>
+                Cancel
+              </Button>
+            ) : null}
           </div>
         )}
       </div>

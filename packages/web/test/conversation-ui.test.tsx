@@ -8,6 +8,7 @@ import { CommunicationScreen } from '@/components/CommunicationScreen';
 import { conversationStore } from '@/lib/conversation';
 import type { DictState } from '@/lib/data';
 import { miniDict } from './fixtures';
+import { openSection } from './settings-section';
 
 const KEY = { 3: '3 DEF, D E F', 4: '4 GHI, G H I', 6: '6 MNO, M N O', 9: '9 WXYZ, W X Y Z', 2: '2 ABC, A B C', 8: '8 TUV, T U V', 7: '7 PQRS, P Q R S', 0: '0 Space' } as Record<string, string>;
 const press = (name: string | RegExp) => fireEvent.click(screen.getByRole('button', { name }));
@@ -353,6 +354,7 @@ describe('model ranking with what you said (web-ui Req 27.11)', () => {
   it('Settings shows "Include what you said" only while model ranking is on', () => {
     render(<CommunicationScreen initialDict={miniDict()} layout="wide" />);
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    openSection('Model ranking');
     expect(screen.queryByRole('switch', { name: 'Include what you said' })).toBeNull();
     fireEvent.click(screen.getByRole('switch', { name: 'Model ranking' }));
     const sub = screen.getByRole('switch', { name: 'Include what you said' }) as HTMLInputElement;

@@ -7,7 +7,7 @@
 //   - a quick repeat tap on the same key (the accept delay) is not counted, the key is marked and the first
 //     one is announced; nothing is ever spoken without a Speak press.
 //   node packages/web/test/e2e/plan-bugs.mjs   (BASE_URL, default http://localhost:3202)
-import { BASE_URL, check, done, loadPlaywright, newContext, openApp, stubSpeech, waitFor } from './lib.mjs';
+import { BASE_URL, check, done, loadPlaywright, newContext, openApp, stubSpeech, waitFor, settingsGroup } from './lib.mjs';
 
 const browser = await loadPlaywright().chromium.launch();
 console.log(`plan bugs on ${BASE_URL}`);
@@ -24,6 +24,7 @@ async function modelRankingOn(page) {
     await page.locator('.phone-actions button', { hasText: 'Menu' }).first().click();
     await page.locator('dialog[open] button', { hasText: 'Settings' }).first().click();
   }
+  await settingsGroup(page, 'Model ranking');
   const sw = page.getByRole('switch', { name: 'Model ranking' });
   await sw.waitFor({ timeout: 5000 });
   if (!(await sw.isChecked())) await sw.click();

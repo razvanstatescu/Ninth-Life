@@ -8,6 +8,7 @@ import { conversationStore } from '@/lib/conversation';
 import { STACK_ROWS_QUERIES, STACK_SHORT_QUERY } from '@/lib/layout';
 import { replyRows } from '@/lib/replies';
 import { miniDict } from './fixtures';
+import { openSection } from './settings-section';
 
 const KEY = { 3: '3 DEF, D E F', 4: '4 GHI, G H I', 6: '6 MNO, M N O', 9: '9 WXYZ, W X Y Z', 2: '2 ABC, A B C', 8: '8 TUV, T U V', 7: '7 PQRS, P Q R S', 0: '0 Space' } as Record<string, string>;
 const press = (name: string | RegExp) => fireEvent.click(screen.getByRole('button', { name }));
@@ -81,7 +82,7 @@ describe('quick replies on phones and tablets (web-ui Req 28)', () => {
     expect(replies()).toEqual(['Hold on.', 'Yes.', 'No.']);
     // 28.5: the sentences are one tap away in Menu while the replies hold the area.
     press('Menu');
-    expect(within(openSheet('menu')!.querySelector<HTMLElement>('[data-scan-row="sentence"]')!).getAllByRole('button')[0]!.textContent).toBe('Sentences');
+    expect(within(openSheet('menu')!.querySelector<HTMLElement>('[data-scan-row^="sentence"]')!).getAllByRole('button')[0]!.textContent).toBe('Sentences');
   });
 
   it('28.1 two rows where 2 fit: Pardon?, Thanks. and Phrases (which opens Phrases and says nothing)', () => {
@@ -203,6 +204,7 @@ describe('Menu and Phrases (web-ui Req 28.4)', () => {
   it('Settings has the switch, on by default, and turning it off removes the replies from the screen', () => {
     render(<CommunicationScreen initialDict={miniDict()} layout="wide" />);
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    openSection('Quick replies');
     const sw = screen.getByRole('switch', { name: 'Quick replies' }) as HTMLInputElement;
     expect(sw.checked).toBe(true);
     fireEvent.click(sw);

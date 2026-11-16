@@ -99,7 +99,7 @@ export function SpellSheet({
   };
 
   return (
-    <Sheet open={open} name="spell" title="Spell this word" onClose={onClose} scanning={scanning} initialFocusId={posId(0)}>
+    <Sheet open={open} name="spell" kind="panel" title="Spell this word" onClose={onClose} scanning={scanning} initialFocusId={posId(0)}>
       <div className="spell" onKeyDown={onKeyDown}>
         <div className="spell__preview">
           <p className="spell__word" lang="en" aria-live="polite" aria-atomic="true">
