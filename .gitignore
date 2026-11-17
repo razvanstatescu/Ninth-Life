@@ -7,6 +7,8 @@ cdk.out/
 .env
 .env.*
 !.env.example
+# Committed on purpose: production settings with no secrets (secrets go in .env.production.local).
+!.env.production
 .DS_Store
 # eval-only datasets with NC licenses are fetched by script, never committed
 packages/eval/.cache/
