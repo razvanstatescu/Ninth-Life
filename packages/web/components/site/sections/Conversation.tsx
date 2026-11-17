@@ -5,6 +5,8 @@
  * Round 4 (2026-11-13; decisions §2 "Boxes"): a lead card first (They said, across the grid, its stage
  * beside its words from 1024px), then three cards in one row from 1024px (.site-bento--3); every feature name carries
  * its icon; one short line per card.
+ * Round 5 (2026-11-17): the They said card also names the quick replies and the reply types (web-ui Req 28, 29), which
+ * the page did not mention; the section is on a ground band (the bands alternate in the new order).
  */
 import type { CSSProperties, ReactNode } from 'react';
 import { Icon } from '@/components/Icon';
@@ -34,7 +36,7 @@ function Card({ i, lead, drawing, icon, feature, title, children }: { i: number;
 
 export function Conversation({ sentence, keys, spell }: { sentence: string; keys: string; spell: SpellExample }) {
   return (
-    <section id="conversation" className="site-band site-band--surface" aria-labelledby="conversation-title">
+    <section id="conversation" className="site-band" aria-labelledby="conversation-title">
       <div className="site-wrap site-stack">
         <div className="site-head" data-reveal="">
           <h2 id="conversation-title" className="site-h2">
@@ -44,7 +46,7 @@ export function Conversation({ sentence, keys, spell }: { sentence: string; keys
         </div>
         <div className="site-grid site-bento site-bento--3">
           <Card i={0} lead drawing={<SaidTurn sentence={sentence} keys={keys} />} icon={<Icon name="said" />} feature="They said" title="Answer what they just said">
-            Type their last line, or press Listen to turn their speech into text. Listen is off until you allow it.
+            Type their last line, or press Listen to turn their speech into text. Listen is off until you allow it. Answer in one press with a quick reply such as Yes or Pardon?, or pick Agree, Disagree or Ask to bring the sentences that fit to the top.
           </Card>
           <Card i={0} drawing={<ShowFlip sentence={sentence} />} icon={<Icon name="flip" />} feature="Show and Flip" title="Turn your words to face them">
             Show puts your sentence in big text. Flip turns it around for the person sitting opposite.

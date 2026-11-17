@@ -538,3 +538,17 @@ language"). The other round-4 builders add their own tasks under this heading.
       reveal steps, the note cards, the hug rule), `site-css.test.ts` (the four box-grid assertions, with the lead's
       leave), `ranking-provider.test.ts` (the §6 entry), `e2e/site.mjs` (per-row stages, the hug, cards per row, the
       switch lead).
+
+## Round 5: one place for each fact (2026-11-17)
+
+- [x] C1. Order How, Proof, Conversation, Access, Privacy, Results, Good to know, Questions, the close; re-alternate
+      the bands (`app/page.tsx`, the sections' band classes).
+- [x] C2. Say each fact once: drop How's and Access's caveats, the Results caveat's people sentence, Good to know's
+      Model ranking row and six FAQ questions; update Access for laptops and They said for quick replies and reply
+      types (content.md "Round 5").
+- [x] C3. Fix the bar to the top of every website page; drop the four mid-page "Open the app" rows.
+- [x] C4. Privacy: the map, then one card of rows; remove the door drawings and their CSS; share `.site-rows`.
+- [x] C5. Details: soft lift in stages, ember-only scan ring, label type for drawn numbers, How's code tracking,
+      `/about` spacing and naming.
+- [x] C6. Tests: `site.test.tsx`, `site-css.test.ts`, `ranking-provider.test.ts`, `e2e/site.mjs`.
+

@@ -21,6 +21,25 @@ Rules for this file:
 - Checked against `.kiro/steering/product.md` (banned claims, honest limits) and
   `.kiro/steering/trademarks.md`; `node scripts/tm-lint.mjs` is clean on this file.
 
+## Round 5 (2026-11-17): one place for each fact
+
+The product owner: "the website feels quite long and messy … see if the same info doesn't get explained in multiple
+sections across the website and consolidate that." Each fact is now said once, where a reader looks for it:
+
+- Page order (MS-3.1): How, Proof, Conversation, Access, Privacy, Results, Good to know, Questions, the close. The
+  product comes first; the evidence (Results) and its limits (Good to know) sit together. The bands still alternate.
+- The limits live in Good to know only: the caveats under How ("You need to be able to spell …"), in Access (the
+  simulator line) and the last sentence of the Results caveat (people who use AAC) are gone; Good to know's Model
+  ranking row is gone (Privacy says what ranking sends).
+- Privacy lists what ranking sends once: the three door cards and the note card become one card of rows (§6).
+- Questions keeps the five no section answers (§9).
+- The sticky bar carries "Open the app" on every screen, so the four mid-page "Open the app" rows (after Proof,
+  Access, Privacy and Results) are gone. The hero and the close keep their ember buttons.
+- Up to date: laptops fit one screen too (web-ui Req 40, ADR-012), and the They said card names the quick replies and
+  the reply types (web-ui Req 28, 29), which the page did not mention.
+
+Removed copy is written without bold in the notes below, so MS-4.1 does not look for it on the page.
+
 ## Page metadata
 
 | Field | Text |
@@ -70,7 +89,8 @@ description (it used to inherit the definition); Next still answers 404 with `no
 - Skip link: **Skip to content** (to `#main`)
 - Brand link (to `#top`): favicon image (`alt=""`) and **Ninth Life**
 - Nav, `aria-label="Main"`: **How it works** (`#how`) · **Proof check** (`#proof`) · **Ways to type** (`#access`) · **Privacy** (`#privacy`) · **Questions** (`#faq`)
-- Header button (secondary): **Open the app** (to `/app`)
+- Header button (secondary): **Open the app** (to `/app`). Round 5: the bar is fixed at the top of the window on every
+  website page (`.site-barline`, Night in both themes, a translucent night fill), so this button is always in view.
 
 ## 1. Hero (`#top`)
 
@@ -149,8 +169,8 @@ app with a short title and one line (design.md "Round 4: How it works"). Fewer w
 - Step 1 (number `1`), `h3` **Press one key per letter**: **G, H and I share key 4, so "home" and "good" are both 4663.**
 - Step 2 (number `2`), `h3` **Pick what you meant**: **Ranked by an offline dictionary on your device. Picking one never speaks it.**
 - Step 3 (number `3`), `h3` **Hear it out loud**: **Your browser's voice says it. With no voice, Show puts it in big text.**
-- Under the row, a limit beside its claim (`.site-caveat`, r4-close's approved sentences): **You need to be able to
-  spell. Ninth Life types words, not symbols. English only for now.**
+- Round 5: no caveat under the row. "You need to be able to spell. Ninth Life types words, not symbols. English only
+  for now." is said once, in Good to know (§8).
 
 Removed in round 4, and where each fact lives now: "Keys 2 to 9 carry the letters" and "No tapping a key three times
 and no code to learn" (the keypad picture shows the keys; the hero says one press per letter); "0 is space" (the
@@ -189,7 +209,7 @@ unchanged.
   3. **Each word is turned back into keys.**
   4. **A word that does not match is dropped, never spoken.**
 - Note: **With model ranking on, the check runs on the server and again in your browser. You decide what is said: only a press of Speak speaks.**
-- Button (secondary, in a `.site-cta` row): **Open the app** (to `/app`)
+- Round 5: no button row after the note; the sticky bar carries "Open the app".
 
 Removed in round 4, and where it went:
 - The lead's third sentence. The steps keep its words: "turned back into keys", "does not match", "never spoken".
@@ -214,7 +234,7 @@ it as a small label (`label` type, `--ink-muted`, in an `hgroup` with the `h3`).
 Round 4 (2026-11-13; decisions §2 "Boxes"): They said is the lead card (across the grid); each feature
 name carries its icon (`said`, `flip`, `save`, `spell`); one short line per card, never fewer facts.
 
-- Label **They said**, `h3` **Answer what they just said**: **Type their last line, or press Listen to turn their speech into text. Listen is off until you allow it.**
+- Label **They said**, `h3` **Answer what they just said**: **Type their last line, or press Listen to turn their speech into text. Listen is off until you allow it. Answer in one press with a quick reply such as Yes or Pardon?, or pick Agree, Disagree or Ask to bring the sentences that fit to the top.** (Round 5: the last sentence is new; the app's quick replies are "Hold on.", "Yes.", "No.", "Pardon?" and "Thanks." (`lib/replies.ts`), and the reply types reorder the sentences, never change the words (`REPLY_TYPES_HELP`).)
 - Label **Show and Flip**, `h3` **Turn your words to face them**: **Show puts your sentence in big text. Flip turns it around for the person sitting opposite.**
 - Label **Saved phrases**, `h3` **Keep what you say often**: **Press Save phrase to keep a sentence on this device. Nothing is saved until you do.**
 - Label **Spell and My words**, `h3` **Spell a name once**: **Spell it letter by letter, then add it to My words. A plus means it matches your keys but is not in the dictionary or My words yet.** (Round 3: the plus moved here from §3's legend.)
@@ -253,12 +273,12 @@ icon (`switch`, `keyboard`, `key`, `view`, `screens`).
 - `h3` **Keyboard**: **Number keys or the numpad. Enter speaks, Backspace goes back, arrow keys pick a sentence.**
 - `h3` **Touch**: **Large keys, from 72 to 128 pixels. Single taps only: no swipes, no long presses.**
 - `h3` **Your view**: **Night or Day theme, large or extra-large keys, and Show for big text.**
-- `h3` **Phones, tablets and laptops**: **On phones and tablets the whole app fits on one screen and never scrolls. Phones work upright, tablets either way up.** Then, as a `.site-caveat` by its claim (round 4, r4-close's limit line): **It has been checked in phone and tablet simulators, not yet on real phones and tablets.**
+- `h3` **Phones, tablets and laptops**: **The whole app fits on one screen and never scrolls, on phones, tablets and laptops. Phones work upright, tablets either way up.** (Round 5: laptops too, web-ui Req 40 and ADR-012; round 4 said "On phones and tablets the whole app fits …" and had the simulator caveat, now only in Good to know.)
   (Round 3 said "Tablets work either way up. Phones work upright: held sideways, Ninth Life asks you to turn the phone
   and keeps your sentence." The Accessibility note keeps the portrait-only exception and the FAQ says "Phones
   (upright)".)
 - Note, `h3` **Accessibility** (round 4: `id="accessibility"`, the footer's link): **We aim for WCAG 2.2 AA as a minimum and check the app with automated accessibility, keyboard and switch tests. One known exception: on phones the app works in portrait only. Found a problem?** link **Open an issue on GitHub** (to `{REPO_URL}/issues`).
-- Last in the section (R3-P10, 2026-11-13), a `.site-cta` row with the secondary button **Open the app** (to `/app`, `nl-btn--secondary nl-btn--xl`), as after Results and Privacy: Results to Privacy was still 9.4 phone screens at 390px and 13.7 at 320px.
+- Round 5: no closing "Open the app" row (R3-P10 added one; the sticky bar replaces it).
 
 The numbers here are product settings, not eval results: 72 and 128 are the `key-min` and `key-xl` tokens;
 0.4 to 5 seconds is `accessibility.md` rule 9.
@@ -288,43 +308,48 @@ three ways out), then one card per way out; each `h3` carries its icon (`offline
   browser's own speech services (online voices, Listen). Round 3 said "What you type, the dictionary, your saved
   phrases and My words. Nothing you say is saved unless you press Save phrase, and then only on this device."; the
   Saved phrases card and the FAQ keep the saving rule.)
-- `h3` **Model ranking, if you turn it on**: first, as real text drawn at the top of the card's stage and placed after
-  the `h3` in the DOM (round 4, MS-7.2 exception), **Sent to rank: {rankingSentText()}. {RANKING_SENT_ALSO}**; then the line **It is off until you turn it on in Settings. Then Ninth Life sends these to {provider.service} to rank the sentences.** (`rankingSentText()` in `lib/rankingProvider.ts` writes the four `RANKING_SENT` items as one clause: "your keys, the dictionary words that match them, Ninth Life's own best guesses and the other person's last line", the same list as §8, §9 and `/about`. Round 3 moved the region, retention and log lines out of this card; round 4 stops the line repeating the list.)
-- `h3` **Voices**: **Voices marked "on this device" keep your words on the device; online voices send the text to the browser maker.** (Round 3 began "Speech uses your browser's voices.")
-- `h3` **Listen**: **The other person's voice may be sent to the browser maker (Google in Chrome, Apple in Safari) to turn it into text, unless the browser can do it on this device. Ninth Life never receives or keeps the audio.** (Round 3 began "Listen uses your browser's speech service.")
-- Under the grid, a note card (round 4; round 3: one `.site-prose` block):
-  - `h3` **What happens to what ranking sends**, then three `.site-fact` rows (globe, clock, chart): `{provider.region}` ·
-    `{provider.retention}` · **Our server logs timings and counts, never your words.** (`provider.region` is
-    "Processing is not limited to the EU." for both current providers, MS-4.6.)
-  - Line: **Check it yourself: the code is open, and your browser's storage shows no cookies.** Links (the evidence,
+- Round 5 (2026-11-17): under the map, one card, `h3` **What leaves this device, and only when you use it**, with one
+  row per way out in Good to know's row look (`.site-rows`: an icon tile, the name as an `h4`, then the text). It
+  replaces the three door cards and the note card below, which drew the map's ways out again with their own outlines.
+  - **Model ranking** (toggle icon): **Off until you turn it on in Settings. Then Ninth Life sends {rankingSentText()} to {provider.service} to rank the sentences. {RANKING_SENT_ALSO}** Then a small list: `{provider.region}` · `{provider.retention}` · **Our server logs timings and counts, never your words.**
+  - **Online voices** (voice icon): **Voices marked "on this device" keep your words on the device; online voices send the text to the browser maker.**
+  - **Listen** (mic icon): **The other person's voice may be sent to the browser maker (Google in Chrome, Apple in Safari) to turn it into text, unless the browser can do it on this device. Ninth Life never receives or keeps the audio.**
+  - Last in the card: **Check it yourself: the code is open, and your browser's storage shows no cookies.** and the
+    two evidence links below.
+- Round 4, replaced in round 5: the card "Model ranking, if you turn it on" with "Sent to rank: …" drawn at the top of
+  its stage and the line "It is off until you turn it on in Settings. Then Ninth Life sends these to … to rank the
+  sentences." (`rankingSentText()` in `lib/rankingProvider.ts` writes the four `RANKING_SENT` items as one clause: "your keys, the dictionary words that match them, Ninth Life's own best guesses and the other person's last line", the same list as §8, §9 and `/about`. Round 3 moved the region, retention and log lines out of this card; round 4 stops the line repeating the list.)
+- Round 4, replaced in round 5: the cards "Voices" and "Listen" (the same sentences, now rows) and the note card "What
+  happens to what ranking sends" (its three lines are now Model ranking's list; `provider.region` is "Processing is
+  not limited to the EU." for both current providers, MS-4.6).
+  - The evidence links, last in the rows card (the evidence,
     not the repo root; round 4: `.site-go--out`, an external icon): **The privacy rules the code follows** (to
     `{PRIVACY_RULES_URL}`, `.kiro/steering/privacy.md`) · **The code that builds the ranking request** (to
     `{RANKING_REQUEST_URL}`, `packages/web/lib/decodeClient.ts`).
-- Last in the section (round 3, verifier 2026-11-13), a `.site-cta` row with the secondary button **Open the app** (to
-  `/app`, `nl-btn--secondary nl-btn--xl`; not an ember fill, MS-9.1). On a 390px phone the Results row and the closing
-  one were about 14 screens apart; this one sits between them.
+- Round 5: no closing "Open the app" row (the sticky bar replaces it).
 
-Drawing text (decorative, `aria-hidden`; round 4: a dashed outline is this device, a feature on its edge is one way
+Drawing text (decorative, `aria-hidden`; round 5: only the map remains, the Model ranking, Voices and Listen drawings
+below are gone with their cards; round 4: a dashed outline is this device, a feature on its edge is one way
 out, an arrow leaving it is data leaving, a cloud marks where it goes; no locks, shields or badges):
 
 - On your device (the lead): the outline's name **This device**; its ways out **Model ranking**, **Online voices** and
   **Listen** (their icons only under 600px); inside, the well with the demo's finished sentence and its digits, the
   rows **The dictionary**, **Saved phrases**, **My words**, and the status **Offline. Using your dictionary.**
-- Model ranking (no title in the drawing; the card's `h3` names it, V31): the switch row **Model ranking** with **Off**,
-  then **On**; inside the outline **Off until you turn it on**; an arrow to the sent text. No count, no provider name
+- Model ranking (no title in the drawing; the card's `h3` names it, V31): the switch row "Model ranking" with "Off",
+  then "On"; inside the outline "Off until you turn it on"; an arrow to the sent text. No count, no provider name
   (MS-7.10). What is sent is real text (above): the four `RANKING_SENT` items, what `buildRequest` in
   `lib/decodeClient.ts` sends (`codes`, `lattice`, `beams`, `context.partner`; `context.recent` is always empty).
-- Voices: **Voice (en, online)** on the outline's edge with **Sends the text to the browser maker**, an arrow **The
-  text** to **The browser maker**; inside, **Voice (en, on this device)** with **Keeps your words on the device** (the
+- Voices: "Voice (en, online)" on the outline's edge with "Sends the text to the browser maker", an arrow "The
+  text" to "The browser maker"; inside, "Voice (en, on this device)" with "Keeps your words on the device" (the
   Settings help text in the singular; no browser maker named in the drawing, MS-4.8; no voice shown as the default).
-- Listen: a drawn **Listen** on the outline's edge that reads **Stop** while it listens; inside, the strip **They
-  said** with **Nothing yet.**, then **Listening. Ask them to speak now.** (the app's own status line), then **What do
-  you need?**; arrows **Their voice** out and **Text** back, to and from **The browser maker**.
+- Listen: a drawn "Listen" on the outline's edge that reads "Stop" while it listens; inside, the strip "They
+  said" with "Nothing yet.", then "Listening. Ask them to speak now." (the app's own status line), then "What do
+  you need?"; arrows "Their voice" out and "Text" back, to and from "The browser maker".
 
 ## 7. Measured, not promised (`#results`)
 
-Round 3 (2026-11-12): on the page this section comes right after §3, the proof check (MS-3.1). The
-section numbers here stay as they were.
+Round 3 (2026-11-12): on the page this section came right after §3, the proof check (MS-3.1). Round 5
+(2026-11-17): it comes after §6, Privacy, right before §8, Good to know. The section numbers here stay as they were.
 
 Round 4 (2026-11-13; decisions "Results", PO-1): the figures are graphics now, with far fewer sentences.
 Every number still comes from `getResults()` (RESULTS.json, the harness output that RESULTS.md is written from); each
@@ -334,7 +359,7 @@ When `getResults()` returns results:
 
 - `h2`: **Measured, not promised**. No lead since round 4 (phone length): its facts are in the captions, the presses
   card and the "Ninth Life, offline" label, and the caveat follows the title.
-- The caveat first, a `.site-caveat` with the info icon, one paragraph: **These figures come from a simulated typist, not from studies with people.** (in bold) **Some test sentences also appear in the dictionary's source text, so the figures are somewhat optimistic.** **The app has not yet been tested with people who use AAC.** (r4-close's limit line, with "The app" for "It" so it cannot be read as "the figures"). The overlap's share is in `data-and-eval.md` §4, not in RESULTS.md, so no number.
+- The caveat first, a `.site-caveat` with the info icon, one paragraph: **These figures come from a simulated typist, not from studies with people.** (in bold) **Some test sentences also appear in the dictionary's source text, so the figures are somewhat optimistic.** (Round 5: the third sentence, "The app has not yet been tested with people who use AAC.", left; Good to know, right after this section, says it as a Testing so far row.) The overlap's share is in `data-and-eval.md` §4, not in RESULTS.md, so no number.
 - The chart, a `dl` of three measures. Each has its `dt`, then Ninth Life offline (B1), word frequency alone (B0) and what it counts; a drawn bar under each value is that value on a full track from 0:
   - **Right sentence first**: `{ghost.top1}` **Ninth Life, offline** · `{dict.top1}` **Word frequency alone** · **of {items} sentences, with no correction**. RESULTS.md, Summary rows "B1 ghost" and "B0 dict", "Sent top-1": 85.6% and 62.4%; "Test set: … 866 items".
   - **Right sentence in the top 5**: `{ghost.top5}` · `{dict.top5}` · **of {items} sentences**. RESULTS.md "Sent top-5": 97.3% and 92.0%.
@@ -347,9 +372,9 @@ When `getResults()` returns results:
   - dash, while this build's provider is not the measured one: **Not measured yet: {service}, which the app's model ranking uses.** When it is the measured one, row 1 ends with "The app's model ranking uses {service}, the provider measured here." and there is no second row.
   - Round 4 replaces the round-3 model line on the page; `/llms.txt` keeps it (`modelRunsLine`, the same values). R3-P7's reasons hold: the measured provider and model ids are named and the configured provider's status is said, with no model-run accuracy, latency or cost number (D14). It never says that model ranking as a whole has not been measured (D15).
 - Links, `.site-go site-go--out` (they leave the site): **Full results** (to `{RESULTS_URL}`, the name `/llms.txt` uses) · **How we measured** (to `{METHOD_URL}`).
-- Last in the section, a `.site-cta` row with the secondary button **Open the app** (to `/app`, `nl-btn--secondary nl-btn--xl`; not an ember fill, MS-9.1).
+- Round 5: no closing "Open the app" row (the sticky bar replaces it). Results now sits after Privacy, right before Good to know.
 
-When `getResults()` returns null: `h2` as above, the line **The eval results are not available in this build.**, the two links and the button row. No numbers.
+When `getResults()` returns null: `h2` as above, the line **The eval results are not available in this build.** and the two links. No numbers.
 
 Replaced in round 4. These lines are no longer on the page; their facts stay, as listed above:
 - the lead "We typed {items} test sentences from public AAC text collections…";
@@ -375,7 +400,7 @@ No accuracy, latency or cost number from a model run appears on the page (D14; m
   - **Spelling**: **You need to be able to spell. Ninth Life types words, not symbols, so it does not suit someone who cannot spell yet.**
   - **Language**: **English only for now.**
   - **Voices**: **Voices depend on your device and browser.**
-  - **Model ranking**: **With model ranking on, your keys, the dictionary words that match them, Ninth Life's own best guesses and the other person's last line leave your device, as described under Privacy. It also sends the reply type you picked (Agree, Disagree or Ask) while one is picked, and the last 3 things you said in this conversation only if you turn on "Include what you said", which is off by default.**
+  - Round 5: no Model ranking row (it was "With model ranking on, … leave your device, as described under Privacy."; Privacy says it).
 - Card `h3` **Testing so far**, one row per check and its state in words, never colour alone (**Done** has a solid edge and a check; **Not yet** a dashed edge; a visually hidden colon between the check and its state):
   - **Checked in phone and tablet simulators**: **Done**
   - **Checked on real phones and tablets**: **Not yet**
@@ -402,21 +427,28 @@ are a later plan (`product.md`), not something the app has. The ranking item is 
 words", less than Privacy and the FAQ). The two Not yet rows stay until `docs/` records user testing and a
 real-device check (product.md, Honest limits).
 
+Round 5 (2026-11-17; amends MS-4.5a): Good to know is the one home of the limits. The three caveats beside their
+claims (How, Access, the Results caveat's last sentence) are gone: the product owner found the page repeating itself,
+and Results, the claim the testing rows qualify most, now sits right before this section. The Results caveat keeps
+what is about its own numbers (a simulated typist; the overlap with the dictionary's text). `/llms.txt` lists the lead
+and the six rows.
+
 ## 9. Questions (`#faq`)
 
 - `h2`: **Questions**. Each item is a native `<details>`, closed by default; the summary is the question.
 - **Is it free?** Yes. There is no paid tier, no ads and no account. The code is open source under the MIT license. Model ranking costs a little per sentence. We can switch it off at any time, and the app then keeps working with the offline dictionary.
 - **Do I need to install anything?** No. Open it in your browser. After one visit it works offline. To keep it on your home screen, use your browser's Add to Home Screen or Install option.
-- **Which devices and languages?** Phones (upright), tablets (either way up) and laptops, in a current browser. It runs in your browser, so voices and Listen depend on that browser. English only for now.
 - **What if the sentence I meant is not first?** Other sentences that match your keys are listed under it: pick one with a tap, the arrow keys or your switch. If a word is still wrong, Spell this word lets you choose the letter for each key you pressed.
-- **Can I type names and my own words?** Yes. When a word is not in the dictionary, choose Spell this word, then Add to my words. My words stay on this device and come up when you type their keys.
-- **Can I use it with a switch?** Yes, with one or two switches. Space or Enter acts as the switch, and the scan speed goes from 0.4 to 5 seconds a step.
-- **Can the model say something I did not type?** No. Every word is turned back into keys and checked against the keys on screen. A word that does not match is dropped. Nothing is spoken until you press Speak.
-- **What does model ranking send, and to whom?** Your keys, the dictionary words that match them, Ninth Life's own best guesses and the other person's last line, to {provider.service}. {RANKING_SENT_ALSO} It is off until you turn it on. {provider.retention}
-- **Does it work without a connection?** Yes, after the first visit. The dictionary and the proof check run on your device. Model ranking and online voices need a connection; the dictionary does not.
 - **Where are my saved phrases?** In your browser on this device, nowhere else. Nothing is saved unless you press Save phrase. Delete one in Phrases; clearing this site's data in your browser deletes them all, with My words.
 - **Is it a medical device?** No. {NOT_A_MEDICAL_DEVICE}
-- After the list (round 3): **Something else?** link **Ask on GitHub** (to `{ISSUES_URL}`).
+- The head's lead (round 5; round 3 put it after the list): **Something else?** link **Ask on GitHub** (to `{ISSUES_URL}`), so it fills the column beside the list on desktop.
+
+Round 5 (2026-11-17): five questions, the ones no section answers. Removed, and where each answer lives: "Which
+devices and languages?" (Access's Phones, tablets and laptops card; Good to know's Language and Voices rows); "Can I
+type names and my own words?" (Conversation's Spell a name once card); "Can I use it with a switch?" (Access's One or
+two switches card); "Can the model say something I did not type?" (the proof check, §3); "What does model ranking
+send, and to whom?" (Privacy's Model ranking row); "Does it work without a connection?" (the Privacy lead, the
+hero's and the close's Works offline). The FAQPage JSON-LD and `/llms.txt` read the same five.
 
 Round 3 (2026-11-12): every new answer names only what the app does (`SpellSheet` "Spell this word" and
 "Add to my words", `MyWordsSheet`, `PhrasesSheet` "Delete", IndexedDB in `lib/storage.ts`, the candidate list and
@@ -495,7 +527,8 @@ checked against your keys, Privacy and What Ninth Life is not, and the site foot
 {provider.service}" (a missing space rendered "toAnthropic's"); what ranking sends is `rankingSentText()` (the
 four `RANKING_SENT` items, the same list as Privacy and the FAQ); the Privacy list adds `{provider.region}` and
 "Our server logs timings and counts, never your words." R3-P3 (2026-11-13): the proof-panel sentence names the list
-**My words**: "a check means the word matches your keys and is in the dictionary or in My words, a plus means it
+**My words** (round 5: it starts "Check the words shows each word with its keys", the app's name for the check since
+web-ui Req 40, and the ranking paragraph's three sentences get their missing spaces): "a check means the word matches your keys and is in the dictionary or in My words, a plus means it
 matches but is not in the dictionary or My words yet (add it to My words), and a struck-through word was suggested
 but does not match."
 

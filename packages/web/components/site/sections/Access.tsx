@@ -9,10 +9,12 @@
  * right of its words from 1024px), then Keyboard, Touch, Your view and Phones, tablets and laptops two by two
  * (.site-bento--4); the simulator limit sits by its claim (.site-caveat); the note carries id="accessibility" for the
  * footer's link.
+ * Round 5 (2026-11-17): laptops fit one screen too (web-ui Req 40, ADR-012); the simulator limit and the closing
+ * "Open the app" row left (the limit is in Good to know, the button in the sticky bar).
  */
 import type { CSSProperties, ReactNode } from 'react';
 import { Icon } from '@/components/Icon';
-import { SiteIcon, info, key, keyboard, screens, view } from '../icons';
+import { SiteIcon, key, keyboard, screens, view } from '../icons';
 import { KeyLegend, LayoutBoxes, ScanPlay, ThemeHalves, TouchSizes, type ScanExample } from '../pictures/Access';
 import { ISSUES_URL, getDemoData } from '../site-data';
 
@@ -48,7 +50,7 @@ function Card({ i, lead, drawing, icon, title, children }: { i: number; lead?: b
 
 export function Access() {
   return (
-    <section id="access" className="site-band" aria-labelledby="access-title">
+    <section id="access" className="site-band site-band--surface" aria-labelledby="access-title">
       <div className="site-wrap site-stack">
         <div className="site-head" data-reveal="">
           <h2 id="access-title" className="site-h2">
@@ -70,11 +72,7 @@ export function Access() {
             <p>Night or Day theme, large or extra-large keys, and Show for big text.</p>
           </Card>
           <Card i={1} drawing={<LayoutBoxes />} icon={<SiteIcon d={screens} />} title="Phones, tablets and laptops">
-            <p>On phones and tablets the whole app fits on one screen and never scrolls. Phones work upright, tablets either way up.</p>
-            <p className="site-caveat">
-              <SiteIcon d={info} />
-              <span>It has been checked in phone and tablet simulators, not yet on real phones and tablets.</span>
-            </p>
+            <p>The whole app fits on one screen and never scrolls, on phones, tablets and laptops. Phones work upright, tablets either way up.</p>
           </Card>
         </div>
         <div id="accessibility" className="site-card site-card--note site-note" data-reveal="">
@@ -83,11 +81,6 @@ export function Access() {
             We aim for WCAG 2.2 AA as a minimum and check the app with automated accessibility, keyboard and switch tests. One known exception: on phones the app works in portrait only. Found a problem?{' '}
             <a href={ISSUES_URL}>Open an issue on GitHub</a>
           </p>
-        </div>
-        <div className="site-cta">
-          <a className="nl-btn nl-btn--secondary nl-btn--xl" href="/app">
-            Open the app
-          </a>
         </div>
       </div>
     </section>

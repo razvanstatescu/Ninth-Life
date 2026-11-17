@@ -86,8 +86,9 @@ const follows = (a: Node, b: Node) => (a.compareDocumentPosition(b) & Node.DOCUM
 const FOCUSABLE = 'a[href], button, input, select, textarea, summary, [tabindex]';
 
 // Round 3 (2026-11-12): Results follows Proof (MS-3.1). Round 4 (2026-11-13): Free and open source
-// (source) dissolved into the close, the footer and /about.
-const SECTION_IDS = ['how', 'proof', 'results', 'conversation', 'access', 'privacy', 'limits', 'faq', 'start'];
+// (source) dissolved into the close, the footer and /about. Round 5 (2026-11-17): the product first, then the
+// evidence and its limits together (Results right before Good to know).
+const SECTION_IDS = ['how', 'proof', 'conversation', 'access', 'privacy', 'results', 'limits', 'faq', 'start'];
 
 beforeEach(() => {
   render(<HomePage />);
@@ -136,7 +137,8 @@ describe('structure and landmarks (MS-3, MS-1.6)', () => {
   it('MS-3.4 every question is a closed native details with the question as its summary', () => {
     const items = $$('#faq details');
     expect(items).toHaveLength(faqItems().length);
-    expect(items).toHaveLength(11);
+    // Round 5: the five questions no section answers.
+    expect(items).toHaveLength(5);
     for (const d of items) {
       expect(d.hasAttribute('open')).toBe(false);
       expect(d.firstElementChild!.tagName).toBe('SUMMARY');
@@ -160,28 +162,27 @@ describe('structure and landmarks (MS-3, MS-1.6)', () => {
 
   it('MS-1.6 every "Open the app" is a plain link to /app, and exactly two are primary', () => {
     const open = $$('a').filter((a) => collapse(a.textContent ?? '') === 'Open the app');
-    // Bar, hero, proof, the mid-page rows after Results, Access (R3-P10) and Privacy (round 3), the close and the footer.
-    expect(open.length).toBe(8);
+    // Round 5 (2026-11-17): the bar (fixed at the top of the window), the hero, the close and the footer. The mid-page
+    // rows after Proof, Results, Access and Privacy are gone: the sticky bar keeps "Open the app" on every screen.
+    expect(open.length).toBe(4);
     for (const a of open) {
       expect(a.tagName).toBe('A');
       expect(a.getAttribute('href')).toBe('/app');
     }
     expect(open.filter((a) => a.classList.contains('nl-btn--primary'))).toHaveLength(2);
     expect($$('.nl-btn--primary')).toHaveLength(2);
-    expect($('header#top .site-bar .nl-btn')!.classList.contains('nl-btn--secondary')).toBe(true);
-    expect($('#proof a.nl-btn')!.classList.contains('nl-btn--secondary')).toBe(true);
-    // Round 3: the Results section ends on a secondary xl "Open the app" in a .site-cta row (review P1-3).
-    // Privacy ends the same way (verifier, 2026-11-13: on a 390px phone the Results row and the close were ~14
-    // screens apart).
-    // R3-P10 (2026-11-13): Access too (Results to Privacy was still 9.4 screens at 390 and 13.7 at 320).
-    for (const id of ['results', 'access', 'privacy']) {
-      const mid = $$(`#${id} a.nl-btn`);
-      expect(mid, id).toHaveLength(1);
-      expect(mid[0]!.className).toBe('nl-btn nl-btn--secondary nl-btn--xl');
-      expect(mid[0]!.parentElement!.className).toBe('site-cta');
-      expect(mid[0]!.parentElement!.nextElementSibling, id).toBeNull();
-      expect(mid[0]!.parentElement!.parentElement!.className).toBe('site-wrap site-stack');
-    }
+    expect($('header#top .site-barline .site-bar .nl-btn')!.classList.contains('nl-btn--secondary')).toBe(true);
+    for (const id of ['how', 'proof', 'conversation', 'access', 'privacy', 'results', 'limits', 'faq']) expect($$(`#${id} a.nl-btn`), id).toHaveLength(0);
+  });
+
+  it('round 5: the bar is fixed at the top on every website page, Night, and its header keeps its height', () => {
+    const bar = $('header#top > .site-barline')!;
+    expect(bar).not.toBeNull();
+    expect(bar.getAttribute('data-theme')).toBe('night');
+    const css = read(web('components/site/site.css'));
+    expect(css).toMatch(/\.site-barline \{[^}]*position: fixed; inset: 0 0 auto;/);
+    expect(css).toContain('header:has(> .site-barline) { padding-top: var(--site-bar-h); }');
+    expect(css).toMatch(/:root:has\(\.site-barline\) \{ scroll-padding-top:/);
   });
 });
 
@@ -297,15 +298,16 @@ describe('copy and claims (MS-4, MS-5)', () => {
     expect($('#limits .site-lead')!.textContent).toBe(LIMITS_LEAD);
     expect(section8).toContain(`**${LIMITS_LEAD}**`);
     const expected = [...section8.matchAll(/^ {2}- \*\*(.+?)\*\*: \*\*(.+)\*\*$/gm)].map((m) => [m[1], m[2]]);
-    expect(expected).toHaveLength(7);
-    const rows = $$('.site-limits__rows > li', limits).map((li) => [li.querySelector('.site-limits__key')!.textContent, li.querySelector('.site-limits__text')!.textContent]);
+    // Round 5: three limits and three checks (the Model ranking row left: Privacy says what ranking sends).
+    expect(expected).toHaveLength(6);
+    const rows = $$('.site-rows > li', limits).map((li) => [li.querySelector('.site-rows__key')!.textContent, li.querySelector('.site-rows__text')!.textContent]);
     const checks = $$('.site-limits__status > li', limits).map((li) => [li.querySelector('.site-limits__check')!.textContent, li.querySelector('.site-limits__state')!.textContent]);
     expect([...rows, ...checks]).toEqual(expected);
     expect(rows).toEqual(LIMIT_ROWS.map((r) => [r.key, r.text]));
     expect(checks).toEqual(TESTING.map((t) => [t.check, t.done ? 'Done' : 'Not yet']));
     expect($$('.site-limits__card > h3', limits).map((h) => h.textContent)).toEqual(['Before you start', 'Testing so far']);
-    // The ranking row is rankingSentText() (MS-4.6).
-    expect(textOf(limits)).toContain(`With model ranking on, ${rankingSentText()} leave your device`);
+    // Round 5: what ranking sends is said once, in Privacy.
+    expect(textOf(limits)).not.toContain(rankingSentText());
     // Never colour alone: Done has a check icon and a solid edge, Not yet a dashed edge (the --not class); each state
     // follows a visually hidden colon, so a screen reader hears "Checked on real phones and tablets: Not yet".
     for (const li of $$('.site-limits__status > li', limits)) {
@@ -315,22 +317,25 @@ describe('copy and claims (MS-4, MS-5)', () => {
       expect(st.querySelector('svg.nl-icon') !== null).toBe(st.textContent === 'Done');
     }
     // Every row's icon sits in a tile and is decorative.
-    for (const li of $$('.site-limits__rows > li', limits)) expect(li.querySelector('.site-tile > svg[aria-hidden="true"]')).not.toBeNull();
+    for (const li of $$('.site-rows > li', limits)) expect(li.querySelector('.site-tile > svg[aria-hidden="true"]')).not.toBeNull();
     const help = $$('.site-limits__help a', limits);
     expect(help.map((a) => [a.textContent, a.getAttribute('href')])).toEqual([['Open an issue on GitHub', ISSUES_URL]]);
     expect(help[0]!.closest('.site-limits__card')!.querySelector('h3')!.textContent).toBe('Testing so far');
   });
 
-  it('MS-4.5a each limit is also said beside the claim it qualifies, in a .site-caveat (info icon, ink)', () => {
-    const caveat = (id: string) => $$(`#${id} .site-caveat`);
-    for (const c of $$('.site-caveat')) expect(c.firstElementChild!.matches('svg.nl-icon[aria-hidden="true"]')).toBe(true);
-    // How: under its row, the spelling and language limits (approved sentences, content.md §8).
-    expect(caveat('how').map((c) => collapse(c.textContent ?? ''))).toEqual(['You need to be able to spell. Ninth Life types words, not symbols. English only for now.']);
-    // Results: in its caveat note, the limit on testing with people.
-    expect(caveat('results').some((c) => /not yet been tested with people who use AAC\./.test(c.textContent ?? ''))).toBe(true);
-    // Access: in the card that makes the device claim, the simulator limit word for word.
-    const devices = caveat('access').filter((c) => c.closest('.site-card')!.querySelector('h3')!.textContent === 'Phones, tablets and laptops');
-    expect(devices.map((c) => c.textContent)).toEqual(['It has been checked in phone and tablet simulators, not yet on real phones and tablets.']);
+  it('MS-4.5a (round 5) each limit is said once, in Good to know; the one caveat left is about the numbers', () => {
+    // Round 5 (2026-11-17, amends MS-4.5a): the caveats beside How, Access and Results' last sentence repeated Good to
+    // know, which now sits right after Results. Results keeps its caveat about its own numbers.
+    expect($$('#how .site-caveat, #access .site-caveat')).toHaveLength(0);
+    const results = $$('#results .site-caveat');
+    expect(results).toHaveLength(1);
+    expect(results[0]!.firstElementChild!.matches('svg.nl-icon[aria-hidden="true"]')).toBe(true);
+    expect(results[0]!.textContent).not.toMatch(/tested with people who use AAC/);
+    const text = pageText();
+    for (const limit of ['You need to be able to spell.', 'English only for now.', 'Checked on real phones and tablets', 'Tested with people who use AAC']) {
+      expect(text.split(limit), limit).toHaveLength(2);
+      expect($('#limits')!.textContent, limit).toContain(limit);
+    }
     // Never fainter than its claim: ink, also inside a card whose own text is ink-muted.
     expect(read(web('components/site/site.css'))).toMatch(/\.site \.site-caveat \{[^}]*color: var\(--ink\);/);
   });
@@ -339,20 +344,22 @@ describe('copy and claims (MS-4, MS-5)', () => {
     const p = providerCopy();
     const privacy = textOf($('#privacy')!);
     expect(privacy).toContain(p.service);
-    // Round 3: region, retention and the log line are a list under the grid, not in the Model ranking card. Round 4
-    // (r4-boxes): fact rows (.site-fact) in a note card.
-    const more = $$('#privacy .site-privacy-facts .site-fact').map((li) => li.textContent);
-    expect(more).toEqual([p.region, p.retention, 'Our server logs timings and counts, never your words.']);
-    const ranking = $$('#privacy h3').find((h) => h.textContent === 'Model ranking, if you turn it on')!.closest('.site-card')!;
-    // Round 4 (decisions §2 "Boxes"): what ranking sends is real text in the card, one sentence from rankingSentText()
-    // (MS-4.6), after the h3 in the DOM (MS-7.2 exception); the card's line no longer repeats the list.
-    const sent = ranking.querySelector(':scope > p.site-sent')!;
-    expect(sent.textContent).toBe(`Sent to rank: ${rankingSentText()}. ${RANKING_SENT_ALSO}`);
-    expect(follows(ranking.querySelector('h3')!, sent)).toBe(true);
-    expect(textOf(ranking.querySelector(':scope > p:last-child')!)).toBe(`It is off until you turn it on in Settings. Then Ninth Life sends these to ${p.service} to rank the sentences.`);
-    expect(textOf(ranking)).not.toContain(p.retention);
-    expect($$('#privacy .site-privacy-facts .site-links a').map((a) => a.getAttribute('href'))).toEqual([PRIVACY_RULES_URL, RANKING_REQUEST_URL]);
-    expect(textOf($('#faq')!)).toContain(p.service);
+    // Round 5 (2026-11-17): the ways out are rows of one card; Model ranking's row says what it sends (rankingSentText(),
+    // MS-4.6), then the region, retention and log lines as a small list.
+    const row = (name: string) => $$('#privacy .site-rows > li').find((li) => li.querySelector('.site-rows__key')!.textContent === name)!;
+    expect($$('#privacy .site-rows .site-rows__key').map((k) => [k.tagName, k.textContent])).toEqual([
+      ['H4', 'Model ranking'],
+      ['H4', 'Online voices'],
+      ['H4', 'Listen'],
+    ]);
+    const ranking = row('Model ranking');
+    expect(textOf(ranking.querySelector('.site-rows__text > p')!)).toBe(
+      `Off until you turn it on in Settings. Then Ninth Life sends ${rankingSentText()} to ${p.service} to rank the sentences. ${RANKING_SENT_ALSO}`,
+    );
+    expect($$('.site-rows__facts > li', ranking).map((li) => li.textContent)).toEqual([p.region, p.retention, 'Our server logs timings and counts, never your words.']);
+    expect($$('#privacy .site-rows-card .site-links a').map((a) => a.getAttribute('href'))).toEqual([PRIVACY_RULES_URL, RANKING_REQUEST_URL]);
+    // Said once: the FAQ and Good to know no longer repeat what ranking sends.
+    expect(pageText().split(rankingSentText())).toHaveLength(2);
     // Round 4: the credits ("Model ranking: {company}.") moved to /about#credits (about.test.tsx).
     expect($('#source')).toBeNull();
   });
@@ -369,12 +376,12 @@ describe('copy and claims (MS-4, MS-5)', () => {
     expect(text).not.toMatch(/model ranking has not been measured yet/i);
   });
 
-  it('MS-4.8 Google, Apple, Chrome and Safari appear only in the Listen privacy card', () => {
-    const listen = $$('#privacy h3').find((h) => h.textContent === 'Listen')!.closest('.site-card')!;
+  it('MS-4.8 Google, Apple, Chrome and Safari appear only in the Listen privacy row', () => {
+    const listen = $$('#privacy .site-rows__key').find((h) => h.textContent === 'Listen')!.closest('li')!;
     expect(textOf(listen)).toMatch(/Google in Chrome, Apple in Safari/);
     const clone = document.body.cloneNode(true) as HTMLElement;
-    const cards = [...clone.querySelectorAll('#privacy .site-card')];
-    cards.find((c) => c.querySelector('h3')?.textContent === 'Listen')!.remove();
+    const rows = [...clone.querySelectorAll('#privacy .site-rows > li')];
+    rows.find((r) => r.querySelector('.site-rows__key')?.textContent === 'Listen')!.remove();
     expect(textOf(clone)).not.toMatch(/\b(Google|Apple|Chrome|Safari)\b/);
   });
 
@@ -478,7 +485,9 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
     // switches; On your device), then its other cards in their round-3 order.
     expect(boxes('conversation')).toEqual(['site-turn', 'site-table', 'site-save', 'site-spell']);
     expect(boxes('access')).toEqual(['site-scan', 'site-keylegend', 'site-touch', 'site-themes', 'site-layouts']);
-    expect(boxes('privacy')).toEqual(['site-map', 'site-door-ranking', 'site-door-voices', 'site-door-listen']);
+    // Round 5 (2026-11-17): Privacy is its map alone (a lead card outside a grid); the ways out are rows of text.
+    expect($$('#privacy .site-card--lead > .site-stage > [data-play]').map((d) => [...d.classList].find((c) => c !== 'site-drawing' && !c.startsWith('site-play--')))).toEqual(['site-map']);
+    expect($('#privacy .site-bento')).toBeNull();
     // Round 4 (2026-11-13): How is three scenes, one in each step's stage: Press, Pick, Speak.
     expect(
       $$('#how .site-how__step > .site-how__stage > .site-how__scene[data-play]').map((d) => [...d.classList].find((c) => /^site-how__(press|pick|speak)$/.test(c))),
@@ -619,7 +628,7 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
       'site-layouts__box--wide',
     ]);
 
-    // Offline unless you choose (round 4): the map, then the three ways out (the ranking and voice drawings: MS-7.10).
+    // Offline unless you choose (round 4): the map. Round 5: the three door drawings are gone.
     const map = $('#privacy .site-map')!;
     expect(map.querySelector('.site-bound__label')!.textContent).toBe('This device');
     expect($$('.site-door__name', map).map((d) => d.textContent)).toEqual(['Model ranking', 'Online voices', 'Listen']);
@@ -632,41 +641,22 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
     ]);
     const pill = map.querySelector('.site-bound__pill')!;
     expect([pill.textContent, pill.className]).toEqual(['Offline. Using your dictionary.', 'site-bound__pill site-rise site-k4']);
-    const listen = $('#privacy .site-door-listen')!;
-    expect(kids(listen.querySelector('.site-strip__line')!)).toEqual([
-      ['Nothing yet.', 'site-strip__empty site-out site-u2'],
-      ['Listening. Ask them to speak now.', 'site-strip__status site-during site-k2 site-u4'],
-      ['What do you need?', 'site-in site-k4'],
-    ]);
-    expect($$('.site-listen__label', listen).map((l) => [l.textContent, l.className])).toEqual([
-      ['Listen', 'site-listen__label site-out site-u1'],
-      ['Stop', 'site-listen__label site-during site-k1 site-u5'],
-      ['Listen', 'site-listen__label site-in site-k5'],
-    ]);
-    expect($$('.site-listen__label', listen).every((l) => l.parentElement!.classList.contains('site-cell'))).toBe(true);
-    expect(listen.querySelector('.site-press-ring')!.className).toBe('site-press-ring site-ring site-k1 site-u2');
-    expect(arrows(listen)).toEqual([
-      ['Their voice', 'site-arrow site-in site-k3'],
-      ['Text', 'site-arrow site-in site-k3'],
-    ]);
-    expect(listen.querySelector('.site-dest')!.textContent).toBe('The browser maker');
+    expect($('#privacy .site-door-ranking, #privacy .site-door-voices, #privacy .site-door-listen')).toBeNull();
   });
 
   it('MS-7.7 every box card starts with a stage holding one data-play drawing', () => {
-    const cards = $$('#conversation .site-bento > .site-card, #access .site-bento > .site-card, #privacy .site-bento > .site-card');
-    expect(cards).toHaveLength(13);
-    // Round 4 (r4-boxes): each section's first card is its lead, with the lead stage (at least stage-l from 600px).
-    for (const id of ['conversation', 'access', 'privacy']) {
+    const cards = $$('#conversation .site-bento > .site-card, #access .site-bento > .site-card, #privacy .site-card--lead');
+    expect(cards).toHaveLength(10);
+    // Round 4 (r4-boxes): each grid's first card is its lead, with the lead stage (at least stage-l from 600px).
+    // Round 5: Privacy's lead (the map) stands alone, then the rows card, which has no stage.
+    expect($('#privacy .site-card--lead')!.firstElementChild!.className).toBe('site-stage site-stage--lead');
+    expect($('#privacy .site-rows-card .site-stage')).toBeNull();
+    for (const id of ['conversation', 'access']) {
       const first = $(`#${id} .site-bento > .site-card`)!;
       expect(first.classList.contains('site-card--lead'), id).toBe(true);
       expect(first.firstElementChild!.className, id).toBe('site-stage site-stage--lead');
       expect($$(`#${id} .site-card--lead`), id).toHaveLength(1);
     }
-    // What model ranking sends is real text after the card's h3 (MS-7.2 exception, round 4); the stage keeps only an
-    // aria-hidden, invisible copy of it, so the drawing keeps the text's room.
-    const ranking = $('#privacy .site-card--sent')!;
-    expect(ranking.querySelector('.site-stage .site-sent--room')!.textContent).toBe(ranking.querySelector(':scope > .site-sent')!.textContent);
-    expect(ranking.querySelector(':scope > .site-sent')!.closest('[aria-hidden]')).toBeNull();
     for (const card of cards) {
       const stage = card.firstElementChild!;
       const name = card.querySelector('h3')!.textContent ?? '';
@@ -724,7 +714,8 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
     };
     // The Results bars and marks have their own test (round 4, PO-1: bars grow, last change by 1,600 ms).
     const roots = $$('[data-play]').filter((r) => !r.closest('#results'));
-    expect(roots).toHaveLength(13 + 3 + 1);
+    // Round 5: 10 box drawings (Privacy keeps its map only), 3 How scenes and the proof figure.
+    expect(roots).toHaveLength(10 + 3 + 1);
     for (const root of roots) {
       const step = stepOf(root);
       expect(step, root.className).toBeGreaterThan(0);
@@ -745,7 +736,6 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
     // Round 4: the rows after each lead card (Conversation and Privacy: one row of three; Access: two rows of two).
     const rows: [string, number[][]][] = [
       ['#conversation .site-bento', [[1, 2, 3]]],
-      ['#privacy .site-bento', [[1, 2, 3]]],
       ['#access .site-bento', [[1, 2], [3, 4]]],
     ];
     for (const [sel, groups] of rows) {
@@ -821,45 +811,21 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
     expect($$(EMBER, $('#access')!).length).toBeGreaterThanOrEqual(9);
   });
 
-  it('MS-7.10 what ranking sends is RANKING_SENT as real text (no count, no provider); the voice lines match the Voices card', () => {
-    // Round 4 (decisions §2 "Boxes"): the list is real text in the card, from rankingSentText() (MS-4.6), drawn at the
-    // top of the stage (MS-7.2 exception); the drawing keeps the switch, its default in words and the arrow out.
+  it('MS-7.10 what ranking sends is RANKING_SENT as real text; the map names no provider and holds no count', () => {
+    // Round 5 (2026-11-17): the list is real text in Model ranking's row, from rankingSentText() (MS-4.6). The ranking
+    // and voice drawings are gone; the map is the one Privacy drawing.
     const p = providerCopy();
-    const sent = $('#privacy .site-card--sent > .site-sent')!;
-    expect(sent.textContent).toBe(`Sent to rank: ${rankingSentText(RANKING_SENT)}. ${RANKING_SENT_ALSO}`);
-    for (const item of RANKING_SENT) expect(sent.textContent!.toLowerCase()).toContain(item.toLowerCase());
-    // No count in the list itself; the conditional sentence after it (RANKING_SENT_ALSO, ADR-007) names "the last 3 things".
-    expect(sent.textContent!.replace(RANKING_SENT_ALSO, '')).not.toMatch(/\d/);
-    expect(sent.textContent).not.toContain(p.service);
-    expect(sent.textContent).not.toContain(p.company);
-    const ranking = $('#privacy .site-door-ranking')!;
-    expect(ranking.classList.contains('site-play--quick')).toBe(true);
-    expect($$('.site-door__row', ranking).map((r) => [r.textContent, r.className])).toEqual([
-      ['Model rankingOff', 'site-door__row site-out site-u1'],
-      ['Model rankingOn', 'site-door__row site-in site-k1'],
-    ]);
-    expect(ranking.querySelector('.site-bound__note')!.textContent).toBe('Off until you turn it on');
-    expect($$('.site-outline', ranking).map((o) => o.className)).toEqual(['site-outline site-ring site-k0 site-u1']);
-    expect($$('.site-arrow', ranking).map((a) => a.className)).toEqual(['site-arrow site-in site-k2']);
-    // The drawing's own words (its invisible copy of the sent line aside) name no provider and hold no count.
-    const own = ranking.cloneNode(true) as Element;
-    own.querySelector('.site-sent--room')!.remove();
-    expect(textOf(own)).not.toMatch(/\d/);
-    expect(textOf(own)).not.toContain(p.service);
-    expect(textOf(own)).not.toContain(p.company);
-    const voices = $('#privacy .site-door-voices')!;
-    expect($$('.site-voice__name', voices).map((n) => n.textContent)).toEqual(['Voice (en, online)', 'Voice (en, on this device)']);
-    expect($$('.site-voice__name .site-voice__check', voices).map((c) => c.className)).toEqual(['site-voice__check site-mark site-k1']);
-    expect($$('.site-voice__line', voices).map((l) => [l.textContent, l.className])).toEqual([
-      ['Sends the text to the browser maker', 'site-voice__line site-in site-k2'],
-      ['Keeps your words on the device', 'site-voice__line site-in site-k1'],
-    ]);
-    expect($$('.site-arrow', voices).map((a) => [a.textContent, a.className])).toEqual([['The text', 'site-arrow site-in site-k2']]);
-    const card = $$('#privacy h3').find((h) => h.textContent === 'Voices')!.closest('.site-card')!;
-    const said = card.querySelector(':scope > p')!.textContent!;
-    expect(said).toContain('keep your words on the device');
-    expect(said).toContain('send the text to the browser maker');
-    expect(textOf(voices)).not.toMatch(/\b(Google|Apple|Chrome|Safari)\b/);
+    const row = $$('#privacy .site-rows > li').find((li) => li.querySelector('.site-rows__key')!.textContent === 'Model ranking')!;
+    const said = row.querySelector('.site-rows__text > p')!.textContent!;
+    for (const item of RANKING_SENT) expect(said.toLowerCase()).toContain(item.toLowerCase());
+    expect(said).toContain(rankingSentText(RANKING_SENT));
+    const map = $('#privacy .site-map')!;
+    expect(textOf(map)).not.toContain(p.service);
+    expect(textOf(map)).not.toContain(p.company);
+    expect(textOf(map)).not.toMatch(/\b(Google|Apple|Chrome|Safari)\b/);
+    const voices = $$('#privacy .site-rows > li').find((li) => li.querySelector('.site-rows__key')!.textContent === 'Online voices')!;
+    expect(voices.textContent).toContain('keep your words on the device');
+    expect(voices.textContent).toContain('send the text to the browser maker');
   });
 
   it('MS-10.9 the box grids: a lead card, then two or three cards a row; the switch card leads Access; no CSS order', () => {
@@ -868,7 +834,6 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
     for (const [id, cls, n] of [
       ['conversation', 'site-grid site-bento site-bento--3', 4],
       ['access', 'site-grid site-bento site-bento--4', 5],
-      ['privacy', 'site-grid site-bento site-bento--3', 4],
     ] as const) {
       const grid = $(`#${id} .site-bento`)!;
       expect(grid.className, id).toBe(cls);
@@ -878,8 +843,10 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
     expect($$('.site-grid--2, .site-grid--boxes, .site-grid--access, .site-card--tall')).toHaveLength(0);
     expect(read(web('components/site/site.css'))).not.toMatch(/\.site-grid--(2|boxes|access|start|hug)\b/);
     expect($$('#access .site-bento > .site-card h3').map((h) => h.textContent)).toEqual(['One or two switches', 'Keyboard', 'Touch', 'Your view', 'Phones, tablets and laptops']);
-    const rowStages = $$('#conversation .site-bento > .site-card:not(.site-card--lead) > .site-stage, #privacy .site-bento > .site-card:not(.site-card--lead) > .site-stage');
-    expect(rowStages).toHaveLength(6);
+    // Round 5: Privacy has no grid (its map, then one card of rows).
+    expect($('#privacy .site-bento')).toBeNull();
+    const rowStages = $$('#conversation .site-bento > .site-card:not(.site-card--lead) > .site-stage');
+    expect(rowStages).toHaveLength(3);
     for (const stage of rowStages) expect(stage.className).toBe('site-stage site-stage--m');
     for (const stage of $$('#access .site-bento > .site-card:not(.site-card--lead) > .site-stage')) expect(stage.className).toBe('site-stage');
   });
@@ -1026,7 +993,8 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
     const outside = $$('*', root).filter((el) => !el.closest('figure') && [...el.classList].some((c) => ROLE.test(c)));
     expect(outside).toHaveLength(4);
     expect(outside.every((el) => el.classList.contains('site-step__lit'))).toBe(true);
-    expect(root.querySelector('.site-proof__more a.nl-btn--secondary.nl-btn--xl')!.getAttribute('href')).toBe('/app');
+    // Round 5: the note ends the layout; no "Open the app" row (the sticky bar carries it).
+    expect(root.querySelector('.site-proof__more a')).toBeNull();
   });
 
   it('MS-8.12 (round 4) How is three steps, each a stage with its scene and a .site-step, and no sticky picture', () => {
@@ -1058,14 +1026,11 @@ describe('drawings (MS-7, MS-9.3, MS-10.5, MS-10.8)', () => {
       expect(li.querySelector('.site-step > h3.site-step__title')).not.toBeNull();
       expect(li.querySelector('.site-step > p.site-step__line')).not.toBeNull();
     });
-    // Drawn buttons are secondary, never primary (MS-1.6). The limits follow the row as one caveat, icon first.
+    // Drawn buttons are secondary, never primary (MS-1.6). Round 5: no caveat after the row (the limits are in #limits).
     const btns = $$('#how .site-drawn-btn');
     expect(btns.map((b) => b.textContent)).toEqual(['SpeakSpeaking', 'Show']);
     for (const btn of btns) expect(btn.classList.contains('nl-btn--secondary') && !btn.classList.contains('nl-btn--primary')).toBe(true);
-    const caveat = $('#how .site-stack > p.site-caveat')!;
-    expect(caveat.textContent).toBe('You need to be able to spell. Ninth Life types words, not symbols. English only for now.');
-    expect(caveat.firstElementChild!.tagName.toLowerCase()).toBe('svg');
-    expect(caveat.firstElementChild!.getAttribute('aria-hidden')).toBe('true');
+    expect($('#how .site-caveat')).toBeNull();
   });
 
   it('MS-7.3 a repeated key press is two rings, the second late', () => {
@@ -1118,16 +1083,16 @@ describe('reveal marks (MS-8.4)', () => {
   const marked = (sel: string) => $$(`${sel} [data-reveal]`).length;
 
   it('MS-8.4 exactly the blocks of design A4 carry data-reveal', () => {
-    expect(marked('#how')).toBe(5);
+    expect(marked('#how')).toBe(4); // round 5: head and the three steps (the caveat left)
     expect(marked('#proof')).toBe(4); // round 4: head, figure, steps, note (the layout is the play root, not a reveal)
     expect(marked('#conversation')).toBe(5);
     expect(marked('#access')).toBe(7);
-    expect(marked('#privacy')).toBe(5);
+    expect(marked('#privacy')).toBe(3); // round 5: head, the map card, the rows card
     expect(marked('#results')).toBe(4);
     expect(marked('#limits')).toBe(3);
     expect(marked('#faq')).toBe(2);
     for (const id of SECTION_IDS.slice(0, -1)) expect($(`#${id} .site-head`)!.hasAttribute('data-reveal')).toBe(true);
-    for (const sel of ['#how .site-how__step', '#how .site-caveat', '.site-proof__more', 'figure.site-proof', '.site-proof-steps', '.site-note', '.site-limits__card', '.site-faq-list']) {
+    for (const sel of ['#how .site-how__step', '.site-rows-card', '.site-proof__more', 'figure.site-proof', '.site-proof-steps', '.site-note', '.site-limits__card', '.site-faq-list']) {
       expect($(sel)!.hasAttribute('data-reveal'), sel).toBe(true);
     }
     for (const sel of ['.site-proof-layout', '.site-limits','.site-how__steps', '.site-stats', '#faq details']) {
@@ -1146,7 +1111,8 @@ describe('reveal marks (MS-8.4)', () => {
     // Round 4 (r4-boxes): the stagger restarts in each row: the lead card alone, then the row's cards 0, 1 (, 2).
     expect(steps('#conversation .site-bento')).toEqual(['0', '0', '1', '2']);
     expect(steps('#access .site-bento')).toEqual(['0', '0', '1', '0', '1']);
-    expect(steps('#privacy .site-bento')).toEqual(['0', '0', '1', '2']);
+    // Round 5: the map card, then the rows card (the head, a sibling, carries none).
+    expect(($$('#privacy .site-stack > .site-card') as HTMLElement[]).map((e) => e.style.getPropertyValue('--reveal-i'))).toEqual(['0', '1']);
     expect(steps('.site-results__grid')).toEqual(['0', '1', '2']); // round 4: the chart card, by source, presses
     expect(steps('.site-limits')).toEqual(['0', '1']); // round 4: the two Good to know cards
     for (const head of $$('.site-head')) expect(head.hasAttribute('style')).toBe(false);
@@ -1276,9 +1242,9 @@ describe('shared primitives and the Night close (round 3, 2026-11-12)', () => {
     expect(read(web('components/site/site.css'))).not.toContain('site-card--line');
     // Round 4: the Good to know cards are feature cards (fill and edge), and the Source section with Credits is gone.
     // Round 4: the Results caveat is a .site-caveat (first, before the numbers), not a note card.
-    // Round 4 (r4-boxes): Privacy's region, retention and log facts are a note card too.
-    expect($$('.site-card--note').map((c) => c.closest('section')!.id)).toEqual(['access', 'privacy']);
-    expect($$('#privacy .site-bento > .site-card').map((c) => c.className)).toEqual(['site-card site-card--lead', 'site-card site-card--sent', 'site-card', 'site-card']);
+    // Round 5: Privacy's note card left (its facts are Model ranking's list); the map leads, then one card of rows.
+    expect($$('.site-card--note').map((c) => c.closest('section')!.id)).toEqual(['access']);
+    expect($$('#privacy .site-stack > .site-card').map((c) => c.className)).toEqual(['site-card site-card--lead', 'site-card site-rows-card']);
   });
 
   it('one brand lockup (.nl-brand) in the bar and the footer', () => {
@@ -1289,23 +1255,28 @@ describe('shared primitives and the Night close (round 3, 2026-11-12)', () => {
 });
 
 describe('lower sections (round 3, 2026-11-12)', () => {
-  it('MS-3.1 bands still alternate ground and surface with Results after Proof; #start is the Night close', () => {
+  it('MS-3.1 bands still alternate ground and surface in the round-5 order; #start is the Night close', () => {
     const bands = $$('main > section').map((s) => (s.classList.contains('site-night') ? 'night' : s.classList.contains('site-band--surface') ? 'surface' : 'ground'));
     const want = SECTION_IDS.map((_, i) => (i === SECTION_IDS.length - 1 ? 'night' : i % 2 === 0 ? 'ground' : 'surface'));
-    // Conversation became a surface band in the same round (lead, 2026-11-12).
+    // Round 5 (2026-11-17): the new order keeps the alternation: Proof, Access, Results and the FAQ are surface bands.
     expect(bands).toEqual(want);
-    expect($('#conversation')!.className).toBe('site-band site-band--surface');
+    expect($('#conversation')!.className).toBe('site-band');
+    expect($('#results')!.className).toBe('site-band site-band--surface');
   });
 
   it('Results (round 4): the caveat first, then the chart, the two cards, the model status rows and the links', () => {
     const r = getResults()!;
     const stack = $('#results .site-stack')!;
     const kids = [...stack.children].map((c) => c.className || c.tagName.toLowerCase());
-    expect(kids).toEqual(['site-head', 'site-caveat site-results__caveat', 'site-results__grid', 'site-results__models', 'site-links', 'site-cta']);
+    // Round 5: no closing "Open the app" row.
+    expect(kids).toEqual(['site-head', 'site-caveat site-results__caveat', 'site-results__grid', 'site-results__models', 'site-links']);
     const caveat = $('#results .site-results__caveat')!;
     expect(caveat.firstElementChild!.matches('svg.nl-icon[aria-hidden="true"]')).toBe(true);
     expect(caveat.querySelector('strong')!.textContent).toBe('These figures come from a simulated typist, not from studies with people.');
-    expect(textOf(caveat)).toContain('The app has not yet been tested with people who use AAC.');
+    // Round 5: the people-who-use-AAC limit is a Testing so far row in Good to know, right after this section.
+    expect(textOf(caveat)).not.toContain('tested with people who use AAC');
+    expect(follows($('#results')!, $('#limits')!)).toBe(true);
+    expect($('#results')!.nextElementSibling!.id).toBe('limits');
     // Each measure: Ninth Life offline, then word frequency alone, then what it counts (RESULTS.md summary rows).
     const groups = $$('#results .site-stats__group').map((g) => [...g.children].map((c) => collapse(c.textContent ?? '')));
     const items = r.items.toLocaleString('en-US');
@@ -1375,21 +1346,22 @@ describe('lower sections (round 3, 2026-11-12)', () => {
     expect(css).toMatch(/@keyframes site-grow \{ from \{ transform: scaleX\(0\); \} to \{ transform: none; \} \}/);
   });
 
-  it('FAQ: the questions are faqItems(), and the list ends with "Something else? Ask on GitHub"', () => {
+  it('FAQ: the questions are faqItems(), and the head says "Something else? Ask on GitHub"', () => {
     const shown = $$('#faq details').map((d) => [d.querySelector('summary')!.textContent, d.querySelector('p')!.textContent]);
     expect(shown).toEqual(faqItems().map(([q, a]) => [q, a]));
-    const ranking = faqItems().find(([q]) => q === 'What does model ranking send, and to whom?')!;
-    expect(ranking[1].toLowerCase()).toContain(rankingSentText().toLowerCase());
-    const more = $('#faq .site-faq-list > p.site-faq__more')!;
+    // Round 5: only the questions no section answers.
+    expect(faqItems().map(([q]) => q)).toEqual(['Is it free?', 'Do I need to install anything?', 'What if the sentence I meant is not first?', 'Where are my saved phrases?', 'Is it a medical device?']);
+    const more = $('#faq .site-head > p.site-faq__more')!;
     expect(collapse(more.textContent ?? '')).toBe('Something else? Ask on GitHub');
     expect(more.querySelector('a')!.getAttribute('href')).toBe(ISSUES_URL);
   });
 
   it('Access has a one-line lead; the box stages hug their drawings on phones (W1; round 4: all three sections)', () => {
     expect($('#access .site-lead')!.textContent).toBe('Keyboard, touch or one or two switches, on the screen you have.');
-    expect($$('.site-bento').map((g) => g.closest('section')!.id)).toEqual(['conversation', 'access', 'privacy']);
+    expect($$('.site-bento').map((g) => g.closest('section')!.id)).toEqual(['conversation', 'access']);
     const css = read(web('components/site/site.css'));
-    expect(css).toMatch(/@media \(max-width: 599px\) \{\s*\.site-bento \.site-stage \{ min-block-size: 0; padding-block: var\(--space-3\); \}/);
+    // Round 5: Privacy's map card, outside a grid, hugs its drawing too.
+    expect(css).toMatch(/@media \(max-width: 599px\) \{\s*:is\(\.site-bento, \.site-card--lead\) \.site-stage \{ min-block-size: 0; padding-block: var\(--space-3\); \}/);
   });
 
   it('round 4: the Source section is gone and its facts live in the close and the footer; the maker is not named (W6)', () => {

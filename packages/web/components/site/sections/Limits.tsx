@@ -7,24 +7,25 @@
  * never colour alone, and a visually hidden colon so it reads "Checked on real phones and tablets: Not yet". Each
  * limit is also said beside the claim it qualifies (.site-caveat in How, Results and Access; MS-4.5a). What ranking
  * sends is rankingSentText(), the list Privacy, the FAQ, /about and /llms.txt use (MS-4.6). /llms.txt reads LIMITS.
+ *
+ * Round 5 (2026-11-17): the one home of the limits. The Model ranking row left (Privacy says what ranking sends), and
+ * the limits are no longer repeated as caveats in How, Access and Results: each is said once, here.
  */
 import type { CSSProperties } from 'react';
 import { Icon } from '@/components/Icon';
-import { RANKING_SENT_ALSO, rankingSentText } from '@/lib/rankingProvider';
-import { SiteIcon, external, globe, toggle } from '../icons';
+import { SiteIcon, external, globe } from '../icons';
 import { ISSUES_URL } from '../site-data';
 
 /** The not-a-replacement limit, first, as the lead (round 4; it was the "What it is not" item, "It" spelled out). */
 export const LIMITS_LEAD = 'Ninth Life is not a replacement for an AAC device, a speech-language assessment or professional advice.';
 
-type RowIcon = 'spell' | 'globe' | 'voice' | 'toggle';
+type RowIcon = 'spell' | 'globe' | 'voice';
 
 /** "Before you start": a key and the approved sentence, word for word (content.md §8). */
 export const LIMIT_ROWS: readonly { key: string; icon: RowIcon; text: string }[] = [
   { key: 'Spelling', icon: 'spell', text: 'You need to be able to spell. Ninth Life types words, not symbols, so it does not suit someone who cannot spell yet.' },
   { key: 'Language', icon: 'globe', text: 'English only for now.' },
   { key: 'Voices', icon: 'voice', text: 'Voices depend on your device and browser.' },
-  { key: 'Model ranking', icon: 'toggle', text: `With model ranking on, ${rankingSentText()} leave your device, as described under Privacy. ${RANKING_SENT_ALSO}` },
 ];
 
 /** "Testing so far": the two old "Not tested yet" sentences as checks with a state (the same facts). */
@@ -44,7 +45,6 @@ const reveal = (i: number) => ({ '--reveal-i': i }) as CSSProperties;
 /** App icons from components/Icon.tsx, website-only ones from ../icons (round 4, decisions §1.5). */
 function RowIconFor({ name }: { name: RowIcon }) {
   if (name === 'globe') return <SiteIcon d={globe} />;
-  if (name === 'toggle') return <SiteIcon d={toggle} />;
   return <Icon name={name} />;
 }
 
@@ -61,14 +61,14 @@ export function Limits() {
         <div className="site-limits">
           <div className="site-card site-limits__card" data-reveal="" style={reveal(0)}>
             <h3 className="site-h3">Before you start</h3>
-            <ul className="site-limits__rows">
+            <ul className="site-rows">
               {LIMIT_ROWS.map((r) => (
                 <li key={r.key}>
                   <span className="site-tile">
                     <RowIconFor name={r.icon} />
                   </span>
-                  <span className="site-limits__key">{r.key}</span>
-                  <p className="site-limits__text">{r.text}</p>
+                  <span className="site-rows__key">{r.key}</span>
+                  <p className="site-rows__text">{r.text}</p>
                 </li>
               ))}
             </ul>

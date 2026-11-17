@@ -478,16 +478,18 @@ describe('site.css round 2 (played drawings, stages and grids)', () => {
     expect(css).toContain('.site-letter__box::before { content: attr(data-l); }');
   });
 
-  it('MS-9.3 in forced colours every drawn ring and box keeps an outline and the toggle knob stays visible', () => {
+  it('MS-9.3 in forced colours every drawn ring and box keeps an outline', () => {
     // Round 4: a section may keep its forced-colours rules in its own block (Results), so read every block.
     const forced = atBlocks(css, /^@media \(forced-colors: active\)$/);
     expect(forced.length).toBeGreaterThanOrEqual(1);
     const body = forced.map((b) => b.body).join('\n');
-    for (const sel of ['.site-press-ring', '.site-key-ring', '.site-key::after', '.site-scan__press', '.site-outline', '.site-proof__box', '.site-proof__spot', '.site-letter__box', '.site-keycap', '.site-step__num', '.site-scan__ring']) {
+    for (const sel of ['.site-press-ring', '.site-key-ring', '.site-key::after', '.site-scan__press', '.site-proof__box', '.site-proof__spot', '.site-letter__box', '.site-keycap', '.site-step__num', '.site-scan__ring']) {
       expect(body).toMatch(new RegExp(`${sel.replace(/[.*+?^${}()|[\]\\:]/g, '\\$&')}[^{]*\\{[^}]*outline:`));
     }
-    expect(body).toContain('.site-toggle, .site-toggle__knob { forced-color-adjust: none; }');
-    expect(body).toContain('.site-toggle--on .site-toggle__knob { background: Canvas; }');
+    // Round 5 (2026-11-17): the drawn ranking switch (.site-toggle) and its press outline (.site-outline) left with the
+    // Model ranking door drawing; the sticky bar keeps a system-colour edge.
+    expect(body).not.toMatch(/\.site-(toggle|outline)\b/);
+    expect(body).toContain('.site-barline { background: Canvas; border-bottom-color: CanvasText; }');
   });
 
   it('MS-10.5 caption (14px) is used only by the footer caption, never inside a drawing (review R3-P2)', () => {

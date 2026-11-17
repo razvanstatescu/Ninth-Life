@@ -576,14 +576,18 @@ try {
         beside: fig.left >= steps.right && fig.left >= more.right && Math.abs(fig.top - steps.top) < 1 && more.top > steps.top,
         stacked: steps.top >= fig.bottom && more.top >= steps.bottom,
       };
-      const cta = document.querySelector('#proof .site-cta > a.nl-btn--secondary.nl-btn--xl');
-      // Round 3: Results, Access (R3-P10, 2026-11-13) and (verifier, 2026-11-13) Privacy end on a 64px secondary
-      // "Open the app" row.
-      const mids = ['results', 'access', 'privacy'].map((id) => {
-        const a = document.querySelector(`#${id} .site-stack > .site-cta:last-child > a.nl-btn--secondary.nl-btn--xl[href="/app"]`);
-        return a ? Math.round(a.getBoundingClientRect().height) : 0;
-      });
-      return { perRow: { conversation: perRow('conversation'), access: perRow('access'), privacy: perRow('privacy') }, spare, switchRow, vw: innerWidth, ordered, dense, cards, how, proof, cta: cta ? cta.getBoundingClientRect().height : 0, mids };
+      // Round 5 (2026-11-17): no mid-page "Open the app" rows; the bar stays at the top of the window instead, with its
+      // secondary button in view at every scroll position.
+      const mids = [...document.querySelectorAll('main a.nl-btn')].filter((a) => !a.closest('header, #start')).length;
+      const bar = document.querySelector('.site-barline');
+      const barBtn = bar.querySelector('a.nl-btn[href="/app"]');
+      scrollTo(0, document.documentElement.scrollHeight);
+      const fixedAtBottom = Math.round(bar.getBoundingClientRect().top) === 0 && barBtn.getBoundingClientRect().bottom <= innerHeight;
+      scrollTo(0, 0);
+      // Privacy (round 5): the map card, then one card of rows (three ways out), no grid.
+      const privacy = [...document.querySelectorAll('#privacy .site-stack > .site-card')].map((c) => c.className);
+      const ways = document.querySelectorAll('#privacy .site-rows > li').length;
+      return { perRow: { conversation: perRow('conversation'), access: perRow('access') }, spare, switchRow, vw: innerWidth, ordered, dense, cards, how, proof, mids, fixedAtBottom, privacy, ways };
     });
     {
       const row = new Set(l.how.tops).size === 1;
@@ -594,17 +598,21 @@ try {
       );
     }
     check(
-      l.proof.underHead && (width >= 1024 ? l.proof.beside : l.proof.stacked) && l.cta === 64,
-      `${label}: Proof shows its head, then ${width >= 1024 ? 'the steps and the note beside the figure' : 'the figure, the steps and the note in one column'}, and its 64px button in a .site-cta row (round 4, MS-10.9)`,
+      l.proof.underHead && (width >= 1024 ? l.proof.beside : l.proof.stacked),
+      `${label}: Proof shows its head, then ${width >= 1024 ? 'the steps and the note beside the figure' : 'the figure, the steps and the note in one column'} (round 4, MS-10.9)`,
     );
     check(
-      l.mids.length === 3 && l.mids.every((h) => h === 64),
-      `${label}: Results, Access and Privacy each end on a 64px secondary "Open the app" .site-cta row (${l.mids.join('/')}px; round 3, R3-P10, MS-1.6, MS-9.1)`,
+      l.mids === 0 && l.fixedAtBottom,
+      `${label}: no mid-page "Open the app" rows (${l.mids}); the bar and its button stay in view at the end of the page (round 5, MS-1.6)`,
+    );
+    check(
+      l.privacy.join('|') === 'site-card site-card--lead|site-card site-rows-card' && l.ways === 3,
+      `${label}: Privacy shows its map card, then one card with the 3 ways out as rows (${l.privacy.join(' + ')}; round 5)`,
     );
     {
       // Round 4 (MS-10.9): the lead card alone, then 3 cards a row (Conversation, Privacy) from 1024px or 2 + 1 below,
       // and Access 2 + 2; one card a row under 648px.
-      const want = l.vw >= 1024 ? { conversation: '1 3', access: '1 2 2', privacy: '1 3' } : l.vw >= 648 ? { conversation: '1 2 1', access: '1 2 2', privacy: '1 2 1' } : null;
+      const want = l.vw >= 1024 ? { conversation: '1 3', access: '1 2 2' } : l.vw >= 648 ? { conversation: '1 2 1', access: '1 2 2' } : null;
       for (const [id, rows] of Object.entries(l.perRow)) {
         const ok = want ? rows.join(' ') === want[id] : rows.every((n) => n === 1);
         check(ok, `${label}: ${id} shows its lead card, then ${want ? want[id].slice(2) : 'one card a row'} (${rows.join(' + ')}, MS-10.9)`);

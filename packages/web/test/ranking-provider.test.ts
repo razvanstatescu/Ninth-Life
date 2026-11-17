@@ -7,16 +7,6 @@ import { RANKING_SENT, rankingSentText } from '../lib/rankingProvider';
 
 const CONTENT = readFileSync(resolve(__dirname, '../../../.kiro/specs/marketing-site/content.md'), 'utf8');
 
-/** The index of each needle in text, in order, or -1 for one that is missing or out of order. */
-function positions(text: string, needles: readonly string[]): number[] {
-  let from = 0;
-  return needles.map((n) => {
-    const i = text.indexOf(n, from);
-    if (i >= 0) from = i + n.length;
-    return i;
-  });
-}
-
 describe('RANKING_SENT', () => {
   it('MS-7.10 RANKING_SENT maps to codes, lattice, beams and context.partner', () => {
     expect(RANKING_SENT).toEqual([
@@ -36,17 +26,12 @@ describe('RANKING_SENT', () => {
     // v, lang, mode and k carry no typed data and are not listed.
     expect(Object.keys(req!).sort()).toEqual(['beams', 'codes', 'context', 'k', 'lang', 'lattice', 'mode', 'v']);
 
-    // The items appear in this order in the Privacy card (§6) and the §9 answer. The card says "its own best
-    // guesses", so the owner of the guesses is not compared there. Round 4 (r4-boxes): the card's list is real text
-    // drawn in its stage ("Sent to rank: {rankingSentText()}."), so the whole §6 entry is read, not only its first line.
-    const card = CONTENT.match(/^- `h3` \*\*Model ranking, if you turn it on\*\*[\s\S]*?(?=\n- |\n\n)/m)?.[0].toLowerCase();
-    const answer = CONTENT.match(/^- \*\*What does model ranking send, and to whom\?\*\*.*$/m)?.[0].toLowerCase();
-    expect(card).toBeDefined();
-    expect(answer).toBeDefined();
-    const lower = RANKING_SENT.map((s) => s.toLowerCase());
-    for (const p of positions(answer!, lower)) expect(p).toBeGreaterThanOrEqual(0);
-    const cardNeedles = lower.map((s) => s.replace("ninth life's ", ''));
-    for (const p of positions(card!, cardNeedles)) expect(p).toBeGreaterThanOrEqual(0);
+    // Round 5 (2026-11-17): content.md §6 lists what ranking sends once, in Privacy's Model ranking row, written by
+    // rankingSentText() (the clause in RANKING_SENT order, tested below); the §9 answer that repeated it is gone.
+    const row = CONTENT.match(/^ {2}- \*\*Model ranking\*\* \(toggle icon\): .*$/m)?.[0];
+    expect(row).toBeDefined();
+    expect(row).toContain('sends {rankingSentText()} to {provider.service}');
+    expect(CONTENT).not.toMatch(/^- \*\*What does model ranking send, and to whom\?\*\*/m);
   });
 });
 

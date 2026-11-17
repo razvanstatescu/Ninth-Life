@@ -5,6 +5,7 @@
  * the right across both rows (no order, MS-10.9). The steps are the shared .site-step. Their numbers are the only
  * parts outside the figure that move: each number's key layer shows while its step plays, on the figure's clock (one
  * motion-sweep step = 240 ms). The step text never waits for the play.
+ * Round 5 (2026-11-17): no "Open the app" row; the sticky bar carries it on every screen.
  */
 import { ProofCheck } from '../pictures/ProofCheck';
 import { play, role, type KStep, type UStep } from '../pictures/roles';
@@ -43,11 +44,6 @@ export function Proof({ proof }: { proof: ProofExample }) {
           </ol>
           <div className="site-proof__more" data-reveal="">
             <p>With model ranking on, the check runs on the server and again in your browser. You decide what is said: only a press of Speak speaks.</p>
-            <div className="site-cta">
-              <a className="nl-btn nl-btn--secondary nl-btn--xl" href="/app">
-                Open the app
-              </a>
-            </div>
           </div>
         </div>
       </div>

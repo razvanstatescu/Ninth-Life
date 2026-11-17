@@ -76,6 +76,17 @@ MS-7.4 and MS-7.5 (the drawings and their finished frames; amends W1 for Show an
 MS-7.7 (a lead card's stage, equal stages per row, all three sections hug on phones), MS-7.8 (the switch types the
 demo's first key), MS-7.10 (the ranking and voice drawings), MS-8.11 (their column leads, at most 2) and MS-10.9 (the
 box grids; amends V37 and R3-P1), and added MS-12.4 (the "only three features" sentence matches the code's requests).
+Round 5 (2026-11-17, the product owner's "the website feels quite long and messy … see if the same info doesn't get
+explained in multiple sections … consolidate that", plus a details pass on spacing, borders and consistency): each fact
+is said once. It changed MS-1.6 and MS-9.1 (the bar is fixed at the top of the window on every website page, so the
+mid-page "Open the app" rows after Proof, Results, Access and Privacy are gone; the hero and the close keep the only
+ember fills), MS-3.1 (order: How, Proof, Conversation, Access, Privacy, Results, Good to know, Questions, the close; the
+bands still alternate), MS-4.5 (Good to know keeps three limits and three checks; its Model ranking row left) and
+MS-4.5a (amended: each limit is said once, in Good to know, which now follows Results; the caveats in How and Access
+and the Results caveat's people sentence are gone), MS-4.6 and MS-7.10 (what ranking sends is said once, in Privacy's
+Model ranking row; the FAQ answer and the door drawings that repeated it are gone), MS-7.4, MS-7.7 and MS-10.9
+(Privacy is its map, then one card of rows; no grid), MS-3.4 (five questions, the ones no section answers) and MS-9.3
+(no drawn toggle in forced colours). Content: content.md "Round 5"; design: design.md "Round 5: one place for each fact".
 
 Requirement IDs carry the `MS-` prefix so tests can name them without clashing with web-ui's numbers
 (`it('MS-6.3 ...')`).

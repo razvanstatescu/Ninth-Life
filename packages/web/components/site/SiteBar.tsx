@@ -10,22 +10,26 @@
  */
 export function SiteBar({ home = '' }: { home?: '' | '/' }) {
   return (
-    <div className="site-wrap site-bar">
-      <a className="nl-brand" href={home ? '/' : '#top'}>
-        {/* Below 48px the favicon variant is used (brand book, Logo). */}
-        <img src="/icons/favicon.svg" alt="" width={44} height={44} />
-        <span className="nl-brand__name">Ninth Life</span>
-      </a>
-      <nav aria-label="Main" className="site-nav">
-        <a href={`${home}#how`}>How it works</a>
-        <a href={`${home}#proof`}>Proof check</a>
-        <a href={`${home}#access`}>Ways to type</a>
-        <a href={`${home}#privacy`}>Privacy</a>
-        <a href={`${home}#faq`}>Questions</a>
-      </nav>
-      <a className="nl-btn nl-btn--secondary" href="/app">
-        Open the app
-      </a>
+    // Round 5 (2026-11-17): the bar stays at the top of the window (.site-barline, fixed, Night in both themes), so
+    // "Open the app" is one press away on every screen and the sections no longer end on their own button rows.
+    <div className="site-barline" data-theme="night">
+      <div className="site-wrap site-bar">
+        <a className="nl-brand" href={home ? '/' : '#top'}>
+          {/* Below 48px the favicon variant is used (brand book, Logo). */}
+          <img src="/icons/favicon.svg" alt="" width={44} height={44} />
+          <span className="nl-brand__name">Ninth Life</span>
+        </a>
+        <nav aria-label="Main" className="site-nav">
+          <a href={`${home}#how`}>How it works</a>
+          <a href={`${home}#proof`}>Proof check</a>
+          <a href={`${home}#access`}>Ways to type</a>
+          <a href={`${home}#privacy`}>Privacy</a>
+          <a href={`${home}#faq`}>Questions</a>
+        </nav>
+        <a className="nl-btn nl-btn--secondary" href="/app">
+          Open the app
+        </a>
+      </div>
     </div>
   );
 }

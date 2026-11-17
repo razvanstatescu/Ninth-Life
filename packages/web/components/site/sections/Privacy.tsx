@@ -16,49 +16,38 @@
  * /api/decode only with model ranking on (lib/decodeClient.ts), a word pack's link (the link only, lib/vocabPack.ts),
  * the service worker (same-origin files; decode network-only), and the browser's own speech services (online voices,
  * Listen). Nothing else sends words or speech.
+ * Round 5 (2026-11-17): the map leads, then one card lists the three ways out as rows (icon tile, name, what goes and
+ * where), in Good to know's row look. It replaces the three door cards, which repeated the map with their own outlines,
+ * and the separate note card: the region, retention and log lines sit under Model ranking, the links close the card.
+ * This is the one place that lists what ranking sends (Good to know and the FAQ no longer repeat it). No closing
+ * "Open the app" row: the sticky bar carries it.
  */
 import type { CSSProperties, ReactNode } from 'react';
 import { Icon } from '@/components/Icon';
 import { RANKING_SENT_ALSO, providerCopy, rankingSentText } from '@/lib/rankingProvider';
-import { SiteIcon, chart, clock, cloud, external, globe, toggle } from '../icons';
-import { DeviceMap, ListenDoor, RankingDoor, VoiceDoor } from '../pictures/Privacy';
+import { SiteIcon, external, toggle } from '../icons';
+import { DeviceMap } from '../pictures/Privacy';
 import { PRIVACY_RULES_URL, RANKING_REQUEST_URL, finishedKeys, finishedSentence, getDemoData } from '../site-data';
 
-/** The reveal stagger restarts in each row: the lead alone, then the row of three (0, 1, 2). */
-const reveal = (i: number) => ({ '--reveal-i': Math.min(i, 2) }) as CSSProperties;
+const reveal = (i: number) => ({ '--reveal-i': i }) as CSSProperties;
 
-/** What model ranking sends, as one sentence in a box with a cloud (real text; the drawing keeps an aria-hidden copy). */
-function Sent() {
+/** One way out: its icon tile, its name, then what it sends and to whom (the .site-rows look of Good to know). */
+function Way({ icon, name, children }: { icon: ReactNode; name: string; children: ReactNode }) {
   return (
-    <>
-      <SiteIcon d={cloud} />
-      <span>
-        <span className="site-sent__label">Sent to rank:</span> {rankingSentText()}. {RANKING_SENT_ALSO}
-      </span>
-    </>
-  );
-}
-
-function Card({ i, lead, className, drawing, icon, title, children }: { i: number; lead?: boolean; className?: string; drawing: ReactNode; icon: ReactNode; title: string; children: ReactNode }) {
-  return (
-    <div className={`site-card${lead ? ' site-card--lead' : ''}${className ? ` ${className}` : ''}`} data-reveal="" style={reveal(i)}>
-      <div className={lead ? 'site-stage site-stage--lead' : 'site-stage site-stage--m'} aria-hidden="true">
-        {drawing}
-      </div>
-      <h3 className="site-h3">
-        {icon}
-        {title}
-      </h3>
-      {children}
-    </div>
+    <li>
+      <span className="site-tile">{icon}</span>
+      <h4 className="site-rows__key">{name}</h4>
+      <div className="site-rows__text">{children}</div>
+    </li>
   );
 }
 
 export function Privacy() {
   const provider = providerCopy();
   const demo = getDemoData();
+  const sent = rankingSentText();
   return (
-    <section id="privacy" className="site-band site-band--surface" aria-labelledby="privacy-title">
+    <section id="privacy" className="site-band" aria-labelledby="privacy-title">
       <div className="site-wrap site-stack">
         <div className="site-head" data-reveal="">
           <h2 id="privacy-title" className="site-h2">
@@ -68,48 +57,39 @@ export function Privacy() {
             Typing, the dictionary and the proof check run in your browser. After one visit the app works with no connection. No account, no cookies, no analytics, no ads.
           </p>
         </div>
-        <div className="site-grid site-bento site-bento--3">
-          <Card i={0} lead drawing={<DeviceMap sentence={finishedSentence(demo)} keys={finishedKeys(demo)} />} icon={<Icon name="offline" />} title="On your device">
-            <p>Your saved phrases and My words are kept in your browser. Only three features send words or speech off this device: model ranking, online voices and Listen.</p>
-          </Card>
-          <Card i={0} className="site-card--sent" drawing={<RankingDoor sent={<Sent />} />} icon={<SiteIcon d={toggle} />} title="Model ranking, if you turn it on">
-            <p className="site-sent">
-              <Sent />
-            </p>
-            <p>It is off until you turn it on in Settings. Then Ninth Life sends these to {provider.service} to rank the sentences.</p>
-          </Card>
-          <Card i={1} drawing={<VoiceDoor />} icon={<Icon name="voice" />} title="Voices">
-            <p>Voices marked &quot;on this device&quot; keep your words on the device; online voices send the text to the browser maker.</p>
-          </Card>
-          <Card i={2} drawing={<ListenDoor />} icon={<Icon name="mic" />} title="Listen">
-            <p>
-              The other person&apos;s voice may be sent to the browser maker (Google in Chrome, Apple in Safari) to turn it into text, unless the browser can do it on this device. Ninth Life never receives or keeps the audio.
-            </p>
-          </Card>
+        <div className="site-card site-card--lead" data-reveal="" style={reveal(0)}>
+          <div className="site-stage site-stage--lead" aria-hidden="true">
+            <DeviceMap sentence={finishedSentence(demo)} keys={finishedKeys(demo)} />
+          </div>
+          <h3 className="site-h3">
+            <Icon name="offline" />
+            On your device
+          </h3>
+          <p>Your saved phrases and My words are kept in your browser. Only three features send words or speech off this device: model ranking, online voices and Listen.</p>
         </div>
-        <div className="site-card site-card--note site-privacy-facts">
-          <h3 className="site-h3">What happens to what ranking sends</h3>
-          <ul className="site-facts">
-            <li className="site-fact">
-              <span className="site-tile">
-                <SiteIcon d={globe} />
-              </span>
-              <span>{provider.region}</span>
-            </li>
-            <li className="site-fact">
-              <span className="site-tile">
-                <SiteIcon d={clock} />
-              </span>
-              <span>{provider.retention}</span>
-            </li>
-            <li className="site-fact">
-              <span className="site-tile">
-                <SiteIcon d={chart} />
-              </span>
-              <span>Our server logs timings and counts, never your words.</span>
-            </li>
+        <div className="site-card site-rows-card" data-reveal="" style={reveal(1)}>
+          <h3 className="site-h3">What leaves this device, and only when you use it</h3>
+          <ul className="site-rows">
+            <Way icon={<SiteIcon d={toggle} />} name="Model ranking">
+              <p>
+                Off until you turn it on in Settings. Then Ninth Life sends {sent} to {provider.service} to rank the sentences. {RANKING_SENT_ALSO}
+              </p>
+              <ul className="site-rows__facts">
+                <li>{provider.region}</li>
+                <li>{provider.retention}</li>
+                <li>Our server logs timings and counts, never your words.</li>
+              </ul>
+            </Way>
+            <Way icon={<Icon name="voice" />} name="Online voices">
+              <p>Voices marked &quot;on this device&quot; keep your words on the device; online voices send the text to the browser maker.</p>
+            </Way>
+            <Way icon={<Icon name="mic" />} name="Listen">
+              <p>
+                The other person&apos;s voice may be sent to the browser maker (Google in Chrome, Apple in Safari) to turn it into text, unless the browser can do it on this device. Ninth Life never receives or keeps the audio.
+              </p>
+            </Way>
           </ul>
-          <p>Check it yourself: the code is open, and your browser&apos;s storage shows no cookies.</p>
+          <p className="site-rows-card__check">Check it yourself: the code is open, and your browser&apos;s storage shows no cookies.</p>
           <p className="site-links">
             <a className="site-go site-go--out" href={PRIVACY_RULES_URL}>
               The privacy rules the code follows
@@ -120,11 +100,6 @@ export function Privacy() {
               <SiteIcon d={external} />
             </a>
           </p>
-        </div>
-        <div className="site-cta">
-          <a className="nl-btn nl-btn--secondary nl-btn--xl" href="/app">
-            Open the app
-          </a>
         </div>
       </div>
     </section>

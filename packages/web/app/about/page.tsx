@@ -69,12 +69,12 @@ export default function AboutPage() {
             </h2>
             <p>
               Before anything is spoken, each word is turned back into keys and compared with the keys on screen. A word that does not match is dropped and never
-              spoken. A word you finish from the word row brings its own keys; the screen marks the ones you did not press. Fix a word lets you change any word. A word one key away changes that word's keys, and the screen marks the key that changed. Nothing is changed without your press. The proof panel shows each word with its keys: a check means the word matches your keys and is in the dictionary or in My words, a plus means it
+              spoken. A word you finish from the word row brings its own keys; the screen marks the ones you did not press. Fix a word lets you change any word. A word one key away changes that word's keys, and the screen marks the key that changed. Nothing is changed without your press. Check the words shows each word with its keys: a check means the word matches your keys and is in the dictionary or in My words, a plus means it
               matches but is not in the dictionary or My words yet (add it to My words), and a struck-through word was suggested but does not match.
             </p>
             <p>
-              Model ranking is off by default. When you turn it on, {rankingSentText()} are sent to {provider.service}, which suggests the order of the sentences.
-              {RANKING_SENT_ALSO}
+              Model ranking is off by default. When you turn it on, {rankingSentText()} are sent to {provider.service}, which suggests the order of the sentences.{' '}
+              {RANKING_SENT_ALSO}{' '}
               It cannot add words: everything it suggests goes through the same check, and nothing is spoken until you press Speak.
             </p>
           </section>

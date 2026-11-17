@@ -153,6 +153,9 @@ html:has(> body .site) { scroll-padding-bottom: var(--space-2); }
 .site-fact { display: flex; align-items: center; gap: var(--space-4); }
 /* A key drawn outside a keypad sits on its panel, never straight on a stage: in Night the stage is plum, the key's
    own fill. One panel may hold several keys, bottom-aligned (Touch). The panel's lift is the drawings' one shadow. */
+/* Round 5 (2026-11-17): inside a stage the lift is short and soft. Night's own lift (16px down, 40px blur, 55% black)
+   spread a dark smudge around every drawn keypad on the plum stage; Day's was already light. */
+.site-stage { --lift: 0 6px 16px color-mix(in srgb, var(--plum) 14%, transparent); }
 .site-key-panel {
   display: inline-flex; align-items: flex-end; gap: var(--space-2); padding: var(--space-2);
   border-radius: calc(var(--radius-key) + var(--space-2)); background: var(--panel); box-shadow: var(--lift);
@@ -165,6 +168,20 @@ html:has(> body .site) { scroll-padding-bottom: var(--space-2); }
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-3);
   padding-top: var(--space-3); padding-bottom: var(--space-3);
 }
+/* Round 5 (2026-11-17): the bar stays at the top of the window on every website page, Night in both themes, over a
+   translucent night fill so the sky shows through at the top of the page. Its header keeps the bar's height as
+   padding, and in-page links land below it. One row at every width (W1), so its height is one target and its padding. */
+:root { --site-bar-h: calc(var(--target-min) + var(--space-3) * 2); }
+:root:has(.site-barline) { scroll-padding-top: calc(var(--site-bar-h) + var(--space-4)); }
+.site-barline {
+  position: fixed; inset: 0 0 auto; z-index: 20; color: var(--ink);
+  background: color-mix(in srgb, var(--night) 88%, transparent);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border-bottom: var(--line-width) solid color-mix(in srgb, var(--line) 60%, transparent);
+}
+header:has(> .site-barline) { padding-top: var(--site-bar-h); }
+@media (forced-colors: active) { .site-barline { background: Canvas; border-bottom-color: CanvasText; } }
+@media print { .site-barline { position: static; } header:has(> .site-barline) { padding-top: 0; } }
 
 /* Round 3 (2026-11-12): the h1 is the promise at the display scale (36-56px); "Ninth Life" is the small
    brand line with the icon above it (icon 48px on phones, 64px from 600px, MS-6.1). Phones keep the copy short and
@@ -485,12 +502,12 @@ html:has(> body .site) { scroll-padding-bottom: var(--space-2); }
  * for pieces, the key panel), a still arrow from each cause to its result, ember only for a press. A drawing keeps
  * space-4 clear of its stage's sides (space-2 under 360px); the two lead drawings may grow wider.
  */
-.site-turn, .site-table, .site-save, .site-spell, .site-map, .site-door-voices, .site-door-listen {
+.site-turn, .site-table, .site-save, .site-spell, .site-map {
   inline-size: calc(100% - var(--space-8)); max-inline-size: calc(var(--space-24) * 3 + var(--space-12));
 }
 .site-turn, .site-map { max-inline-size: calc(var(--space-24) * 5 + var(--space-12)); }
 @media (max-width: 359px) {
-  .site-turn, .site-table, .site-save, .site-spell, .site-map, .site-door-voices, .site-door-listen { inline-size: calc(100% - var(--space-4)); }
+  .site-turn, .site-table, .site-save, .site-spell, .site-map { inline-size: calc(100% - var(--space-4)); }
 }
 /* The stage's own fill, for words set on a line that crosses it (the device's name). */
 .site-stage { --site-stage-fill: var(--surface-sunken); }
@@ -503,7 +520,6 @@ html:has(> body .site) { scroll-padding-bottom: var(--space-2); }
 /* An arrow from a cause to its result (a still SiteIcon turn), line-strong like any drawn edge, with its label. */
 .site-arrow { display: flex; align-items: center; justify-content: center; gap: var(--space-2); color: var(--line-strong); }
 .site-arrow__label { font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink); }
-.site-arrows { display: flex; justify-content: center; gap: var(--space-6); }
 
 /* The They said strip (They said, Listen): the app's read view, shortened; Listen wraps under it on narrow stages. */
 .site-strip {
@@ -562,7 +578,7 @@ html:has(> body .site) { scroll-padding-bottom: var(--space-2); }
   position: relative; display: inline-grid; place-items: center;
   min-inline-size: calc(var(--space-8) + var(--space-2)); block-size: calc(var(--space-8) + var(--space-2)); padding-inline: var(--space-2);
   border: var(--line-width) solid var(--line-strong); border-radius: var(--radius-chip); background: var(--surface-sunken); color: var(--ink);
-  font-family: var(--font-mono); font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-digits-weight);
+  font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight);
 }
 /* Up and Down, the keys that pick a sentence in the app (lib/keyboard.ts): the back icon, turned (a still transform). */
 .site-kbd--up .nl-icon { transform: rotate(90deg); }
@@ -574,7 +590,7 @@ html:has(> body .site) { scroll-padding-bottom: var(--space-2); }
 .site-touch { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
 .site-touch__sizes {
   display: grid; grid-template-columns: var(--key-min) var(--key-xl); column-gap: var(--space-2); padding-inline: var(--space-2); justify-items: center;
-  font-family: var(--font-mono); font-size: var(--type-label-size); line-height: var(--type-label-line); color: var(--ink-muted);
+  font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); font-variant-numeric: tabular-nums; color: var(--ink-muted);
 }
 
 /* One or two switches (the Access lead): the sentence card, the keypad with its scan highlights on its own grid, and
@@ -598,7 +614,7 @@ html:has(> body .site) { scroll-padding-bottom: var(--space-2); }
 @media (min-width: 321px), (pointer: coarse) {
   .site-scan .nl-keypad.site-pad, .site-scan__rings { padding: var(--space-3); }
 }
-.site-scan__ring { border-radius: calc(var(--radius-key) + var(--scan-width)); box-shadow: 0 0 0 var(--scan-width) var(--ember), 0 0 0 calc(var(--scan-width) + var(--ring-width)) var(--plum); }
+.site-scan__ring { border-radius: calc(var(--radius-key) + var(--scan-width)); box-shadow: 0 0 0 var(--scan-width) var(--ember); }
 .site-scan__rings > .site-scan__ring--row1 { grid-area: 1 / 1 / 2 / 4; }
 .site-scan__rings > .site-scan__ring--row2 { grid-area: 2 / 1 / 3 / 4; }
 .site-scan__rings > .site-scan__ring--key4 { grid-area: 2 / 1 / 3 / 2; border-radius: var(--radius-key); }
@@ -615,7 +631,7 @@ html:has(> body .site) { scroll-padding-bottom: var(--space-2); }
 .site-scan__words { display: flex; flex-direction: column; gap: var(--space-1); }
 .site-scan__label { font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink); }
 /* The scan speed range the card states (0.4 to 5 seconds a step): a line and a mark, no number of its own. */
-.site-speed { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--type-label-size); line-height: var(--type-label-line); color: var(--ink-muted); }
+.site-speed { display: flex; align-items: center; gap: var(--space-2); font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); font-variant-numeric: tabular-nums; color: var(--ink-muted); }
 .site-speed__track { position: relative; inline-size: var(--space-16); block-size: var(--line-width); background: var(--line-strong); }
 .site-speed__track::after {
   content: ''; position: absolute; top: 50%; left: 17%; inline-size: var(--space-3); block-size: var(--space-3);
@@ -696,9 +712,6 @@ html:has(> body .site) { scroll-padding-bottom: var(--space-2); }
   font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight);
 }
 .site-bound__doors > .site-drawn-btn { background: var(--site-piece); }
-.site-door__row { display: inline-flex; align-items: center; gap: var(--space-2); }
-.site-door__state { color: var(--ink-muted); }
-.site-bound__note { align-self: center; font-size: var(--type-label-size); line-height: var(--type-label-line); color: var(--ink-muted); }
 .site-bound__inside { display: grid; gap: var(--space-3); }
 .site-bound__kept { display: flex; flex-direction: column; gap: var(--space-1); }
 .site-bound__kept li { display: flex; align-items: center; gap: var(--space-2); color: var(--ink); font-weight: var(--type-label-weight); }
@@ -708,7 +721,7 @@ html:has(> body .site) { scroll-padding-bottom: var(--space-2); }
   font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight);
 }
 @media (max-width: 599px) {
-  /* The lead's three ways out are their icons alone on phones; the cards that follow name them. */
+  /* The map's three ways out are their icons alone on phones; the rows under it name them. */
   .site-map .site-door { inline-size: var(--space-12); justify-content: center; padding: 0; }
   .site-map .site-door__name { display: none; }
 }
@@ -716,54 +729,10 @@ html:has(> body .site) { scroll-padding-bottom: var(--space-2); }
   .site-bound__inside { grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--space-6); }
   .site-bound__inside > .site-bound__pill { grid-column: 1 / -1; }
 }
-.site-dest, .site-sent {
-  display: flex; align-items: flex-start; gap: var(--space-2); padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-chip); background: var(--site-piece); color: var(--ink);
-  font-size: var(--type-label-size); line-height: var(--type-label-line);
-}
-.site-dest { align-self: center; font-weight: var(--type-label-weight); }
-.site-sent__label { font-weight: var(--type-label-weight); }
-.site-door-voices, .site-door-listen { display: flex; flex-direction: column; gap: var(--space-2); }
-.site-voice {
-  display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-chip); background: var(--site-piece); color: var(--ink);
-}
-.site-voice__name { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-2); font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); }
-.site-voice__check { flex: none; display: grid; }
-.site-voice__line { font-size: var(--type-label-size); line-height: var(--type-label-line); color: var(--ink-muted); }
-.site-bound__doors > .site-voice--out { flex: 1; box-shadow: inset 0 0 0 var(--line-width) var(--line-strong); }
-/* Model ranking: what it sends is real text (after the card's h3 in the DOM; MS-7.2 exception) drawn at the top of
-   the stage, over the drawing's invisible copy of it, which keeps its room at every width. */
-.site-door-ranking { display: flex; flex-direction: column; gap: var(--space-2); }
-.site-sent--room { visibility: hidden; }
-.site-bento > .site-card--sent { --site-sent-pad: var(--space-4); display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; }
-.site-card--sent > * { grid-column: 1; }
-.site-card--sent > .site-stage, .site-card--sent > .site-sent { grid-row: 1; }
-.site-card--sent > .site-h3 { grid-row: 2; }
-.site-card--sent > p:last-child { grid-row: 3; }
-.site-bento > .site-card--sent > .site-stage { place-items: start stretch; padding: var(--site-sent-pad) var(--space-4); }
-.site-card--sent > .site-sent { align-self: start; z-index: 1; max-width: none; margin: var(--site-sent-pad) var(--space-4) 0; background: var(--surface-sunken); color: var(--ink); }
-.site-toggle {
-  position: relative; flex: none; inline-size: var(--space-12); block-size: calc(var(--space-6) + var(--space-1));
-  border: var(--line-width) solid var(--line-strong); border-radius: var(--radius-pill);
-}
-.site-toggle__knob {
-  position: absolute; top: var(--line-width); left: var(--line-width);
-  inline-size: calc(var(--space-4) + var(--space-1)); block-size: calc(var(--space-4) + var(--space-1));
-  border-radius: var(--radius-pill); background: var(--ink-muted);
-}
-.site-toggle--on { border-color: var(--ink); background: var(--ink); }
-.site-toggle--on .site-toggle__knob { left: auto; right: var(--line-width); background: var(--surface); }
-/* A press on something that is not a drawn button (the ranking switch's row): line-strong, never ember. */
-.site-outline { position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 var(--ring-width) var(--line-strong); pointer-events: none; }
-/* The privacy facts (region, retention, logs): fact rows in a note card. */
-.site-privacy-facts { gap: var(--space-4); }
-.site-privacy-facts > .site-facts { display: grid; gap: var(--space-3); }
-.site-privacy-facts .site-fact { color: var(--ink); }
 /* Forced colours drop the pieces' fills, so each piece keeps a thin system-colour edge and the dashed line still
    stops at a door (the shared forced-colours block below covers rings, outlines and the toggle). */
 @media (forced-colors: active) {
-  :is(.site-door, .site-dest, .site-sent, .site-voice, .site-sheet, .site-strip, .site-bound__pill, .site-scan__well) {
+  :is(.site-door, .site-sheet, .site-strip, .site-bound__pill, .site-scan__well) {
     outline: var(--line-width) solid CanvasText; outline-offset: calc(var(--line-width) * -1);
   }
 }
@@ -880,7 +849,7 @@ html:has(> body .site) { scroll-padding-bottom: var(--space-2); }
 /* 1 Press: keypad rows 1 and 2 on their panel (8px around the 64px keys, 224px wide), then the digits typed so far. */
 .site-how__press .nl-keypad.site-pad { padding: var(--space-2); }
 .site-how__digits {
-  display: flex; gap: var(--space-3); color: var(--ink);
+  display: flex; letter-spacing: var(--type-digits-tracking); color: var(--ink);
   font-family: var(--font-mono); font-size: var(--type-digits-size); line-height: var(--type-digits-line); font-weight: var(--type-digits-weight);
 }
 /* 2 Pick: the app's status pill, then three drawn rows on the stage's piece fill. */
@@ -989,13 +958,22 @@ html:has(> body .site) { scroll-padding-bottom: var(--space-2); }
    Not yet: dashed), never colour alone. */
 .site-limits { display: grid; gap: var(--space-6); grid-template-columns: minmax(0, 1fr); align-items: start; }
 .site-limits__card { gap: var(--space-2); }
-.site-limits__rows > li {
+.site-rows > li {
   display: grid; grid-template-columns: var(--space-12) minmax(0, 1fr); align-items: center; gap: var(--space-2) var(--space-4);
   padding-block: var(--space-3);
 }
-.site-limits__rows > li + li, .site-limits__status > li + li { border-top: var(--line-width) solid var(--line); }
-.site-limits__key { font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink); }
-.site-limits__text { grid-column: 1 / -1; color: var(--ink); }
+.site-rows > li + li, .site-limits__status > li + li { border-top: var(--line-width) solid var(--line); }
+.site-rows__key { margin: 0; font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); color: var(--ink); }
+.site-rows__text { grid-column: 1 / -1; color: var(--ink); }
+/* Round 5 (2026-11-17): the rows are shared. Good to know's Before you start and Privacy's ways out use the same tile,
+   key and text; a row's text may hold paragraphs and a list of small facts (Model ranking's region, retention, logs). */
+.site-rows { display: flex; flex-direction: column; }
+.site-rows__text { display: flex; flex-direction: column; gap: var(--space-2); }
+.site-rows__text > p { max-width: var(--measure); }
+.site-rows__facts { display: flex; flex-direction: column; gap: var(--space-1); padding-left: var(--space-4); list-style: disc; color: var(--ink-muted); }
+.site-rows__facts > li::marker { color: var(--line-strong); }
+.site-rows-card { gap: var(--space-2); }
+.site-rows-card > .site-rows-card__check { margin-top: var(--space-2); color: var(--ink); }
 .site-limits__status > li {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--space-4); padding-block: var(--space-3);
 }
@@ -1007,16 +985,16 @@ html:has(> body .site) { scroll-padding-bottom: var(--space-2); }
 .site-limits__state--not { border-style: dashed; padding-inline: var(--space-4); }
 .site .site-limits__help { column-gap: var(--space-2); color: var(--ink); }
 @media (min-width: 600px) {
-  .site-limits__rows > li { grid-template-columns: var(--space-12) calc(var(--space-24) + var(--space-12)) minmax(0, 1fr); align-items: start; }
-  .site-limits__key { padding-top: calc((var(--space-12) - var(--type-label-line)) / 2); }
-  .site-limits__text { grid-column: auto; padding-top: calc((var(--space-12) - var(--type-body-line)) / 2); }
+  .site-rows > li { grid-template-columns: var(--space-12) calc(var(--space-24) + var(--space-12)) minmax(0, 1fr); align-items: start; }
+  .site-rows__key { padding-top: calc((var(--space-12) - var(--type-label-line)) / 2); }
+  .site-rows__text { grid-column: auto; padding-top: calc((var(--space-12) - var(--type-body-line)) / 2); }
 }
 @media (min-width: 1024px) {
   .site-limits { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
 }
 /* Phones: 8px row padding and 16px card padding, so the two cards stay close to the old note's height. */
 @media (max-width: 599px) {
-  .site-limits__rows > li, .site-limits__status > li { padding-block: var(--space-2); }
+  .site-rows > li, .site-limits__status > li { padding-block: var(--space-2); }
   .site-card.site-limits__card { padding-block: calc(var(--space-4) - var(--line-width)); }
 }
 
@@ -1037,17 +1015,15 @@ html:has(> body .site) { scroll-padding-bottom: var(--space-2); }
 .site-faq[open] .site-faq__x { display: block; }
 .site-faq[open] .site-faq__plus { display: none; }
 .site-faq p { max-width: var(--measure); padding-bottom: var(--space-4); color: var(--ink); }
-/* The way out for an unanswered question (round 3), under the last item's answer. */
-.site-faq__more { margin-top: var(--space-4); column-gap: var(--space-2); color: var(--ink); }
+/* The way out for an unanswered question (round 3; round 5: the head's lead, beside the list on desktop). */
+.site-faq__more { color: var(--ink-muted); }
 
 /* The box sections on phones (round 3, W1; round 4: all three): one card per row, so no row to line up; each stage
    hugs its drawing with 12px above and below (24px in all, the MS-10.9 limit for the switch stage) instead of the
    shared stage height. Played drawings keep one size (the parts that replace each other share a cell), so the stage
-   never changes height while they play. The ranking card's stage keeps the same 12px (its real text sits at that
-   offset, .site-card--sent). */
+   never changes height while they play. Round 5: Privacy's map card, now outside a grid, hugs its drawing too. */
 @media (max-width: 599px) {
-  .site-bento .site-stage { min-block-size: 0; padding-block: var(--space-3); }
-  .site-bento > .site-card--sent { --site-sent-pad: var(--space-3); }
+  :is(.site-bento, .site-card--lead) .site-stage { min-block-size: 0; padding-block: var(--space-3); }
 }
 
 /* Closing call to action: a Night band (.site-night), so the page ends the way it opens (W2). */
@@ -1188,7 +1164,6 @@ html:has(> body .site) { scroll-padding-bottom: var(--space-2); }
   .site-bento > .site-card--lead { grid-column: 1 / -1; }
   .site-bento--3 > .site-card:not(.site-card--lead) { display: grid; grid-row: span 3; grid-template-rows: subgrid; row-gap: var(--space-3); }
   .site-bento--4 > .site-card:not(.site-card--lead) { display: grid; grid-row: span 4; grid-template-rows: subgrid; row-gap: var(--space-3); }
-  .site-bento--3 > .site-card--sent > :is(.site-stage, .site-sent) { grid-row: 1; }
 }
 @media (min-width: 648px) and (max-width: 1023px) {
   .site-bento--3 > :last-child {
@@ -1436,17 +1411,13 @@ html:has(> body .site) { scroll-padding-bottom: var(--space-2); }
  * colour instead; the scan ring uses Highlight. The drawn toggle keeps its own two system colours so the
  * knob stays visible on its track. Opacity still steps, so the drawings keep their sequence. */
 @media (forced-colors: active) {
-  .site-press-ring, .site-key-ring, .site-key::after, .site-scan__press, .site-outline {
+  .site-press-ring, .site-key-ring, .site-key::after, .site-scan__press {
     outline: var(--ring-width) solid CanvasText; outline-offset: calc(-1 * var(--ring-width));
   }
   .site-proof__box, .site-proof__spot, .site-letter__box, .site-keycap, .site-layouts__keys, .site-layouts__pills > span:nth-child(2), .site-step__num {
     outline: var(--line-width) solid CanvasText; outline-offset: calc(-1 * var(--line-width));
   }
   .site-scan__ring { outline: var(--scan-width) solid Highlight; }
-  .site-toggle, .site-toggle__knob { forced-color-adjust: none; }
-  .site-toggle { border-color: CanvasText; background: Canvas; }
-  .site-toggle__knob, .site-toggle--on { background: CanvasText; }
-  .site-toggle--on .site-toggle__knob { background: Canvas; }
   /* An icon button's name keeps an edge when its fill is dropped (round 4). */
   .site-tip { border: var(--line-width) solid CanvasText; }
 }

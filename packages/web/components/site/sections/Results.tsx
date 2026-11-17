@@ -9,6 +9,8 @@
  * model-ranking status rows and the links. A bar is a drawn piece (aria-hidden) whose length is its printed value
  * (barShare) on a full track from 0; the value and its label are real text beside it. The bars grow once from their
  * start edge as a data-play sequence (PO-1, MS-8.11 round-4 amendment); reduced motion and no JavaScript show them full.
+ * Round 5 (2026-11-17): after Privacy, right before Good to know, whose Testing so far card says what has not been
+ * tested yet (the caveat no longer repeats it); no closing "Open the app" row.
  */
 import type { CSSProperties } from 'react';
 import { Icon } from '@/components/Icon';
@@ -111,7 +113,7 @@ function Links() {
 export function Results({ results }: { results: SiteResults | null }) {
   const sentences = results ? `of ${results.items.toLocaleString('en-US')} sentences` : '';
   return (
-    <section id="results" className="site-band" aria-labelledby="results-title">
+    <section id="results" className="site-band site-band--surface" aria-labelledby="results-title">
       <div className="site-wrap site-stack">
         <div className="site-head" data-reveal="">
           <h2 id="results-title" className="site-h2">
@@ -126,7 +128,7 @@ export function Results({ results }: { results: SiteResults | null }) {
             <div className="site-caveat site-results__caveat">
               <SiteIcon d={info} />
               <p>
-                <strong>These figures come from a simulated typist, not from studies with people.</strong> Some test sentences also appear in the dictionary&apos;s source text, so the figures are somewhat optimistic. The app has not yet been tested with people who use AAC.
+                <strong>These figures come from a simulated typist, not from studies with people.</strong> Some test sentences also appear in the dictionary&apos;s source text, so the figures are somewhat optimistic.
               </p>
             </div>
             <div className="site-results__grid">
@@ -210,11 +212,6 @@ export function Results({ results }: { results: SiteResults | null }) {
         ) : (
           <Links />
         )}
-        <div className="site-cta">
-          <a className="nl-btn nl-btn--secondary nl-btn--xl" href="/app">
-            Open the app
-          </a>
-        </div>
       </div>
     </section>
   );

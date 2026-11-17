@@ -21,6 +21,9 @@ import '@/components/site/site.css';
  * The website at / (spec .kiro/specs/marketing-site, copy in content.md). The app is at /app
  * (ADR-006), the PWA start URL; /welcome redirects here. Statically rendered at build time: the demo,
  * the drawings' sentences, the proof example and the numbers are computed once, by site-data.ts.
+ *
+ * Round 5 (2026-11-17, MS-3.1): the product first (How, Proof, Conversation, Access, Privacy), then the evidence and its
+ * limits together (Results, Good to know), then the questions and the close. The bands still alternate.
  */
 export const dynamic = 'force-static';
 
@@ -52,10 +55,10 @@ export default function HomePage() {
       <main id="main" tabIndex={-1}>
         <How how={how} />
         <Proof proof={proof} />
-        <Results results={results} />
         <Conversation sentence={finishedSentence(demo)} keys={finishedKeys(demo)} spell={getSpellExample()} />
         <Access />
         <Privacy />
+        <Results results={results} />
         <Limits />
         <Faq />
         <Start />

@@ -5,11 +5,11 @@
  * 1024px, where site.css plays the scenes once in story order (MS-8.11). Each step is a [data-play-scope], so its
  * number lights while its scene plays (.site-step, :has()). The limits these steps carry (spelling, English) follow
  * the row as one .site-caveat. The sticky picture, its runway and the step sync (A8, MS-8.12) are gone.
+ * Round 5 (2026-11-17): the caveat left; spelling and English are said once, in Good to know (#limits).
  */
 import type { CSSProperties } from 'react';
 import { HowPick, HowPress, HowSpeak } from '../pictures/HowScenes';
 import { play, role, type PlayClass } from '../pictures/roles';
-import { SiteIcon, info } from '../icons';
 import type { HowData } from '../site-data';
 
 const STEPS: readonly {
@@ -74,10 +74,6 @@ export function How({ how }: { how: HowData }) {
             </li>
           ))}
         </ol>
-        <p className="site-caveat" data-reveal="">
-          <SiteIcon d={info} />
-          <span>You need to be able to spell. Ninth Life types words, not symbols. English only for now.</span>
-        </p>
       </div>
     </section>
   );

@@ -2145,3 +2145,55 @@ Tests: `site.test.tsx` (MS-4.6, MS-7.4, MS-7.7, MS-8.11 leads and per-row rings,
 subgrid rows, the `--play-i` rules), `ranking-provider.test.ts` (the §6 entry keeps the order), `e2e/site.mjs` (equal
 stages per row with the lead on its own, the hug on phones, the cards per row, the switch lead's stage, the Access
 order).
+
+## Round 5: one place for each fact (2026-11-17)
+
+The product owner: "the website feels quite long and messy … see if the same info doesn't get explained in multiple
+sections … Feel free to also reorganize the sections", and a details pass: "spacing, borders, elements that should be
+displayed different, more organized". The page was 12,477px at 1440x900 and 19,228px at 390x844; it is about 10,900px
+and 16,900px now, with the same claims.
+
+What was said more than once, and where it lives now (content.md "Round 5"):
+
+| Fact | Was in | Now only in |
+|---|---|---|
+| What model ranking sends | Privacy's card and drawing, Good to know, the FAQ | Privacy, Model ranking row |
+| Spelling, English only | How's caveat, Good to know, the FAQ | Good to know |
+| Simulators, not real devices; not tested with AAC users | Access, Results, Good to know | Good to know (Testing so far) |
+| Switch scanning 0.4 to 5 s | Access, the FAQ | Access |
+| The model cannot add words | Proof, the FAQ | Proof |
+| Works offline | hero, Privacy lead, the close, the FAQ | hero note, Privacy lead, the close (the bookends stay) |
+| Names and My words | Conversation, the FAQ | Conversation |
+| "Open the app" | bar, hero, 4 mid-page rows, close, footer | bar (fixed), hero, close, footer |
+
+Order. The product first (How, Proof, Conversation, Access, Privacy), then the evidence and its limits side by side
+(Results, Good to know), then the questions and the close. Bands still alternate: How, Conversation, Privacy and Good
+to know on ground; Proof, Access, Results and the FAQ on surface.
+
+The bar. `.site-barline` wraps `SiteBar` and is fixed to the top of the window on every website page (`/`, `/about`,
+the 404), Night in both themes over a translucent night fill with a blur, a 2px line under it. Its header keeps its
+height as padding (`header:has(> .site-barline)`); in-page links land below it (`scroll-padding-top`). Print puts it
+back in the flow; forced colours give it Canvas and a CanvasText edge.
+
+Privacy. The map leads (unchanged). The three door cards (each a dashed outline with small print) and the note card
+become one card, "What leaves this device, and only when you use it": three `.site-rows` rows (icon tile, name as an
+`h4`, text), Model ranking's row ending in the region, retention and log lines as a small list, then "Check it
+yourself" and the two evidence links. `.site-rows` is shared with Good to know's Before you start (it was
+`.site-limits__rows`), so both read as one table style. The dead door CSS (`.site-sent`, `.site-voice`,
+`.site-toggle`, `.site-outline`, `.site-dest`, `.site-privacy-facts`) is gone.
+
+Questions. Five, with "Something else? Ask on GitHub" as the head's lead, so it fills the column beside the list.
+
+Details.
+- Drawings inside a stage use a short, soft lift (`.site-stage { --lift: … }`, 6px down, 16px blur, 14% plum).
+  Night's own lift (16px down, 40px blur, 55% black) smudged a dark halo around every drawn keypad on the plum stage.
+- The scan ring is ember only; its outer plum ring read as a dark blot over the light keypad tray in Night.
+- Drawn numbers that are not key codes (the scan speed 0.4 s and 5 s, the touch sizes 72 and 128) and the drawn
+  computer keys (Enter, Backspace) use the label type with tabular figures, not the wide mono. Key codes stay mono,
+  as in the app; How's digits read as one code, 4663, with the code tracking, not four spaced digits.
+- Privacy's ways-out names are `h4`s with no margin, level with their text.
+- `/about`: the ranking paragraph's three sentences get their missing spaces ("sentences.It"), and the proof-panel
+  sentence names the app's check, "Check the words".
+- Up to date: Access says laptops fit one screen too (ADR-012); the They said card names the quick replies and the
+  reply types.
+
