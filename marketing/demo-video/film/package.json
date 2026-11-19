@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "description": "Ninth Life demo film \"Hello again\" (Remotion). See ../05-production-guide.md.",
-  "license": "UNLICENSED",
+  "license": "CC-BY-NC-ND-4.0",
   "type": "module",
   "scripts": {
     "studio": "remotion studio src/index.ts",
