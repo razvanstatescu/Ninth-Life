@@ -1,9 +1,9 @@
 # "Hello again": the Ninth Life demo film
 
-A 1:58 film (16:9, 1920 x 1080, 60 fps) for Kiroween 2026, built in Remotion. The plan behind it is
-one folder up: `../07-revision-v2.md` (the brief for this second cut), `../README.md` (decisions),
-`../research-v2/` (research). Build rules for anyone editing a scene: `STYLE.md` (its "Second cut"
-section first).
+A 2:18 film (16:9, 1920 x 1080, 60 fps) for Kiroween 2026, built in Remotion. The plan behind it is
+one folder up: `../08-revision-v3.md` (the third cut: the real-app reel and the Kiro chapter), `../07-revision-v2.md`
+(the second cut), `../README.md` (decisions), `../research-v2/` (research). Build rules for anyone editing a scene:
+`STYLE.md` (its "Second cut" section first, then `../08-revision-v3.md`).
 
 ## Render it
 
@@ -11,7 +11,7 @@ Needs Node 22, ffmpeg and python3 (with numpy and Pillow).
 
 ```bash
 npm install
-CONCURRENCY=8 bash scripts/render-final.sh
+CONCURRENCY=3 bash scripts/render-final.sh   # 8 stalled the 2:18 cut at s10's opening (2026-11-19); 3 takes about 25 min
 ```
 
 The script checks the decoder data, type-checks, runs the repository's trademark check, renders, runs
@@ -25,7 +25,7 @@ the flash check, normalises the loudness for YouTube, writes the captions and th
 | `flash-report.json` | The flash screening result (a screening tool, not a certified analysis) |
 | `film-raw.mp4` | The render before the loudness pass |
 
-A full render takes a few minutes on a recent Mac.
+A full render takes about 25 minutes at concurrency 3 on a recent Mac.
 
 ## Change things
 
@@ -37,9 +37,9 @@ A full render takes a few minutes on a recent Mac.
 | The app's voice lines | `public/audio/voice/*.wav` and their word timings in `src/data/voice.json` |
 | The narrator | `public/audio/narration/*.wav`, word timings in `src/data/narration.json`, the script in `scripts/audio/prompts/narration.json` |
 | The mix | `src/audio/mix.ts` (levels, ducking under the narrator, which music files) |
-| The music | `public/audio/music/act2-v2*.wav`: 90.000 s, 120 BPM, bar 1 beat 1 at 0 (film 0:28), with drums and other stems; `mix.ts` picks the variant |
+| The music | `public/audio/music/act2-v3*.wav`: 110.000 s, 120 BPM, bar 1 beat 1 at 0 (film 0:28), built from `act2-v2*` by `.venv/bin/python -I -B scripts/audio/music_extend.py` (its bar map; not in git, and `render-final.sh` rebuilds it; run it once before the Studio); `mix.ts` picks the files |
 | What the decoder shows | Nothing by hand: `npx tsx scripts/build-data.ts` rebuilds `src/data/decoded.json` from the real decoder and fails if a sentence the film relies on changes |
-| App captures | `node scripts/capture/capture.mjs <group>` against the running app (http://localhost:3000/app); never `next build` while the dev server runs |
+| App captures | `BASE_URL=https://night.statescu.net node scripts/capture/capture.mjs <group>` (or the local app); the third cut's reel uses the groups `convo` and `show-water`; never `next build` while the dev server runs |
 
 Preview a scene as a contact sheet (no Studio needed):
 

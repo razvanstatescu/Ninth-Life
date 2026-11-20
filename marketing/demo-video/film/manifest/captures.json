@@ -12,12 +12,12 @@
   {
     "id": "phone-water",
     "path": "public/captures/phone-water.png",
-    "url": "http://localhost:3000/app",
+    "url": "https://night.statescu.net/app",
     "viewport": [390, 700],
     "dpr": 3,
-    "state": "Typed \"I need water\" with the keyboard (keys 4 0 6 3 3 3 0 9 2 8 3 7; 0 is space). The sentence card reads \"I need water\" with its keys \"4 6333 92837\" under it. Suggestion row: \"I need waves\" and More. Status pill: \"On device\". Speak is the ember button.",
-    "date": "2026-11-10T17:22:16.004Z",
-    "sha256": "001ecdb59109c17d4d7c468a561a1aa517d8bb10d0dd92290485a7cf3f52a8ea"
+    "state": "Typed \"I need water\" with the keyboard (keys 4 0 6 3 3 3 0 9 2 8 3 7; 0 is space). The sentence card reads \"I need water\" with its keys \"4 6333 92837\" under it. No suggestion row content. Status pill: \"On device\". Speak is the ember button.",
+    "date": "2026-11-19T14:03:32.877Z",
+    "sha256": "97d76641dbea6ed4ffd05d093aa536f6b67960cc3ad80cab2f9c9984dfd8e444"
   },
   {
     "id": "phone-hello",
@@ -32,12 +32,12 @@
   {
     "id": "phone-offline",
     "path": "public/captures/phone-offline.png",
-    "url": "http://localhost:3000/app",
+    "url": "https://night.statescu.net/app",
     "viewport": [390, 700],
     "dpr": 3,
-    "state": "Loaded online once, then the browser context was set offline (context.setOffline(true)); the status pill changed from \"On device\" to \"Offline\". Typed \"I need water\" with the keyboard (keys 4 0 6 3 3 3 0 9 2 8 3 7; 0 is space). The sentence card reads \"I need water\" with its keys \"4 6333 92837\" under it. Suggestion row: \"I need waves\" and More. Status pill: \"Offline\". Speak is the ember button.",
-    "date": "2026-11-10T17:22:21.423Z",
-    "sha256": "82e3a7eaa0a64ff2ba7410b9012f836183cb255900e15ef4c3c8d45904dc5055"
+    "state": "Loaded online once, then the browser context was set offline (context.setOffline(true)); the status pill changed from \"On device\" to \"Offline\". Typed \"I need water\" with the keyboard (keys 4 0 6 3 3 3 0 9 2 8 3 7; 0 is space). The sentence card reads \"I need water\" with its keys \"4 6333 92837\" under it. No suggestion row content. Status pill: \"Offline\". Speak is the ember button.",
+    "date": "2026-11-19T14:29:45.201Z",
+    "sha256": "fae589ff920d02b5e307698a47dfd5d614ff69da9892e1faaf663cf27af3d5f0"
   },
   {
     "id": "tablet-water",
@@ -198,5 +198,85 @@
     "state": "Typed \"It is good to be back\" (keys 4 8 0 4 7 0 4 6 6 3 0 8 6 0 2 3 0 2 2 2 5); the sentence card read \"It is good to be back\". Show, then Flip tapped: the label and \"It is good to be back\" are turned 180 degrees for the person across the table; Done and Flip stay upright.",
     "date": "2026-11-10T17:22:45.572Z",
     "sha256": "4bf13ac15cb7ba3ec810de31ba9b04c85f1644d834736fa109438f66cec68b2f"
+  },
+  {
+    "id": "show-water-flipped",
+    "path": "public/captures/show-water-flipped.png",
+    "url": "https://night.statescu.net/app",
+    "viewport": [390, 700],
+    "dpr": 3,
+    "state": "Show, then Flip tapped: the label and \"I need water\" are turned 180 degrees for the person across the table; Done and Flip stay upright.",
+    "date": "2026-11-19T14:29:42.135Z",
+    "sha256": "346c353aae3a24f93169a99719d1569d9cb38d7df9eda9a92f00aab5a67bbc3b"
+  },
+  {
+    "id": "show-water-upright",
+    "path": "public/captures/show-water-upright.png",
+    "url": "https://night.statescu.net/app",
+    "viewport": [390, 700],
+    "dpr": 3,
+    "state": "Typed \"I need water\"; Show tapped: label \"Show this to the other person\", text \"I need water\", buttons Done and Flip.",
+    "date": "2026-11-19T14:29:41.712Z",
+    "sha256": "f0626b596aafb64bab8a44811a9a0a4695cfbb587953b9131abe6d776c609025"
+  },
+  {
+    "id": "convo-heard",
+    "path": "public/captures/convo-heard.png",
+    "url": "https://night.statescu.net/app",
+    "viewport": [1440, 900],
+    "dpr": 4,
+    "state": "The recogniser heard \"Do you want it cold?\": the line is in the They said field, with Listen, Done and Cancel.",
+    "date": "2026-11-19T14:32:56.788Z",
+    "sha256": "3d56957cfb236b7a7484f36f5c798749d5e14965ddd2106eb37fa393441153e6"
+  },
+  {
+    "id": "convo-listening",
+    "path": "public/captures/convo-listening.png",
+    "url": "https://night.statescu.net/app",
+    "viewport": [1440, 900],
+    "dpr": 4,
+    "state": "Listen pressed (voice to text allowed): the They said panel is open and listening, \"Listening. Ask them to speak now.\", with Stop, Done and Cancel. A fake speech recogniser stands in for the browser's.",
+    "date": "2026-11-19T14:32:56.305Z",
+    "sha256": "ada2304cab01eab07d11b6cc0698afb27e2bf4d1dfdfedac1e8ad5f8ad13586c"
+  },
+  {
+    "id": "convo-their",
+    "path": "public/captures/convo-their.png",
+    "url": "https://night.statescu.net/app",
+    "viewport": [1440, 900],
+    "dpr": 4,
+    "state": "Done: the strip shows \"They: Do you want it cold?\"; quick replies and the reply types (Agree, Disagree, Ask) under the empty card. Nothing is ember.",
+    "date": "2026-11-19T14:32:57.315Z",
+    "sha256": "cd25a454e7b552f97a1b37e2efedafdb95a4330c6e794cd02d65a7d4a180aaec"
+  },
+  {
+    "id": "convo-thread",
+    "path": "public/captures/convo-thread.png",
+    "url": "https://night.statescu.net/app",
+    "viewport": [1440, 900],
+    "dpr": 4,
+    "state": "Whole conversation open: newest first, \"You said: Yes.\", \"They said: Do you want it cold?\", \"You said: I need water\", \"They said: What do you need?\". Kept in memory only.",
+    "date": "2026-11-19T14:32:59.277Z",
+    "sha256": "cc265d54dda3f269bbbc58a741e3d451d87c193c96b4fb0f4921c911876dbf63"
+  },
+  {
+    "id": "convo-yes",
+    "path": "public/captures/convo-yes.png",
+    "url": "https://night.statescu.net/app",
+    "viewport": [1440, 900],
+    "dpr": 4,
+    "state": "The quick reply \"Yes.\" pressed once (spoken by the stub voice; its big-text fallback closed): the strip shows \"You: Yes.\"",
+    "date": "2026-11-19T14:32:58.235Z",
+    "sha256": "1bb944a3a33f4881a828d319a3a5b2cafc1d7197903c1bd00b31521767d5ed01"
+  },
+  {
+    "id": "convo-you",
+    "path": "public/captures/convo-you.png",
+    "url": "https://night.statescu.net/app",
+    "viewport": [1440, 900],
+    "dpr": 4,
+    "state": "Laptop at 4x. They said \"What do you need?\"; \"I need water\" was typed and spoken (stub voice, big-text fallback closed), then cleared. The strip shows the last turn, \"You: I need water\", with Listen, Type their line and Whole conversation; quick replies under the empty card. Nothing is ember.",
+    "date": "2026-11-19T14:32:55.731Z",
+    "sha256": "7a1f08423057018efa96236aec22de7fee27cdcf58e8ef5adecfdda169271f9e"
   }
 ]

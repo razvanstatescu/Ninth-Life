@@ -33,7 +33,8 @@ export const MIX = {
 export const MUSIC_FILES: { full: string; drums: string | null; other: string | null } = {
   // The "drive" variant (a soft shaker on eighths in the drop, bars 18-21, access and the lift, 14 dB under
   // the music) is the lead's default; the plain version is act2-v2.wav / act2-v2-drums.wav.
-  full: 'audio/music/act2-v2-drive.wav',
-  drums: 'audio/music/act2-v2-drive-drums.wav',
-  other: 'audio/music/act2-v2-other.wav',
+  // Third cut: act2-v3, the same bars rearranged to 55 (scripts/audio/music_extend.py).
+  full: 'audio/music/act2-v3-drive.wav',
+  drums: 'audio/music/act2-v3-drive-drums.wav',
+  other: 'audio/music/act2-v3-other.wav',
 };

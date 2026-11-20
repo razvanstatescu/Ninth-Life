@@ -3,6 +3,9 @@
 The plan for a 1:54 film about Ninth Life, for Kiroween 2026 (Resurrection category).
 Written 2026-11-10.
 
+**Status (2026-11-19): third cut, 2:18.** The real app in the middle (a 10 s reel of real captures) and a narrated
+14 s Kiro chapter: [08-revision-v3.md](08-revision-v3.md).
+
 **Status (2026-11-11): second cut built, 1:58.** After the owner's review of the first cut, the brief became
 [07-revision-v2.md](07-revision-v2.md); its research is in [research-v2/](research-v2/). The changes:
 - a narrator, as one continuous story;

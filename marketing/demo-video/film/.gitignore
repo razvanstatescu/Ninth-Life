@@ -13,3 +13,9 @@ public/audio/music/act2-drums.wav
 public/audio/music/act2-other.wav
 public/audio/music/act2-v2.wav
 public/audio/music/act2-v2-drums.wav
+
+# Third cut: act2-v3 is built from the tracked act2-v2 files by scripts/audio/music_extend.py (render-final.sh runs it),
+# so its 93 MB of WAV are not kept in git.
+public/audio/music/act2-v3-drive.wav
+public/audio/music/act2-v3-drive-drums.wav
+public/audio/music/act2-v3-other.wav

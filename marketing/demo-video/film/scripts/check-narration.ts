@@ -1,6 +1,6 @@
 /**
  * Checks where the narrator's lines sit (07-revision-v2.md, section 3), from the measured files:
- * no overlaps (at least 0.25 s apart), never in a quiet zone, never within a beat of the app's voice,
+ * no overlaps (speech at least 0.25 s apart), never in a quiet zone, never within a beat of the app's voice,
  * Act 1 lines over by 27.0 s. Prints the table the lead uses to place lines.
  *
  *   npx tsx scripts/check-narration.ts
@@ -11,7 +11,10 @@ import { fileURLToPath } from 'node:url';
 import { ACT2_START, BAR, BEAT, FPS, NARRATION_AT, QUIET_ZONES, SCENES, SCENE_IDS, VOICE_AT, sec, type NarrationId } from '../src/timeline';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const narr = JSON.parse(readFileSync(join(here, '..', 'src', 'data', 'narration.json'), 'utf8')) as Record<string, { duration: number; text: string }>;
+const narr = JSON.parse(readFileSync(join(here, '..', 'src', 'data', 'narration.json'), 'utf8')) as Record<
+  string,
+  { duration: number; text: string; words?: { start: number; end: number }[] }
+>;
 const voice = JSON.parse(readFileSync(join(here, '..', 'src', 'data', 'voice.json'), 'utf8')) as Record<string, { duration: number }>;
 
 const s = (f: number) => (f / FPS).toFixed(2);
@@ -46,10 +49,19 @@ for (const r of rows) {
   // Act 1's shots run across its scene lines (components/act1/shots.tsx), so only Act 2 is checked here.
   if (r.from >= ACT2_START && sceneOf(r.from) !== sceneOf(r.to - 1)) problems.push(`${r.id}: crosses from ${sceneOf(r.from)} into ${sceneOf(r.to - 1)} (allowed only on purpose)`);
 }
+// Gaps are measured speech to speech (last word's end to next first word's start): a file's silent head and tail
+// may overlap the next file's (third cut, 2026-11-19). Files themselves may not overlap by more than 0.2 s.
 const measured = rows.filter((r) => r.measured).sort((a, b) => a.from - b.from);
+const speech = (r: (typeof rows)[number]) => {
+  const w = narr[r.id]?.words;
+  return w?.length ? { a: r.from + sec(w[0]!.start), b: r.from + sec(w[w.length - 1]!.end) } : { a: r.from, b: r.to };
+};
 for (let i = 1; i < measured.length; i++) {
-  const gap = measured[i]!.from - measured[i - 1]!.to;
-  if (gap < sec(0.25)) problems.push(`${measured[i - 1]!.id} -> ${measured[i]!.id}: gap ${s(gap)}s (min 0.25s)`);
+  const prev = measured[i - 1]!;
+  const next = measured[i]!;
+  const gap = speech(next).a - speech(prev).b;
+  if (gap < sec(0.25)) problems.push(`${prev.id} -> ${next.id}: speech gap ${s(gap)}s (min 0.25s)`);
+  if (next.from - prev.to < -sec(0.2)) problems.push(`${prev.id} -> ${next.id}: files overlap by ${s(prev.to - next.from)}s (max 0.2s)`);
 }
 
 console.log('id                      start   end     len    where                 scene');

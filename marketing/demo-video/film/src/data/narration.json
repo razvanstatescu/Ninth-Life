@@ -984,6 +984,158 @@
       ]
     ]
   },
+  "n18b-keeps-up": {
+    "file": "audio/narration/n18b-keeps-up.wav",
+    "text": "It keeps up with the conversation.",
+    "act": 2,
+    "duration": 2.518,
+    "words": [
+      {
+        "text": "It",
+        "start": 0.1,
+        "end": 0.2
+      },
+      {
+        "text": "keeps",
+        "start": 0.26,
+        "end": 0.52
+      },
+      {
+        "text": "up",
+        "start": 0.62,
+        "end": 0.82
+      },
+      {
+        "text": "with",
+        "start": 1.34,
+        "end": 1.44
+      },
+      {
+        "text": "the",
+        "start": 1.48,
+        "end": 1.54
+      },
+      {
+        "text": "conversation.",
+        "start": 1.58,
+        "end": 2.32
+      }
+    ],
+    "pauses": []
+  },
+  "n18c-listen": {
+    "file": "audio/narration/n18c-listen.wav",
+    "text": "Listen to what they say, and answer in one press.",
+    "act": 2,
+    "duration": 3.368,
+    "words": [
+      {
+        "text": "Listen",
+        "start": 0.12,
+        "end": 0.38
+      },
+      {
+        "text": "to",
+        "start": 0.42,
+        "end": 0.48
+      },
+      {
+        "text": "what",
+        "start": 0.52,
+        "end": 0.66
+      },
+      {
+        "text": "they",
+        "start": 0.68,
+        "end": 0.86
+      },
+      {
+        "text": "say,",
+        "start": 0.94,
+        "end": 1.22
+      },
+      {
+        "text": "and",
+        "start": 1.54,
+        "end": 1.7
+      },
+      {
+        "text": "answer",
+        "start": 1.78,
+        "end": 2.2
+      },
+      {
+        "text": "in",
+        "start": 2.24,
+        "end": 2.4
+      },
+      {
+        "text": "one",
+        "start": 2.48,
+        "end": 2.62
+      },
+      {
+        "text": "press.",
+        "start": 2.74,
+        "end": 3.14
+      }
+    ],
+    "pauses": []
+  },
+  "n18d-show-flip": {
+    "file": "audio/narration/n18d-show-flip.wav",
+    "text": "Or show it, and flip it to face them.",
+    "act": 2,
+    "duration": 3.117,
+    "words": [
+      {
+        "text": "Or",
+        "start": 0.1,
+        "end": 0.18
+      },
+      {
+        "text": "show",
+        "start": 0.28,
+        "end": 0.52
+      },
+      {
+        "text": "it,",
+        "start": 0.58,
+        "end": 0.78
+      },
+      {
+        "text": "and",
+        "start": 1.24,
+        "end": 1.34
+      },
+      {
+        "text": "flip",
+        "start": 1.5,
+        "end": 1.7
+      },
+      {
+        "text": "it",
+        "start": 1.76,
+        "end": 1.94
+      },
+      {
+        "text": "to",
+        "start": 2.26,
+        "end": 2.38
+      },
+      {
+        "text": "face",
+        "start": 2.44,
+        "end": 2.68
+      },
+      {
+        "text": "them.",
+        "start": 2.76,
+        "end": 2.96
+      }
+    ],
+    "pauses": []
+  },
   "n19-access": {
     "file": "audio/narration/n19-access.wav",
     "text": "Use touch, a keyboard, or one switch.",
@@ -1024,6 +1176,168 @@
         "text": "switch.",
         "start": 2.5,
         "end": 2.86
+      }
+    ],
+    "pauses": []
+  },
+  "n19b-specs": {
+    "file": "audio/narration/n19b-specs.wav",
+    "text": "In Kiro, features start as specs.",
+    "act": 2,
+    "duration": 3.068,
+    "words": [
+      {
+        "text": "In",
+        "start": 0.1,
+        "end": 0.18
+      },
+      {
+        "text": "Kiro,",
+        "start": 0.3,
+        "end": 0.72
+      },
+      {
+        "text": "features",
+        "start": 1.24,
+        "end": 1.56
+      },
+      {
+        "text": "start",
+        "start": 1.7,
+        "end": 2.02
+      },
+      {
+        "text": "as",
+        "start": 2.12,
+        "end": 2.26
+      },
+      {
+        "text": "specs.",
+        "start": 2.4,
+        "end": 2.8
+      }
+    ],
+    "pauses": []
+  },
+  "n19c-hooks": {
+    "file": "audio/narration/n19c-hooks.wav",
+    "text": "Steering holds the rules, and hooks run the checks on every save.",
+    "act": 2,
+    "duration": 4.39,
+    "words": [
+      {
+        "text": "Steering",
+        "start": 0.22,
+        "end": 0.54
+      },
+      {
+        "text": "holds",
+        "start": 0.64,
+        "end": 0.9
+      },
+      {
+        "text": "the",
+        "start": 0.94,
+        "end": 1.02
+      },
+      {
+        "text": "rules,",
+        "start": 1.1,
+        "end": 1.58
+      },
+      {
+        "text": "and",
+        "start": 1.86,
+        "end": 1.96
+      },
+      {
+        "text": "hooks",
+        "start": 2.08,
+        "end": 2.42
+      },
+      {
+        "text": "run",
+        "start": 2.54,
+        "end": 2.66
+      },
+      {
+        "text": "the",
+        "start": 2.7,
+        "end": 2.8
+      },
+      {
+        "text": "checks",
+        "start": 2.86,
+        "end": 3.18
+      },
+      {
+        "text": "on",
+        "start": 3.22,
+        "end": 3.44
+      },
+      {
+        "text": "every",
+        "start": 3.52,
+        "end": 3.74
+      },
+      {
+        "text": "save.",
+        "start": 3.86,
+        "end": 4.26
+      }
+    ],
+    "pauses": []
+  },
+  "n19d-cli": {
+    "file": "audio/narration/n19d-cli.wav",
+    "text": "On GitHub, Kiro's CLI can review pull requests, headless.",
+    "act": 2,
+    "duration": 4.872,
+    "words": [
+      {
+        "text": "On",
+        "start": 0.08,
+        "end": 0.18
+      },
+      {
+        "text": "GitHub,",
+        "start": 0.28,
+        "end": 0.72
+      },
+      {
+        "text": "Kiro's",
+        "start": 1.06,
+        "end": 1.54
+      },
+      {
+        "text": "CLI",
+        "start": 1.64,
+        "end": 2.4
+      },
+      {
+        "text": "can",
+        "start": 2.52,
+        "end": 2.66
+      },
+      {
+        "text": "review",
+        "start": 2.72,
+        "end": 2.98
+      },
+      {
+        "text": "pull",
+        "start": 3.1,
+        "end": 3.26
+      },
+      {
+        "text": "requests,",
+        "start": 3.32,
+        "end": 3.84
+      },
+      {
+        "text": "headless.",
+        "start": 4.18,
+        "end": 4.64
       }
     ],
     "pauses": []

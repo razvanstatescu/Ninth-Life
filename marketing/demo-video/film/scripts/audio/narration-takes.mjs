@@ -56,9 +56,11 @@ async function take(line, k, seed, context) {
   mkdirSync(dir, { recursive: true });
   const base = `${dir}take-${k}`;
   if (existsSync(`${base}.wav`)) return;
-  const text = (line.act === 1 ? cfg.act1_tag + ' ' : '') + line.text;
+  // `say` (third cut): what is sent to the voice when punctuation must steer the pace; the words must equal `text`.
+  const text = (line.act === 1 ? cfg.act1_tag + ' ' : '') + (line.say ?? line.text);
   if (spent() + Math.ceil(text.length * 0.3) > BUDGET) throw new Error(`budget: ${line.id} take ${k} (ledger ${spent()})`);
-  const body = { text, model_id: cfg.model_id, voice_settings: cfg.voice_settings, seed };
+  // A line may override the voice settings (third cut: `speed` for two lines read too fast or too slow).
+  const body = { text, model_id: cfg.model_id, voice_settings: { ...cfg.voice_settings, ...(line.voice_settings ?? {}) }, seed };
   if (context.length) body.previous_request_ids = context;
   const url = new URL(`https://api.elevenlabs.io/v1/text-to-speech/${cfg.voice_id}/with-timestamps`);
   url.searchParams.set('output_format', cfg.output_format);

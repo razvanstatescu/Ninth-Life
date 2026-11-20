@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/build-data.ts",
   "source": "@ninth/core decodeGhost on data/lexicon/en.v1.json + en.bigram.v1.json",
-  "generatedAt": "2026-11-11",
+  "generatedAt": "2026-11-19",
   "keypad": {
     "keys": [
       {

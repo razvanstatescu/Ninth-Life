@@ -549,6 +549,40 @@ export const WIDE_SPEC = [
 ];
 
 const SHOW = 'dialog.show[open]';
+/**
+ * Third cut (2026-11-19): the laptop's conversation states for the real-app reel (s12b), measured at 4x so macro shots
+ * stay sharp. Regions are the layout's own blocks (the lift-and-re-seat tiles); the rest are the controls pressed.
+ */
+export const LAPTOP4 = {
+  name: 'laptop',
+  viewport: [1440, 900],
+  dpr: 4,
+  options: { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 4 },
+};
+const THREAD_DIALOG = 'dialog[open]';
+export const CONVO_SPEC = [
+  { name: 'header', sel: 'header.app-header' },
+  { name: 'partner', sel: 'section.thread-panel' },
+  { name: 'partner-row', sel: '.thread-panel .thread-row', text: true },
+  { name: 'partner-text', sel: '.thread-panel .thread-row__text', tight: true, text: true },
+  { name: 'partner-button', sel: '.thread-panel button.nl-btn', all: true, names: ['partner-b1', 'partner-b2', 'partner-b3'], text: true },
+  { name: 'partner-field', sel: '.thread-panel input.input' },
+  { name: 'speakbar', sel: '.speak-group .nl-speakbar' },
+  { name: 'speakbar-text', sel: '.speak-group .nl-speakbar__text', tight: true, text: true },
+  { name: 'quick', sel: 'section.quick-replies' },
+  { name: 'quick-reply', sel: '.quick-reply', all: true, names: ['reply-hold', 'reply-yes', 'reply-no', 'reply-pardon', 'reply-thanks'], text: true },
+  { name: 'reply-types', sel: '.reply-types' },
+  { name: 'reply-type', sel: '.reply-type', all: true, names: ['type-agree', 'type-disagree', 'type-ask'], text: true },
+  { name: 'keypad', sel: '.nl-keypad' },
+  { name: 'pad-tools', sel: '.pad-tools' },
+  { name: 'thread', sel: THREAD_DIALOG },
+  { name: 'thread-list', sel: `${THREAD_DIALOG} ol.thread-list` },
+  { name: 'turn', sel: `${THREAD_DIALOG} li.thread-item`, all: true, names: ['turn-1', 'turn-2', 'turn-3', 'turn-4'] },
+  { name: 'turn-text', sel: `${THREAD_DIALOG} .thread-item__text`, all: true, names: ['turn-1-text', 'turn-2-text', 'turn-3-text', 'turn-4-text'], tight: true, text: true },
+  // "You said: I need water" is the third turn (newest first); its first row is Say again, Show, Copy.
+  { name: 'turn-3-show', sel: `${THREAD_DIALOG} li.thread-item:nth-child(3) .thread-item__row:first-child .nl-btn:nth-child(2)`, text: true },
+];
+
 export const SHOW_SPEC = [
   { name: 'show-screen', sel: SHOW },
   { name: 'show-message', sel: '.show__message', within: SHOW },

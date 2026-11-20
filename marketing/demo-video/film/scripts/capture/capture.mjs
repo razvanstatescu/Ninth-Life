@@ -11,7 +11,7 @@
 import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { FILM_ROOT, LAPTOP, OUT_DIR, PHONE, SETTINGS_SPEC, SETTLE_MS, SHELL_SPEC, SHOW_SPEC, Session, TABLET, WIDE_SPEC, launchBrowser, sleep } from './lib.mjs';
+import { CONVO_SPEC, FILM_ROOT, LAPTOP, LAPTOP4, OUT_DIR, PHONE, SETTINGS_SPEC, SETTLE_MS, SHELL_SPEC, SHOW_SPEC, Session, TABLET, WIDE_SPEC, launchBrowser, sleep } from './lib.mjs';
 
 /** Sentences typed on the keypad: one press per letter, 0 is space. */
 const SENTENCES = {
@@ -235,6 +235,113 @@ async function show(browser) {
   }
 }
 
+/**
+ * Third cut (2026-11-19), the real-app reel (s12b): one conversation on a laptop, at 4x. The app's own speech is
+ * replaced by the e2e test stub, and the browser's speech recognition by a fake that "hears" one line on request, so
+ * Listen can be shown. A stub voice is not taken as a voice by this headless browser, so Speak and the quick replies
+ * open the app's big-text fallback; it is closed with Done (the turn is in the conversation either way).
+ */
+async function convo(browser) {
+  const s = await Session.open(browser, LAPTOP4);
+  const p = s.page;
+  await s.ctx.addInitScript(() => {
+    class FakeRec {
+      constructor() { this.lang = 'en-US'; this.continuous = false; this.interimResults = true; this._h = {}; }
+      addEventListener(t, f) { (this._h[t] ||= []).push(f); }
+      removeEventListener(t, f) { this._h[t] = (this._h[t] || []).filter((g) => g !== f); }
+      _emit(t, e) { const ev = Object.assign({ type: t }, e || {}); if (this['on' + t]) this['on' + t](ev); for (const f of this._h[t] || []) f(ev); }
+      start() { window.__rec = this; setTimeout(() => { this._emit('start'); this._emit('audiostart'); this._emit('speechstart'); }, 30); }
+      hear(text) { const res = [{ transcript: text, confidence: 0.92 }]; res.isFinal = true; this._emit('result', { resultIndex: 0, results: [res] }); this._emit('speechend'); this._emit('end'); }
+      stop() { this._emit('end'); }
+      abort() { this._emit('end'); }
+    }
+    window.SpeechRecognition = FakeRec;
+    window.webkitSpeechRecognition = FakeRec;
+    const voice = { voiceURI: 'stub', name: 'Stub voice', lang: 'en-US', localService: true, default: true };
+    class Utterance { constructor(text) { this.text = text; this.voice = null; this.lang = ''; this.rate = 1; this.pitch = 1; } }
+    const synth = { speaking: false, pending: false, paused: false, onvoiceschanged: null, getVoices: () => [voice],
+      speak(u) { setTimeout(() => u.onstart?.(), 10); setTimeout(() => u.onend?.(), 600); },
+      cancel() {}, pause() {}, resume() {}, addEventListener() {}, removeEventListener() {} };
+    Object.defineProperty(window, 'SpeechSynthesisUtterance', { value: Utterance, configurable: true, writable: true });
+    Object.defineProperty(window, 'speechSynthesis', { value: synth, configurable: true, writable: true });
+  });
+  const blur = () => p.evaluate(() => document.activeElement instanceof HTMLElement && document.activeElement.blur());
+  const closeShow = async () => {
+    const done = p.locator('dialog.show[open] button', { hasText: 'Done' });
+    if (await done.count()) await done.first().click();
+    await s.until('the big text to close', () => !document.querySelector('dialog.show[open]'));
+  };
+  const out = [];
+  try {
+    await s.openApp();
+    await s.expectLayout('wide');
+    await p.locator('button', { hasText: 'Type their line' }).first().click();
+    await p.locator('.thread-panel input.input').first().fill('What do you need?');
+    await p.locator('button[type="submit"]', { hasText: 'Done' }).first().click();
+    await s.until('their line', () => /What do you need\?/.test(document.querySelector('.thread-panel .thread-row')?.textContent ?? ''));
+    await blur();
+    await s.type(SENTENCES.water.keys);
+    await s.expectSentence(SENTENCES.water.text, SENTENCES.water.digits);
+    await s.press('.speak-group [data-action="speak"]');
+    await sleep(400);
+    await closeShow();
+    await p.locator('.speak-group button[aria-label="Clear"]').first().click(); // the card's x (it becomes Undo)
+    await s.until('the cleared card', () => /Press a key/.test(document.querySelector('.speak-group .nl-speakbar__text')?.textContent ?? ''));
+    await blur();
+    out.push(await s.shoot('convo-you', 'Laptop at 4x. They said "What do you need?"; "I need water" was typed and spoken (stub voice, big-text fallback closed), then cleared. The strip shows the last turn, "You: I need water", with Listen, Type their line and Whole conversation; quick replies under the empty card. Nothing is ember.', CONVO_SPEC));
+    await p.locator('.thread-panel button', { hasText: /^Listen$/ }).first().click();
+    const allow = p.locator('button', { hasText: 'Allow and listen' });
+    if (await allow.count()) await allow.first().click();
+    await s.until('listening', () => /Listening/.test(document.querySelector('.thread-panel')?.textContent ?? ''));
+    await blur();
+    out.push(await s.shoot('convo-listening', 'Listen pressed (voice to text allowed): the They said panel is open and listening, "Listening. Ask them to speak now.", with Stop, Done and Cancel. A fake speech recogniser stands in for the browser\'s.', CONVO_SPEC));
+    await p.evaluate(() => window.__rec && window.__rec.hear('Do you want it cold?'));
+    await s.until('the heard line', () => (document.querySelector('.thread-panel input.input')?.value ?? '') === 'Do you want it cold?');
+    await blur();
+    out.push(await s.shoot('convo-heard', 'The recogniser heard "Do you want it cold?": the line is in the They said field, with Listen, Done and Cancel.', CONVO_SPEC));
+    await p.locator('.thread-panel button', { hasText: /^Done$/ }).first().click();
+    await s.until('their new line', () => /Do you want it cold\?/.test(document.querySelector('.thread-panel .thread-row')?.textContent ?? ''));
+    await blur();
+    out.push(await s.shoot('convo-their', 'Done: the strip shows "They: Do you want it cold?"; quick replies and the reply types (Agree, Disagree, Ask) under the empty card. Nothing is ember.', CONVO_SPEC));
+    await p.locator('.quick-reply', { hasText: /^Yes\.$/ }).first().click();
+    await sleep(400);
+    await closeShow();
+    await s.until('the reply in the strip', () => /Yes\./.test(document.querySelector('.thread-panel .thread-row')?.textContent ?? ''));
+    await blur();
+    out.push(await s.shoot('convo-yes', 'The quick reply "Yes." pressed once (spoken by the stub voice; its big-text fallback closed): the strip shows "You: Yes."', CONVO_SPEC));
+    await p.locator('.thread-panel button', { hasText: 'Whole conversation' }).first().click();
+    await s.until('the conversation sheet', () => !!document.querySelector('dialog[open]'));
+    await sleep(500);
+    await blur();
+    out.push(await s.shoot('convo-thread', 'Whole conversation open: newest first, "You said: Yes.", "They said: Do you want it cold?", "You said: I need water", "They said: What do you need?". Kept in memory only.', CONVO_SPEC));
+    return out;
+  } finally {
+    await s.close();
+  }
+}
+
+/** Third cut: Show and Flip on the phone with "I need water" (the reel's last shot). */
+async function showWater(browser) {
+  const s = await Session.open(browser, PHONE);
+  const want = SENTENCES.water;
+  try {
+    await s.openApp();
+    await s.expectLayout('stack');
+    await s.type(want.keys);
+    await s.expectSentence(want.text, want.digits);
+    await sleep(SETTLE_MS);
+    await s.press(SHOW_BTN);
+    await s.until('show mode', (t) => document.querySelector('dialog.show[open] .show__text')?.textContent?.trim() === t, want.text);
+    const a = await s.shoot('show-water-upright', (t) => `Typed "${want.text}"; Show tapped: label "${t['show-label']}", text "${t['show-text']}", buttons Done and Flip.`, SHOW_SPEC);
+    await s.press('dialog.show[open] [data-action="flip"]');
+    await s.until('the flipped message', () => !!document.querySelector('dialog.show[open] .show__message.is-flipped'));
+    const b = await s.shoot('show-water-flipped', (t) => `Show, then Flip tapped: the label and "${t['show-text']}" are turned 180 degrees for the person across the table; Done and Flip stay upright.`, SHOW_SPEC);
+    return [a, b];
+  } finally {
+    await s.close();
+  }
+}
+
 /** Where the scan highlight is: the ringed keypad row (0-3, -1 none) and the lit key. */
 function scanStateInPage() {
   const rows = [...document.querySelectorAll('.nl-keypad__row')];
@@ -390,11 +497,13 @@ const GROUPS = {
   settings: (b) => settings(b),
   show: (b) => show(b),
   review: (b) => review(b),
+  convo: (b) => convo(b),
+  'show-water': (b) => showWater(b),
 };
 /** Ids a group owns when their number can change: older ones it did not shoot again are removed. */
 const OWNED = { scan: /^scan-\d+$/ };
 /** Order of the entries in the JSON files. */
-const ORDER = ['phone-empty', 'phone-water', 'phone-hello', 'phone-offline', 'tablet-water', 'laptop-water', 'laptop-water-full', 'laptop-hello', 'scan-', 'settings-speed-', 'show-upright', 'show-flipped'];
+const ORDER = ['phone-empty', 'phone-water', 'phone-hello', 'phone-offline', 'tablet-water', 'laptop-water', 'laptop-water-full', 'laptop-hello', 'scan-', 'settings-speed-', 'show-upright', 'show-flipped', 'show-water-', 'convo-'];
 const rank = (id) => {
   const i = ORDER.findIndex((o) => (o.endsWith('-') ? id.startsWith(o) : id === o));
   return i < 0 ? ORDER.length : i;

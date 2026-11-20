@@ -85,9 +85,9 @@ const sounds: Cue[] = [
   { from: at(5), to: at(5) + sec(0.3), text: '[Music stops]', kind: 'sound' },
   { from: at(6), to: at(6, 3), text: '[Music, full]', kind: 'sound' },
   { from: at(17, 4), to: at(18, 2), text: '[A rising swell. The beat returns]', kind: 'sound' },
-  { from: at(35), to: at(37), text: '[The music lifts]', kind: 'sound' },
-  { from: at(40), to: at(41), text: '[Five soft key tones]', kind: 'sound' },
-  { from: at(43), to: TOTAL, text: '[Music fades out]', kind: 'sound' },
+  { from: at(40), to: at(40, 3), text: '[The music lifts]', kind: 'sound' },
+  { from: at(50), to: at(51), text: '[Five soft key tones]', kind: 'sound' },
+  { from: at(53), to: TOTAL, text: '[Music fades out]', kind: 'sound' },
 ];
 const gaps = (c: Cue) => {
   let pieces: [number, number][] = [[c.from, c.to]];
@@ -95,6 +95,9 @@ const gaps = (c: Cue) => {
   return pieces.filter(([a, b]) => b - a >= sec(0.8)).map(([a, b]) => ({ ...c, from: a, to: b }));
 };
 
+// Third cut: lines can follow within 0.3 s, so a cue ends where the next spoken cue starts (no stacked captions).
+speech.sort((a, b) => a.from - b.from);
+for (let i = 0; i + 1 < speech.length; i++) speech[i]!.to = Math.min(speech[i]!.to, speech[i + 1]!.from);
 const cues = [...speech, ...sounds.flatMap(gaps)].sort((a, b) => a.from - b.from);
 const out = join(here, '..', 'out', 'ninth-life-hello-again.srt');
 mkdirSync(dirname(out), { recursive: true });

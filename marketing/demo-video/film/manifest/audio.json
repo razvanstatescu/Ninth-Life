@@ -12835,5 +12835,1512 @@
     "sha256": "b8a1b63ce0feb545544345dfbff0dce0b80e9a1c86862002e90ed754cc1eb516",
     "durationSec": 90.0,
     "notes": "Music v2, drive variant, the drums stem: our kick and shaker; pair it with act2-v2-other.wav. The drive variant for the owner to compare, not in MUSIC_FILES: act2-v2 plus a soft shaker synthesised here (tuned E8 and A8, 88 hits on the eighths in bars 6-8, 18-21, 33-34 and 35-36, 14 dB under the music). . 90.000 s, 48 kHz 24-bit stereo; drums + other = full within -65 dB. Bar 1 beat 1 at 0.000 s (film 0:28). Bars 1-4 climb 7.7 dB into bar 4 (bass automation and our noise riser, cut dead at 7.6 s); bars 31-33 rebuilt from the take's own bar 34 into bar 33's kick (the lead's fixes, second round). Map rho 0.662, key [0.784, 'A minor']. Generated music; say so in the video description."
+  },
+  {
+    "id": "narration-take/n18b-keeps-up/take-1",
+    "path": "_takes/narration-v2/n18b-keeps-up/take-1.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "It keeps up... with the conversation.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 1111,
+      "tag": null,
+      "previous_request_ids": [
+        "LDvHiqewvwop5MOvX8VM",
+        "kQSedL6MyB8JNTcDMMc1",
+        "O8ahVa4iLxn5gnr9U6Q0"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "Cp8O5NiCbKtwDyv0MSIR",
+      "character_cost": 8,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "It keeps up with the conversation.",
+        "audio_events": []
+      }
+    },
+    "take": "n18b-keeps-up/take-1",
+    "sha256": "5ce4c0ee55a85b2d3291458b33e335ed355e148909566a7d01c26b419e5c8007",
+    "durationSec": 2.48,
+    "notes": "Narrator take, second cut. CHOSEN. pace 2.7 words/s, pitch 2.19 st and timbre 2.76 dB from the reference, fails []. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n18b-keeps-up/take-2",
+    "path": "_takes/narration-v2/n18b-keeps-up/take-2.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "It keeps up... with the conversation.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 2222,
+      "tag": null,
+      "previous_request_ids": [
+        "LDvHiqewvwop5MOvX8VM",
+        "kQSedL6MyB8JNTcDMMc1",
+        "O8ahVa4iLxn5gnr9U6Q0"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "EN3AimGn8gJflQtHLYdG",
+      "character_cost": 8,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "It keeps up with the conversation.",
+        "audio_events": []
+      }
+    },
+    "take": "n18b-keeps-up/take-2",
+    "sha256": "d5dfa1d312e7efbe67ee2265d3572b8efd0c40229da8dcc748b35297f45ddd7c",
+    "durationSec": 2.56,
+    "notes": "Narrator take, second cut. not chosen. pace 2.65 words/s, pitch 1.88 st and timbre 2.89 dB from the reference, fails ['cut off (start -79.5 / end -45.4 dB re peak)']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n18b-keeps-up/take-3",
+    "path": "_takes/narration-v2/n18b-keeps-up/take-3.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "It keeps up... with the conversation.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 3333,
+      "tag": null,
+      "previous_request_ids": [
+        "LDvHiqewvwop5MOvX8VM",
+        "kQSedL6MyB8JNTcDMMc1",
+        "O8ahVa4iLxn5gnr9U6Q0"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "ijUZWoQqzJVo6WSPEcOV",
+      "character_cost": 8,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "It keeps up with the conversation.",
+        "audio_events": []
+      }
+    },
+    "take": "n18b-keeps-up/take-3",
+    "sha256": "f583fe5fc257033ff9bb1b5ebf7c558f4ea33088498c6899eba25db3a79ea934",
+    "durationSec": 2.48,
+    "notes": "Narrator take, second cut. not chosen. pace 2.75 words/s, pitch 1.99 st and timbre 2.82 dB from the reference, fails []. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n18c-listen/take-1",
+    "path": "_takes/narration-v2/n18c-listen/take-1.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Listen to what they say, and answer in one press.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 1111,
+      "tag": null,
+      "previous_request_ids": [
+        "kQSedL6MyB8JNTcDMMc1",
+        "O8ahVa4iLxn5gnr9U6Q0",
+        "8CVtePKZdIVst7fC4TUM"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "UVCqddvyRmnwn2pj1fRv",
+      "character_cost": 11,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "Listen to what they say and answer in one press.",
+        "audio_events": []
+      }
+    },
+    "take": "n18c-listen/take-1",
+    "sha256": "8298d87a3b4f03c6df9c28a729466c7de99c88770b4e2596edc750d937d554ef",
+    "durationSec": 3.28,
+    "notes": "Narrator take, second cut. not chosen. pace 3.33 words/s, pitch -0.75 st and timbre 3.37 dB from the reference, fails ['pace 3.33']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n18c-listen/take-2",
+    "path": "_takes/narration-v2/n18c-listen/take-2.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Listen to what they say, and answer in one press.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 2222,
+      "tag": null,
+      "previous_request_ids": [
+        "kQSedL6MyB8JNTcDMMc1",
+        "O8ahVa4iLxn5gnr9U6Q0",
+        "8CVtePKZdIVst7fC4TUM"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "x8g0zrKGarUjEG02nw8v",
+      "character_cost": 11,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "Listen to what they say and answer in one press.",
+        "audio_events": []
+      }
+    },
+    "take": "n18c-listen/take-2",
+    "sha256": "673d456142d1c425c5aa37f311eda216eb7675146549ab74d65cf9c8a15690d4",
+    "durationSec": 3.36,
+    "notes": "Narrator take, second cut. CHOSEN. pace 3.33 words/s, pitch -1.05 st and timbre 2.84 dB from the reference, fails ['pace 3.33']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n18c-listen/take-3",
+    "path": "_takes/narration-v2/n18c-listen/take-3.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Listen to what they say, and answer in one press.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 3333,
+      "tag": null,
+      "previous_request_ids": [
+        "kQSedL6MyB8JNTcDMMc1",
+        "O8ahVa4iLxn5gnr9U6Q0",
+        "8CVtePKZdIVst7fC4TUM"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "RohjZUcjbIGRtq2qozbW",
+      "character_cost": 11,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "Listen to what they say and answer in one press.",
+        "audio_events": []
+      }
+    },
+    "take": "n18c-listen/take-3",
+    "sha256": "404ecf642115f44c4595fe34c3a6fc2437a2e9c7b6c7c17170e9e52b92b8723b",
+    "durationSec": 3.28,
+    "notes": "Narrator take, second cut. not chosen. pace 3.4 words/s, pitch -0.95 st and timbre 3.3 dB from the reference, fails ['pace 3.4']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n18c-listen/take-4",
+    "path": "_takes/narration-v2/n18c-listen/take-4.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Listen to what they say, and answer in one press.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 4444,
+      "tag": null,
+      "previous_request_ids": [
+        "kQSedL6MyB8JNTcDMMc1",
+        "O8ahVa4iLxn5gnr9U6Q0",
+        "8CVtePKZdIVst7fC4TUM"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "hUIVR7JOZ0FHWoeWUC1C",
+      "character_cost": 11,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "Listen to what they say and answer in one press.",
+        "audio_events": []
+      }
+    },
+    "take": "n18c-listen/take-4",
+    "sha256": "97f0683364aa86dfa8377e788b358b49eabbc06cc388c6d8956c2179c4eff99f",
+    "durationSec": 3.28,
+    "notes": "Narrator take, second cut. not chosen. pace 3.33 words/s, pitch -0.75 st and timbre 3.45 dB from the reference, fails ['pace 3.33']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n18c-listen/take-5",
+    "path": "_takes/narration-v2/n18c-listen/take-5.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Listen to what they say, and answer in one press.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 5555,
+      "tag": null,
+      "previous_request_ids": [
+        "kQSedL6MyB8JNTcDMMc1",
+        "O8ahVa4iLxn5gnr9U6Q0",
+        "8CVtePKZdIVst7fC4TUM"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "R7v66rhH4aS5fDkMSCJC",
+      "character_cost": 11,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "Listen to what they say and answer in one press.",
+        "audio_events": []
+      }
+    },
+    "take": "n18c-listen/take-5",
+    "sha256": "4eb02a045f96b43a9ddcb495a60a61906fa719cda8d4e200ec992f59536c0c42",
+    "durationSec": 3.28,
+    "notes": "Narrator take, second cut. not chosen. pace 3.33 words/s, pitch -1.16 st and timbre 2.92 dB from the reference, fails ['pace 3.33']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n18c-listen/take-6",
+    "path": "_takes/narration-v2/n18c-listen/take-6.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Listen to what they say, and answer in one press.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 6666,
+      "tag": null,
+      "previous_request_ids": [
+        "kQSedL6MyB8JNTcDMMc1",
+        "O8ahVa4iLxn5gnr9U6Q0",
+        "8CVtePKZdIVst7fC4TUM"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "fT9B89VPIMiA1sybKb9A",
+      "character_cost": 11,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "Listen to what they say and answer in one press.",
+        "audio_events": []
+      }
+    },
+    "take": "n18c-listen/take-6",
+    "sha256": "dafe7fd968e819fa2e23aa4a498c7de877fb45b4a6d26ce3f56193c1b5c26852",
+    "durationSec": 3.36,
+    "notes": "Narrator take, second cut. not chosen. pace 3.33 words/s, pitch -1.05 st and timbre 3.59 dB from the reference, fails ['pace 3.33']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n18d-show-flip/take-1",
+    "path": "_takes/narration-v2/n18d-show-flip/take-1.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Or show it... and flip it, to face them.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 1111,
+      "tag": null,
+      "previous_request_ids": [
+        "O8ahVa4iLxn5gnr9U6Q0",
+        "Cp8O5NiCbKtwDyv0MSIR",
+        "x8g0zrKGarUjEG02nw8v"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "Zlox9zZHM0Eca8vZ2WjX",
+      "character_cost": 9,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "or show it and flip it to face them.",
+        "audio_events": []
+      }
+    },
+    "take": "n18d-show-flip/take-1",
+    "sha256": "a3a27f3e96f9607215b94c72f652f0aad5de897003f9d432fcd0871a2bfcfe27",
+    "durationSec": 3.12,
+    "notes": "Narrator take, second cut. CHOSEN. pace 3.15 words/s, pitch 1.24 st and timbre 2.21 dB from the reference, fails ['pace 3.15']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n18d-show-flip/take-2",
+    "path": "_takes/narration-v2/n18d-show-flip/take-2.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Or show it... and flip it, to face them.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 2222,
+      "tag": null,
+      "previous_request_ids": [
+        "O8ahVa4iLxn5gnr9U6Q0",
+        "Cp8O5NiCbKtwDyv0MSIR",
+        "x8g0zrKGarUjEG02nw8v"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "k9hij790GVjX3FVt2B7y",
+      "character_cost": 9,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "Or show it and flip it to face them.",
+        "audio_events": []
+      }
+    },
+    "take": "n18d-show-flip/take-2",
+    "sha256": "e26368376453efc9bffa702552d9b42b488875237493fd5c8ea1090381f7607f",
+    "durationSec": 3.12,
+    "notes": "Narrator take, second cut. not chosen. pace 3.19 words/s, pitch 1.64 st and timbre 2.61 dB from the reference, fails ['pace 3.19']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n18d-show-flip/take-3",
+    "path": "_takes/narration-v2/n18d-show-flip/take-3.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Or show it... and flip it, to face them.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 3333,
+      "tag": null,
+      "previous_request_ids": [
+        "O8ahVa4iLxn5gnr9U6Q0",
+        "Cp8O5NiCbKtwDyv0MSIR",
+        "x8g0zrKGarUjEG02nw8v"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "1TrB05cWAJEaoaHn4Cq8",
+      "character_cost": 9,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "Or show it and flip it to face them.",
+        "audio_events": []
+      }
+    },
+    "take": "n18d-show-flip/take-3",
+    "sha256": "79d6ca591e91f0ad979aeb987b24ebf93f050c16ee2b90808ca9567816fab7e9",
+    "durationSec": 3.2,
+    "notes": "Narrator take, second cut. not chosen. pace 3.15 words/s, pitch 2.63 st and timbre 3.08 dB from the reference, fails ['pace 3.15']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n18d-show-flip/take-4",
+    "path": "_takes/narration-v2/n18d-show-flip/take-4.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Or show it... and flip it, to face them.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 4444,
+      "tag": null,
+      "previous_request_ids": [
+        "O8ahVa4iLxn5gnr9U6Q0",
+        "Cp8O5NiCbKtwDyv0MSIR",
+        "x8g0zrKGarUjEG02nw8v"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "0Y5oERERb4nJmRBiU6a5",
+      "character_cost": 9,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "or show it and flip it to face them.",
+        "audio_events": []
+      }
+    },
+    "take": "n18d-show-flip/take-4",
+    "sha256": "a3931cd441e6000118e6e5e5d9e1b385577b703a8610f9a0a9f5f2e465c85803",
+    "durationSec": 3.04,
+    "notes": "Narrator take, second cut. not chosen. pace 3.24 words/s, pitch -0.06 st and timbre 3.16 dB from the reference, fails ['pace 3.24']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n18d-show-flip/take-5",
+    "path": "_takes/narration-v2/n18d-show-flip/take-5.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Or show it... and flip it, to face them.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 5555,
+      "tag": null,
+      "previous_request_ids": [
+        "O8ahVa4iLxn5gnr9U6Q0",
+        "Cp8O5NiCbKtwDyv0MSIR",
+        "x8g0zrKGarUjEG02nw8v"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "y9Lg0pdp0hdVAkn3nLZl",
+      "character_cost": 9,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "Or show it and flip it to face them.",
+        "audio_events": []
+      }
+    },
+    "take": "n18d-show-flip/take-5",
+    "sha256": "053d5bf891c09f7062d52417ef631f764f71e9937131899eeb3f6c5b2572f82b",
+    "durationSec": 3.12,
+    "notes": "Narrator take, second cut. not chosen. pace 3.21 words/s, pitch 0.94 st and timbre 3.03 dB from the reference, fails ['pace 3.21']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n18d-show-flip/take-6",
+    "path": "_takes/narration-v2/n18d-show-flip/take-6.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Or show it... and flip it, to face them.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 6666,
+      "tag": null,
+      "previous_request_ids": [
+        "O8ahVa4iLxn5gnr9U6Q0",
+        "Cp8O5NiCbKtwDyv0MSIR",
+        "x8g0zrKGarUjEG02nw8v"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "LoTrNlgxk0wA7cWBUL5A",
+      "character_cost": 9,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "Or show it and flip it to face them.",
+        "audio_events": []
+      }
+    },
+    "take": "n18d-show-flip/take-6",
+    "sha256": "e3c81104cc38a463656c2f4b84b6ad0002987a33c3f1239a68b14e9d2c3089a1",
+    "durationSec": 3.2,
+    "notes": "Narrator take, second cut. not chosen. pace 3.1 words/s, pitch 1.94 st and timbre 3.58 dB from the reference, fails ['pace 3.1']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n19b-specs/take-1",
+    "path": "_takes/narration-v2/n19b-specs/take-1.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "In Kiro, features start as specs.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 1111,
+      "tag": null,
+      "previous_request_ids": [
+        "x8g0zrKGarUjEG02nw8v",
+        "2U7mYz70m7L1qCgNcCHD",
+        "adXpkrFmmDvi9LKXss5A"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "c3a9SW1qVQxwdJ8Fke0N",
+      "character_cost": 7,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "In Kiro, features start as specs.",
+        "audio_events": []
+      }
+    },
+    "take": "n19b-specs/take-1",
+    "sha256": "4e820086a62a0f5a552f93f330c575a46086ed36fec2b22aa7b5865a676e4bb7",
+    "durationSec": 3.12,
+    "notes": "Narrator take, second cut. not chosen. pace 2.16 words/s, pitch 1.65 st and timbre 4.72 dB from the reference, fails ['pace 2.16', 'timbre 4.72 dB']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n19b-specs/take-2",
+    "path": "_takes/narration-v2/n19b-specs/take-2.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "In Kiro, features start as specs.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 2222,
+      "tag": null,
+      "previous_request_ids": [
+        "x8g0zrKGarUjEG02nw8v",
+        "2U7mYz70m7L1qCgNcCHD",
+        "adXpkrFmmDvi9LKXss5A"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "fiioEZLqrcpzojlHuxpM",
+      "character_cost": 7,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "In Kiro, features start as specs.",
+        "audio_events": []
+      }
+    },
+    "take": "n19b-specs/take-2",
+    "sha256": "5ee5500fac975eadb0e691d99841f6734dccb1e6887d46d19b8d08841bc5ce6b",
+    "durationSec": 3.12,
+    "notes": "Narrator take, second cut. not chosen. pace 2.14 words/s, pitch 1.2 st and timbre 3.76 dB from the reference, fails ['pace 2.14']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n19b-specs/take-3",
+    "path": "_takes/narration-v2/n19b-specs/take-3.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "In Kiro, features start as specs.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 3333,
+      "tag": null,
+      "previous_request_ids": [
+        "x8g0zrKGarUjEG02nw8v",
+        "2U7mYz70m7L1qCgNcCHD",
+        "adXpkrFmmDvi9LKXss5A"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "DQtx2w2esgbaDGkRFbGV",
+      "character_cost": 7,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "In Kiro, features start as specs.",
+        "audio_events": []
+      }
+    },
+    "take": "n19b-specs/take-3",
+    "sha256": "508c5b2f8eda9793dbf2b1e1f2bfc746fc1c38068edfc290560f86dcc6382061",
+    "durationSec": 3.04,
+    "notes": "Narrator take, second cut. CHOSEN. pace 2.22 words/s, pitch 1.1 st and timbre 3.93 dB from the reference, fails []. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n19c-hooks/take-1",
+    "path": "_takes/narration-v2/n19c-hooks/take-1.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Steering holds the rules, and hooks run the checks on every save.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 1111,
+      "tag": null,
+      "previous_request_ids": [
+        "2U7mYz70m7L1qCgNcCHD",
+        "adXpkrFmmDvi9LKXss5A",
+        "DQtx2w2esgbaDGkRFbGV"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "uRQQ83N61dBmCqTBBw8i",
+      "character_cost": 14,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "Steering holds the rules, and hooks run the checks on every save.",
+        "audio_events": []
+      }
+    },
+    "take": "n19c-hooks/take-1",
+    "sha256": "071c34242c05b9b6ea934b138c9789ba058c01a9e1bee92ca28064c0c23f7d83",
+    "durationSec": 4.32,
+    "notes": "Narrator take, second cut. not chosen. pace 3.03 words/s, pitch -4.21 st and timbre 3.26 dB from the reference, fails ['cut off (start -78.0 / end -49.5 dB re peak)', 'pace 3.03', 'pitch -4.21 st']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n19c-hooks/take-2",
+    "path": "_takes/narration-v2/n19c-hooks/take-2.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Steering holds the rules, and hooks run the checks on every save.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 2222,
+      "tag": null,
+      "previous_request_ids": [
+        "2U7mYz70m7L1qCgNcCHD",
+        "adXpkrFmmDvi9LKXss5A",
+        "DQtx2w2esgbaDGkRFbGV"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "ETdsHXc12cjrGKbPiNkU",
+      "character_cost": 14,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "Steering holds the rules, and hooks run the checks on every save.",
+        "audio_events": []
+      }
+    },
+    "take": "n19c-hooks/take-2",
+    "sha256": "74a55d7a61e18a31e26df83497737ae4a795abb31508c33c527b0841d63aac46",
+    "durationSec": 4.32,
+    "notes": "Narrator take, second cut. not chosen. pace 3.05 words/s, pitch -3.79 st and timbre 2.94 dB from the reference, fails ['cut off (start -56.1 / end -48.4 dB re peak)', 'pace 3.05']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n19c-hooks/take-3",
+    "path": "_takes/narration-v2/n19c-hooks/take-3.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Steering holds the rules, and hooks run the checks on every save.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 3333,
+      "tag": null,
+      "previous_request_ids": [
+        "2U7mYz70m7L1qCgNcCHD",
+        "adXpkrFmmDvi9LKXss5A",
+        "DQtx2w2esgbaDGkRFbGV"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "mvNAHHk6oBKl3tZr0DSt",
+      "character_cost": 14,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "Steering holds the rules, and hooks run the checks on every save.",
+        "audio_events": []
+      }
+    },
+    "take": "n19c-hooks/take-3",
+    "sha256": "7499804f703268e231fb6c01c7df4c654c269d4530dd97f72abdd5106ab792d6",
+    "durationSec": 4.32,
+    "notes": "Narrator take, second cut. not chosen. pace 3.03 words/s, pitch -3.6 st and timbre 3.59 dB from the reference, fails ['pace 3.03']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n19c-hooks/take-4",
+    "path": "_takes/narration-v2/n19c-hooks/take-4.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Steering holds the rules, and hooks run the checks on every save.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 4444,
+      "tag": null,
+      "previous_request_ids": [
+        "2U7mYz70m7L1qCgNcCHD",
+        "adXpkrFmmDvi9LKXss5A",
+        "DQtx2w2esgbaDGkRFbGV"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "RQ82ddB52rFxAVdNbaY3",
+      "character_cost": 14,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "Steering holds the rules, and hooks run the checks on every save.",
+        "audio_events": []
+      }
+    },
+    "take": "n19c-hooks/take-4",
+    "sha256": "139a7d8ff350dc1d2c2569802a8309c66940c8aa8a43e0dc0421942a195c1d40",
+    "durationSec": 4.4,
+    "notes": "Narrator take, second cut. CHOSEN. pace 2.97 words/s, pitch -2.81 st and timbre 3.2 dB from the reference, fails ['pace 2.97']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n19c-hooks/take-5",
+    "path": "_takes/narration-v2/n19c-hooks/take-5.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Steering holds the rules, and hooks run the checks on every save.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 5555,
+      "tag": null,
+      "previous_request_ids": [
+        "2U7mYz70m7L1qCgNcCHD",
+        "adXpkrFmmDvi9LKXss5A",
+        "DQtx2w2esgbaDGkRFbGV"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "vO7G2s9gRJYeySZaVjPU",
+      "character_cost": 14,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "Steering holds the rules, and hooks run the checks on every save.",
+        "audio_events": []
+      }
+    },
+    "take": "n19c-hooks/take-5",
+    "sha256": "f7a253bf37f3d415032d63614e7870b691543324658004510bb5b393747aefb0",
+    "durationSec": 4.4,
+    "notes": "Narrator take, second cut. not chosen. pace 2.97 words/s, pitch -3.2 st and timbre 3.04 dB from the reference, fails ['pace 2.97']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n19c-hooks/take-6",
+    "path": "_takes/narration-v2/n19c-hooks/take-6.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Steering holds the rules, and hooks run the checks on every save.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 6666,
+      "tag": null,
+      "previous_request_ids": [
+        "2U7mYz70m7L1qCgNcCHD",
+        "adXpkrFmmDvi9LKXss5A",
+        "DQtx2w2esgbaDGkRFbGV"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "07ACtBS5CBlw67JfQPyg",
+      "character_cost": 14,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "Steering holds the rules, and hooks run the checks on every save.",
+        "audio_events": []
+      }
+    },
+    "take": "n19c-hooks/take-6",
+    "sha256": "c4368d55b6181f37381efc10d11bc61d0dbf6f20fc5834f62a5fdc3513492b73",
+    "durationSec": 4.4,
+    "notes": "Narrator take, second cut. not chosen. pace 2.97 words/s, pitch -3.76 st and timbre 3.27 dB from the reference, fails ['pace 2.97']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n19d-cli/take-1",
+    "path": "_takes/narration-v2/n19d-cli/take-1.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "On GitHub, Kiro's CLI can review pull requests, headless.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8,
+        "speed": 1.12
+      },
+      "seed": 1111,
+      "tag": null,
+      "previous_request_ids": [
+        "adXpkrFmmDvi9LKXss5A",
+        "DQtx2w2esgbaDGkRFbGV",
+        "RQ82ddB52rFxAVdNbaY3"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "eZsfLrP2M6prkB6F0zxe",
+      "character_cost": 13,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "On GitHub, Kiro's CLI can review pull requests headless.",
+        "audio_events": []
+      }
+    },
+    "take": "n19d-cli/take-1",
+    "sha256": "436e755ac42e5d1689163c1c72e6542f31fe4dad38aca12cfff66895253c71f1",
+    "durationSec": 4.8,
+    "notes": "Narrator take, second cut. CHOSEN. pace 1.97 words/s, pitch -0.06 st and timbre 2.56 dB from the reference, fails ['pace 1.97']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n19d-cli/take-2",
+    "path": "_takes/narration-v2/n19d-cli/take-2.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "On GitHub, Kiro's CLI can review pull requests, headless.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8,
+        "speed": 1.12
+      },
+      "seed": 2222,
+      "tag": null,
+      "previous_request_ids": [
+        "adXpkrFmmDvi9LKXss5A",
+        "DQtx2w2esgbaDGkRFbGV",
+        "RQ82ddB52rFxAVdNbaY3"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "GT39nUASuTMvezEgjIaR",
+      "character_cost": 13,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "On GitHub, Kiro's CLI can review pull requests headless.",
+        "audio_events": []
+      }
+    },
+    "take": "n19d-cli/take-2",
+    "sha256": "77a1101f6189643f85194b55e859bda56b2c4041f0c37ad77ecdc7455f347d5e",
+    "durationSec": 5.04,
+    "notes": "Narrator take, second cut. not chosen. pace 1.9 words/s, pitch 0.14 st and timbre 2.44 dB from the reference, fails ['pace 1.9']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n19d-cli/take-3",
+    "path": "_takes/narration-v2/n19d-cli/take-3.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "On GitHub, Kiro's CLI can review pull requests, headless.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8,
+        "speed": 1.12
+      },
+      "seed": 3333,
+      "tag": null,
+      "previous_request_ids": [
+        "adXpkrFmmDvi9LKXss5A",
+        "DQtx2w2esgbaDGkRFbGV",
+        "RQ82ddB52rFxAVdNbaY3"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "MTyWmCz6bhTnjsWplu42",
+      "character_cost": 13,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "On GitHub, Kiro's CLI can review pull requests headless.",
+        "audio_events": []
+      }
+    },
+    "take": "n19d-cli/take-3",
+    "sha256": "b0ca8b5472b5843616a385be6751b41bab62f06ad2f07abbd3981de92d2cd828",
+    "durationSec": 4.88,
+    "notes": "Narrator take, second cut. not chosen. pace 1.97 words/s, pitch 0.23 st and timbre 2.78 dB from the reference, fails ['pace 1.97']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n19d-cli/take-4",
+    "path": "_takes/narration-v2/n19d-cli/take-4.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "On GitHub, Kiro's CLI can review pull requests, headless.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8,
+        "speed": 1.12
+      },
+      "seed": 4444,
+      "tag": null,
+      "previous_request_ids": [
+        "adXpkrFmmDvi9LKXss5A",
+        "DQtx2w2esgbaDGkRFbGV",
+        "RQ82ddB52rFxAVdNbaY3"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "ggdTq3WPfeooxIgBhdg2",
+      "character_cost": 13,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "On GitHub, Kiro's CLI can review pull requests headless.",
+        "audio_events": []
+      }
+    },
+    "take": "n19d-cli/take-4",
+    "sha256": "7db266fb98cf471416441abf8c1c09addfb2ec18d26c34b7f0cfb140d72ee5e0",
+    "durationSec": 4.8,
+    "notes": "Narrator take, second cut. not chosen. pace 2.01 words/s, pitch 0.43 st and timbre 3.15 dB from the reference, fails ['pace 2.01']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n19d-cli/take-5",
+    "path": "_takes/narration-v2/n19d-cli/take-5.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "On GitHub, Kiro's CLI can review pull requests, headless.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8,
+        "speed": 1.12
+      },
+      "seed": 5555,
+      "tag": null,
+      "previous_request_ids": [
+        "adXpkrFmmDvi9LKXss5A",
+        "DQtx2w2esgbaDGkRFbGV",
+        "RQ82ddB52rFxAVdNbaY3"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "mfJXhQ47hMjaTjPI4CEE",
+      "character_cost": 13,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "On GitHub, Kiro's CLI can review pull requests headless.",
+        "audio_events": []
+      }
+    },
+    "take": "n19d-cli/take-5",
+    "sha256": "8a415e5bd47e3519f35f78c6ddcc3440afe4425fc664aa9baaae16ee57fc02cc",
+    "durationSec": 4.88,
+    "notes": "Narrator take, second cut. not chosen. pace 1.97 words/s, pitch 0.14 st and timbre 3.06 dB from the reference, fails ['pace 1.97']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration-take/n19d-cli/take-6",
+    "path": "_takes/narration-v2/n19d-cli/take-6.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "On GitHub, Kiro's CLI can review pull requests, headless.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8,
+        "speed": 1.12
+      },
+      "seed": 6666,
+      "tag": null,
+      "previous_request_ids": [
+        "adXpkrFmmDvi9LKXss5A",
+        "DQtx2w2esgbaDGkRFbGV",
+        "RQ82ddB52rFxAVdNbaY3"
+      ],
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "request_id": "5WCECHRUG5wfbjnrGgfM",
+      "character_cost": 13,
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "On GitHub, Kiro's CLI can review pull requests headless.",
+        "audio_events": []
+      }
+    },
+    "take": "n19d-cli/take-6",
+    "sha256": "f3791c0eb657c68d7106880cd4ec607920bb8bc3e3df603c56e0b1a0d36671bc",
+    "durationSec": 4.96,
+    "notes": "Narrator take, second cut. not chosen. pace 1.93 words/s, pitch 0.84 st and timbre 2.73 dB from the reference, fails ['pace 1.93']. Raw API output, 48 kHz 16-bit mono."
+  },
+  {
+    "id": "narration/n18b-keeps-up",
+    "path": "public/audio/narration/n18b-keeps-up.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "It keeps up... with the conversation.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py; scripts/audio/narration_finish.py; scripts/audio/narration-align.mjs; scripts/audio/narration_data.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 1111,
+      "tag": null,
+      "previous_request_ids": [
+        "LDvHiqewvwop5MOvX8VM",
+        "kQSedL6MyB8JNTcDMMc1",
+        "O8ahVa4iLxn5gnr9U6Q0"
+      ],
+      "request_id": "Cp8O5NiCbKtwDyv0MSIR",
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "source_take": "_takes/narration-v2/n18b-keeps-up/take-1.wav",
+      "trim_s": [
+        0.0,
+        2.48
+      ],
+      "pad_s": [
+        0.023,
+        0.015
+      ],
+      "chain": "highpass=f=80:poles=2,acompressor=threshold=-16dB:ratio=2:attack=10:release=120:knee=6:makeup=1,equalizer=f=3000:t=q:w=1.0:g=2,deesser=i=0.4:m=0.5:f=0.5:s=o",
+      "level_lufs": -19.0,
+      "true_peak_ceiling_dbtp": -6.5,
+      "measured": {
+        "lufs": -19.0,
+        "lra": 0.0,
+        "true_peak_dbtp": -6.5
+      },
+      "word_times": "ElevenLabs forced alignment (POST /v1/forced-alignment) on this file",
+      "alignment_loss": 0.647085470311782,
+      "pauses": [],
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "It keeps up with the conversation.",
+        "notes": []
+      }
+    },
+    "take": "n18b-keeps-up/take-1",
+    "sha256": "2f6f069d66d9d96e5392223504609cdda84ed1ff8d473d69b431b7679e961447",
+    "durationSec": 2.518,
+    "notes": "Narrator, act 2. Chosen from 3 takes. 6 words in 2.22 s = 2.70 words/s; pauses over 0.35 s none. Trim 60 ms head / 150 ms tail (silence padded where the take had less), highpass 80 Hz, compressor -16 dB 2:1, +2 dB at 3 kHz, de-esser, -19.0 LUFS integrated, true peak <= -6.5 dBTP (4x oversampled limiter). 48 kHz 24-bit mono. The narrator's voice is generated; say so in the video description."
+  },
+  {
+    "id": "narration/n18c-listen",
+    "path": "public/audio/narration/n18c-listen.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Listen to what they say, and answer in one press.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py; scripts/audio/narration_finish.py; scripts/audio/narration-align.mjs; scripts/audio/narration_data.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 2222,
+      "tag": null,
+      "previous_request_ids": [
+        "kQSedL6MyB8JNTcDMMc1",
+        "O8ahVa4iLxn5gnr9U6Q0",
+        "8CVtePKZdIVst7fC4TUM"
+      ],
+      "request_id": "x8g0zrKGarUjEG02nw8v",
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "source_take": "_takes/narration-v2/n18c-listen/take-2.wav",
+      "trim_s": [
+        0.0,
+        3.34
+      ],
+      "pad_s": [
+        0.028,
+        0.0
+      ],
+      "chain": "highpass=f=80:poles=2,acompressor=threshold=-16dB:ratio=2:attack=10:release=120:knee=6:makeup=1,equalizer=f=3000:t=q:w=1.0:g=2,deesser=i=0.4:m=0.5:f=0.5:s=o",
+      "level_lufs": -19.0,
+      "true_peak_ceiling_dbtp": -6.5,
+      "measured": {
+        "lufs": -19.0,
+        "lra": 20.2,
+        "true_peak_dbtp": -6.5
+      },
+      "word_times": "ElevenLabs forced alignment (POST /v1/forced-alignment) on this file",
+      "alignment_loss": 0.7336616126858458,
+      "pauses": [],
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "Listen to what they say and answer in one press.",
+        "notes": []
+      }
+    },
+    "take": "n18c-listen/take-2",
+    "sha256": "20e716496ea0813c4cea5b278cfcb65e8179bac557c0c179a4137317056d0d73",
+    "durationSec": 3.368,
+    "notes": "Narrator, act 2. Chosen from 6 takes (fallback: no take met every rule; pace 3.33). 10 words in 3.02 s = 3.31 words/s; pauses over 0.35 s none. Trim 60 ms head / 150 ms tail (silence padded where the take had less), highpass 80 Hz, compressor -16 dB 2:1, +2 dB at 3 kHz, de-esser, -19.0 LUFS integrated, true peak <= -6.5 dBTP (4x oversampled limiter). 48 kHz 24-bit mono. The narrator's voice is generated; say so in the video description."
+  },
+  {
+    "id": "narration/n18d-show-flip",
+    "path": "public/audio/narration/n18d-show-flip.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Or show it... and flip it, to face them.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py; scripts/audio/narration_finish.py; scripts/audio/narration-align.mjs; scripts/audio/narration_data.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 1111,
+      "tag": null,
+      "previous_request_ids": [
+        "O8ahVa4iLxn5gnr9U6Q0",
+        "Cp8O5NiCbKtwDyv0MSIR",
+        "x8g0zrKGarUjEG02nw8v"
+      ],
+      "request_id": "Zlox9zZHM0Eca8vZ2WjX",
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "source_take": "_takes/narration-v2/n18d-show-flip/take-1.wav",
+      "trim_s": [
+        0.0,
+        3.088
+      ],
+      "pad_s": [
+        0.029,
+        0.0
+      ],
+      "chain": "highpass=f=80:poles=2,acompressor=threshold=-16dB:ratio=2:attack=10:release=120:knee=6:makeup=1,equalizer=f=3000:t=q:w=1.0:g=2,deesser=i=0.4:m=0.5:f=0.5:s=o",
+      "level_lufs": -19.0,
+      "true_peak_ceiling_dbtp": -6.5,
+      "measured": {
+        "lufs": -19.0,
+        "lra": 20.1,
+        "true_peak_dbtp": -6.5
+      },
+      "word_times": "ElevenLabs forced alignment (POST /v1/forced-alignment) on this file",
+      "alignment_loss": 0.7539579546129381,
+      "pauses": [],
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "or show it and flip it to face them.",
+        "notes": []
+      }
+    },
+    "take": "n18d-show-flip/take-1",
+    "sha256": "ec72eda90d0c8bfbabf6324208bd7a525e7bfeca8968e3c8bcdd374ec193918a",
+    "durationSec": 3.117,
+    "notes": "Narrator, act 2. Chosen from 6 takes (fallback: no take met every rule; pace 3.15). 9 words in 2.86 s = 3.15 words/s; pauses over 0.35 s none. Trim 60 ms head / 150 ms tail (silence padded where the take had less), highpass 80 Hz, compressor -16 dB 2:1, +2 dB at 3 kHz, de-esser, -19.0 LUFS integrated, true peak <= -6.5 dBTP (4x oversampled limiter). 48 kHz 24-bit mono. The narrator's voice is generated; say so in the video description."
+  },
+  {
+    "id": "narration/n19b-specs",
+    "path": "public/audio/narration/n19b-specs.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "In Kiro, features start as specs.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py; scripts/audio/narration_finish.py; scripts/audio/narration-align.mjs; scripts/audio/narration_data.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 3333,
+      "tag": null,
+      "previous_request_ids": [
+        "x8g0zrKGarUjEG02nw8v",
+        "2U7mYz70m7L1qCgNcCHD",
+        "adXpkrFmmDvi9LKXss5A"
+      ],
+      "request_id": "DQtx2w2esgbaDGkRFbGV",
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "source_take": "_takes/narration-v2/n19b-specs/take-3.wav",
+      "trim_s": [
+        0.0,
+        3.04
+      ],
+      "pad_s": [
+        0.005,
+        0.023
+      ],
+      "chain": "highpass=f=80:poles=2,acompressor=threshold=-16dB:ratio=2:attack=10:release=120:knee=6:makeup=1,equalizer=f=3000:t=q:w=1.0:g=2,deesser=i=0.4:m=0.5:f=0.5:s=o",
+      "level_lufs": -19.0,
+      "true_peak_ceiling_dbtp": -6.5,
+      "measured": {
+        "lufs": -19.0,
+        "lra": 20.0,
+        "true_peak_dbtp": -6.5
+      },
+      "word_times": "ElevenLabs forced alignment (POST /v1/forced-alignment) on this file",
+      "alignment_loss": 0.8037473505193536,
+      "pauses": [],
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "In Kiro, features start as specs.",
+        "notes": []
+      }
+    },
+    "take": "n19b-specs/take-3",
+    "sha256": "49e29ac8123c712a78b5feb9db0137f9cfe45ae2240e0fd9c9ebed2f6669b203",
+    "durationSec": 3.068,
+    "notes": "Narrator, act 2. Chosen from 3 takes. 6 words in 2.70 s = 2.22 words/s; pauses over 0.35 s none. Trim 60 ms head / 150 ms tail (silence padded where the take had less), highpass 80 Hz, compressor -16 dB 2:1, +2 dB at 3 kHz, de-esser, -19.0 LUFS integrated, true peak <= -6.5 dBTP (4x oversampled limiter). 48 kHz 24-bit mono. The narrator's voice is generated; say so in the video description."
+  },
+  {
+    "id": "narration/n19c-hooks",
+    "path": "public/audio/narration/n19c-hooks.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "Steering holds the rules, and hooks run the checks on every save.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py; scripts/audio/narration_finish.py; scripts/audio/narration-align.mjs; scripts/audio/narration_data.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8
+      },
+      "seed": 4444,
+      "tag": null,
+      "previous_request_ids": [
+        "2U7mYz70m7L1qCgNcCHD",
+        "adXpkrFmmDvi9LKXss5A",
+        "DQtx2w2esgbaDGkRFbGV"
+      ],
+      "request_id": "RQ82ddB52rFxAVdNbaY3",
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "source_take": "_takes/narration-v2/n19c-hooks/take-4.wav",
+      "trim_s": [
+        0.0,
+        4.377
+      ],
+      "pad_s": [
+        0.013,
+        0.0
+      ],
+      "chain": "highpass=f=80:poles=2,acompressor=threshold=-16dB:ratio=2:attack=10:release=120:knee=6:makeup=1,equalizer=f=3000:t=q:w=1.0:g=2,deesser=i=0.4:m=0.5:f=0.5:s=o",
+      "level_lufs": -19.0,
+      "true_peak_ceiling_dbtp": -6.5,
+      "measured": {
+        "lufs": -19.0,
+        "lra": 1.8,
+        "true_peak_dbtp": -6.5
+      },
+      "word_times": "ElevenLabs forced alignment (POST /v1/forced-alignment) on this file",
+      "alignment_loss": 0.6786208226130559,
+      "pauses": [],
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "Steering holds the rules, and hooks run the checks on every save.",
+        "notes": []
+      }
+    },
+    "take": "n19c-hooks/take-4",
+    "sha256": "3d3d82243855e9d5e70ef3ce9971a7703c2f39fcc7a9cb975d74501ab9ca595d",
+    "durationSec": 4.39,
+    "notes": "Narrator, act 2. Chosen from 6 takes (fallback: no take met every rule; pace 2.97). 12 words in 4.04 s = 2.97 words/s; pauses over 0.35 s none. Trim 60 ms head / 150 ms tail (silence padded where the take had less), highpass 80 Hz, compressor -16 dB 2:1, +2 dB at 3 kHz, de-esser, -19.0 LUFS integrated, true peak <= -6.5 dBTP (4x oversampled limiter). 48 kHz 24-bit mono. The narrator's voice is generated; say so in the video description."
+  },
+  {
+    "id": "narration/n19d-cli",
+    "path": "public/audio/narration/n19d-cli.wav",
+    "tool": "elevenlabs-tts",
+    "model": "eleven_v4",
+    "date": "2026-11-19",
+    "prompt": "On GitHub, Kiro's CLI can review pull requests, headless.",
+    "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py; scripts/audio/narration_finish.py; scripts/audio/narration-align.mjs; scripts/audio/narration_data.py",
+    "params": {
+      "voice_id": "j9jfwdrw7BRfcR43Qohk",
+      "voice_name": "Frederick Surrey - Smooth and Velvety (ElevenLabs voice library)",
+      "voice_settings": {
+        "stability": 0.6,
+        "similarity_boost": 0.8,
+        "speed": 1.12
+      },
+      "seed": 1111,
+      "tag": null,
+      "previous_request_ids": [
+        "adXpkrFmmDvi9LKXss5A",
+        "DQtx2w2esgbaDGkRFbGV",
+        "RQ82ddB52rFxAVdNbaY3"
+      ],
+      "request_id": "eZsfLrP2M6prkB6F0zxe",
+      "output_format": "wav_48000",
+      "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
+      "source_take": "_takes/narration-v2/n19d-cli/take-1.wav",
+      "trim_s": [
+        0.0,
+        4.8
+      ],
+      "pad_s": [
+        0.012,
+        0.06
+      ],
+      "chain": "highpass=f=80:poles=2,acompressor=threshold=-16dB:ratio=2:attack=10:release=120:knee=6:makeup=1,equalizer=f=3000:t=q:w=1.0:g=2,deesser=i=0.4:m=0.5:f=0.5:s=o",
+      "level_lufs": -19.0,
+      "true_peak_ceiling_dbtp": -6.5,
+      "measured": {
+        "lufs": -19.0,
+        "lra": 1.4,
+        "true_peak_dbtp": -6.5
+      },
+      "word_times": "ElevenLabs forced alignment (POST /v1/forced-alignment) on this file",
+      "alignment_loss": 0.710937265764203,
+      "pauses": [],
+      "stt_check": {
+        "model": "scribe_v3",
+        "transcript": "On GitHub, Kiro's CLI can review pull requests headless.",
+        "notes": []
+      }
+    },
+    "take": "n19d-cli/take-1",
+    "sha256": "c8bf371b2c158978afcc019aefcd254abee7ce2ce0e996d9e7991c9597dde39e",
+    "durationSec": 4.872,
+    "notes": "Narrator, act 2. Chosen from 6 takes (fallback: no take met every rule; pace 1.97). 9 words in 4.56 s = 1.97 words/s; pauses over 0.35 s none. Trim 60 ms head / 150 ms tail (silence padded where the take had less), highpass 80 Hz, compressor -16 dB 2:1, +2 dB at 3 kHz, de-esser, -19.0 LUFS integrated, true peak <= -6.5 dBTP (4x oversampled limiter). 48 kHz 24-bit mono. The narrator's voice is generated; say so in the video description."
+  },
+  {
+    "id": "music/act2-v3",
+    "path": "public/audio/music/act2-v3-drive.wav",
+    "tool": "scripts/audio/music_extend.py",
+    "model": null,
+    "date": "2026-11-19",
+    "prompt": null,
+    "command": ".venv/bin/python -I -B scripts/audio/music_extend.py",
+    "params": {
+      "from": "public/audio/music/act2-v2-drive.wav",
+      "barMap": "1-32 -> 1-32; 33-37 -> 19-23; 38-39 -> 33-34; 40-46 -> 35,36,33,34,35,35,36; 47-55 -> 37-45",
+      "splice": "30 ms equal-power crossfade before each spliced bar line"
+    },
+    "take": "script",
+    "sha256": "f72e0127a31a7be5df27f59e484e28247dbc8ed6828c1954a6a6265f5085aef8",
+    "durationSec": 110.0,
+    "notes": "Third cut: the second cut music v2 rearranged by whole bars to 55 bars (110 s) for the real-app reel and the Kiro chapter. No new generation."
+  },
+  {
+    "id": "music/act2-v3-drums",
+    "path": "public/audio/music/act2-v3-drive-drums.wav",
+    "tool": "scripts/audio/music_extend.py",
+    "model": null,
+    "date": "2026-11-19",
+    "prompt": null,
+    "command": ".venv/bin/python -I -B scripts/audio/music_extend.py",
+    "params": {
+      "from": "public/audio/music/act2-v2-drive-drums.wav",
+      "barMap": "1-32 -> 1-32; 33-37 -> 19-23; 38-39 -> 33-34; 40-46 -> 35,36,33,34,35,35,36; 47-55 -> 37-45",
+      "splice": "30 ms equal-power crossfade before each spliced bar line"
+    },
+    "take": "script",
+    "sha256": "a37a574858a9087ffbe9b8afeaa2fcea7eda2cf3f9d62b699490cf933118fbc7",
+    "durationSec": 110.0,
+    "notes": "Third cut: the second cut music v2 rearranged by whole bars to 55 bars (110 s) for the real-app reel and the Kiro chapter. No new generation."
+  },
+  {
+    "id": "music/act2-v3-other",
+    "path": "public/audio/music/act2-v3-other.wav",
+    "tool": "scripts/audio/music_extend.py",
+    "model": null,
+    "date": "2026-11-19",
+    "prompt": null,
+    "command": ".venv/bin/python -I -B scripts/audio/music_extend.py",
+    "params": {
+      "from": "public/audio/music/act2-v2-other.wav",
+      "barMap": "1-32 -> 1-32; 33-37 -> 19-23; 38-39 -> 33-34; 40-46 -> 35,36,33,34,35,35,36; 47-55 -> 37-45",
+      "splice": "30 ms equal-power crossfade before each spliced bar line"
+    },
+    "take": "script",
+    "sha256": "b5e928867e6ee7f2d17c2535e343db2c2c7ee34dcc1402ca74a29c2602fef0af",
+    "durationSec": 110.0,
+    "notes": "Third cut: the second cut music v2 rearranged by whole bars to 55 bars (110 s) for the real-app reel and the Kiro chapter. No new generation."
   }
 ]

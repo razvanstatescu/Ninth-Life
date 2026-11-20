@@ -34,16 +34,24 @@ export const ACT2_START = sec(28);
 export const at = (bar: number, beat = 1, eighth = 0) =>
   ACT2_START + (bar - 1) * BAR + (beat - 1) * BEAT + eighth * EIGHTH;
 
-/** Act 2 has 45 bars: the film is 1:58 (7,080 frames). */
-export const ACT2_BARS = 45;
+/**
+ * Act 2 has 55 bars: the film is 2:18 (8,280 frames). The third cut (2026-11-19) added 10 bars to the 1:58 cut: the
+ * real-app conversation reel (s12b, 5 bars) after ghost mode, and a Kiro chapter of 7 bars instead of 2 (s14).
+ */
+export const ACT2_BARS = 55;
 export const TOTAL = at(ACT2_BARS + 1);
 
 export type SceneId =
   | 's01' | 's02' | 's03' | 's04' | 's05'
-  | 's06' | 's07' | 's08' | 's09' | 's10' | 's11' | 's12' | 's13' | 's14' | 's15' | 's16';
+  | 's06' | 's07' | 's08' | 's09' | 's10' | 's11' | 's12' | 's12b' | 's13' | 's14' | 's15' | 's16';
 
-/** Absolute frame ranges [from, to) of every scene (07-revision-v2.md, section 4). */
-export const SCENES: Record<SceneId, { from: number; to: number; title: string }> = {
+/**
+ * Absolute frame ranges [from, to) of every scene (07-revision-v2.md, section 4; third cut: 08-revision-v3.md).
+ * `shift`: bars to add to the bar numbers a scene's code uses (atIn). Scenes s13, s15 and s16 were written for the
+ * 1:58 cut and still number their bars as in it (s13: 33-34, s15: 37-40, s16: 41-45); their shift moves them.
+ * Third-cut bars: s12b 33-37, s13 38-39, s14 40-46, s15 47-50, s16 51-55.
+ */
+export const SCENES: Record<SceneId, { from: number; to: number; title: string; shift?: number }> = {
   s01: { from: 0, to: sec(4), title: 'Dead air' },
   s02: { from: sec(4), to: sec(11), title: 'The phone wakes' },
   s03: { from: sec(11), to: sec(17), title: 'Ghost typing, battery low' },
@@ -56,10 +64,11 @@ export const SCENES: Record<SceneId, { from: number; to: number; title: string }
   s10: { from: at(18), to: at(24), title: 'The solution' },
   s11: { from: at(24), to: at(30), title: 'The proof' },
   s12: { from: at(30), to: at(33), title: 'No signal: ghost mode' },
-  s13: { from: at(33), to: at(35), title: 'Touch, keyboard, one switch' },
-  s14: { from: at(35), to: at(37), title: 'Made for Kiroween' },
-  s15: { from: at(37), to: at(41), title: 'Same keys, I have something to say' },
-  s16: { from: at(41), to: at(46), title: 'Lockup and closing card' },
+  s12b: { from: at(33), to: at(38), title: 'Keeps up with the conversation (the real app)' },
+  s13: { from: at(38), to: at(40), title: 'Touch, keyboard, one switch', shift: 5 },
+  s14: { from: at(40), to: at(47), title: 'Made for Kiroween: how Kiro was used' },
+  s15: { from: at(47), to: at(51), title: 'Same keys, I have something to say', shift: 10 },
+  s16: { from: at(51), to: at(56), title: 'Lockup and closing card', shift: 10 },
 };
 
 export const SCENE_IDS = Object.keys(SCENES) as SceneId[];
@@ -67,8 +76,8 @@ export const SCENE_IDS = Object.keys(SCENES) as SceneId[];
 /** Length of a scene in frames. */
 export const sceneLen = (id: SceneId) => SCENES[id].to - SCENES[id].from;
 
-/** LOCAL frame (inside scene `id`) of an Act 2 position. */
-export const atIn = (id: SceneId, bar: number, beat = 1, eighth = 0) => at(bar, beat, eighth) - SCENES[id].from;
+/** LOCAL frame (inside scene `id`) of an Act 2 position, in the bar numbers the scene's code uses (see `shift`). */
+export const atIn = (id: SceneId, bar: number, beat = 1, eighth = 0) => at(bar + (SCENES[id].shift ?? 0), beat, eighth) - SCENES[id].from;
 
 /** LOCAL frame (inside scene `id`) of an absolute film time in seconds, e.g. tIn('s02', 6.5). */
 export const tIn = (id: SceneId, filmSeconds: number) => sec(filmSeconds) - SCENES[id].from;
@@ -78,7 +87,7 @@ export const VOICE_AT = {
   'hello-again': at(5) + sec(0.2),
   // Bar 22 beat 2: n14 ("...You press Speak.") ends at 69.8 s, so the app speaks a beat after it.
   'i-need-water': at(22, 2) + sec(0.1),
-  'something-to-say': at(39) + sec(0.2),
+  'something-to-say': at(49) + sec(0.2),
 } as const;
 export type VoiceId = keyof typeof VOICE_AT;
 
@@ -108,9 +117,17 @@ export const NARRATION_AT = {
   'n16-must-match': at(26, 2), // 2.79 s, ends 81.3 s; the proof's impact after it
   'n17-never': at(28, 2), // 2.45 s
   'n18-ghost-mode': at(30, 1, 1), // 4.38 s
-  'n19-access': at(33, 1, 1), // 3.07 s
-  'n20-same-keys': at(37, 1, 1), // 2.80 s
-  'n21-free': at(41, 2), // 3.25 s, ends 111.8 s; the closing card from 112 s
+  // Third cut: the real-app reel (s12b, bars 33-37), answering the problem's "The conversation moves on."
+  'n18b-keeps-up': at(33, 1, 1), // 2.52 s, speech 0.35-2.57 s into the reel
+  'n18c-listen': at(34, 2, 1), // 3.37 s, speech 2.87-5.89 s
+  'n18d-show-flip': at(36, 1, 1), // 3.12 s, speech 6.35-9.21 s; "flip" at 7.75 s
+  'n19-access': at(38, 1, 1), // 3.07 s
+  // Third cut: the Kiro chapter (s14, bars 40-46). The title has the lift's first two beats to itself.
+  'n19b-specs': at(40, 3), // 3.07 s, speech 1.10-3.80 s into the chapter
+  'n19c-hooks': at(42, 1, 1), // 4.39 s, speech 4.47-8.51 s
+  'n19d-cli': at(44, 2, 1), // 4.87 s, speech 8.83-13.39 s
+  'n20-same-keys': at(47, 1, 1), // 2.80 s
+  'n21-free': at(51, 2), // 3.25 s; the closing card from bar 53
 } as const;
 export type NarrationId = keyof typeof NARRATION_AT;
 
@@ -122,14 +139,17 @@ export const QUIET_ZONES: { from: number; to: number; why: string }[] = [
   { from: sec(27.0), to: at(6, 2), why: 'handover, rebirth, Hello again, the drop' },
   { from: at(17, 4), to: at(18, 1, 1), why: 'the fold' },
   { from: at(27, 4) - sec(0.17), to: at(28, 2), why: "the proof's impact (s11, bar 27 beat 4)" },
-  { from: at(35), to: at(37), why: 'Kiro lift' },
-  { from: at(38, 4), to: at(41, 2), why: 'I have something to say, the motif, the lockup fade' },
-  { from: at(43), to: at(46), why: 'closing card' },
+  { from: at(40), to: at(40, 3), why: 'the Kiro title on the lift' },
+  { from: at(48, 4), to: at(51, 2), why: 'I have something to say, the motif, the lockup fade' },
+  { from: at(53), to: at(56), why: 'closing card' },
   // The app's lines are checked separately (a beat either side of VOICE_AT); the proof's impact is
   // added when the mid builder fixes its frame.
 ];
 
-/** Music: one track for Act 2 (90 s, bar 1 beat 1 at ACT2_START). Muted where the app speaks alone. */
+/**
+ * Music: one track for Act 2 (110 s, bar 1 beat 1 at ACT2_START; act2-v3, built from v2's bars by
+ * scripts/audio/music_extend.py). Muted where the app speaks alone.
+ */
 export const MUSIC = {
   from: ACT2_START,
   /** Length of the track in seconds. */
@@ -137,7 +157,7 @@ export const MUSIC = {
   /** [from, to) absolute frames with the music fully off (hard cut). */
   mutes: [
     [at(5), at(6)],
-    [at(39), at(41)],
+    [at(49), at(51)],
   ] as [number, number][],
   /** [from, to) absolute frames with the music ducked under the app's voice. */
   ducks: [[at(22), at(23)]] as [number, number][],

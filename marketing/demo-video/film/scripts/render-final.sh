@@ -4,6 +4,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 npx tsx scripts/build-data.ts
+# The third cut's music (act2-v3*) is rebuilt from act2-v2* by whole bars; it is not in git.
+.venv/bin/python -I -B scripts/audio/music_extend.py
 npx tsc -p tsconfig.json --noEmit
 (cd ../../.. && node scripts/tm-lint.mjs)
 npx tsx src/components/close/verify-kiro.ts

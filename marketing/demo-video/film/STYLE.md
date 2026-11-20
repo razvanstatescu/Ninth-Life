@@ -4,6 +4,13 @@ Read this before writing a scene. It turns the plan in `../02-creative-direction
 `../03-script-storyboard.md` into code rules. Where this file and the plan differ, this file wins
 (it includes the owner's decisions of 2026-11-10).
 
+## Third cut (2026-11-19): ../08-revision-v3.md
+
+The film is 2:18. Two segments are new: s12b, the real-app reel (bars 33-37), and s14, the Kiro chapter (bars 40-46,
+narrated). Scenes s13, s15 and s16 keep their 1:58 bar numbers, and `SCENES[id].shift` moves them, so do not
+renumber them. The reel shows real captures only, moved as pieces (`components/reel/reel.tsx`). The Kiro chapter
+quotes only lines that `verify-kiro.ts` checks. Everything below still applies.
+
 ## Second cut: read this first (07-revision-v2.md)
 
 The owner reviewed the first cut. The brief for the second cut is `../07-revision-v2.md`, with the

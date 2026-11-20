@@ -24,6 +24,12 @@ MAN = FILM / "manifest/audio.json"
 TAKES = FILM / "_takes/narration-v2"
 PLAN = json.loads((FILM / "scripts/audio/prompts/narration.json").read_text())
 DATE = "2026-11-10"
+# Third cut (2026-11-19): six lines added; their entries carry the day they were made.
+THIRD_CUT = {"n18b-keeps-up", "n18c-listen", "n18d-show-flip", "n19b-specs", "n19c-hooks", "n19d-cli"}
+
+
+def date_of(line_id: str) -> str:
+    return "2026-11-19" if line_id in THIRD_CUT else DATE
 
 
 def sha(p: Path) -> str:
@@ -48,7 +54,7 @@ def take_entry(wav: Path, sel_rows: dict, chosen: str | None, superseded: bool) 
          f"from the reference, fails {r.get('fails')}" if r else "no selection metrics")
     return {
         "id": f"narration-take/{meta['id']}/{'v1/' if superseded else ''}{wav.stem}",
-        "path": str(wav.relative_to(FILM)), "tool": "elevenlabs-tts", "model": meta["model_id"], "date": DATE,
+        "path": str(wav.relative_to(FILM)), "tool": "elevenlabs-tts", "model": meta["model_id"], "date": date_of(meta["id"]),
         "prompt": meta["sent_text"],
         "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py",
         "params": {"voice_id": meta["voice_id"], "voice_name": f"{meta['voice_name']} (ElevenLabs voice library)",
@@ -97,7 +103,7 @@ def main():
         span = nj["words"][-1]["end"] - nj["words"][0]["start"]
         new.append({
             "id": f"narration/{line['id']}", "path": str(out.relative_to(FILM)), "tool": "elevenlabs-tts", "model": meta["model_id"],
-            "date": DATE, "prompt": meta["sent_text"],
+            "date": date_of(line["id"]), "prompt": meta["sent_text"],
             "command": "scripts/audio/narration-takes.mjs; scripts/audio/narration_select.py; scripts/audio/narration_finish.py; "
                        "scripts/audio/narration-align.mjs; scripts/audio/narration_data.py",
             "params": {"voice_id": meta["voice_id"], "voice_name": f"{meta['voice_name']} (ElevenLabs voice library)",
